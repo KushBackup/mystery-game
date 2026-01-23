@@ -7,6 +7,7 @@ import { DashboardView } from './components/views/DashboardView';
 import { IntelView } from './components/views/IntelView';
 import { FilesView } from './components/views/FilesView';
 import { DossierView } from './components/views/DossierView';
+import { ChatView } from './components/views/ChatView';
 import { GuestProfileModal } from './components/modals/GuestProfileModal';
 import { DecoderModal } from './components/modals/DecoderModal';
 import { CharacterSelect } from './components/CharacterSelect';
@@ -123,6 +124,10 @@ export default function App() {
 
         {activeTab === 'INTEL' && (
           <IntelView unlockedClues={unlockedClues} />
+        )}
+
+        {activeTab === 'CHAT' && (
+          <ChatView myCharacter={myCharacter} />
         )}
 
         {activeTab === 'FILES' && (

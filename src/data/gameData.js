@@ -13,7 +13,7 @@ export const ROUNDS = [
 export const CHARACTERS = [
   {
     id: 'char_vikram',
-    name: "Vikram",
+    name: "Vikram Singh",
     role: "MURDERER",
     profession: "Personal Assistant",
     bio: "Taher's shadow for 8 years. You organized this entire party. You know every detail, every drink preference.",
