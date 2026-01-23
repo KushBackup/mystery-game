@@ -75,6 +75,13 @@ const Unlock = (props) => (
   </IconBase>
 );
 
+const ShieldCheck = (props) => (
+  <IconBase {...props}>
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    <path d="m9 12 2 2 4-4" />
+  </IconBase>
+);
+
 const Calculator = (props) => (
   <IconBase {...props}>
     <rect x="4" y="2" width="16" height="20" rx="2" />
@@ -444,32 +451,6 @@ const DoodleCCTV = ({ type }) => (
   </svg>
 );
 
-// --- SHARED STYLES ---
-const APP_STYLES = `
-  @import url('https://fonts.googleapis.com/css2?family=Gloria+Hallelujah&display=swap');
-  
-  body { font-family: 'Gloria Hallelujah', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }
-  .font-handwritten { font-family: 'Gloria Hallelujah', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif; }
-  
-  .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-  .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-  .custom-scrollbar::-webkit-scrollbar-track { background: #e7e5e4; }
-  .custom-scrollbar::-webkit-scrollbar-thumb { background: #ea580c; border: 2px solid #e7e5e4; border-radius: 0; }
-  
-  .shadow-sketch { box-shadow: 2px 2px 0px 0px #1c1917; }
-  .shadow-sketch-lg { box-shadow: 4px 4px 0px 0px #1c1917; }
-  
-  .bg-texture {
-      background-image: radial-gradient(#d6d3d1 1px, transparent 1px);
-      background-size: 20px 20px;
-  }
-  
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-  .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
-  @keyframes bounceShort { 0%, 100% { transform: translateY(0) rotate(1deg); } 50% { transform: translateY(-5px) rotate(1deg); } }
-  .animate-bounce-short { animation: bounceShort 0.5s ease-in-out 1; }
-`;
-
 export default function App() {
   // Global State
   const [currentUser, setCurrentUser] = useState(null);
@@ -554,8 +535,7 @@ export default function App() {
   if (!currentUser) {
     return (
       <div className="min-h-screen bg-[#f4f1ea] text-stone-900 font-handwritten relative overflow-hidden flex flex-col items-center justify-center p-4 bg-texture">
-        <style>{APP_STYLES}</style>
-        
+        {/* Blood Splatters */}
         <div className="absolute top-0 left-0 w-48 h-48 sm:w-64 sm:h-64 bg-red-700/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none mix-blend-multiply"></div>
         <div className="absolute bottom-0 right-0 w-64 h-64 sm:w-80 sm:h-80 bg-orange-600/20 rounded-full blur-3xl translate-x-1/3 translate-y-1/3 pointer-events-none mix-blend-multiply"></div>
 
@@ -596,8 +576,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#f4f1ea] text-stone-900 font-handwritten pb-20 sm:pb-24 relative overflow-hidden bg-texture">
-      <style>{APP_STYLES}</style>
-      
       {/* Background Decor */}
       <div className="fixed top-0 left-0 w-full h-2 bg-red-700 z-50"></div>
       

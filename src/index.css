@@ -1,3 +1,54 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --font-handwritten: 'Gloria Hallelujah', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif;
+}
+
+/* Custom Utilities if needed, though v4 handles most via @theme */
+.pb-safe { 
+  padding-bottom: env(safe-area-inset-bottom); 
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar { 
+  width: 6px; 
+}
+.custom-scrollbar::-webkit-scrollbar-track { 
+  background: #e7e5e4; 
+}
+.custom-scrollbar::-webkit-scrollbar-thumb { 
+  background: #ea580c; 
+  border: 2px solid #e7e5e4; 
+  border-radius: 0; 
+}
+
+/* Shadow Utilities */
+.shadow-sketch { 
+  box-shadow: 2px 2px 0px 0px #1c1917; 
+}
+.shadow-sketch-lg { 
+  box-shadow: 4px 4px 0px 0px #1c1917; 
+}
+
+/* Background Texture */
+.bg-texture {
+  background-image: radial-gradient(#d6d3d1 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Animations */
+@keyframes fadeIn { 
+  from { opacity: 0; transform: translateY(10px); } 
+  to { opacity: 1; transform: translateY(0); } 
+}
+.animate-fade-in { 
+  animation: fadeIn 0.3s ease-out forwards; 
+}
+
+@keyframes bounceShort { 
+  0%, 100% { transform: translateY(0) rotate(1deg); } 
+  50% { transform: translateY(-5px) rotate(1deg); } 
+}
+.animate-bounce-short { 
+  animation: bounceShort 0.5s ease-in-out 1; 
+}
