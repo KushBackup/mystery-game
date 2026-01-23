@@ -2,14 +2,27 @@ import React, { useState, useEffect, useRef } from 'react';
 import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { Send } from '../icons/ChatIcons';
+import { VoteResultsModal } from '../modals/VoteResultsModal';
 
-export const ChatView = ({ myCharacter }) => {
+export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [lastMessageCount, setLastMessageCount] = useState(0);
+  const [showVoteResults, setShowVoteResults] = useState(false);
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
+
+  // Check if any voting has occurred (after first round)
+  const hasVotingOccurred = Object.keys(voteCounts || {}).length > 0;
+
+  // Vibration function - works on mobile devices
+  const vibrate = (pattern = [200]) => {
+    if ('vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  };
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -35,7 +48,18 @@ export const ChatView = ({ myCharacter }) => {
           id: doc.id,
           ...doc.data(),
         }));
+        
+        // Vibrate on new message from others (not initial load)
+        if (lastMessageCount > 0 && messageData.length > lastMessageCount) {
+          const newestMessage = messageData[messageData.length - 1];
+          // Only vibrate if message is from someone else
+          if (newestMessage.characterId !== myCharacter.id) {
+            vibrate([100, 50, 100]); // Double buzz pattern
+          }
+        }
+        
         setMessages(messageData);
+        setLastMessageCount(messageData.length);
         setLoading(false);
       },
       (error) => {
@@ -45,7 +69,7 @@ export const ChatView = ({ myCharacter }) => {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [lastMessageCount, myCharacter.id]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -62,9 +86,13 @@ export const ChatView = ({ myCharacter }) => {
         createdAt: Date.now(), // For immediate local sorting
       });
       setNewMessage('');
+      // Haptic feedback on send
+      vibrate([50]); // Quick tap
     } catch (error) {
       console.error('Error sending message:', error);
       alert('Failed to send message. Check Firebase configuration.');
+      // Error vibration pattern
+      vibrate([100, 50, 100, 50, 100]);
     } finally {
       setSending(false);
     }
@@ -179,6 +207,41 @@ export const ChatView = ({ myCharacter }) => {
           Chatting as <span className="text-orange-400 font-bold">{myCharacter.name}</span>
         </p>
       </div>
+
+      {/* Floating Vote Results Button */}
+      {hasVotingOccurred && (
+        <button
+          onClick={() => setShowVoteResults(true)}
+          className="fixed bottom-[180px] sm:bottom-[200px] right-4 sm:right-6 w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-red-600 to-orange-600 border-4 border-stone-900 text-white rounded-full shadow-[4px_4px_0px_#1c1917] flex items-center justify-center hover:scale-110 transition-transform z-40 active:translate-y-1 active:shadow-none animate-pulse-slow"
+          title="View Vote Results"
+        >
+          <span className="text-2xl">📊</span>
+        </button>
+      )}
+
+      {/* Vote Results Modal */}
+      <VoteResultsModal
+        isOpen={showVoteResults}
+        onClose={() => setShowVoteResults(false)}
+        voteCounts={voteCounts}
+      />
+
+      <style jsx>{`
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          50% {
+            opacity: 0.9;
+            transform: scale(1.05);
+          }
+        }
+        
+        .animate-pulse-slow {
+          animation: pulse-slow 2s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 };

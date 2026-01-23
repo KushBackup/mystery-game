@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Calculator } from './components/icons/IconComponents';
 import { FeedbackToast } from './components/ui/FeedbackToast';
 import { Header } from './components/layout/Header';
@@ -13,17 +13,19 @@ import { DecoderModal } from './components/modals/DecoderModal';
 import { CharacterSelect } from './components/CharacterSelect';
 import { HostPanel } from './components/HostPanel';
 import { ROUNDS, CHARACTERS, CLUE_DB } from './data/gameData';
+import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase } from './firebase/config';
 
 export default function App() {
   // Global State
   const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState('DASHBOARD');
   
-  // Game State (Mocking Firebase)
+  // Game State (Synced with Firebase)
   const [currentRound, setCurrentRound] = useState(0);
   const [isVotingOpen, setIsVotingOpen] = useState(false);
   const [unlockedClues, setUnlockedClues] = useState([]);
-  const [votes, setVotes] = useState({}); // { round: suspectId }
+  const [votes, setVotes] = useState({}); // { userId: { round: suspectId } }
+  const [voteCounts, setVoteCounts] = useState({}); // { suspectId: count }
   
   // Local UI State
   const [inputCode, setInputCode] = useState("");
@@ -38,6 +40,34 @@ export default function App() {
   [currentUser]);
 
   const currentRoundData = ROUNDS[currentRound] || ROUNDS[ROUNDS.length - 1];
+
+  // --- FIREBASE SYNC ---
+  
+  // Initialize game state on first load
+  useEffect(() => {
+    initializeGameState();
+    initializeVotes();
+  }, []);
+
+  // Subscribe to real-time game state changes
+  useEffect(() => {
+    const unsubscribe = subscribeToGameState((gameState) => {
+      setCurrentRound(gameState.currentRound || 0);
+      setIsVotingOpen(gameState.isVotingOpen || false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Subscribe to real-time vote changes
+  useEffect(() => {
+    const unsubscribe = subscribeToVotes((voteData) => {
+      setVotes(voteData.votes || {});
+      setVoteCounts(voteData.voteCounts || {});
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   // --- ACTIONS ---
 
@@ -76,9 +106,15 @@ export default function App() {
     setTimeout(() => setFeedback(null), 3000);
   };
 
-  const submitVote = (suspectId) => {
-    setVotes({ ...votes, [currentRound]: suspectId });
-    setFeedback({ type: 'success', msg: "VOTE RECORDED" });
+  const submitVote = async (suspectId) => {
+    try {
+      await submitVoteToFirebase(currentUser, suspectId, currentRound);
+      setFeedback({ type: 'success', msg: "VOTE RECORDED" });
+      setTimeout(() => setFeedback(null), 3000);
+    } catch (error) {
+      setFeedback({ type: 'error', msg: "Failed to submit vote" });
+      setTimeout(() => setFeedback(null), 3000);
+    }
   };
 
   // --- HOST CONTROLS (Hidden) ---
@@ -127,7 +163,7 @@ export default function App() {
         )}
 
         {activeTab === 'CHAT' && (
-          <ChatView myCharacter={myCharacter} />
+          <ChatView myCharacter={myCharacter} voteCounts={voteCounts} currentRound={currentRound} />
         )}
 
         {activeTab === 'FILES' && (
@@ -139,7 +175,7 @@ export default function App() {
             currentUser={currentUser}
             isVotingOpen={isVotingOpen}
             currentRound={currentRound}
-            votes={votes}
+            votes={votes[currentUser] || {}}
             onSelectGuest={setSelectedGuest}
           />
         )}
@@ -150,8 +186,6 @@ export default function App() {
           currentRound={currentRound}
           isVotingOpen={isVotingOpen}
           onClose={() => setHostPanelOpen(false)}
-          onRoundChange={setCurrentRound}
-          onToggleVoting={() => setIsVotingOpen(!isVotingOpen)}
         />
 
         {/* Decoder FAB */}
