@@ -138,9 +138,11 @@ COOLER001       - The Cooler (smoking gun)
 - **Build Tool:** Vite 7.2.4
 - **Styling:** Tailwind CSS 4.1.18
 - **Backend:** Firebase 11.1.0 (Firestore Database)
-- **State Management:** React useState + useMemo
+- **PWA:** vite-plugin-pwa (Progressive Web App support)
+- **State Management:** React useState + useMemo + Firebase real-time sync
 - **Routing:** Custom tab-based navigation (no React Router)
-- **Real-time Features:** Firebase Firestore listeners
+- **Real-time Features:** Firebase Firestore listeners (chat, voting, game state)
+- **Mobile Features:** Vibration API for haptic feedback
 
 ### **Design System**
 - **Theme:** Detective noir / True crime aesthetic
@@ -156,6 +158,8 @@ COOLER001       - The Cooler (smoking gun)
 ```
 mystery-game/
 ├── public/
+│   ├── manifest.json                     # PWA manifest
+│   └── icon.svg                          # App icon
 ├── src/
 │   ├── components/
 │   │   ├── icons/
@@ -166,7 +170,8 @@ mystery-game/
 │   │   │   └── Navigation.jsx            # Bottom tab navigation (5 tabs)
 │   │   ├── modals/
 │   │   │   ├── DecoderModal.jsx          # Code input modal
-│   │   │   └── GuestProfileModal.jsx     # Character detail modal
+│   │   │   ├── GuestProfileModal.jsx     # Character detail modal
+│   │   │   └── VoteResultsModal.jsx      # Animated vote bar graph
 │   │   ├── ui/
 │   │   │   ├── Doodles.jsx               # SVG decorations
 │   │   │   └── FeedbackToast.jsx         # Notification system
@@ -231,11 +236,12 @@ mystery-game/
 // User Identity
 currentUser: string | null              // Selected character ID
 
-// Game Progress
+// Game State (Synced with Firebase)
 currentRound: number (0-6)              // Current game round
 isVotingOpen: boolean                   // Voting phase active
-unlockedClues: string[]                 // Array of unlocked clue IDs
-votes: { [round]: suspectId }          // Voting history
+unlockedClues: string[]                 // Array of unlocked clue IDs (local only)
+votes: { [userId]: { [round]: suspectId } }  // All votes (Firebase)
+voteCounts: { [suspectId]: count }      // Aggregated vote counts (Firebase)
 
 // UI State
 activeTab: string                       // Current view tab
@@ -247,10 +253,30 @@ hostPanelOpen: boolean                  // Admin panel
 secretTapCount: number                  // Host panel unlock counter
 ```
 
-### **Derived State**
+### **Firebase Real-Time Sync**
 ```javascript
-myCharacter = CHARACTERS.find(c => c.id === currentUser)
-currentRoundData = ROUNDS[currentRound]
+// Game State Document (gameState/current)
+{
+  currentRound: 0,
+  isVotingOpen: false,
+  lastUpdated: timestamp
+}
+
+// Votes Document (gameState/votes)
+{
+  votes: { userId: { round: suspectId } },
+  voteCounts: { suspectId: count },
+  lastUpdated: timestamp
+}
+
+// Messages Collection (messages/*)
+{
+  characterId: string,
+  characterName: string,
+  message: string,
+  timestamp: serverTimestamp,
+  createdAt: number
+}
 ```
 
 ---
@@ -313,6 +339,8 @@ npm run deploy       # Deploy to GitHub Pages
 - vite (7.2.4)
 - tailwindcss (4.1.18)
 - firebase (11.1.0)
+- vite-plugin-pwa (^0.21.1)
+- workbox-window (^7.3.0)
 - @vitejs/plugin-react (5.1.1)
 
 ---
@@ -342,6 +370,22 @@ npm run deploy       # Deploy to GitHub Pages
 
 ## 🚀 IMPLEMENTED FEATURES
 
+### **Progressive Web App (PWA)** ✅
+- Install to home screen on mobile and desktop
+- Offline support with service worker caching
+- Standalone app mode (no browser UI)
+- Custom detective-themed app icon
+- Splash screen support
+- Portrait-optimized for mobile devices
+- Auto-update on new deployments
+
+### **Haptic Feedback (Vibration)** ✅
+- Double buzz when receiving new chat messages
+- Quick tap confirmation when sending messages
+- Triple buzz on errors
+- Smart detection (doesn't vibrate for own messages)
+- Works on all modern mobile browsers
+
 ### **Real-Time Chat System** ✅
 - Firebase Firestore integration for real-time messaging
 - Character-based message identification
@@ -351,9 +395,36 @@ npm run deploy       # Deploy to GitHub Pages
 - Real-time synchronization across all players
 - Responsive chat UI with send button and input
 
+### **Real-Time Voting System** ✅
+- All votes synced via Firebase Firestore
+- Players can change votes (overwrites previous)
+- Automatic vote counting and aggregation
+- Real-time updates across all devices
+- Vote history tracking per user and round
+
+### **Animated Vote Results** ✅
+- Floating 📊 button on Chat screen (after first vote)
+- Animated horizontal bar graph modal
+- Sorted by most voted → least voted
+- Real-time updates as votes are cast
+- Shows vote counts and percentages
+- 🏆 badge for top suspect
+- Mobile-friendly with smooth animations
+- Vertical scrolling for many suspects
+
+### **Remote Host Controls** ✅
+- Triple-tap ghost logo to access Host Panel
+- Change game round (syncs to all devices instantly)
+- Open/close voting (syncs to all devices instantly)
+- Firebase-powered real-time synchronization
+- Visual feedback for remote control status
+- Enhanced UI with better controls
+
 ### **Firebase Integration** ✅
 - Firestore Database configured and active
 - Real-time listeners with onSnapshot
+- Game state synchronization (rounds, voting status)
+- Vote management and aggregation
 - Message collection with automatic ordering
 - Server-side timestamps for message sync
 - Firebase config file: `src/firebase/config.js`
@@ -415,10 +486,11 @@ Players collectively identify Vikram as the murderer through:
 ## 🐛 KNOWN ISSUES / LIMITATIONS
 
 ### **Current Limitations**
-- No persistence for game state (page refresh loses round/vote progress)
-- Chat messages persist via Firebase but game progress doesn't
-- No authentication system (players self-select characters)
-- Host panel is hidden/discoverable only
+- No persistence for unlocked clues (local storage only, resets on refresh)
+- No authentication system (players self-select characters, can impersonate)
+- Host panel discoverable by anyone (no password protection)
+- No private messaging between players
+- No player roster/presence detection
 - No print stylesheet for character cards
 - No mobile app (web-only)
 
@@ -468,8 +540,8 @@ Players collectively identify Vikram as the murderer through:
 ---
 
 **Last Updated:** January 23, 2026  
-**Version:** 1.1.0  
-**Status:** Production-ready with real-time multiplayer chat
+**Version:** 2.0.0  
+**Status:** Production PWA with real-time multiplayer features
 
 ---
 
@@ -483,9 +555,14 @@ Players collectively identify Vikram as the murderer through:
 - [ ] Try entering code: "ASSISTANT_V"
 - [ ] Try entering clue: "BULLY001"
 - [ ] Triple-tap ghost logo for Host Panel
-- [ ] Advance to Round 2 to see timeline unlock
-- [ ] Explore all 5 tabs (including Chat)
-- [ ] Open multiple browser windows to test real-time chat
-- [ ] Test voting when host opens it
+- [ ] Change round and watch all devices update
+- [ ] Open voting from Host Panel
+- [ ] Vote for a suspect in Dossier tab
+- [ ] Switch to Chat tab and see 📊 vote button
+- [ ] View animated vote results
+- [ ] Send chat messages and feel vibration
+- [ ] Explore all 5 tabs (ID, Clues, Chat, Files, Guests)
+- [ ] Install PWA on mobile device
+- [ ] Test offline functionality
 
 **Congratulations! You're ready to host a murder mystery party! 🎉**
