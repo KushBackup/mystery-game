@@ -177,11 +177,14 @@ mystery-game/
 │   │   │   └── FeedbackToast.jsx         # Notification system
 │   │   ├── views/
 │   │   │   ├── DashboardView.jsx         # ID Card tab
-│   │   │   ├── DossierView.jsx           # Suspects tab
+│   │   │   ├── DossierView.jsx           # Guest Profiles tab
 │   │   │   ├── FilesView.jsx             # Archives tab
 │   │   │   ├── IntelView.jsx             # Evidence Board tab
-│   │   │   └── ChatView.jsx              # Real-time chat tab
+│   │   │   ├── ChatView.jsx              # Real-time chat tab
+│   │   │   ├── VotingView.jsx            # Dedicated voting interface
+│   │   │   └── TimelineView.jsx          # Animated timeline view
 │   │   ├── CharacterSelect.jsx           # Login screen
+│   │   ├── GridMenu.jsx                  # Metro-style home hub
 │   │   └── HostPanel.jsx                 # Admin controls
 │   ├── data/
 │   │   └── gameData.js                   # All game constants
@@ -202,24 +205,38 @@ mystery-game/
 
 ## 🎨 UI/UX DESIGN
 
-### **Navigation Tabs**
-1. **ID Card** (Dashboard) - Shows character role, secret, timeline, access code
-2. **Clues** (Intel) - Evidence board with unlocked clues
-3. **Chat** - Real-time messaging between all players
-4. **Files** (Archives) - Case files, reports, CCTV sketches
-5. **Guests** (Dossier) - Suspect list, voting interface
+### **Navigation System - Metro Grid Hub**
+Windows 8/Nokia Lumia inspired interface with animated tile grid:
+
+**Metro Grid Tiles:**
+1. **ID** (Large 2x2 tile, Red) - Character role, secret, timeline, access code
+2. **CLUES** (Amber) - Evidence board with unlocked clues
+3. **CHAT** (Blue) - Real-time messaging between all players
+4. **TIMELINE** (Indigo) - Animated timeline of character's movements
+5. **VOTES** (Pink) - Dedicated voting interface with results
+6. **FILES** (Emerald) - Case files, reports, CCTV sketches
+7. **GUESTS** (Purple) - Guest profiles and information
+8. **LOGOUT** (Stone Gray) - Exit to character selection
 
 ### **Key UI Components**
 - **Character Select Screen** - Initial login to choose character
-- **Header** - Shows current round and title
-- **Decoder FAB** - Floating red button (bottom-right) for entering codes
-- **Host Panel** - Hidden admin controls (tap ghost logo 3x)
-- **Guest Profile Modal** - Full character details and voting
+- **Metro Grid Menu** - Animated tile-based home hub (Windows 8 style)
+- **Full-Screen Views** - Each tile opens a dedicated full-screen view
+- **Close Button** - Red circular button (top-right) to return to grid
+- **Header** - Shows current round and title (centered)
+- **Decoder FAB** - Floating red button (only on Clues screen) for entering codes
+- **Host Panel** - Hidden admin controls (tap ghost logo 3x on grid menu)
+- **Guest Profile Modal** - Full character details (no voting)
+- **Timeline View** - Animated timeline of character's movements with murder context
+- **Voting View** - Dedicated screen with suspect cards, vote counts, and results
+- **Vote Results Modal** - Animated bar graph accessible from Voting screen
 - **Feedback Toast** - Success/error messages
-- **Navigation Bar** - Bottom sticky tab bar
 
 ### **Visual Style Guide**
-- Hand-drawn borders and sketchy shadows
+- **Metro Tiles**: Smooth animations, shimmer effects, poppy colors
+- **Transitions**: Slide-in animations between views
+- **Touch Gestures**: Scale effects on tap, haptic feedback
+- Hand-drawn borders and sketchy shadows (maintained on content)
 - Coffee stain decorations
 - Rotated card elements (rotate-1, rotate-[-2deg])
 - Dashed borders for evidence/documents
@@ -284,13 +301,17 @@ secretTapCount: number                  // Host panel unlock counter
 ## 🎯 GAME FLOW & USER ACTIONS
 
 ### **Player Journey**
-1. **Select Character** → `handleLogin(id)`
-2. **View ID Card** → See role, secret, access code
-3. **Enter Clues** → `handleCodeSubmit(e)` via Decoder modal
-4. **Unlock Evidence** → Clues added to Intel tab
-5. **Review Suspects** → Browse Dossier tab
-6. **Vote** → `submitVote(suspectId)` when voting opens
-7. **Advance Rounds** → Host controls round progression
+1. **Select Character** → `handleLogin(id)` → Opens Metro Grid Menu
+2. **Navigate Grid** → Tap tiles to open full-screen views
+3. **View ID Card** → See role, secret, access code
+4. **Enter Clues** → Tap Decoder FAB (only on Clues screen) → `handleCodeSubmit(e)`
+5. **Unlock Evidence** → Clues added to Intel view
+6. **Review Guests** → Browse Guest Profiles in Dossier
+7. **Vote** → Open Votes tile → Select suspect (tap twice to confirm) → `submitVote(suspectId)`
+8. **View Results** → Tap "View Vote Results" button in Voting screen
+9. **Return Home** → Tap close button (top-right) to return to grid
+10. **Logout** → Tap LOGOUT tile from grid menu
+11. **Advance Rounds** → Host controls round progression from Host Panel
 
 ### **Host Actions (Admin)**
 - Triple-tap ghost logo to open Host Panel
@@ -394,6 +415,8 @@ npm run deploy       # Deploy to GitHub Pages
 - Persistent message history across sessions
 - Real-time synchronization across all players
 - Responsive chat UI with send button and input
+- Full-screen layout with proper scroll containment
+- Fixed scroll behavior (prevents background scrolling)
 
 ### **Real-Time Voting System** ✅
 - All votes synced via Firebase Firestore
@@ -402,15 +425,43 @@ npm run deploy       # Deploy to GitHub Pages
 - Real-time updates across all devices
 - Vote history tracking per user and round
 
-### **Animated Vote Results** ✅
-- Floating 📊 button on Chat screen (after first vote)
-- Animated horizontal bar graph modal
-- Sorted by most voted → least voted
+### **Animated Timeline View** ✅
+- Full-screen animated timeline interface
+- Parses character timeline text into structured events
+- Staggered slide-in animations (200ms delay per event)
+- Visual timeline with gradient line (purple/indigo)
+- Numbered event dots (critical events get ⚠️ icon)
+- Critical events highlighted in red (kitchen, ice, poison mentions)
+- Time stamps displayed prominently for each event
+- Murder context section with key timeline moments
+- Shows critical times: 6:50 PM (poison placement) to 8:19 PM (death)
+- Detective notes section with investigation tips
+- Special indicator for murderer role
+- Smooth transitions and hover effects
+- Helps players compare alibis and find inconsistencies
+
+### **Metro-Style Grid Navigation** ✅
+- Windows 8/Nokia Lumia inspired tile interface
+- Animated slide-up entrance with stagger effect
+- Shimmer and scale effects on hover/tap
+- Full-screen views with slide-in transitions
+- Close button to return to grid hub
+- Responsive grid layout (2 columns, auto-rows)
+- Haptic feedback on tile taps
+- Smooth Metro-style animations (cubic-bezier easing)
+
+### **Dedicated Voting Interface** ✅
+- Full-screen voting view (separate from Guest Profiles)
+- Large suspect cards in 2-column grid layout
+- Two-tap confirmation system (select then confirm)
+- Live vote counts displayed on suspect cards
+- Visual status indicators (green ring for your vote)
+- Integrated "View Vote Results" button
+- Animated bar graph modal
 - Real-time updates as votes are cast
 - Shows vote counts and percentages
 - 🏆 badge for top suspect
 - Mobile-friendly with smooth animations
-- Vertical scrolling for many suspects
 
 ### **Remote Host Controls** ✅
 - Triple-tap ghost logo to access Host Panel
@@ -514,9 +565,15 @@ Players collectively identify Vikram as the murderer through:
 1. Edit `src/data/gameData.js` → CLUE_DB array
 2. Specify roundReq and code
 
+**To add a new grid tile:**
+1. Edit `src/components/GridMenu.jsx` → menuItems array
+2. Create corresponding view in `src/components/views/`
+3. Add route handler in `App.jsx`
+
 **To modify UI:**
 1. Individual components in `src/components/`
 2. Styling in Tailwind classes or `App.css`
+3. Metro animations in `App.css` (slideInUp, shimmer, etc.)
 
 **To change game flow:**
 1. Edit `App.jsx` for logic
@@ -539,9 +596,9 @@ Players collectively identify Vikram as the murderer through:
 
 ---
 
-**Last Updated:** January 23, 2026  
-**Version:** 2.0.0  
-**Status:** Production PWA with real-time multiplayer features
+**Last Updated:** January 24, 2026  
+**Version:** 2.1.0  
+**Status:** Production PWA with Metro UI and real-time multiplayer features
 
 ---
 

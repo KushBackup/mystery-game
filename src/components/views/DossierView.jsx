@@ -1,44 +1,17 @@
 import React from 'react';
-import { Lock, Vote } from '../icons/IconComponents';
 import { CHARACTERS } from '../../data/gameData';
 
 export const DossierView = ({ 
   currentUser, 
-  isVotingOpen, 
-  currentRound, 
-  votes, 
   onSelectGuest 
 }) => {
   return (
     <div className="animate-fade-in">
-      <h2 className="text-2xl sm:text-3xl font-black text-stone-900 text-center uppercase mb-6 decoration-wavy underline decoration-red-500">Suspects</h2>
+      <h2 className="text-2xl sm:text-3xl font-black text-stone-900 text-center uppercase mb-6 decoration-wavy underline decoration-red-500">Guest Profiles</h2>
       
-       {/* Voting Section */}
-       <div className="bg-stone-800 p-4 mb-6 rounded border-2 border-stone-900 shadow-sketch text-white relative overflow-hidden">
-           {isVotingOpen ? (
-               <>
-                  <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-xl font-bold text-green-400 flex items-center gap-2"><Vote size={20}/> VOTING OPEN</h3>
-                      <span className="text-xs bg-stone-700 px-2 py-1 rounded">Round {currentRound}</span>
-                  </div>
-                  <p className="text-sm text-stone-300 mb-2">Select your prime suspect. You can change your vote until voting closes.</p>
-                  {votes[currentRound] ? (
-                       <div className="bg-green-900/30 border border-green-500 p-2 rounded text-center">
-                           <p className="text-green-400 font-bold">VOTE RECORDED</p>
-                           <p className="text-xs text-stone-400">Suspect: {CHARACTERS.find(c => c.id === votes[currentRound])?.name}</p>
-                       </div>
-                  ) : (
-                      <p className="text-xs text-stone-500 italic">Select a guest below to cast vote.</p>
-                  )}
-               </>
-           ) : (
-              <div className="text-center py-2 opacity-50">
-                  <Lock size={24} className="mx-auto mb-2 text-stone-500"/>
-                  <h3 className="text-lg font-bold text-stone-400">VOTING LOCKED</h3>
-                  <p className="text-xs">Wait for the Host to open voting.</p>
-              </div>
-           )}
-       </div>
+      <p className="text-center text-stone-600 mb-6 font-bold">
+        Tap any guest to view their full profile and background information
+      </p>
 
       <div className="grid grid-cols-1 gap-3 sm:gap-4">
         {CHARACTERS.map((char) => (

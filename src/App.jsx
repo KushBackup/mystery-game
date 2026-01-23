@@ -2,14 +2,17 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Calculator } from './components/icons/IconComponents';
 import { FeedbackToast } from './components/ui/FeedbackToast';
 import { Header } from './components/layout/Header';
-import { Navigation } from './components/layout/Navigation';
+import GridMenu from './components/GridMenu';
 import { DashboardView } from './components/views/DashboardView';
 import { IntelView } from './components/views/IntelView';
 import { FilesView } from './components/views/FilesView';
 import { DossierView } from './components/views/DossierView';
 import { ChatView } from './components/views/ChatView';
+import { VotingView } from './components/views/VotingView';
+import { TimelineView } from './components/views/TimelineView';
 import { GuestProfileModal } from './components/modals/GuestProfileModal';
 import { DecoderModal } from './components/modals/DecoderModal';
+import { VoteResultsModal } from './components/modals/VoteResultsModal';
 import { CharacterSelect } from './components/CharacterSelect';
 import { HostPanel } from './components/HostPanel';
 import { ROUNDS, CHARACTERS, CLUE_DB } from './data/gameData';
@@ -18,7 +21,7 @@ import { initializeGameState, subscribeToGameState, initializeVotes, subscribeTo
 export default function App() {
   // Global State
   const [currentUser, setCurrentUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('DASHBOARD');
+  const [activeTab, setActiveTab] = useState(null); // null = show grid menu
   
   // Game State (Synced with Firebase)
   const [currentRound, setCurrentRound] = useState(0);
@@ -34,6 +37,7 @@ export default function App() {
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [hostPanelOpen, setHostPanelOpen] = useState(false);
   const [secretTapCount, setSecretTapCount] = useState(0);
+  const [showVoteResults, setShowVoteResults] = useState(false);
 
   const myCharacter = useMemo(() => 
     CHARACTERS.find(c => c.id === currentUser), 
@@ -73,7 +77,7 @@ export default function App() {
 
   const handleLogin = (id) => {
     setCurrentUser(id);
-    setActiveTab('DASHBOARD');
+    setActiveTab(null); // Show grid menu after login
   };
 
   const handleCodeSubmit = (e) => {
@@ -94,7 +98,7 @@ export default function App() {
         setUnlockedClues([...unlockedClues, foundClue.id]);
         setFeedback({ type: 'success', msg: `EVIDENCE ADDED: ${foundClue.title}` });
         setModalOpen(false);
-        setActiveTab('INTEL');
+        setActiveTab('intel'); // Changed from 'INTEL' to 'intel'
       }
     } else if (foundChar) {
        setFeedback({ type: 'success', msg: `MET: ${foundChar.name}.` });
@@ -135,48 +139,115 @@ export default function App() {
     return <CharacterSelect onSelectCharacter={handleLogin} />;
   }
 
+  // Show Grid Menu when no tab is active
+  if (!activeTab) {
+    const handleNavigate = (tabId) => {
+      if (tabId === 'logout') {
+        setCurrentUser(null);
+      } else {
+        setActiveTab(tabId);
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-[#f4f1ea]">
+        <GridMenu onNavigate={handleNavigate} voteCounts={voteCounts} />
+        
+        {/* Host Panel Access */}
+        <div 
+          className="fixed top-4 left-4 text-stone-900 opacity-10 hover:opacity-100 cursor-pointer z-50" 
+          onClick={toggleHostPanel}
+        >
+          👻
+        </div>
+
+        {/* Host Controls Panel */}
+        <HostPanel
+          isOpen={hostPanelOpen}
+          currentRound={currentRound}
+          isVotingOpen={isVotingOpen}
+          onClose={() => setHostPanelOpen(false)}
+        />
+
+        {/* Decoder Modal */}
+        <DecoderModal
+          isOpen={modalOpen}
+          inputCode={inputCode}
+          onInputChange={(e) => setInputCode(e.target.value)}
+          onSubmit={handleCodeSubmit}
+          onClose={() => setModalOpen(false)}
+        />
+
+        {/* Feedback Toast */}
+        <FeedbackToast feedback={feedback} />
+      </div>
+    );
+  }
+
+  // Full Screen View with Close Button
   return (
-    <div className="min-h-screen bg-[#f4f1ea] text-stone-900 font-handwritten pb-20 sm:pb-24 relative overflow-hidden bg-texture">
+    <div className="min-h-screen bg-[#f4f1ea] text-stone-900 font-handwritten relative overflow-hidden bg-texture view-container">
       {/* Background Decor */}
       <div className="fixed top-0 left-0 w-full h-2 bg-red-700 z-50"></div>
       
+      {/* Close Button */}
+      <button
+        onClick={() => setActiveTab(null)}
+        className="fixed top-4 right-4 z-50 w-12 h-12 bg-red-600 border-3 border-stone-900 text-white rounded-full shadow-[3px_3px_0px_#1c1917] flex items-center justify-center hover:scale-110 transition-all active:scale-95"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
       {/* Header */}
       <Header 
         currentRound={currentRound}
         currentRoundData={currentRoundData}
-        onLogout={() => setCurrentUser(null)}
         onSecretTap={toggleHostPanel}
       />
 
       {/* Main Content */}
-      <main className="p-3 sm:p-4 max-w-2xl mx-auto space-y-6 sm:space-y-8">
+      <main className="p-3 sm:p-4 max-w-2xl mx-auto space-y-6 sm:space-y-8 pb-6">
         {/* Feedback Toast */}
         <FeedbackToast feedback={feedback} />
 
         {/* View Routing */}
-        {activeTab === 'DASHBOARD' && (
+        {activeTab === 'dashboard' && (
           <DashboardView myCharacter={myCharacter} currentRound={currentRound} />
         )}
 
-        {activeTab === 'INTEL' && (
+        {activeTab === 'intel' && (
           <IntelView unlockedClues={unlockedClues} />
         )}
 
-        {activeTab === 'CHAT' && (
+        {activeTab === 'chat' && (
           <ChatView myCharacter={myCharacter} voteCounts={voteCounts} currentRound={currentRound} />
         )}
 
-        {activeTab === 'FILES' && (
+        {activeTab === 'timeline' && (
+          <TimelineView myCharacter={myCharacter} />
+        )}
+
+        {activeTab === 'files' && (
           <FilesView />
         )}
 
-        {activeTab === 'DOSSIER' && (
+        {activeTab === 'dossier' && (
           <DossierView
+            currentUser={currentUser}
+            onSelectGuest={setSelectedGuest}
+          />
+        )}
+
+        {activeTab === 'votes' && (
+          <VotingView
             currentUser={currentUser}
             isVotingOpen={isVotingOpen}
             currentRound={currentRound}
             votes={votes[currentUser] || {}}
-            onSelectGuest={setSelectedGuest}
+            voteCounts={voteCounts}
+            onVote={submitVote}
           />
         )}
 
@@ -188,20 +259,16 @@ export default function App() {
           onClose={() => setHostPanelOpen(false)}
         />
 
-        {/* Decoder FAB */}
-        <button
-          onClick={() => setModalOpen(true)}
-          className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 w-14 h-14 sm:w-16 sm:h-16 bg-red-600 border-4 border-stone-900 text-white rounded-full shadow-[4px_4px_0px_#1c1917] flex items-center justify-center hover:scale-110 transition-transform z-40 active:translate-y-1 active:shadow-none"
-        >
-          <Calculator size={28} className="sm:w-8 sm:h-8" />
-        </button>
-
-        {/* Helper for finding Host Panel */}
-        <div className="fixed bottom-20 right-20 text-stone-300 opacity-20 hover:opacity-100 cursor-pointer" onClick={toggleHostPanel}>⚡</div>
+        {/* Decoder FAB - Only show on Intel/Clues screen */}
+        {activeTab === 'intel' && (
+          <button
+            onClick={() => setModalOpen(true)}
+            className="fixed bottom-6 right-6 w-14 h-14 sm:w-16 sm:h-16 bg-red-600 border-4 border-stone-900 text-white rounded-full shadow-[4px_4px_0px_#1c1917] flex items-center justify-center hover:scale-110 transition-transform z-40 active:translate-y-1 active:shadow-none"
+          >
+            <Calculator size={28} className="sm:w-8 sm:h-8" />
+          </button>
+        )}
       </main>
-
-      {/* Navigation */}
-      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* Guest Profile Modal */}
       <GuestProfileModal
@@ -220,6 +287,24 @@ export default function App() {
         onSubmit={handleCodeSubmit}
         onClose={() => setModalOpen(false)}
       />
+
+      {/* View Transition Animation */}
+      <style jsx>{`
+        .view-container {
+          animation: slideInFromRight 0.3s ease-out;
+        }
+        
+        @keyframes slideInFromRight {
+          from {
+            opacity: 0;
+            transform: translateX(100%);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }

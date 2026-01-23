@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { Send } from '../icons/ChatIcons';
-import { VoteResultsModal } from '../modals/VoteResultsModal';
 
 export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
   const [messages, setMessages] = useState([]);
@@ -10,7 +9,6 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [lastMessageCount, setLastMessageCount] = useState(0);
-  const [showVoteResults, setShowVoteResults] = useState(false);
   const messagesEndRef = useRef(null);
   const chatContainerRef = useRef(null);
 
@@ -119,8 +117,8 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-12rem)] sm:h-[calc(100vh-14rem)] animate-fade-in">
-      <div className="bg-orange-500 p-3 border-b-4 border-stone-900 shadow-sm mb-4">
+    <div className="fixed inset-x-0 top-[4.5rem] bottom-0 flex flex-col animate-fade-in overflow-hidden">
+      <div className="bg-orange-500 p-3 border-b-4 border-stone-900 shadow-sm flex-shrink-0">
         <h2 className="text-xl sm:text-2xl font-black text-white text-center uppercase tracking-wide">
           🔍 Investigator Chat
         </h2>
@@ -132,7 +130,8 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
       {/* Messages Container */}
       <div 
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto px-3 sm:px-4 pb-4 space-y-3 custom-scrollbar"
+        className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 space-y-3 custom-scrollbar"
+        style={{ overscrollBehavior: 'contain', touchAction: 'pan-y' }}
       >
         {messages.length === 0 ? (
           <div className="text-center py-12">
@@ -183,7 +182,7 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
       </div>
 
       {/* Input Form */}
-      <div className="border-t-4 border-stone-900 bg-stone-800 p-3 shadow-lg">
+      <div className="border-t-4 border-stone-900 bg-stone-800 p-3 shadow-lg flex-shrink-0">
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <input
             type="text"
@@ -207,24 +206,6 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
           Chatting as <span className="text-orange-400 font-bold">{myCharacter.name}</span>
         </p>
       </div>
-
-      {/* Floating Vote Results Button */}
-      {hasVotingOccurred && (
-        <button
-          onClick={() => setShowVoteResults(true)}
-          className="fixed bottom-[180px] sm:bottom-[200px] right-4 sm:right-6 w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-red-600 to-orange-600 border-4 border-stone-900 text-white rounded-full shadow-[4px_4px_0px_#1c1917] flex items-center justify-center hover:scale-110 transition-transform z-40 active:translate-y-1 active:shadow-none animate-pulse-slow"
-          title="View Vote Results"
-        >
-          <span className="text-2xl">📊</span>
-        </button>
-      )}
-
-      {/* Vote Results Modal */}
-      <VoteResultsModal
-        isOpen={showVoteResults}
-        onClose={() => setShowVoteResults(false)}
-        voteCounts={voteCounts}
-      />
 
       <style jsx>{`
         @keyframes pulse-slow {
