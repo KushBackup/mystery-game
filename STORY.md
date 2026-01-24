@@ -31,11 +31,15 @@ Every person invited had one thing in common: Rohan had wronged them. Some he'd 
 
 Esha, Rohan's wife of five years, arrived at 5:00 PM to oversee preparations. She brought several items from home:
 - A sealed bottle of 50-year-old Macallan scotch (Rohan's prized possession)
-- A special cooler bag with "artisanal ice cubes" she insisted were from a premium ice company
+- A special cooler bag with "artisanal ice cubes" she claimed were from a premium ice company
 - An elaborate three-tier cake from a local bakery
 - Their cat, Whiskers, in a carrier (Rohan claimed the cat "calmed his nerves")
 
 The bar owner, Marcus, thought it was odd that someone would bring their own ice to a bar, but Esha explained these were "spherical whiskey stones" that melted slower and didn't dilute the expensive scotch. She personally placed them in the bar's freezer, in a clearly labeled container: "ROHAN'S ICE - DO NOT USE FOR OTHER DRINKS."
+
+Interestingly, the bar already stocked identical artisanal ice spheres in their regular inventory—same size, same shape, stored right next to Esha's container. Marcus noted this coincidence but thought nothing of it at the time.
+
+At 7:43 PM, there was a brief power fluctuation that knocked out the freezer area camera for approximately 4 minutes. Marcus was in his office dealing with the outage. During this time, he heard the freezer door open and close but assumed it was his staff.
 
 ### Guest Arrivals (7:00 PM - 7:45 PM)
 
@@ -129,27 +133,34 @@ She proposed an alternative.
 
 Rohan agreed. They planned it together.
 
-### The Method: Poisoned Ice
+### The Method: Poisoned Ice (With Perfect Red Herrings)
 
-The plan was elegant:
+The plan was elegant, but deliberately created multiple alternative theories:
 
-1. **The Poison**: Sodium azide, obtained from a laboratory supply company using Rohan's tech industry connections. Lethal in small doses, and crucially, takes 20-45 minutes to kill—long enough to establish that others had access to the drink.
+1. **The Poison**: Sodium azide. Esha ordered it online, but so could have others with the right connections. Andrew (journalist with lab contacts), Dr. Poshika (veterinary access to controlled substances), and even Surya (tech skills to navigate the dark web) all had potential access.
 
-2. **The Ice**: Esha froze the poison into spherical ice cubes at home. The poison was distributed throughout the ice, so it would only release as the cubes melted.
+2. **The Ice**: Esha cancelled her order from "Premium Ice Co." on January 17th and made the poisoned ice spheres at home. But here's the genius: Re'a used to work at Premium Ice Co. and knew their manufacturing process. The bar also stocked identical ice. Anyone could have swapped ice between containers during the 4-minute CCTV blind spot.
 
-3. **The Sip**: Esha would take a tiny sip from Rohan's drink immediately after he added the ice—before significant melting occurred. This would "prove" the drink was safe when served, and she'd only ingest a trace amount (survivable, though she might feel slightly ill later).
+3. **The Sip**: Esha would take a tiny sip from Rohan's drink immediately after he added the ice—before significant melting occurred. This would "prove" the drink was safe when served. She might feel slightly ill later, which could support her innocence.
 
 4. **The Delay**: The ice would melt over the next 20-30 minutes as Rohan sipped. By the time he'd consumed enough poison, plenty of other people would have had opportunity to "tamper" with his drink.
 
-5. **The Suspects**: The guest list was perfect—32 people who all hated Rohan, any of whom could have slipped something into his drink during the mingling period.
+5. **The Suspects**: The guest list was perfect—32 people who all hated Rohan. Multiple suspects had means (poison access), motive (financial ruin), and opportunity (the CCTV blind spot).
 
-### Why It Works
+6. **The Insurance**: ₹1.5 crores, not enough to make Esha obviously guilty, but enough to provide for her after clearing Rohan's debts. The payout was also contested due to his fraud investigation, making it uncertain.
+
+### Why It Works (And Why It's Not Obvious)
 
 - The scotch bottle was sealed and opened in front of everyone—clearly not poisoned
-- Esha sipped from the glass publicly—clearly safe at that moment
-- The glass sat unattended at various points while Rohan circulated
-- Every guest had motive to want Rohan dead
-- The ice cubes, melted and diluted in the remaining scotch, would be nearly impossible to identify as the delivery mechanism without knowing to look for them
+- Esha sipped from the glass publicly—clearly safe at that moment (or was she poisoned too?)
+- A 4-minute CCTV gap gave others access to the ice containers
+- The bar's own ice was identical—swap was possible
+- Encrypted messages between Surya and Andrew suggest a conspiracy
+- Dr. Poshika had 50g of sodium azide missing from her clinic
+- Re'a worked at the company that supposedly supplied the ice
+- The ice order was cancelled—so where did Esha's "premium ice" actually come from?
+- Multiple suspects used the same café WiFi to search for poison methods
+- Financial motives were distributed: Surya (₹4 crores), Tanishka (₹3 crores lawsuit), Esha (₹1.5 crores contested insurance)
 
 ---
 
@@ -165,7 +176,14 @@ The plan was elegant:
 
 **Suspicious Behavior**: She insisted on bringing "special ice." She was the last person confirmed to touch his drink. She seemed remarkably composed after his death.
 
-**Accusation (What another guest saw)**: "I saw Esha whispering intensely with Rohan near the freezer around 8:10 PM. She looked angry, and he looked... guilty? When they noticed me watching, they immediately separated."
+**Accusation (What another guest saw)**: "I saw Esha whispering intensely with Rohan near the storage area around 8:10 PM. She looked angry, and he looked... guilty? When they noticed me watching, they immediately separated."
+
+**Additional Complications**:
+- Her ice order from Premium Ice Co. was cancelled Jan 17—so where did the ice come from?
+- ₹45,000 transferred out to encrypted wallet on Jan 18—was she paying someone?
+- But also received ₹30,000 from Govind marked "consultation fee"—was she consulting or being paid?
+- Used the same café WiFi as Poshika, Anusha, and Re'a where poison searches originated
+- Insurance payout is only ₹1.5 crores and contested—not an obvious jackpot
 
 ---
 
@@ -179,11 +197,16 @@ The plan was elegant:
 
 **Secret**: Their cat is "actually a cow-shark hybrid"—eccentric, yes, but they're also hiding genuine trauma from what Rohan did to their reputation.
 
-**Motive**: Rohan's rumors cost Re'a three major studio jobs. They had to build their career from scratch in a different city.
+**Motive**: Rohan's rumors cost Re'a three major studio jobs. They had to build their career from scratch in a different city. **Crucially, Re'a worked at Premium Ice Co. for two years (2022-2024) as a Quality Control Technician—they know exactly how to make spherical ice cubes and understand the manufacturing process.**
 
 **Suspicious Behavior**: Was spotted near the bar area multiple times, claiming to "admire the ice sculptures." Kept making dark jokes about "how easy it would be to get away with murder at a party like this."
 
 **Accusation**: "I noticed Re'a near the bar right after Rohan put down his drink. They were pretending to look at their phone, but they weren't actually typing anything—just hovering near his glass."
+
+**Additional Complications**:
+- Visited Café Sunrise on Jan 20 (same café where poison searches originated)
+- Former employee of the company that supposedly supplied Esha's ice
+- Would have known the ice order was cancelled—could have provided "replacements"
 
 ---
 
@@ -192,11 +215,15 @@ The plan was elegant:
 **Bio**: "Caring, loving, providing" - A devoted partner who takes pride in managing the household while his girlfriend pursues her career.
 
 **Relationship to Rohan**: Rohan dated Govind's current girlfriend years ago and treated her terribly. After they broke up, Rohan spread intimate photos of her online. She nearly took her own life. Govind has been helping her heal ever since.
+ **Bank records show Govind withdrew ₹30,000 cash one week before the party with notation: "consultation fee."**
 
-**Hidden Talent**: Expert at wedding planning—detail-oriented, meticulous, patient. Perfect qualities for planning something more sinister.
+**Suspicious Behavior**: Left his seat twice during the speech to "get napkins." Was seen standing behind Rohan's booth at one point, close enough to reach his drink.
 
-**Secret**: "I'm in love with my girlfriend" sounds innocent, but there's more—he's been considering proposing, and seeing Rohan brought up all the trauma she'd buried.
+**Accusation**: "Govind was definitely near Rohan's booth when Rohan left to talk to other guests. His girlfriend tried to pull him away, but he lingered there for almost a minute."
 
+**Additional Complications**:
+- The ₹30,000 withdrawal matches the ₹30,000 transfer TO Esha—were they working together?
+- Or did Govind hire Esha to do something?
 **Motive**: Rohan nearly destroyed the woman he loves. Seeing Rohan "apologize" without real consequences was infuriating.
 
 **Suspicious Behavior**: Left his seat twice during the speech to "get napkins." Was seen standing behind Rohan's booth at one point, close enough to reach his drink.
@@ -211,11 +238,17 @@ The plan was elegant:
 
 **Relationship to Rohan**: Andrew published an exposé on Rohan's company three years ago—data manipulation, fake engagement metrics, selling user data to political campaigns. Rohan's lawyers buried the story and nearly bankrupted the publication Andrew worked for. Andrew had to move to Goa and start over.
 
-**Hidden Talent**: Dancing—but more relevantly, he's trained in investigative techniques, knows how to avoid detection, and has contacts in... interesting places.
+**Hidden Talent**: Dancing—but more relevantly, he's trained in investigative techniques, knows how to avoid detection, and has contacts in... interesting places. **As an investigative journalist, Andrew has cultivated contacts in unusual places—including laboratory supply companies for past chemical industry investigations.**
 
-**Secret**: He's been working on a second, bigger exposé. He has evidence that could have sent Rohan to prison.
+**Suspicious Behavior**: Kept taking notes on his phone all night. Was observed photographing Rohan's drink setup. Cornered Rohan for an "interview" shortly before the collapse.
 
-**Motive**: Andrew's career was destroyed by Rohan's legal team. The story was true, and Rohan knew it. Worse, Andrew discovered new evidence that Rohan was planning to flee the country before any charges could be filed.
+**Accusation**: "Andrew literally had his phone out, recording everything. At one point, I saw him ask Rohan to 'step aside for a quick chat.' They went near the storage room, and Rohan looked uncomfortable when they came back."
+
+**Additional Complications**:
+- Encrypted messages with Surya discussing "the plan"
+- Text fragment recovered: "...bar has blind spot near freezer..."
+- Contact labeled 'Lab Supply - Pune' in phone
+- The messages suggest a conspiracy between Andrew and Surya
 
 **Suspicious Behavior**: Kept taking notes on his phone all night. Was observed photographing Rohan's drink setup. Cornered Rohan for an "interview" shortly before the collapse.
 
@@ -245,17 +278,23 @@ The plan was elegant:
 
 **Bio**: "Lazy, Chill and Alcoholic" - A developer who worked at Rohan's company for two years before a dramatic exit. Claims to have an "anti-hangover" superpower.
 
-**Relationship to Rohan**: Surya was the lead developer on Rohan's flagship product. He worked 80-hour weeks for two years, was promised equity, then was fired the day before the vesting period—a move that cost him potentially ₹2 crores.
+**Relationship to Rohan**: Surya was the lead developer on Rohan's flagship product. He worked 80-hour weeks for two years, was promised equity, then was fired the day before the vesting period—a move that cost him approximately **₹4 crores**.
 
 **Hidden Talent**: Can function at extremely high blood alcohol levels without appearing impaired. "Anti-hangover" is useful for someone who wanted to appear sober while slipping something into a drink.
 
-**Secret**: The "bike trip to Kerala" he mentioned? He was actually meeting with a lawyer about suing Rohan—a lawsuit that would have been worthless if Rohan died first.
+**Secret**: The "bike trip to Kerala" he mentioned? He was actually meeting with a lawyer about suing Rohan. **His lawyer filed a criminal fraud case with a ₹5 crore penalty clause. However, the case required Rohan's testimony—if Rohan died before trial, the criminal case would collapse and Surya would get nothing.**
 
-**Motive**: Rohan stole years of his life and millions from his pocket. The "apology" party felt like a slap in the face—words instead of the equity he was owed.
+**Motive**: Rohan stole years of his life and ₹4 crores from his pocket. But killing Rohan would destroy his lawsuit—unless there was another reason...
 
 **Suspicious Behavior**: Was notably the drunkest person at the party—or was he? He was near the bar constantly, had multiple interactions with Rohan's glass, and "accidentally" bumped into the bar counter at one point.
 
 **Accusation**: "Surya was hammered, or at least acting like it. He literally stumbled into the bar right next to where Rohan's drink was sitting. Classic misdirection, if you ask me."
+
+**Additional Complications**:
+- Encrypted messages with Andrew Pereira discussing "the plan"
+- Messages mention the bar's freezer blind spot
+- Installed encrypted chat app on Jan 17 (same day Esha cancelled ice order)
+- Motive seems contradictory—why kill Rohan and destroy his own lawsuit?
 
 ---
 
@@ -274,6 +313,9 @@ The plan was elegant:
 **Suspicious Behavior**: Kept positioning herself with a clear view of the bar area. Was observed speaking into her phone as if recording voice notes throughout the evening.
 
 **Accusation**: "Anusha was definitely documenting everything. At one point, I heard her whisper 'recording' to herself right before Rohan picked up his drink. Like she knew something was about to happen."
+
+**Additional Complications**:
+- Visited Café Sunrise on Jan 19 (same café where poison searches originated)
 
 ---
 
@@ -299,13 +341,13 @@ The plan was elegant:
 
 **Bio**: "Extrovert, explorer, spontaneous" - A fashion designer with a natural ability to make people comfortable and share secrets.
 
-**Relationship to Rohan**: Business partner gone wrong. Rohan invested in her first fashion line, then pulled funding at the last minute when a competitor offered him a better deal. She lost her entire savings, her team, and her reputation.
+**Relationship to Rohan**: Business partner gone wrong. Rohan invested in her first fashion line, then pulled funding at the last minute when a competitor offered him a better deal. She lost her entire savings, her team, and her reputation—approximately **₹2.5 crores in total losses**.
 
 **Hidden Talent**: "I can easily become a safe space for people... I am a secret keeper." She knows things about everyone in this room.
 
 **Secret**: "I'm switching my job and idk what I'm gonna do next"—she's actually planning to restart her fashion line, but she needed the lawsuit against Rohan to succeed first.
 
-**Motive**: Rohan took everything from her when she was most vulnerable. Starting over in her 30s while watching him thrive was excruciating.
+**Motive**: Rohan took everything from her when she was most vulnerable. **She had a civil lawsuit pending for ₹3 crores in damages, scheduled for trial in February 2026. The case was strong, but Rohan's wealth issues made recovery uncertain.**
 
 **Suspicious Behavior**: Was incredibly friendly all night—too friendly. Made a point of hugging Rohan after his speech, holding him close for an uncomfortably long time. Had private conversations with almost every guest.
 
@@ -323,11 +365,16 @@ The plan was elegant:
 
 **Secret**: "You once treated an animal whose injuries clearly implicated someone close you knew. You documented only what was medically necessary and nothing more. You live in guilt." The animal that Rohan hurt wasn't a random stray—it belonged to a prominent family who never learned the truth.
 
-**Motive**: Rohan is a man who hurts the defenseless and threatens those who try to stop him. She's spent years wondering if she should have done more.
+**Motive**: Rohan is a man who hurts the defenseless and threatens those who try to stop him. She's spent years wondering if she should have done more. **As a veterinary surgeon, she has legitimate access to controlled substances including sodium azide, which is used for euthanasia and tissue preservation.**
 
 **Suspicious Behavior**: Positioned herself with a direct view of Rohan's drink all night. Has medical knowledge—knows drugs, dosages, delivery mechanisms. Was strangely calm during the chaos after the collapse.
 
 **Accusation**: "Dr. Poshika spent the whole night watching Rohan like he was a specimen. She's a surgeon—she knows how to kill things. And she didn't even flinch when he collapsed. Almost like she expected it."
+
+**Additional Complications**:
+- Inventory audit shows 50g of sodium azide missing from her veterinary clinic (enough for 166-200 lethal doses)
+- Visited Café Sunrise on Jan 18 (same café where poison searches originated)
+- Claims she didn't notice the shortage until after the party
 
 ---
 

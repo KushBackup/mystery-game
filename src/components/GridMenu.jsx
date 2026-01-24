@@ -44,13 +44,6 @@ const LogoutIcon = ({ className }) => (
   </svg>
 );
 
-const TimelineIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/>
-    <path d="M13 7h-2v5.414l3.293 3.293 1.414-1.414L13 11.586z"/>
-  </svg>
-);
-
 export default function GridMenu({ onNavigate, voteCounts }) {
   const [hoveredTile, setHoveredTile] = useState(null);
 
@@ -74,13 +67,6 @@ export default function GridMenu({ onNavigate, voteCounts }) {
       label: 'CHAT', 
       icon: ChatIcon, 
       color: 'bg-blue-600',
-      size: 'medium'
-    },
-    { 
-      id: 'timeline', 
-      label: 'TIMELINE', 
-      icon: TimelineIcon, 
-      color: 'bg-indigo-600',
       size: 'medium'
     },
     { 
@@ -125,8 +111,8 @@ export default function GridMenu({ onNavigate, voteCounts }) {
     <div className="min-h-screen bg-stone-100 overflow-hidden font-handwritten">
       {/* Header */}
       <div className="bg-stone-900 text-white p-6 shadow-lg">
-        <h1 className="text-3xl font-bold tracking-tight">THE TAHER PARTY</h1>
-        <p className="text-stone-300 text-sm mt-1">Murder Mystery Investigation</p>
+        <h1 className="text-3xl font-bold tracking-tight">Astral Project's Murder Mystery Experience</h1>
+        <p className="text-stone-300 text-sm mt-1">Ultimate mystery solver gadget</p>
       </div>
 
       {/* Metro Grid */}

@@ -19,7 +19,7 @@ export const IntelView = ({ unlockedClues, myAccusation, confession, currentRoun
           </div>
           <div className="pt-4">
             <h3 className="text-xl font-black uppercase text-red-800 mb-3">{confession.title}</h3>
-            <p className="text-lg font-bold text-red-900 leading-relaxed font-serif italic">"{confession.content}"</p>
+            <p className="text-lg font-bold text-red-900 leading-relaxed font-serif italic whitespace-pre-line">"{confession.content}"</p>
             <p className="text-sm text-red-600 mt-4 font-bold">Only you can see this revelation.</p>
           </div>
         </div>
@@ -43,7 +43,7 @@ export const IntelView = ({ unlockedClues, myAccusation, confession, currentRoun
             </div>
             
             <h3 className="text-xl font-black uppercase text-amber-900 mb-3">{myAccusation.title}</h3>
-            <p className="text-lg font-bold text-stone-800 leading-relaxed font-serif italic">"{myAccusation.accusation}"</p>
+            <p className="text-lg font-bold text-stone-800 leading-relaxed font-serif italic whitespace-pre-line">"{myAccusation.accusation}"</p>
             <div className="mt-4 bg-amber-200/50 p-2 rounded border border-amber-300">
               <p className="text-xs text-amber-800">
                 💡 <strong>Tip:</strong> This is your assigned accusation. Discuss it with other investigators to build your case!
@@ -76,21 +76,59 @@ export const IntelView = ({ unlockedClues, myAccusation, confession, currentRoun
           const rotation = idx % 2 === 0 ? 'rotate-1' : 'rotate-[-1deg]';
           const isRevelation = clue.type === 'REVELATION';
           const isAccusation = clue.type === 'ACCUSATION';
+          const isMotive = clue.type === 'MOTIVE';
+          const isForensics = clue.type === 'FORENSICS';
+          const isEvidence = clue.type === 'EVIDENCE';
           const clueText = isAccusation ? clue.accusation : clue.content;
+          
+          // Color scheme based on type
+          let borderColor, bgColor, titleColor, badgeColor;
+          
+          if (isRevelation) {
+            borderColor = 'border-purple-700';
+            bgColor = 'bg-purple-50';
+            titleColor = 'text-purple-700';
+            badgeColor = 'bg-purple-200';
+          } else if (isAccusation) {
+            borderColor = 'border-orange-600';
+            bgColor = 'bg-orange-50';
+            titleColor = 'text-orange-700';
+            badgeColor = 'bg-orange-200';
+          } else if (isMotive) {
+            borderColor = 'border-red-700';
+            bgColor = 'bg-red-50';
+            titleColor = 'text-red-700';
+            badgeColor = 'bg-red-200';
+          } else if (isForensics) {
+            borderColor = 'border-blue-700';
+            bgColor = 'bg-blue-50';
+            titleColor = 'text-blue-700';
+            badgeColor = 'bg-blue-200';
+          } else if (isEvidence) {
+            borderColor = 'border-green-700';
+            bgColor = 'bg-green-50';
+            titleColor = 'text-green-700';
+            badgeColor = 'bg-green-200';
+          } else {
+            borderColor = 'border-stone-900';
+            bgColor = 'bg-white';
+            titleColor = 'text-red-700';
+            badgeColor = 'bg-stone-200';
+          }
           
           return (
             <div 
               key={clue.id} 
-              className={`relative p-4 border-2 ${isRevelation ? 'border-purple-700 bg-purple-50' : 'border-stone-900 bg-white'} shadow-sketch transition-all ${rotation}`}
+              className={`relative p-4 border-2 ${borderColor} ${bgColor} shadow-sketch transition-all ${rotation}`}
             >
               <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-16 sm:w-24 h-6 bg-yellow-200/50 rotate-1 border-l border-r border-white/50 backdrop-blur-sm shadow-sm"></div>
               <div className="flex justify-between items-start mb-3 pt-2">
-                <h3 className={`text-lg sm:text-xl font-black uppercase ${isRevelation ? 'text-purple-700' : 'text-red-700'}`}>{clue.title}</h3>
+                <h3 className={`text-lg sm:text-xl font-black uppercase ${titleColor}`}>{clue.title}</h3>
                 <Unlock size={18} className="text-green-600"/>
               </div>
               <div>
-                <span className={`text-[10px] ${isRevelation ? 'bg-purple-200' : 'bg-stone-200'} px-2 py-1 rounded font-bold uppercase mb-2 inline-block`}>{clue.type}</span>
-                <p className="text-base sm:text-lg font-bold text-stone-800 leading-snug font-serif italic mb-2">"{clueText}"</p>
+                <span className={`text-[10px] ${badgeColor} px-2 py-1 rounded font-bold uppercase mb-2 inline-block`}>{clue.type}</span>
+                <p className="text-base sm:text-lg font-bold text-stone-800 leading-snug font-serif italic mb-2 whitespace-pre-line">"{clueText}"</p>
               </div>
             </div>
           );

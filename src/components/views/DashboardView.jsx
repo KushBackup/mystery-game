@@ -28,24 +28,13 @@ export const DashboardView = ({ myCharacter, currentRound }) => {
               <div className="bg-purple-100 border-l-4 border-purple-600 p-3 mb-4 rotate-1">
                   <p className="text-purple-800 font-bold uppercase text-center text-lg sm:text-xl">🤕 You are the Victim</p>
               </div>
-            ) : (
-              <div className="bg-green-100 border-l-4 border-green-600 p-3 mb-4 rotate-1">
-                  <p className="text-green-800 font-bold uppercase text-center text-lg sm:text-xl">✅ Innocent Bystander</p>
-              </div>
-            )}
+            ) : null}
 
             <div className="space-y-4 font-bold text-stone-700 text-sm sm:text-base">
               <div className="bg-orange-50 p-4 border-2 border-orange-200 rounded-sm relative">
                   <div className="absolute -top-3 -left-2 bg-orange-500 text-white px-2 py-0.5 text-[10px] sm:text-xs rotate-[-3deg] border border-stone-900 shadow-sm">SECRET</div>
                   <p className="italic">"{myCharacter.secret}"</p>
               </div>
-
-              {currentRound >= 2 && (
-                  <div className="bg-blue-50 p-4 border-2 border-blue-200 rounded-sm relative">
-                      <div className="absolute -top-3 -right-2 bg-blue-500 text-white px-2 py-0.5 text-[10px] sm:text-xs rotate-[2deg] border border-stone-900 shadow-sm">TIMELINE</div>
-                      <p className="italic">{myCharacter.timeline}</p>
-                  </div>
-              )}
               
               <div className="mt-6 border-t-2 border-dashed border-stone-300 pt-4 text-center">
                   <p className="text-xs text-stone-400 uppercase tracking-widest mb-1">Your Access Code</p>

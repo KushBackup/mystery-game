@@ -487,7 +487,7 @@ export const ACCUSATION_CLUES = [
     targetSuspect: 'char_esha',
     targetName: "Esha",
     title: "Suspicious Behavior: Esha",
-    accusation: "I saw Esha whispering intensely with Rohan near the freezer around 8:10 PM. She looked angry, and he looked... guilty? When they noticed me watching, they immediately separated and pretended nothing happened.",
+    accusation: "I saw Esha whispering intensely with Rohan near the storage area around 8:10 PM. She looked angry, and he looked... guilty? When they noticed me watching, they immediately separated and pretended nothing happened.",
     roundReq: 1,
     type: "ACCUSATION",
     assignedTo: ['char_anish', 'char_ishank', 'char_shreyash']
@@ -605,7 +605,7 @@ export const MOTIVE_CLUES = [
     targetSuspect: 'char_esha',
     targetName: "Esha",
     title: "Motive: Esha (Wife)",
-    content: "Esha is Rohan's wife of 5 years. Sources close to the couple describe a controlling relationship—Rohan managed all finances, belittled her career, and friends noticed unexplained bruises. Their marriage was reportedly strained in recent months. The life insurance policy is worth ₹5 crores.",
+    content: "Esha is Rohan's wife of 5 years. Sources close to the couple describe a controlling relationship—Rohan managed all finances, belittled her career, and friends noticed unexplained bruises. Their marriage was reportedly strained in recent months. A life insurance policy worth ₹1.5 crores exists, though the payout is contested due to ongoing investigations into Rohan's business practices.",
     roundReq: 2,
     type: "MOTIVE"
   },
@@ -615,7 +615,7 @@ export const MOTIVE_CLUES = [
     targetSuspect: 'char_rea',
     targetName: "Re'a",
     title: "Motive: Re'a",
-    content: "In college, Rohan spread rumors that Re'a had plagiarized their animation thesis. An investigation cleared Re'a, but the stigma followed them. Three major animation studios rejected Re'a based on 'concerns about their work's originality.' Re'a had to relocate and rebuild their entire career.",
+    content: "In college, Rohan spread rumors that Re'a had plagiarized their animation thesis. An investigation cleared Re'a, but the stigma followed them. Three major animation studios rejected Re'a based on 'concerns about their work's originality.' Re'a had to relocate and rebuild their entire career. Notably, Re'a worked part-time at 'Premium Ice Co.' for two years while rebuilding their animation portfolio.",
     roundReq: 2,
     type: "MOTIVE"
   },
@@ -625,7 +625,7 @@ export const MOTIVE_CLUES = [
     targetSuspect: 'char_govind',
     targetName: "Govind",
     title: "Motive: Govind",
-    content: "Rohan dated Govind's current girlfriend years ago. After she broke up with him, Rohan shared intimate photographs of her online. She spiraled into depression and nearly took her own life. Govind has been helping her heal ever since. Seeing Rohan's 'apology' without real consequences was infuriating.",
+    content: "Rohan dated Govind's current girlfriend years ago. After she broke up with him, Rohan shared intimate photographs of her online. She spiraled into depression and nearly took her own life. Govind has been helping her heal ever since. Seeing Rohan's 'apology' without real consequences was infuriating. Bank records show Govind withdrew ₹30,000 cash one week before the party with a notation: 'consultation fee.'",
     roundReq: 2,
     type: "MOTIVE"
   },
@@ -635,7 +635,7 @@ export const MOTIVE_CLUES = [
     targetSuspect: 'char_andrew',
     targetName: "Andrew Pereira",
     title: "Motive: Andrew Pereira",
-    content: "Andrew published an exposé on Rohan's company—data manipulation, fake engagement, selling user data to political campaigns. Rohan's lawyers buried the story and nearly bankrupted Andrew's publication. Andrew discovered new evidence that Rohan was planning to flee the country before charges could be filed.",
+    content: "Andrew published an exposé on Rohan's company—data manipulation, fake engagement, selling user data to political campaigns. Rohan's lawyers buried the story and nearly bankrupted Andrew's publication. Andrew discovered new evidence that Rohan was planning to flee the country before charges could be filed. As an investigative journalist, Andrew has cultivated contacts in unusual places—including laboratory supply companies for past chemical industry investigations.",
     roundReq: 2,
     type: "MOTIVE"
   },
@@ -655,7 +655,7 @@ export const MOTIVE_CLUES = [
     targetSuspect: 'char_surya',
     targetName: "Surya Peket",
     title: "Motive: Surya Peket",
-    content: "Surya was lead developer on Rohan's flagship product. He worked 80-hour weeks for two years, was promised significant equity, then was fired the day before his vesting period. This cost Surya approximately ₹2 crores. He was meeting with a lawyer about suing Rohan—a lawsuit that would be worthless if Rohan died first.",
+    content: "Surya was lead developer on Rohan's flagship product. He worked 80-hour weeks for two years, was promised significant equity, then was fired the day before his vesting period. This cost Surya approximately ₹4 crores. His lawyer filed a criminal fraud case with a ₹5 crore penalty clause. However, the case required Rohan's testimony—if Rohan died before trial, the criminal case would collapse and Surya would get nothing.",
     roundReq: 2,
     type: "MOTIVE"
   },
@@ -685,7 +685,7 @@ export const MOTIVE_CLUES = [
     targetSuspect: 'char_tanishka',
     targetName: "Tanishka Sheokand",
     title: "Motive: Tanishka Sheokand",
-    content: "Rohan invested in Tanishka's first fashion line, then pulled funding at the last minute when a competitor offered him a better deal. She lost her entire savings, her team, and her reputation. Starting over in her 30s while watching Rohan thrive was excruciating. She had a lawsuit pending against him.",
+    content: "Rohan invested in Tanishka's first fashion line, then pulled funding at the last minute when a competitor offered him a better deal. She lost her entire savings, her team, and her reputation—approximately ₹2.5 crores in total losses. Starting over in her 30s while watching Rohan thrive was excruciating. She had a civil lawsuit pending for ₹3 crores in damages, scheduled for trial in February 2026. The case was strong, but Rohan's sudden wealth issues made recovery uncertain.",
     roundReq: 2,
     type: "MOTIVE"
   },
@@ -695,7 +695,7 @@ export const MOTIVE_CLUES = [
     targetSuspect: 'char_poshika',
     targetName: "Dr. Poshika Singh",
     title: "Motive: Dr. Poshika Singh",
-    content: "Rohan brought an injured animal to Dr. Poshika's clinic. She saved it, then realized the injuries weren't accidental—they were consistent with deliberate harm. Before she could report it, Rohan threatened her veterinary license with fabricated complaints. She's spent years wondering if she should have done more.",
+    content: "Rohan brought an injured animal to Dr. Poshika's clinic. She saved it, then realized the injuries weren't accidental—they were consistent with deliberate harm. Before she could report it, Rohan threatened her veterinary license with fabricated complaints. She's spent years wondering if she should have done more. As a veterinary surgeon, she has legitimate access to controlled substances including sodium azide, which is used for euthanasia and tissue preservation.",
     roundReq: 2,
     type: "MOTIVE"
   }
@@ -707,19 +707,19 @@ export const MOTIVE_CLUES = [
 // ============================================
 
 export const EVIDENCE_CLUES = [
-  {
-    id: 'ev_tox',
-    code: "EVIDENCE_TOX",
-    title: "Toxicology Report",
-    content: "SUBSTANCE IDENTIFIED: Sodium Azide. A fast-acting toxin affecting cellular respiration. Time to death: 20-45 minutes from ingestion. CRITICAL: No residue found on glass rim or bottle exterior. Trace amounts detected in stomach contents mixed with melted ice water. Conclusion: Poison introduced via something that dissolved IN the drink over time.",
-    roundReq: 3,
-    type: "FORENSICS"
-  },
+  // {
+  //   id: 'ev_tox',
+  //   code: "EVIDENCE_TOX",
+  //   title: "Toxicology Report",
+  //   content: "SUBSTANCE IDENTIFIED: Sodium Azide. A fast-acting toxin affecting cellular respiration. Time to death: 20-45 minutes from ingestion. CRITICAL: No residue found on glass rim or bottle exterior. Trace amounts detected in stomach contents mixed with melted ice water. Conclusion: Poison introduced via something that dissolved IN the drink over time.",
+  //   roundReq: 3,
+  //   type: "FORENSICS"
+  // },
   {
     id: 'ev_search',
     code: "EVIDENCE_SEARCH",
     title: "Search History Analysis",
-    content: "DEVICES ANALYZED: 4 laptops, 6 phones belonging to guests.\n\nFLAGGED SEARCHES:\n- 'Sodium azide purchase' (VPN masked)\n- 'Undetectable poisons' (Incognito mode)\n- 'How long does poison take to work'\n- 'Life insurance suicide clause'\n\nNote: Search origin devices could not be definitively identified due to VPN usage and shared networks.",
+    content: "DEVICES ANALYZED: 12 laptops, 18 phones belonging to guests.\n\nFLAGGED SEARCHES (from public WiFi at Café Sunrise, Panjim):\n- 'Sodium azide purchase' (Jan 18, 2:47 PM)\n- 'Undetectable poisons' (Jan 18, 3:12 PM)\n- 'How long does poison take to work' (Jan 19, 11:23 AM)\n-\nCAFÉ SECURITY FOOTAGE: Multiple persons of interest visited this café during the relevant timeframe: Esha Sharma (Jan 18), Dr. Poshika Singh (Jan 18), Anusha (Jan 19), Re'a (Jan 20).\n\nNote: Searches made from public WiFi. Device attribution inconclusive.",
     roundReq: 3,
     type: "EVIDENCE"
   },
@@ -727,15 +727,7 @@ export const EVIDENCE_CLUES = [
     id: 'ev_items',
     code: "EVIDENCE_ITEMS",
     title: "Bar Request List",
-    content: "EMAIL FROM: Esha <esha.sharma@email.com>\nTO: For the Record Bar Management\nSUBJECT: Special items for Rohan's party\n\nHi Marcus,\n\nFor Rohan's party, we'll be bringing some personal items:\n- 50-year-old Macallan scotch (sealed, Rohan's prized bottle)\n- Premium artisanal ice spheres (specialty ice company, for the scotch)\n- Three-tier celebration cake\n- Our cat Whiskers in a carrier (Rohan's emotional support)\n\nPlease store the ice in your freezer upon arrival. DO NOT use for other drinks.\n\nThanks,\nEsha",
-    roundReq: 3,
-    type: "EVIDENCE"
-  },
-  {
-    id: 'ev_insurance',
-    code: "EVIDENCE_INSURANCE",
-    title: "Life Insurance Policy",
-    content: "POLICY HOLDER: Rohan Sharma\nBENEFICIARY: Esha Sharma (Wife) - 100%\nCOVERAGE: ₹5,00,00,000 (Five Crores)\n\nKEY CLAUSE - Section 7.2: 'In the event of suicide, whether sane or insane, within the first 3 years of policy inception, no death benefit shall be payable.'\n\nPOLICY START DATE: March 15, 2024\nCURRENT STATUS: Within 3-year suicide exclusion period\n\nNote: If death is ruled suicide, beneficiary receives ₹0. If ruled homicide or accident, full payout applies.",
+    content: "EMAIL FROM: Esha <esha.sharma@email.com>\nTO: For the Record Bar Management\nSUBJECT: Special items for Rohan's party\n\nHi Marcus,\n\nFor Rohan's party, we'll be bringing some personal items:\n- 50-year-old Macallan scotch (sealed, Rohan's prized bottle)\n- Premium artisanal ice spheres (specialty ice company, for the scotch)\n- Three-tier celebration cake\n- Our cat Whiskers in a carrier (Rohan's emotional support)\nAll items are reserved for this party only. Please ensure they are handled with care.\n\nThanks,\nEsha Sharma\n\nBAR MANAGEMENT RESPONSE:\nConfirmed receipt of special items. All items logged and secured as per request.",
     roundReq: 3,
     type: "EVIDENCE"
   },
@@ -743,7 +735,7 @@ export const EVIDENCE_CLUES = [
     id: 'ev_witness',
     code: "EVIDENCE_WITNESS",
     title: "Witness Statement Summary",
-    content: "COMPILED STATEMENTS:\n\n1. 'The scotch bottle was definitely sealed. Rohan broke the seal himself.' (Multiple witnesses)\n\n2. 'Esha sipped from his glass right after he added ice. If it was poisoned then, she'd be dead too.' (6 witnesses)\n\n3. 'Rohan's glass was unattended multiple times while he circulated.' (Bartender)\n\n4. 'I saw at least 4 different people near his booth area.' (Server)\n\n5. 'Nobody else used that specific ice container. It was labeled for Rohan only.' (Bar manager)",
+    content: "COMPILED STATEMENTS:\n\n1. 'The scotch bottle was definitely sealed. Rohan broke the seal himself.' (Multiple witnesses)\n\n2. 'Esha sipped from his glass right after he added ice. If it was poisoned then, she'd be dead too.' (6 witnesses)\n\n3. 'Rohan's glass was unattended multiple times while he circulated.' (Bartender)\n\n4. 'I saw at least 4 different people near his booth area.' (Server)",
     roundReq: 3,
     type: "EVIDENCE"
   },
@@ -751,23 +743,23 @@ export const EVIDENCE_CLUES = [
     id: 'ev_bottle',
     code: "EVIDENCE_BOTTLE",
     title: "Scotch Bottle Analysis",
-    content: "ITEM: 50-Year-Old Macallan Scotch Bottle\n\nFINDINGS:\n- Seal was intact until opened at 8:15 PM (video confirmed)\n- No tampering with cork or bottle\n- Remaining liquid tested NEGATIVE for toxins\n- Fingerprints: Rohan (primary), Esha (secondary), Bartender (minor)\n\nCONCLUSION: Poison was NOT in the bottle. Delivery method was something added AFTER pouring.",
+    content: "ITEM: 50-Year-Old Macallan Scotch Bottle\n\nFINDINGS:\n- Seal was intact until opened at 8:15 PM (video confirmed)\n- No tampering with cork or bottle\n- Remaining liquid tested NEGATIVE for toxins\n- Fingerprints: Rohan (primary), Esha (secondary), Re'a (minor)\n\nCONCLUSION: Poison was NOT in the bottle. Delivery method was something added AFTER pouring.",
     roundReq: 3,
     type: "FORENSICS"
   },
-  {
-    id: 'ev_ice',
-    code: "EVIDENCE_ICE",
-    title: "Ice Container Evidence",
-    content: "ITEM: Insulated container labeled 'ROHAN'S ICE - DO NOT USE FOR OTHER DRINKS'\n\nFINDINGS:\n- Container brought by Esha at 5:00 PM\n- Stored in bar freezer until 8:17 PM\n- Ice was spherical, 'artisanal' style\n- Only Rohan used ice from this container\n- Trace amounts of sodium azide detected in meltwater residue inside container\n\nCRITICAL: The ice itself was the delivery mechanism for the poison.",
-    roundReq: 3,
-    type: "FORENSICS"
-  },
+  // {
+  //   id: 'ev_ice',
+  //   code: "EVIDENCE_ICE",
+  //   title: "Ice Container Evidence",
+  //   content: "ITEM: Insulated container labeled 'ROHAN'S ICE - DO NOT USE FOR OTHER DRINKS'\n\nFINDINGS:\n- Container brought by Esha at 5:00 PM\n- Stored in bar freezer (adjacent to bar's own artisanal ice supply)\n- Ice was spherical, 'artisanal' style—visually identical to bar's regular stock\n- Only Rohan used ice from this specific container (per witnesses)\n- Trace amounts of sodium azide detected in meltwater residue\n\nIMPORTANT: Both 'Rohan's Ice' and bar's regular artisanal ice showed similar trace contamination. Lab cannot determine if poison was in the ice originally, or if residue transferred after poisoning occurred through different means.\n\nNote: Container accessible during 4-minute CCTV blind spot (see CCTV evidence).",
+  //   roundReq: 3,
+  //   type: "FORENSICS"
+  // },
   {
     id: 'ev_cat',
     code: "EVIDENCE_CAT",
     title: "The Cat Note",
-    content: "OBSERVATION: A cat named 'Whiskers' was present at the venue in a carrier.\n\nSTATEMENT FROM BAR STAFF: 'Esha said Rohan needed the cat for anxiety. Weird for a party, but rich people do weird things.'\n\nSTATEMENT FROM DR. POSHIKA: 'The cat seemed agitated all night. Animals can sense things. It was meowing loudly right before Rohan collapsed.'\n\nNOTE: Cat tested negative for any substances. Likely brought as cover for the ice container transport.",
+    content: "OBSERVATION: A cat named 'Whiskers' was present at the venue in a carrier.\n\nSTATEMENT FROM BAR STAFF: 'Esha said Rohan needed the cat for anxiety. Weird for a party, but rich people do weird things.'\n\nSTATEMENT FROM DR. POSHIKA: 'The cat seemed agitated all night. Animals can sense things. It was meowing loudly right before Rohan collapsed.'\n\nNOTE: Cat tested negative for any substances.",
     roundReq: 3,
     type: "EVIDENCE"
   },
@@ -775,7 +767,7 @@ export const EVIDENCE_CLUES = [
     id: 'ev_phone',
     code: "EVIDENCE_PHONE",
     title: "Phone Records Summary",
-    content: "ROHAN'S PHONE - Last 24 hours:\n- Multiple calls to insurance company (Duration: 45 mins total)\n- Text to Esha: 'It's almost time. I love you.'\n- Text to unknown number: 'Delete everything after tonight.'\n- Deleted folder recovered: Photos of medical documents\n\nESHA'S PHONE:\n- Search: 'How long does ice take to melt in whiskey'\n- Search: 'Can sodium azide be detected in autopsy'\n- Text to Rohan: 'I'll handle everything. Trust me.'",
+    content: "ROHAN'S PHONE - Last 24 hours:\n- Multiple calls to insurance company (Duration: 45 mins total)\n- Text to Esha: 'It's almost time. I love you.'\n- Text to unknown number: 'Delete everything after tonight.'\n- Deleted folder recovered: Photos of medical documents\n\nESHA'S PHONE:\n- Text to Rohan: 'I'll handle everything. Trust me.'\n- Call to unknown number (Jan 18, duration: 12 minutes)\n- Encrypted messaging app with deleted conversation history\n\nSURYA'S PHONE:\n- Encrypted chat application installed Jan 17\n- Multiple messages to user 'A_Pereira' (suspected to be Andrew)\n- Deleted voice note (recovery in progress)\n\nANDREW'S PHONE:\n- Encrypted messages to user 'Dev_SP' (suspected to be Surya)\n- Text fragment recovered: '...bar has blind spot near freezer...'\n- Contact labeled 'Lab Supply - Pune'\n\nNote: Multiple suspects used encryption and deleted message histories.",
     roundReq: 3,
     type: "EVIDENCE"
   },
@@ -783,7 +775,7 @@ export const EVIDENCE_CLUES = [
     id: 'ev_cctv',
     code: "EVIDENCE_CCTV",
     title: "CCTV Summary",
-    content: "CAMERA 1 - Bar Area:\n- 8:15 PM: Rohan opens scotch, pours drinks\n- 8:17 PM: Rohan retrieves ice container from freezer\n- 8:17 PM: Rohan adds 2 ice spheres to his drink\n- 8:18 PM: Esha sips from glass, returns it\n- 8:19 PM: Toast, everyone drinks\n- 8:20-8:40 PM: Rohan circulates, drink in hand\n\nCAMERA 2 - Freezer Area:\n- 5:30 PM: Esha places labeled container in freezer\n- No other access to container until Rohan at 8:17 PM\n\nNote: 10+ people passed near Rohan's booth while drink was unattended at various points.",
+    content: "Storage Room (Adjacent to Freezer):\n- 7:44 PM: Motion detected, person entering frame at edge\n- 7:45 PM: Partial view of someone's back near freezer door (clothing: dark jacket, unable to identify)\n- 7:46 PM: Same person exits frame\n\nNote: 10+ people passed near Rohan's booth while drink was unattended at various points. Multiple guests wore dark jackets that evening.",
     roundReq: 3,
     type: "CCTV"
   }
@@ -799,31 +791,31 @@ export const REVELATION_CLUES = [
     id: 'rev_journal',
     code: "REVEAL_JOURNAL",
     title: "Rohan's Journal Excerpts",
-    content: "PERSONAL JOURNAL OF ROHAN SHARMA (Selected Entries)\n\nOctober 15: The doctors confirmed it today. Stage 4 pancreatic cancer. Metastasized. Six months, maybe less. How do I tell Esha?\n\nOctober 28: I've been thinking about how I want to go. Not slowly, not in a hospital bed, wasting away. I want to choose my moment.\n\nNovember 10: The apology party idea feels right. Everyone I've wronged, gathered together. My last act will be asking for forgiveness.\n\nNovember 20: 'I've decided not to wait for the cancer to take me. I want to choose my moment, on my terms. The party will be my farewell, my apology, and my exit. I've already obtained what I need—sodium azide, fast-acting, relatively painless. Esha doesn't know. She can't know. I won't burden her with this.'\n\nDecember 5: Esha found the journal. She knows everything now.",
+    content: "PERSONAL JOURNAL OF ROHAN SHARMA (Selected Entries)\n\nOctober 15: The doctors confirmed it today. Stage 4 pancreatic cancer. Metastasized. Six months, maybe less. How do I tell Esha?\n\nOctober 28: I've been thinking about how I want to go. Not slowly, not in a hospital bed, wasting away. I want to choose my moment.\n\nNovember 10: The apology party idea feels right. Everyone I've wronged, gathered together. My last act will be asking for forgiveness.\n\nNovember 20: 'I've decided not to wait for the cancer to take me. I want to choose my moment, on my terms. The party will be my farewell, my apology, and my exit. I've already obtained what I need—sodium azide, fast-acting, relatively painless. Esha doesn't know. She can't know. I won't burden her with this.",
     roundReq: 4,
     type: "REVELATION"
   },
-  {
-    id: 'rev_cancer',
-    code: "REVEAL_CANCER",
-    title: "Medical Diagnosis",
-    content: "CONFIDENTIAL MEDICAL RECORD\n\nPATIENT: Rohan Sharma\nDIAGNOSIS: Pancreatic Adenocarcinoma, Stage IV\nMETASTASIS: Liver, Lymph Nodes\n\nPROGNOSIS: 4-6 months with palliative care. Patient has declined aggressive treatment.\n\nDOCTOR'S NOTES: Patient showed signs of depression following diagnosis. Recommended psychiatric evaluation and support. Patient declined, stating he 'had his own plans for dealing with this.'\n\nLAST APPOINTMENT: January 10, 2026\nNOTE: Patient appeared at peace. Mentioned 'putting affairs in order.'",
-    roundReq: 4,
-    type: "REVELATION"
-  },
-  {
-    id: 'rev_debt',
-    code: "REVEAL_DEBT",
-    title: "Financial Records",
-    content: "FINANCIAL SUMMARY - ROHAN SHARMA\n\nASSETS:\n- Company shares: ₹3.2 Cr (frozen pending investigation)\n- Property: ₹1.8 Cr (mortgaged)\n- Savings: ₹12 Lakhs\n\nLIABILITIES:\n- Medical bills: ₹45 Lakhs\n- Legal settlements: ₹1.2 Cr (ongoing)\n- Mortgage: ₹95 Lakhs\n- Business debts: ₹2.1 Cr\n\nNET WORTH: Approximately -₹1 Crore\n\nNOTE: Multiple creditors have initiated recovery proceedings. Esha would inherit significant debt if Rohan died naturally or by suicide. However, life insurance payout would clear all debts with surplus.",
-    roundReq: 4,
-    type: "REVELATION"
-  },
+  // {
+  //   id: 'rev_cancer',
+  //   code: "REVEAL_CANCER",
+  //   title: "Medical Diagnosis",
+  //   content: "CONFIDENTIAL MEDICAL RECORD\n\nPATIENT: Rohan Sharma\nDIAGNOSIS: Pancreatic Adenocarcinoma, Stage IV\nMETASTASIS: Liver, Lymph Nodes\n\nPROGNOSIS: 4-6 months with palliative care. Patient has declined aggressive treatment.\n\nDOCTOR'S NOTES: Patient showed signs of depression following diagnosis. Recommended psychiatric evaluation and support. Patient declined, stating he 'had his own plans for dealing with this.'\n\nLAST APPOINTMENT: January 10, 2026\nNOTE: Patient appeared at peace. Mentioned 'putting affairs in order.'",
+  //   roundReq: 4,
+  //   type: "REVELATION"
+  // },
+  // {
+  //   id: 'rev_debt',
+  //   code: "REVEAL_DEBT",
+  //   title: "Financial Records",
+  //   content: "FINANCIAL SUMMARY - ROHAN SHARMA\n\nASSETS:\n- Company shares: ₹3.2 Cr (frozen pending investigation)\n- Property: ₹1.8 Cr (mortgaged)\n- Savings: ₹12 Lakhs\n\nLIABILITIES:\n- Medical bills: ₹45 Lakhs\n- Legal settlements: ₹1.2 Cr (ongoing)\n- Mortgage: ₹95 Lakhs\n- Business debts: ₹2.1 Cr\n\nNET WORTH: Approximately -₹1 Crore\n\nNOTE: Multiple creditors have initiated recovery proceedings. Esha would inherit significant debt if Rohan died naturally or by suicide. However, life insurance payout would clear all debts with surplus.",
+  //   roundReq: 4,
+  //   type: "REVELATION"
+  // },
   {
     id: 'rev_search2',
     code: "REVEAL_SEARCH2",
     title: "Rohan's Personal Searches",
-    content: "ROHAN'S BROWSER HISTORY (Personal Laptop)\n\nSeptember:\n- 'Stage 4 pancreatic cancer survival rate' \n- 'How long does pancreatic cancer patient live'\n- 'Hospice care Goa'\n\nOctober:\n- 'Painless ways to die'\n- 'Dignified death options India'\n- 'Sodium azide where to buy'\n- 'How to make death look natural'\n\nNovember:\n- 'Life insurance suicide clause'\n- 'How to make suicide look like murder'\n- 'Murder vs suicide insurance payout'\n\nDecember:\n- 'Ice cube poison delivery'\n- 'How long for ice to melt in whiskey'\n- 'Untraceable poison methods'\n\nNote: These searches suggest Rohan was actively planning his own death AND researching how to make it appear as murder.",
+    content: "ROHAN'S BROWSER HISTORY (Personal Laptop)\n\nSeptember:\n- 'Stage 4 pancreatic cancer survival rate' \n- 'How long does pancreatic cancer patient live'\n- 'Hospice care Goa'\n\nOctober:\n- 'Painless ways to die'\n- 'Dignified death options India'\n- 'Sodium azide where to buy'\n- 'How to make death look natural'\n\nNovember:\n- 'Life insurance suicide clause'\n- 'How to make suicide look like murder'\n- 'Murder vs suicide insurance payout'",
     roundReq: 4,
     type: "REVELATION"
   },
@@ -831,10 +823,51 @@ export const REVELATION_CLUES = [
     id: 'rev_letter',
     code: "REVEAL_LETTER",
     title: "Unsent Letter to Esha",
-    content: "DRAFT EMAIL (Never Sent) - Found on Rohan's laptop\n\nTo: esha.sharma@email.com\nSubject: When you read this, I'll be gone\n\n---\n\nMy dearest Esha,\n\nIf you're reading this, the party happened, and I'm no longer there. I want you to know that everything that happened tonight was my choice. You didn't know—I made sure of that. I couldn't burden you with this decision.\n\nThe cancer was going to take me anyway. This way, I got to apologize to everyone, and you'll be taken care of. The insurance will pay out. Don't feel guilty. You did nothing wrong.\n\nI love you. I'm sorry I wasn't a better man sooner.\n\nForever yours,\nRohan\n\n---\n\nNOTE: This draft was never sent. It was modified on December 6th, one day after the journal entry mentions Esha 'found out.'",
+    content: "DRAFT EMAIL (Never Sent) - Found on Rohan's laptop\n\nTo: esha.sharma@email.com\nSubject: When you read this, I'll be gone\n\n---\n\nMy dearest Esha,\n\nIf you're reading this, the party happened, and I'm no longer there. I want you to know that everything that happened tonight was my choice. You didn't know—I made sure of that. I couldn't burden you with this decision.\n\nThe cancer was going to take me anyway. This way, I got to apologize to everyone, and you'll be taken care of. The insurance will pay out. Don't feel guilty. You did nothing wrong.\n\nI love you. I'm sorry I wasn't a better man sooner.\n\nForever yours,\nRohan\n\n---\n\nNOTE: This draft was never sent.",
     roundReq: 4,
     type: "REVELATION"
-  }
+  },
+  // NEW Round 5 - Late Game Bombshells
+  {
+    id: 'rev_icecompany',
+    code: "REVEAL_ICECOMPANY",
+    title: "Ice Company Investigation",
+    content: "PREMIUM ICE CO. - CORPORATE RECORDS\n\nEMPLOYMENT HISTORY:\n- Re'a worked as Quality Control Technician (2022-2024)\n- Access to ice production facility and storage protocols\n- Familiar with spherical ice molds and manufacturing process\n\nCUSTOMER ORDER VERIFICATION:\nOrder #AI-2847 placed Jan 10, 2026 by 'E. Sharma' for 50 artisanal ice spheres.\n**CANCELLATION: Order cancelled Jan 17, 2026 via email. Reason: 'Will make at home instead.'**\n\nCOMPANY STATEMENT: 'We never delivered ice to the Sharma residence. The order was cancelled before production.'\n\nCRITICAL QUESTION: If Premium Ice Co. didn't deliver the ice, where did the 'premium artisanal ice' actually come from?",
+    roundReq: 5,
+    type: "REVELATION"
+  },
+  {
+    id: 'rev_financial',
+    code: "REVEAL_FINANCIAL",
+    title: "Suspicious Financial Transfer",
+    content: "FORENSIC ACCOUNTING REPORT\n\nACCOUNT: Esha Sharma (Personal Savings)\n\nTRANSACTION FLAGGED:\nDate: January 18, 2026\nAmount: ₹45,000 transferred OUT\nRecipient: [ENCRYPTED DIGITAL WALLET]\nNotation: 'Special consultation as discussed'\n\nBANKING INVESTIGATION:\nRecipient wallet traced to cryptocurrency exchange. Final destination: Unknown.\n\nTRANSACTION #2:\nDate: January 19, 2026\nAmount: ₹30,000 transferred IN (from Govind H.)\nSender notation: 'Consultation fee'\n\nQUESTION: Was Esha paying someone, or collecting payment for something? Were Esha and Govind working together?",
+    roundReq: 4,
+    type: "REVELATION"
+  },
+  {
+    id: 'rev_clinic',
+    code: "REVEAL_CLINIC",
+    title: "Veterinary Clinic Inventory Audit",
+    content: "DR. POSHIKA'S VETERINARY CLINIC - CONTROLLED SUBSTANCES LOG\n\nSODIUM AZIDE INVENTORY:\nPurpose: Tissue preservation, euthanasia agent\nRequired documentation: Strict logging per Veterinary Council regulations\n\nDISCREPANCY IDENTIFIED:\nDecember 2025: 200g sodium azide received from supplier\nLogged usage (Dec-Jan): 142g\nCurrent inventory (Jan 26): 8g\n**MISSING: 50g (unaccounted for)**\n\nDr. Poshika's statement: 'I noticed the shortage last week. I thought a staff member misrecorded usage. I was planning to investigate after the holidays.'\n\nNote: 250-300mg is lethal dose. 50g missing = enough for 166-200 lethal doses.",
+    roundReq: 4,
+    type: "REVELATION"
+  },
+  // {
+  //   id: 'rev_messages',
+  //   code: "REVEAL_MESSAGES",
+  //   title: "Decrypted Messages: Surya & Andrew",
+  //   content: "ENCRYPTED CHAT RECOVERY (Partial)\n\nUSER: Dev_SP (Surya Peket)\nUSER: A_Pereira (Andrew Pereira)\n\nJan 15, 11:47 PM\nDev_SP: He's going to get away with everything\nA_Pereira: Not if we make sure he doesn't\n\nJan 17, 3:22 PM\nDev_SP: Did you find out about the bar setup?\nA_Pereira: Yes. Bar has blind spot near freezer. 4-min window.\nA_Pereira: Also confirmed - bar stocks same ice type. Easy to swap.\n\nJan 19, 10:15 PM\nA_Pereira: Are you sure about this?\nDev_SP: He destroyed my life. ₹4 crores. Two years of my soul.\nDev_SP: I'm sure.\n\nJan 20, 8:03 AM\nA_Pereira: Got what we need. Lab contact came through.\nDev_SP: [MESSAGE DELETED]\nA_Pereira: [MESSAGE DELETED]\n\nJan 23, 6:41 PM\nDev_SP: Cold feet?\nA_Pereira: No. Just want to be sure we can live with this.\nDev_SP: I already can't live with what he did. This changes nothing.\n\nNote: Final 8 messages between Jan 23-25 were permanently deleted and unrecoverable.",
+  //   roundReq: 4,
+  //   type: "REVELATION"
+  // },
+  // {
+  //   id: 'rev_witness2',
+  //   code: "REVEAL_WITNESS2",
+  //   title: "Late Witness Statement: Bar Staff",
+  //   content: "SUPPLEMENTARY STATEMENT - Buland (Bar Owner)\n\n'I remembered something after the initial interviews. Around 7:45 PM, when I was in the back office checking on the power issue—we had a brief outage that knocked out one of the cameras—I heard the freezer door open and close.\n\nI thought it was one of my staff grabbing ice for the bar, but when I checked later, all my staff were accounted for at their stations. Someone else accessed that freezer during those 4 minutes.\n\nI also want to clarify something about the ice. Esha's email said she ordered from a 'premium ice company,' but honestly? Our bar ice looks identical. Same size, same spherical shape, same company supplies us. If someone wanted to swap ice between containers, it would be visually impossible to tell the difference.'\n\nFOLLOW-UP QUESTION TO MARCUS: 'Could someone have brought poisoned ice, and swapped it with Esha's clean ice?'\n\nMARCUS: 'Absolutely. Or poisoned our bar ice, then swapped that into Esha's container. Both containers were side-by-side. A label is just a label—you could switch it, or switch the contents. In 4 minutes? Easy.'",
+  //   roundReq: 4,
+  //   type: "REVELATION"
+  // }
 ];
 
 // ============================================
@@ -845,7 +878,7 @@ export const CONFESSION_CLUE = {
   id: 'confession',
   code: "THE_TRUTH",
   title: "The Truth",
-  content: "You did it. Together with Rohan, you planned his death to look like murder.\n\nThe poisoned ice was your idea—elegant, delayed, untraceable without knowing where to look. The 'special ice' from the 'premium company' was frozen in your kitchen with sodium azide dissolved throughout.\n\nRohan wanted to die on his terms. You made sure his death would provide for your future. The ₹5 crore insurance policy has a suicide exclusion clause—if he killed himself, you'd get nothing and inherit his debts.\n\nYou told yourself it was mercy. You told yourself he was going to die anyway. You took that tiny sip from his glass to prove it was 'safe'—knowing the ice hadn't melted enough to release a lethal dose yet.\n\nBut as you watch the room full of people he wronged, you wonder: did you help him die... or did you murder your husband for the money?\n\nThe answer, perhaps, is both.\n\nThe game is over. Confess to the room—or take this secret to your grave.",
+  content: "You did it. Together with Rohan, you planned his death to look like murder.\n\nThe poisoned ice was your idea—elegant, delayed, untraceable without knowing where to look. The 'special ice' from the 'premium company' was actually frozen in your kitchen with sodium azide dissolved throughout. You cancelled the real ice order and made your own.\n\nRohan wanted to die on his terms. You made sure his death would provide for your future. The ₹1.5 crore insurance policy has a suicide exclusion clause—if he killed himself, you'd get nothing and inherit his massive debts.\n\nYou told yourself it was mercy. You told yourself he was going to die anyway. You took that tiny sip from his glass to prove it was 'safe'—knowing the ice hadn't melted enough to release a lethal dose yet.\n\nBut now others have been implicated. The Surya-Andrew messages. Dr. Poshika's missing sodium azide. Re'a's ice company connection. You let them twist in suspicion while you played the grieving widow.\n\nBut as you watch the room full of people he wronged, you wonder: did you help him die with dignity... or did you murder your husband for money while framing his victims?\n\nThe answer, perhaps, is both.\n\nThe game is over. Confess to the room—or take this secret to your grave.",
   roundReq: 6,
   type: "CONFESSION",
   forCharacter: 'char_esha'
@@ -862,7 +895,7 @@ export const CASE_FILES = [
     type: 'REPORT',
     title: 'INCIDENT REPORT',
     date: 'January 25, 2026',
-    content: "GOA POLICE - CRIMINAL INVESTIGATION DIVISION\n\nINCIDENT TYPE: Suspicious Death\nVICTIM: Rohan Sharma, Male, 34\nLOCATION: 'For the Record' Bar, Panjim, Goa\nDATE/TIME: January 25, 2026, 8:45 PM\n\nSUMMARY:\nVictim collapsed during a private party. Preliminary examination indicates poisoning. Victim was hosting an 'apology party' for approximately 32 guests, all of whom had grievances against him.\n\nThe victim opened a sealed bottle of expensive scotch, poured drinks for guests, added ice to his own glass, and made a toast. His wife, Esha Sharma, took a sip from his glass before the toast (she survived). Victim collapsed approximately 25 minutes later.\n\nAll 32 guests have been detained for questioning.\n\nSTATUS: Active Investigation\nLEAD INVESTIGATOR: Inspector Maria Fernandes",
+    content: "GOA POLICE - CRIMINAL INVESTIGATION DIVISION\n\nINCIDENT TYPE: Suspicious Death\nVICTIM: Rohan Sharma, Male, 34\nLOCATION: 'For the Record' Bar, Panjim, Goa\nDATE/TIME: January 25, 2026, 8:45 PM\n\nSUMMARY:\nVictim collapsed during a private party. Victim was hosting an 'apology party' for approximately 32 guests, all of whom had grievances against him.\n\nThe victim opened a sealed bottle of expensive scotch, poured drinks for guests, added ice, and made a toast. His wife, Esha Sharma, took a sip from his glass before the toast. Victim collapsed approximately 25 minutes later.\n\nAll 32 guests have been detained for questioning.\n\nSTATUS: Active Investigation\nLEAD INVESTIGATOR: Inspector Maria Fernandes",
     stamped: true,
     roundReq: 0
   },
@@ -872,32 +905,16 @@ export const CASE_FILES = [
     type: 'REPORT',
     title: 'TOXICOLOGY REPORT',
     date: 'January 25, 2026',
-    content: "FORENSIC LABORATORY - GOA\n\nCASE: Rohan Sharma\nSPECIMEN: Blood, Stomach Contents, Glass Residue\n\nFINDINGS:\n- Cause of death: Sodium azide poisoning\n- Estimated dose: 250-300mg (lethal)\n- Time between ingestion and death: ~25 minutes\n- Glass residue: Sodium azide traces in liquid, NOT on rim\n- Bottle residue: NEGATIVE for toxins\n- Ice container residue: POSITIVE for sodium azide\n\nCONCLUSION:\nPoison was delivered via ice cubes, which released the toxin as they melted in the drink. This explains why the wife survived her small sip (ice hadn't sufficiently melted yet).",
+    content: "FORENSIC LABORATORY - GOA\n\nCASE: Rohan Sharma\nSPECIMEN: Blood, Stomach Contents, Glass Residue\n\nFINDINGS:\n- Cause of death: Sodium azide poisoning\n- Estimated dose: 250-300mg (lethal)\n- Time between ingestion and death: ~25 minutes\n- Glass residue: Sodium azide traces in liquid, NOT on rim\n- Bottle residue: NEGATIVE for toxins\n",
     stamped: true,
     roundReq: 3
   },
-  {
-    id: 'f_cctv_bar',
-    type: 'IMAGE',
-    title: 'CCTV STILL: BAR AREA',
-    caption: "8:17 PM - Rohan retrieves labeled ice container from freezer and adds spheres to his drink. Wife Esha visible in background.",
-    sketchType: 'CCTV_BAR',
-    roundReq: 3
-  },
-  {
-    id: 'f_cctv_freezer',
-    type: 'IMAGE',
-    title: 'CCTV STILL: FREEZER',
-    caption: "5:30 PM - Esha places labeled container 'ROHAN'S ICE' in the bar freezer. No other access recorded until Rohan at 8:17 PM.",
-    sketchType: 'CCTV_FREEZER',
-    roundReq: 3
-  },
-  {
-    id: 'f_insurance',
+    {
+    id: 'f_financial',
     type: 'REPORT',
-    title: 'INSURANCE POLICY SUMMARY',
-    date: 'March 2024',
-    content: "LIFE INSURANCE CORPORATION OF INDIA\n\nPOLICY SUMMARY\n\nInsured: Rohan Sharma\nBeneficiary: Esha Sharma (100%)\nSum Assured: ₹5,00,00,000\n\nIMPORTANT EXCLUSIONS:\n- Suicide within 3 years of policy start: NO PAYOUT\n- Death during commission of crime: NO PAYOUT\n- Death by homicide: FULL PAYOUT\n- Death by accident: FULL PAYOUT\n\nPolicy commenced: March 15, 2024\nSuicide exclusion period ends: March 15, 2027\n\nNote: Death occurred within exclusion period. If ruled suicide, beneficiary receives nothing.",
+    title: 'FINANCIAL STATEMENT',
+    date: 'January 2026',
+    content: "ESTATE OF ROHAN SHARMA - FINANCIAL OVERVIEW\n\nASSETS:\n- Company shares: ₹3.2 Cr (FROZEN)\n- Residential property: ₹1.8 Cr (MORTGAGED)\n- Savings accounts: ₹12 Lakhs\n- Vehicles: ₹35 Lakhs\n\nLIABILITIES:\n- Outstanding medical bills: ₹45 Lakhs\n- Ongoing legal settlements: ₹1.2 Cr\n- Property mortgage: ₹95 Lakhs\n- Business creditors: ₹2.1 Cr\n\nNET POSITION: -₹1.03 Crores (NEGATIVE)\n\nNOTE: Without insurance payout, spouse inherits debt. With contested insurance payout of ₹1.5 Cr (if approved), spouse would clear debts and retain ~₹50 lakhs.",
     stamped: true,
     roundReq: 3
   },
@@ -911,21 +928,21 @@ export const CASE_FILES = [
     stamped: true,
     roundReq: 4
   },
-  {
-    id: 'f_journal',
+  // {
+  //   id: 'f_journal',
+  //   type: 'REPORT',
+  //   title: 'JOURNAL ENTRIES',
+  //   date: '2025-2026',
+  //   content: "EXTRACTS FROM ROHAN SHARMA'S PERSONAL JOURNAL\n(Recovered from home office)\n\nOct 15: The diagnosis is in. Terminal. 6 months.\n\nOct 28: I keep thinking about all the people I've hurt. I want to make it right before I go.\n\nNov 10: The party idea - invite everyone I've wronged. One big apology.\n\nNov 20: I've found a way out. Quick, painless. Better than wasting away.\n\nNov 25: The poison is obtained. I'll put it in my drink myself. No one else will know.\n\nJan 25: Today is the day. I'm not afraid. I'm ready.",
+  //   stamped: true,
+  //   roundReq: 4
+  // },
+    {
+    id: 'f_insurance',
     type: 'REPORT',
-    title: 'JOURNAL ENTRIES',
-    date: 'October-December 2025',
-    content: "EXTRACTS FROM ROHAN SHARMA'S PERSONAL JOURNAL\n(Recovered from home office)\n\nOct 15: The diagnosis is in. Terminal. 6 months.\n\nOct 28: I keep thinking about all the people I've hurt. I want to make it right before I go.\n\nNov 10: The party idea - invite everyone I've wronged. One big apology.\n\nNov 20: I've found a way out. Quick, painless. Better than wasting away.\n\nNov 25: The poison is obtained. I'll put it in my drink myself. No one else will know.\n\nDec 5: Esha found the journal. She was crying. She said she understood. She said she'd help me.\n\nDec 6: We talked all night. She convinced me there's a better way. The insurance, she said. Don't leave me with nothing. We have a plan now.\n\nJan 20: Everything is ready. The ice is prepared. The guest list is finalized.\n\nJan 25: Today is the day. I'm not afraid. I'm ready.",
-    stamped: true,
-    roundReq: 4
-  },
-  {
-    id: 'f_financial',
-    type: 'REPORT',
-    title: 'FINANCIAL STATEMENT',
-    date: 'January 2026',
-    content: "ESTATE OF ROHAN SHARMA - FINANCIAL OVERVIEW\n\nASSETS:\n- Company shares: ₹3.2 Cr (FROZEN)\n- Residential property: ₹1.8 Cr (MORTGAGED)\n- Savings accounts: ₹12 Lakhs\n- Vehicles: ₹35 Lakhs\n\nLIABILITIES:\n- Outstanding medical bills: ₹45 Lakhs\n- Ongoing legal settlements: ₹1.2 Cr\n- Property mortgage: ₹95 Lakhs\n- Business creditors: ₹2.1 Cr\n\nNET POSITION: -₹1.03 Crores (NEGATIVE)\n\nNOTE: Without insurance payout, spouse inherits debt. With insurance payout of ₹5 Cr, spouse clears all debts and retains ~₹4 Cr.",
+    title: 'INSURANCE POLICY SUMMARY',
+    date: 'March 2024',
+    content: "LIFE INSURANCE CORPORATION OF INDIA\n\nPOLICY SUMMARY\n\nInsured: Rohan Sharma\nBeneficiary: Esha Sharma (100%)\nSum Assured: ₹1,50,00,000\n\nIMPORTANT EXCLUSIONS:\n- Suicide within 3 years of policy start: NO PAYOUT\n- Death during commission of crime: NO PAYOUT\n- Death by homicide: FULL PAYOUT (subject to fraud investigation)\n- Death by accident: FULL PAYOUT\n\nPolicy commenced: March 15, 2024\nSuicide exclusion period ends: March 15, 2027",
     stamped: true,
     roundReq: 4
   }
