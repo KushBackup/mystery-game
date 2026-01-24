@@ -39,14 +39,20 @@ export const TimelineView = ({ myCharacter }) => {
     });
   }, [myCharacter.id]);
 
-  // Key murder timeline context
+  // Key murder timeline context (only shown to suspects after revelation)
   const murderContext = [
-    { time: '6:50 PM', event: 'Poisoned ice placed in kitchen freezer', icon: '❄️' },
-    { time: '8:00 PM', event: 'Taher begins apology speech', icon: '🎤' },
-    { time: '8:05 PM', event: 'Taher adds ice to drinks', icon: '🥃' },
-    { time: '8:10 PM', event: 'Priya takes a sip (survives)', icon: '💧' },
-    { time: '8:19 PM', event: 'TAHER COLLAPSES - TIME OF DEATH', icon: '💀' }
+    { time: '8:00 PM', event: 'Rohan begins his apology speech', icon: '🎤' },
+    { time: '8:15 PM', event: 'Speech ends, sealed scotch bottle opened', icon: '🥃' },
+    { time: '8:17 PM', event: 'Rohan adds special ice to his drink', icon: '❄️' },
+    { time: '8:18 PM', event: 'Esha takes a small sip from his glass', icon: '💧' },
+    { time: '8:19 PM', event: 'Toast made, everyone drinks', icon: '🥂' },
+    { time: '8:45 PM', event: 'ROHAN COLLAPSES - CRITICAL MOMENT', icon: '💀' },
+    { time: '9:02 PM', event: 'Rohan pronounced dead', icon: '⚰️' },
+    { time: '9:30 PM', event: 'Police arrive, bar locked down', icon: '🚨' }
   ];
+
+  // Only show murder timeline to suspects (roles: MURDERER, SUSPECT)
+  const canSeeMurderTimeline = myCharacter.role === 'MURDERER' || myCharacter.role === 'SUSPECT';
 
   return (
     <div className="fixed inset-x-0 top-[4.5rem] bottom-0 overflow-y-auto animate-fade-in bg-gradient-to-b from-stone-100 to-stone-200">
@@ -68,7 +74,7 @@ export const TimelineView = ({ myCharacter }) => {
                 📍 Location: <span className="font-black">For The Record Bar</span>
               </p>
               <p className="text-white text-xs font-bold mt-1">
-                📅 Date: <span className="font-black">The Night of Taher's Party</span>
+                📅 Date: <span className="font-black">January 25, 2026</span>
               </p>
             </div>
           </div>
@@ -155,12 +161,13 @@ export const TimelineView = ({ myCharacter }) => {
           </div>
         </div>
 
-        {/* Murder Timeline Context */}
-        <div className="bg-stone-900 p-6 border-4 border-red-600 shadow-[8px_8px_0px_rgba(220,38,38,0.3)] mb-6">
-          <h3 className="text-xl font-black text-red-500 mb-4 flex items-center gap-2">
-            <span className="text-2xl">🔪</span>
-            Key Events - The Murder
-          </h3>
+        {/* Murder Timeline Context - Only for suspects */}
+        {canSeeMurderTimeline && (
+          <div className="bg-stone-900 p-6 border-4 border-red-600 shadow-[8px_8px_0px_rgba(220,38,38,0.3)] mb-6">
+            <h3 className="text-xl font-black text-red-500 mb-4 flex items-center gap-2">
+              <span className="text-2xl">🔪</span>
+              Key Events - The Incident
+            </h3>
           
           <div className="space-y-3">
             {murderContext.map((item, index) => (
@@ -188,32 +195,7 @@ export const TimelineView = ({ myCharacter }) => {
             ))}
           </div>
         </div>
-
-        {/* Detective Notes */}
-        <div className="bg-amber-50 border-4 border-amber-900 p-6 shadow-[4px_4px_0px_rgba(0,0,0,0.2)] rotate-[-1deg]">
-          <h4 className="text-lg font-black text-amber-900 mb-3 flex items-center gap-2">
-            <span className="text-xl">📝</span>
-            Detective's Notes
-          </h4>
-          <ul className="space-y-2 text-sm text-amber-900 font-bold">
-            <li className="flex items-start gap-2">
-              <span>•</span>
-              <span>Compare your timeline with other guests to find alibis</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span>•</span>
-              <span>Who had access to the kitchen around 6:50 PM?</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span>•</span>
-              <span>The ice was the delivery method - it hadn't fully melted when Priya drank</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span>•</span>
-              <span>Look for inconsistencies in testimonies and movements</span>
-            </li>
-          </ul>
-        </div>
+        )}
 
         {/* Character Role Badge */}
         {myCharacter.role === 'MURDERER' && (

@@ -1,272 +1,969 @@
-// --- GAME DATA (Based on 1-Story-Script.md) ---
+// --- GAME DATA: THE ROHAN SHARMA MURDER MYSTERY ---
 
 export const ROUNDS = [
-  { id: 0, title: "Pre-Game", desc: "Arrivals & Mingling" },
-  { id: 1, title: "The Apology", desc: "Backstories & Grudges" },
-  { id: 2, title: "The Incident", desc: "Timelines & Alibis" },
-  { id: 3, title: "Forensics", desc: "Toxicology & Physical Evidence" },
-  { id: 4, title: "Interrogations", desc: "Motives & Confessions" },
-  { id: 5, title: "The Bombshell", desc: "Deep Secrets Revealed" },
+  { id: 0, title: "The Incident", desc: "Read the report & profiles" },
+  { id: 1, title: "Accusations", desc: "What did you see?" },
+  { id: 2, title: "Motives", desc: "Who had reason to kill?" },
+  { id: 3, title: "Evidence", desc: "Forensics & Documents" },
+  { id: 4, title: "Revelations", desc: "The Twist" },
+  { id: 5, title: "Finale", desc: "Final Discussion" },
   { id: 6, title: "The Reveal", desc: "Case Closed" }
 ];
 
+// ============================================
+// CHARACTERS (32 total)
+// ============================================
+// Role types: "MURDERER", "SUSPECT", "WITNESS"
+// isSuspect: true for the 10 main suspects
+
 export const CHARACTERS = [
-  {
-    id: 'char_vikram',
-    name: "Vikram Singh",
-    role: "MURDERER",
-    profession: "Personal Assistant",
-    bio: "Taher's shadow for 8 years. You organized this entire party. You know every detail, every drink preference.",
-    quirk: "Obsessively organized.",
-    secret: "You have a gambling debt Taher exploited. You prepared the poison ice weeks ago.",
-    code: "ASSISTANT_V",
-    timeline: "6:00 PM - Setup. 6:50 PM - Kitchen (Ice). 8:05 PM - Bar (Serving)."
-  },
-  {
-    id: 'char_anish',
-    name: "Anish Shirwant",
-    role: "SUSPECT",
-    profession: "Industrialist",
-    bio: "Childhood friend of Taher. Successful, analytical, and driven.",
-    quirk: "Can predict horror movie plots accurately.",
-    secret: "Guilt-eats junk food. Taher stole your school science project idea that made him famous.",
-    code: "ANISH_S",
-    timeline: "6:50 PM - Arrival. 7:15 PM - Parking Lot shots. 8:05 PM - Witnessed fall."
-  },
-  {
-    id: 'char_anubhav',
-    name: "Anubhav Raina",
-    role: "SUSPECT",
-    profession: "Self-Employed",
-    bio: "Former business partner. Curious, talkative, a deep thinker.",
-    quirk: "Talented woodworker.",
-    secret: "Murder (It's a joke answer to 'Never Do', but looks suspicious).",
-    code: "ANUBHAV_R",
-    timeline: "7:00 PM - Main Bar. 8:00 PM - Helping fallen guest. 8:20 PM - Near body."
-  },
-  {
-    id: 'char_ishank',
-    name: "Ishank Mahale",
-    role: "SUSPECT",
-    profession: "Digital Marketing",
-    bio: "Tech-savvy and introverted. Keeps to himself but sees everything.",
-    quirk: "Can mimic Venom's voice perfectly.",
-    secret: "Intercepted flight signals. Taher spread rumors about your mental health.",
-    code: "ISHANK_M",
-    timeline: "7:10 PM - Setup hidden cam. 7:45 PM - Bathroom break. 8:15 PM - Texting."
-  },
+  // === THE VICTIM (not playable, for reference) ===
+  // Rohan Sharma - deceased
+
+  // === THE MURDERER ===
   {
     id: 'char_esha',
     name: "Esha",
-    role: "SUSPECT",
+    role: "MURDERER",
     profession: "Design Scientist",
-    bio: "Brilliant and mathematical. Sees patterns others miss.",
-    quirk: "Forensic pattern analysis hobby.",
-    secret: "Knows the organizers. Taher stole credit for your $500k design project.",
-    code: "ESHA_D",
-    timeline: "7:30 PM - Talking to Anish. 8:00 PM - Observing the bar."
+    bio: "Brilliant, smart, genius - with a passion for mathematics and patterns others can't see.",
+    quirk: "Has an uncanny ability to find mathematical patterns in chaos.",
+    secret: "You know the organizers of this event... intimately. You are Rohan's wife.",
+    neverDo: "Lie - but sometimes the truth is just a matter of perspective.",
+    isSuspect: true,
+    motive: "Financial control, years of emotional abuse, and the need to secure your future before his cancer took everything.",
+    timeline: "5:00 PM - Arrived with supplies. 8:18 PM - Sipped from Rohan's glass. 8:45 PM - First to scream.",
+    code: "ESHA_D"
+  },
+
+  // === THE 9 OTHER SUSPECTS ===
+  {
+    id: 'char_rea',
+    name: "Re'a",
+    role: "SUSPECT",
+    profession: "Animator / Artist / Vampire",
+    bio: "Cool Class Clown (CCC) - A quirky digital artist who specializes in dark, surreal animations.",
+    quirk: "Plays LinkedIn games religiously. Claims vampiric tendencies.",
+    secret: "My cat is actually a cow-shark hybrid and not a cat. Also, I hear things others don't.",
+    neverDo: "Never judge my cat for eating cockroaches.",
+    isSuspect: true,
+    motive: "Rohan spread plagiarism rumors that destroyed your animation career. You had to rebuild from nothing in a different city.",
+    timeline: "7:15 PM - Arrived. 8:10 PM - Near the bar area. 8:30 PM - Making dark jokes about murder.",
+    code: "REA_A"
   },
   {
-    id: 'char_ajay',
-    name: "Ajay Jain",
+    id: 'char_govind',
+    name: "Govind",
     role: "SUSPECT",
-    profession: "Product Manager",
-    bio: "True crime enthusiast. Strategist. Plans before he panics.",
-    quirk: "Collects swords.",
-    secret: "Taher plagiarized your MBA essay to get an internship.",
-    code: "AJAY_J",
-    timeline: "7:00 PM - Bar. 7:45 PM - Patio. 8:10 PM - Taking notes."
-  },
-  {
-    id: 'char_tanishka',
-    name: "Tanishka Sheokand",
-    role: "SUSPECT",
-    profession: "Fashion Designer",
-    bio: "Extrovert and spontaneous. People feel safe telling you secrets.",
-    quirk: "Natural secret-keeper.",
-    secret: "Planning to leave Goa. Taher gaslit you during a past relationship.",
-    code: "TANISHKA_S",
-    timeline: "7:20 PM - Greeting Priya. 8:00 PM - Crying in bathroom."
+    profession: "House Husband",
+    bio: "Caring, loving, providing - A devoted partner who manages the household with precision.",
+    quirk: "Expert wedding planner with meticulous attention to detail.",
+    secret: "I really want to have kids. But there's more - Rohan nearly destroyed the woman I love.",
+    neverDo: "I really want to have kids - it's actually something I desperately want.",
+    isSuspect: true,
+    motive: "Rohan dated your girlfriend years ago, treated her terribly, and shared intimate photos of her online. She nearly didn't survive.",
+    timeline: "7:00 PM - Arrived with girlfriend. 8:05 PM - Getting napkins near Rohan's booth. 8:20 PM - Standing behind booth.",
+    code: "GOVIND_H"
   },
   {
     id: 'char_andrew',
     name: "Andrew Pereira",
     role: "SUSPECT",
     profession: "Journalist",
-    bio: "Principled and investigative. Still seeking the truth.",
-    quirk: "Surprisingly good dancer.",
-    secret: "Identifies as Tintin. Taher's lawyers bankrupted your publication.",
-    code: "ANDREW_P",
-    timeline: "6:55 PM - Interviewing staff. 8:20 PM - First to call 911."
+    bio: "Curious - An investigative journalist who lives for the truth, no matter the cost.",
+    quirk: "Surprisingly excellent dancer. Also claims to be Tintin.",
+    secret: "I am Tintin. And I have evidence that could have sent Rohan to prison.",
+    neverDo: "Jump from a height. Ironic, given how many stories I've broken.",
+    isSuspect: true,
+    motive: "Your exposé on Rohan's data manipulation was buried by his lawyers. They nearly bankrupted your publication and ended your career.",
+    timeline: "7:30 PM - Arrived late. 8:10 PM - Cornered Rohan for an interview. 8:25 PM - Taking notes on phone.",
+    code: "ANDREW_P"
   },
   {
-    id: 'char_bharath',
-    name: "Bharath Raj",
+    id: 'char_fatema',
+    name: "Fatema",
     role: "SUSPECT",
+    profession: "Artist",
+    bio: "Friendly and also mysterious, sucker for dark humor, eventful - with art that explores hidden violence.",
+    quirk: "Can hear voices when nobody speaks. Becomes invisible in loud rooms.",
+    secret: "Underneath my fringe, lies a scarring truth from my time with Rohan.",
+    neverDo: "Whack a mole, pet a turkey, tiger, or tribe member. Some things are sacred.",
+    isSuspect: true,
+    motive: "Rohan was abusive during your brief relationship. When you left, he destroyed your art career by canceling your first gallery show.",
+    timeline: "7:00 PM - Arrived early. 8:00-8:45 PM - Standing against wall, sketching, watching everything.",
+    code: "FATEMA_A"
+  },
+  {
+    id: 'char_surya',
+    name: "Surya Peket",
+    role: "SUSPECT",
+    profession: "Software Developer",
+    bio: "Lazy, Chill and Alcoholic - A developer who appears perpetually drunk but never actually impaired.",
+    quirk: "Anti-hangover superpower. Can function at high blood alcohol levels without appearing drunk.",
+    secret: "The bike trip to Kerala was actually meeting with a lawyer about suing Rohan.",
+    neverDo: "Cheat on my girlfriend. Some lines I won't cross.",
+    isSuspect: true,
+    motive: "Rohan fired you the day before your equity vested - stealing ₹2 crores you'd earned with 80-hour weeks for two years.",
+    timeline: "7:00 PM - At bar, drinking heavily. 8:15 PM - Stumbled into bar counter. 8:30 PM - Very drunk (or acting?).",
+    code: "SURYA_S"
+  },
+  {
+    id: 'char_anusha',
+    name: "Anusha",
+    role: "SUSPECT",
+    profession: "Audio Description Writer",
+    bio: "Friendly, optimistic, lazy - Works in accessibility, with encyclopedic pop culture knowledge.",
+    quirk: "Can identify songs within one second of music playing. Trained ear for details.",
+    secret: "I have a fan Instagram account I use more than my own - dedicated to documenting Rohan's company's harms.",
+    neverDo: "Eat a creepy crawlie. Everything else is negotiable.",
+    isSuspect: true,
+    motive: "You flagged harmful content at Rohan's company. He overruled you. People got hurt. When you went to HR, you were 'made redundant.'",
+    timeline: "7:20 PM - Arrived. 8:00-8:40 PM - Positioned with view of bar, speaking into phone.",
+    code: "ANUSHA_A"
+  },
+  {
+    id: 'char_chaaya',
+    name: "Chaaya",
+    role: "SUSPECT",
+    profession: "Artist / Illustrator",
+    bio: "Quiet, Creative, Nerd - An illustrator known for beautiful, haunting work about memory and loss.",
+    quirk: "Can bake perfect sourdough. Patience and precision in everything.",
+    secret: "I like pineapples on pizza. But really, I've been in therapy for a decade because of what Rohan did.",
+    neverDo: "Burpees. Physical and emotional limits exist for a reason.",
+    isSuspect: true,
+    motive: "Rohan bullied you mercilessly in high school - mocking your weight, your art, your silence. He destroyed your art school portfolio.",
+    timeline: "7:10 PM - Arrived quietly. 8:00-8:45 PM - Making rounds, sketching, always watching Rohan.",
+    code: "CHAAYA_A"
+  },
+  {
+    id: 'char_tanishka',
+    name: "Tanishka Sheokand",
+    role: "SUSPECT",
+    profession: "Fashion Designer",
+    bio: "Extrovert, explorer, spontaneous - Creates safe spaces wherever she goes.",
+    quirk: "Natural secret-keeper. People trust you with things they tell no one else.",
+    secret: "I'm switching my job and don't know what's next. But I needed the lawsuit against Rohan to succeed first.",
+    neverDo: "Reveal secrets of people if they're extremely personal.",
+    isSuspect: true,
+    motive: "Rohan invested in your fashion line, then pulled funding when a competitor offered more. You lost everything - savings, team, reputation.",
+    timeline: "7:00 PM - Arrived energetically. 8:16 PM - Hugged Rohan after speech. 8:20 PM - Private conversations with everyone.",
+    code: "TANISHKA_S"
+  },
+  {
+    id: 'char_poshika',
+    name: "Dr. Poshika Singh",
+    role: "SUSPECT",
+    profession: "Lead Veterinarian Surgeon",
+    bio: "Observant, Steady, Exact - A surgeon with uncanny ability to distinguish accident from intention.",
+    quirk: "Can distinguish accidental injuries from deliberate harm by instinct.",
+    secret: "You once treated an animal whose injuries implicated someone powerful. You documented only what was medically necessary. You live in guilt.",
+    neverDo: "Never lie about medical facts. That line is sacred.",
+    isSuspect: true,
+    motive: "Rohan deliberately hurt an animal and brought it to your clinic. When you realized the truth, he threatened your license with fabricated complaints.",
+    timeline: "7:30 PM - Arrived. 8:00-8:45 PM - Watching Rohan's drink with surgical focus. Strangely calm at his collapse.",
+    code: "POSHIKA_V"
+  },
+
+  // === THE 22 WITNESSES ===
+  {
+    id: 'char_anish',
+    name: "Anish Shirwant",
+    role: "WITNESS",
+    profession: "Industrialist",
+    bio: "I'm into horror - An analytical industrialist with a dark entertainment taste.",
+    quirk: "Can predict horror movie plots with eerie accuracy.",
+    secret: "I guilt eat junk food during my drive home. My wife doesn't know about the bad stuff she likes that I secretly eat.",
+    neverDo: "Cheat on my wife. That's the one line.",
+    isSuspect: false,
+    motive: "Rohan's company sold fake engagement metrics to your factory's marketing team, costing lakhs.",
+    timeline: "7:00 PM - Arrived. 8:00 PM - At bar, drinking. 8:45 PM - Witnessed collapse.",
+    code: "ANISH_S"
+  },
+  {
+    id: 'char_ishank',
+    name: "Ishank Mahale",
+    role: "WITNESS",
+    profession: "Digital Marketing Professional",
+    bio: "Tech-savvy, Introverted, critical-thinker - Sees everything, says little.",
+    quirk: "Can mimic the Venom voice perfectly. Into shooting guns. Has ADHD with tons of niche hobbies.",
+    secret: "Used to intercept radio signals and catch flight data. Once caught Vijay Mallya's flight. Also hijacked wireless data packets for fun.",
+    neverDo: "Take undue advantage of others, or consume alcohol.",
+    isSuspect: false,
+    motive: "Rohan stole your client list when you worked at the same agency.",
+    timeline: "7:10 PM - Arrived. 8:00-8:45 PM - Observing from corner, taking mental notes.",
+    code: "ISHANK_M"
+  },
+  {
+    id: 'char_shreyash',
+    name: "Shreyash Shinde",
+    role: "WITNESS",
     profession: "Student",
-    bio: "Witty but private. Stubborn when it counts.",
-    quirk: "Excellent boat handling.",
-    secret: "Taher's real estate deal ruined your father's fishing business.",
-    code: "BHARATH_R",
-    timeline: "7:00 PM - Balcony. 8:00 PM - Bar."
+    bio: "Curious, Precise, humble - A versatile student who adapts to any situation.",
+    quirk: "Versatile in sports, plays a wide range of games.",
+    secret: "I say 'no worries' while mentally panicking in lowercase.",
+    neverDo: "Trust autocorrect completely.",
+    isSuspect: false,
+    motive: "Rohan was your college senior and hazed you mercilessly during orientation week.",
+    timeline: "7:30 PM - Arrived nervously. 8:00-8:45 PM - Staying close to exit.",
+    code: "SHREYASH_S"
+  },
+  {
+    id: 'char_rashmi',
+    name: "Rashmi Shirwant",
+    role: "WITNESS",
+    profession: "Eye Doctor",
+    bio: "Saucy, Quick thinker, Smile for life - An ophthalmologist who sees through masks.",
+    quirk: "Can see through someone's mask. Literally trained to observe.",
+    secret: "Trying truffles and late night munchies. Some vices are harmless.",
+    neverDo: "Get on another roller coaster. Once was enough.",
+    isSuspect: false,
+    motive: "Rohan spread rumors you'd botched a procedure, costing you patients.",
+    timeline: "7:00 PM - Arrived with Anish. 8:47 PM - First doctor to Rohan's side.",
+    code: "RASHMI_S"
+  },
+  {
+    id: 'char_anubhav',
+    name: "Anubhav Raina",
+    role: "WITNESS",
+    profession: "Self-Employed",
+    bio: "Curious, talkative, thinker - A philosophical woodworker who asks hard questions.",
+    quirk: "Talented woodworker who creates beautiful furniture.",
+    secret: "Murder. (It was my joke answer to 'what would you never do.' Suspicious now, isn't it?)",
+    neverDo: "Force things. Patience is everything.",
+    isSuspect: false,
+    motive: "Rohan sabotaged your woodworking business with fake negative reviews.",
+    timeline: "7:00 PM - At main bar. 8:00-8:45 PM - Asking probing questions about Rohan's change.",
+    code: "ANUBHAV_R"
+  },
+  {
+    id: 'char_antara',
+    name: "Antara Majumdar",
+    role: "WITNESS",
+    profession: "Self-Employed",
+    bio: "Happy, proud, friendly - Running her own operations business with pride.",
+    quirk: "Expert in operations and logistics.",
+    secret: "My teeth aren't real. Everyone has something they're hiding.",
+    neverDo: "Needle people. Kindness matters.",
+    isSuspect: false,
+    motive: "Rohan outed a personal secret at a party years ago, humiliating you publicly.",
+    timeline: "7:15 PM - Arrived. 8:00-8:45 PM - Cheerful facade, clearly uncomfortable.",
+    code: "ANTARA_M"
+  },
+  {
+    id: 'char_gautam',
+    name: "Gautam Borkar",
+    role: "WITNESS",
+    profession: "Visual Artist / Filmmaker",
+    bio: "Observant, calm, spontaneous - A filmmaker who captures what others miss.",
+    quirk: "Can dive 20 meters underwater on a single breath.",
+    secret: "I listen to Taylor Swift songs. Don't tell anyone.",
+    neverDo: "Fall for someone who hates dogs. Dealbreaker.",
+    isSuspect: false,
+    motive: "Rohan plagiarized your short film concept and sold it to a streaming platform.",
+    timeline: "7:00 PM - Arrived with camera. 8:00-8:45 PM - Filming 'b-roll' on phone.",
+    code: "GAUTAM_B"
+  },
+  {
+    id: 'char_shannon',
+    name: "Shannon D'Cruz",
+    role: "WITNESS",
+    profession: "Private Consultant",
+    bio: "Mr Skeptical - A consultant who trusts nothing without verification.",
+    quirk: "Professional skepticism. Questions everything.",
+    secret: "Given it was a secret, it wouldn't have been whispered to start with.",
+    neverDo: "Having already sworn never to reveal that, it won't be feasible for me to say...",
+    isSuspect: false,
+    motive: "Rohan hired your firm, then refused to pay the final invoice claiming unsatisfactory work.",
+    timeline: "7:20 PM - Arrived. 8:00-8:45 PM - Maintaining professional skepticism throughout.",
+    code: "SHANNON_D"
   },
   {
     id: 'char_anika',
     name: "Anika",
-    role: "SUSPECT",
-    profession: "Life Coach / Singer",
-    bio: "Confident, fun, and goofy. Turned weakness into strength.",
-    quirk: "Great singer (Taher mocked it).",
-    secret: "Became a coach by accident. Taher mocked your voice for years.",
-    code: "ANIKA_L",
-    timeline: "7:15 PM - Karaoke machine. 8:05 PM - Applauding speech."
+    role: "WITNESS",
+    profession: "Singer / Vocal Coach / Life Coach",
+    bio: "Confident, fun, goofy - Turns weakness into strength through music and coaching.",
+    quirk: "Turns weakness into strength. Natural teacher.",
+    secret: "I got into my career by someone misunderstanding what I said to them. Fun origin story!",
+    neverDo: "Fall for a man who isn't emotionally intelligent.",
+    isSuspect: false,
+    motive: "Rohan was an ex who ghosted you after you introduced him to industry contacts he exploited.",
+    timeline: "7:00 PM - Arrived. 8:00-8:45 PM - Coaching others on emotional resilience.",
+    code: "ANIKA_L"
   },
   {
-    id: 'char_priya',
-    name: "Priya (Wife)",
-    role: "INNOCENT",
-    profession: "Socialite",
-    bio: "Taher's supportive wife. Unaware of his dark past.",
-    quirk: "Always perfectly dressed.",
-    secret: "You drank from the same glass as Taher but survived.",
-    code: "PRIYA_W",
-    timeline: "8:00 PM - Beside Taher. 8:10 PM - Sipped drink. 8:19 PM - Screaming."
+    id: 'char_amrit',
+    name: "Amrit",
+    role: "WITNESS",
+    profession: "Data Analyst",
+    bio: "Eccentric mellow nerd - Analyzes patterns in everything, including people.",
+    quirk: "Can eat any number of raw chillies without flinching.",
+    secret: "I'm a huge Hannah Montana fan. The best of both worlds.",
+    neverDo: "Bend and touch my toes. Some limits are physical.",
+    isSuspect: false,
+    motive: "Rohan took credit for your data model that made his company millions.",
+    timeline: "7:30 PM - Arrived. 8:00-8:45 PM - Analyzing everyone's behavior patterns.",
+    code: "AMRIT_D"
+  },
+  {
+    id: 'char_pallavi',
+    name: "Pallavi",
+    role: "WITNESS",
+    profession: "Art Conservator",
+    bio: "Meticulous, observant, discreet - Restores masterpieces with surgical precision.",
+    quirk: "Can paint perfect replicas of masterpieces.",
+    secret: "I have a stolen masterpiece in my bedroom. It's complicated.",
+    neverDo: "Never touch an artifact without gloves.",
+    isSuspect: false,
+    motive: "Rohan 'commissioned' a restoration, refused to pay, and kept the piece.",
+    timeline: "7:00 PM - Arrived. 8:00-8:45 PM - Meticulous attention to physical evidence around bar.",
+    code: "PALLAVI_A"
+  },
+  {
+    id: 'char_sukriti',
+    name: "Sukriti",
+    role: "WITNESS",
+    profession: "Healthcare Strategist",
+    bio: "Insightful, composed, resourceful - Runs mental scenarios constantly.",
+    quirk: "Notices obscure details no one else does. Runs 'what-if' scenarios constantly.",
+    secret: "I trust very few people - and that's intentional.",
+    neverDo: "Gate crash a party or post selfies on Instagram.",
+    isSuspect: false,
+    motive: "Rohan used insider information from your healthcare startup to tank it.",
+    timeline: "7:15 PM - Arrived. 8:00-8:45 PM - Running mental scenarios, trusting no one.",
+    code: "SUKRITI_H"
+  },
+  {
+    id: 'char_arjun',
+    name: "Arjun Pathni",
+    role: "WITNESS",
+    profession: "This and That",
+    bio: "Patient, Impulsive and Bashful - A jack of all trades with unpredictable energy.",
+    quirk: "Coaches bathroom singers. Certified by UBA (United Bathrooms Association).",
+    secret: "I have brought a gun to a knife fight. It happened.",
+    neverDo: "Bring a gun to a knife fight. (Okay, I did it once.)",
+    isSuspect: false,
+    motive: "Rohan publicly humiliated you at a karaoke event, mocking your singing.",
+    timeline: "7:00 PM - Arrived energetically. 8:00-8:45 PM - Making sarcastic comments about crocodile tears.",
+    code: "ARJUN_P"
+  },
+  {
+    id: 'char_sneha',
+    name: "Sneha",
+    role: "WITNESS",
+    profession: "Strategy Consultant",
+    bio: "Outspoken, observant, witty - A strategist who sees plays before they're made.",
+    quirk: "Sews her own clothes. Complete creative control.",
+    secret: "I've shoplifted multiple times. We all have our phases.",
+    neverDo: "Snort anything. Lines I won't cross.",
+    isSuspect: false,
+    motive: "Rohan poached your entire team for his company, killing your startup.",
+    timeline: "7:30 PM - Arrived. 8:00-8:45 PM - Cataloging everyone's reactions.",
+    code: "SNEHA_S"
+  },
+  {
+    id: 'char_soham',
+    name: "Soham",
+    role: "WITNESS",
+    profession: "Disaster and Climate Change Management",
+    bio: "Thoughtful, patient, observant - Watches people like he watches birds.",
+    quirk: "Expert birdwatcher. Patience and observation are second nature.",
+    secret: "My bag was tested for explosives at Frankfurt Airport. Long story.",
+    neverDo: "Sky diving. Some risks aren't worth it.",
+    isSuspect: false,
+    motive: "Rohan's company funded climate disinformation you've spent years fighting.",
+    timeline: "7:00 PM - Arrived. 8:00-8:45 PM - Patient people-watching from a quiet corner.",
+    code: "SOHAM_D"
+  },
+  {
+    id: 'char_nikita',
+    name: "Dr. Nikita Vaidya",
+    role: "WITNESS",
+    profession: "Orthopedic Physiotherapist",
+    bio: "Cheerful, funny and smart - A healer with a great sense of humor.",
+    quirk: "Great singer. Healing through laughter and music.",
+    secret: "My real name is Vaidehi. Nikita is just easier.",
+    neverDo: "Lie. Honesty in medicine is everything.",
+    isSuspect: false,
+    motive: "Rohan injured himself at a gym you managed, then sued you for 'negligence.'",
+    timeline: "7:20 PM - Arrived. 8:47 PM - Second doctor to Rohan's side, attempted CPR.",
+    code: "NIKITA_V"
+  },
+  {
+    id: 'char_shardul',
+    name: "Shardul Kulkarni",
+    role: "WITNESS",
+    profession: "Project Management Consultant",
+    bio: "Kind, Witty and Street Smart - Manages projects and people with equal skill.",
+    quirk: "Expert mimicry and voice modulation.",
+    secret: "I am super rich, but my money is blocked in disputed lands.",
+    neverDo: "Betray someone. Loyalty is everything.",
+    isSuspect: false,
+    motive: "Rohan outbid you on multiple projects using insider information.",
+    timeline: "7:00 PM - Arrived. 8:00-8:45 PM - Networking aggressively, perhaps too aggressively.",
+    code: "SHARDUL_K"
+  },
+  {
+    id: 'char_srinjan',
+    name: "Srinjan Ghosh",
+    role: "WITNESS",
+    profession: "Lawyer",
+    bio: "Honest, competitive, lazy - A lawyer who fights hard then rests harder.",
+    quirk: "Collects quirky pens. Every signature needs the right instrument.",
+    secret: "I crashed the car once. We don't talk about it.",
+    neverDo: "Go kayaking at night again. Never again.",
+    isSuspect: false,
+    motive: "Rohan was a client who fired you after you won the case, refusing to pay.",
+    timeline: "7:30 PM - Arrived. 8:00-8:45 PM - Mentally preparing cross-examinations for everyone.",
+    code: "SRINJAN_G"
+  },
+  {
+    id: 'char_rahul',
+    name: "Rahul Srivastava",
+    role: "WITNESS",
+    profession: "Law Student",
+    bio: "Quirky, Charismatic, Layered - A future lawyer with magic in his hands.",
+    quirk: "Card magic. Really helps in casinos.",
+    secret: "I'm not the only Rahul here *points at head*. The Dark Side beckons with every trick.",
+    neverDo: "Black Magic. The Dark Side is strong but I shall never answer.",
+    isSuspect: false,
+    motive: "Rohan sabotaged your moot court competition with false evidence.",
+    timeline: "7:15 PM - Arrived. 8:00-8:45 PM - Doing card tricks to ease tension.",
+    code: "RAHUL_S"
+  },
+  {
+    id: 'char_akash',
+    name: "Dr. Akash Halankar",
+    role: "WITNESS",
+    profession: "Maritime Doctor",
+    bio: "Observant, calm, calculated - Catches lies instantly through behavioral tells.",
+    quirk: "Can catch lies by observing breathing patterns and micro-breaks in behavior.",
+    secret: "Once falsified a medical record to save someone powerful. Now living in exile in Goa.",
+    neverDo: "Refuse treatment to anyone. The oath matters.",
+    isSuspect: false,
+    motive: "Rohan threatened to expose your past incident if you didn't sign a fraudulent document.",
+    timeline: "7:00 PM - Arrived. 8:47 PM - Third doctor to Rohan, assisted with CPR.",
+    code: "AKASH_H"
+  },
+  {
+    id: 'char_bharath',
+    name: "Bharath Raj",
+    role: "WITNESS",
+    profession: "Student",
+    bio: "Witty, stubborn, antisocial - Makes people comfortable despite preferring solitude.",
+    quirk: "Excellent boat handling. Good on the water.",
+    secret: "I'm good at boat handling. Sometimes that's all you need to know.",
+    neverDo: "Kill someone. Obviously.",
+    isSuspect: false,
+    motive: "Rohan's bullying during a summer internship drove you to drop out.",
+    timeline: "7:00 PM - Arrived. 8:00-8:45 PM - Staying near the edges, observing.",
+    code: "BHARATH_R"
+  },
+  {
+    id: 'char_adish',
+    name: "Adish Jha",
+    role: "WITNESS",
+    profession: "AVP Marketing",
+    bio: "I am Awesome - Confidence personified, with a secret identity.",
+    quirk: "Guitarist. Also claims to be Batman.",
+    secret: "I am Batman. The guitar is just a cover.",
+    neverDo: "Bungee Jumping. Not all heroes leap.",
+    isSuspect: false,
+    motive: "Rohan took credit for a marketing campaign that won your company a major award.",
+    timeline: "7:30 PM - Arrived. 8:00-8:45 PM - Projecting confidence, secretly seething.",
+    code: "ADISH_J"
   }
 ];
 
-export const CLUE_DB = [
-  // Round 1
+// ============================================
+// ACCUSATION CLUES (Round 1)
+// 10 accusations, pre-assigned to players
+// ============================================
+
+export const ACCUSATION_CLUES = [
   {
-    id: 'c1',
-    code: "BULLY001",
-    title: "Taher's History",
-    content: "Taher was a serial bully for 25 years. He targeted anyone different. Every person here has a story of being hurt by him.",
+    id: 'acc_esha',
+    code: "ACCUSE_ESHA",
+    targetSuspect: 'char_esha',
+    targetName: "Esha",
+    title: "Suspicious Behavior: Esha",
+    accusation: "I saw Esha whispering intensely with Rohan near the freezer around 8:10 PM. She looked angry, and he looked... guilty? When they noticed me watching, they immediately separated and pretended nothing happened.",
     roundReq: 1,
-    type: "BACKSTORY"
+    type: "ACCUSATION",
+    assignedTo: ['char_anish', 'char_ishank', 'char_shreyash']
   },
   {
-    id: 'c2',
-    code: "APOLOGY002",
-    title: "The Sudden Change",
-    content: "Three months ago, Taher changed. He invited everyone he'd wronged. Was it genuine? Or a final power play?",
+    id: 'acc_rea',
+    code: "ACCUSE_REA",
+    targetSuspect: 'char_rea',
+    targetName: "Re'a",
+    title: "Suspicious Behavior: Re'a",
+    accusation: "I noticed Re'a near the bar right after Rohan put down his drink. They were pretending to look at their phone, but they weren't actually typing anything—just hovering near his glass with this strange smile.",
     roundReq: 1,
-    type: "BACKSTORY"
+    type: "ACCUSATION",
+    assignedTo: ['char_govind', 'char_rashmi', 'char_anubhav']
   },
-  // Round 2
   {
-    id: 'c3',
-    code: "TIMELINE001",
-    title: "Official Timelines",
-    content: "Timelines unlocked for all guests. Check the Dossier tab to see where everyone was at 8:00 PM.",
+    id: 'acc_govind',
+    code: "ACCUSE_GOVIND",
+    targetSuspect: 'char_govind',
+    targetName: "Govind",
+    title: "Suspicious Behavior: Govind",
+    accusation: "Govind was definitely near Rohan's booth when Rohan left to talk to other guests. His girlfriend tried to pull him away, but he lingered there for almost a minute, just staring at the unattended drink.",
+    roundReq: 1,
+    type: "ACCUSATION",
+    assignedTo: ['char_antara', 'char_gautam', 'char_shannon']
+  },
+  {
+    id: 'acc_andrew',
+    code: "ACCUSE_ANDREW",
+    targetSuspect: 'char_andrew',
+    targetName: "Andrew Pereira",
+    title: "Suspicious Behavior: Andrew",
+    accusation: "Andrew literally had his phone out, recording everything. At one point, I saw him ask Rohan to 'step aside for a quick chat.' They went near the storage room, and Rohan looked very uncomfortable when they came back.",
+    roundReq: 1,
+    type: "ACCUSATION",
+    assignedTo: ['char_anika', 'char_amrit', 'char_pallavi']
+  },
+  {
+    id: 'acc_fatema',
+    code: "ACCUSE_FATEMA",
+    targetSuspect: 'char_fatema',
+    targetName: "Fatema",
+    title: "Suspicious Behavior: Fatema",
+    accusation: "Fatema barely said a word all night, just watched everyone like she was cataloging them. When Rohan left his drink on the booth table, she was the only one facing that direction. And she was smiling.",
+    roundReq: 1,
+    type: "ACCUSATION",
+    assignedTo: ['char_sukriti', 'char_arjun', 'char_sneha']
+  },
+  {
+    id: 'acc_surya',
+    code: "ACCUSE_SURYA",
+    targetSuspect: 'char_surya',
+    targetName: "Surya Peket",
+    title: "Suspicious Behavior: Surya",
+    accusation: "Surya was hammered, or at least acting like it. He literally stumbled into the bar right next to where Rohan's drink was sitting. Classic misdirection, if you ask me. His hand definitely brushed the glass.",
+    roundReq: 1,
+    type: "ACCUSATION",
+    assignedTo: ['char_soham', 'char_nikita', 'char_shardul']
+  },
+  {
+    id: 'acc_anusha',
+    code: "ACCUSE_ANUSHA",
+    targetSuspect: 'char_anusha',
+    targetName: "Anusha",
+    title: "Suspicious Behavior: Anusha",
+    accusation: "Anusha was definitely documenting everything. At one point, I heard her whisper 'recording' to herself right before Rohan picked up his drink. Like she knew something was about to happen.",
+    roundReq: 1,
+    type: "ACCUSATION",
+    assignedTo: ['char_srinjan', 'char_rahul', 'char_akash']
+  },
+  {
+    id: 'acc_chaaya',
+    code: "ACCUSE_CHAAYA",
+    targetSuspect: 'char_chaaya',
+    targetName: "Chaaya",
+    title: "Suspicious Behavior: Chaaya",
+    accusation: "Chaaya was sketching something during the party. When I asked to see, she slammed the book shut. I caught a glimpse though—it looked like a detailed floor plan of the bar with 'X' marks on specific spots.",
+    roundReq: 1,
+    type: "ACCUSATION",
+    assignedTo: ['char_bharath', 'char_adish', 'char_rea']
+  },
+  {
+    id: 'acc_tanishka',
+    code: "ACCUSE_TANISHKA",
+    targetSuspect: 'char_tanishka',
+    targetName: "Tanishka Sheokand",
+    title: "Suspicious Behavior: Tanishka",
+    accusation: "Tanishka hugged Rohan after his speech, and I saw her hand brush his jacket pocket. She's a designer—she knows exactly where pockets are. What was she putting in there? Or taking out?",
+    roundReq: 1,
+    type: "ACCUSATION",
+    assignedTo: ['char_andrew', 'char_fatema', 'char_surya']
+  },
+  {
+    id: 'acc_poshika',
+    code: "ACCUSE_POSHIKA",
+    targetSuspect: 'char_poshika',
+    targetName: "Dr. Poshika Singh",
+    title: "Suspicious Behavior: Dr. Poshika",
+    accusation: "Dr. Poshika spent the whole night watching Rohan like he was a specimen. She's a surgeon—she knows how to kill things. And she didn't even flinch when he collapsed. Almost like she expected it.",
+    roundReq: 1,
+    type: "ACCUSATION",
+    assignedTo: ['char_anusha', 'char_chaaya', 'char_tanishka', 'char_esha']
+  }
+];
+
+// ============================================
+// MOTIVE CLUES (Round 2)
+// 10 motives, distributed via printed codes
+// ============================================
+
+export const MOTIVE_CLUES = [
+  {
+    id: 'mot_esha',
+    code: "MOTIVE_ESHA",
+    targetSuspect: 'char_esha',
+    targetName: "Esha",
+    title: "Motive: Esha (Wife)",
+    content: "Esha is Rohan's wife of 5 years. Sources close to the couple describe a controlling relationship—Rohan managed all finances, belittled her career, and friends noticed unexplained bruises. Their marriage was reportedly strained in recent months. The life insurance policy is worth ₹5 crores.",
     roundReq: 2,
-    type: "TIMELINE"
+    type: "MOTIVE"
   },
   {
-    id: 'c4',
-    code: "PHONECALL004",
-    title: "The Angry Call",
-    content: "7:45 PM: Taher was heard shouting on the phone. 'The deal is off if he doesn't sign!' Who was he talking to?",
+    id: 'mot_rea',
+    code: "MOTIVE_REA",
+    targetSuspect: 'char_rea',
+    targetName: "Re'a",
+    title: "Motive: Re'a",
+    content: "In college, Rohan spread rumors that Re'a had plagiarized their animation thesis. An investigation cleared Re'a, but the stigma followed them. Three major animation studios rejected Re'a based on 'concerns about their work's originality.' Re'a had to relocate and rebuild their entire career.",
     roundReq: 2,
-    type: "CLUE"
+    type: "MOTIVE"
   },
   {
-    id: 'c4b',
-    code: "ASSISTANT005",
-    title: "The Assistant's Role",
-    content: "Taher's assistant coordinated every detail. He was in and out of the kitchen all night.",
+    id: 'mot_govind',
+    code: "MOTIVE_GOVIND",
+    targetSuspect: 'char_govind',
+    targetName: "Govind",
+    title: "Motive: Govind",
+    content: "Rohan dated Govind's current girlfriend years ago. After she broke up with him, Rohan shared intimate photographs of her online. She spiraled into depression and nearly took her own life. Govind has been helping her heal ever since. Seeing Rohan's 'apology' without real consequences was infuriating.",
     roundReq: 2,
-    type: "CLUE"
+    type: "MOTIVE"
   },
-  // Round 3
   {
-    id: 'c5',
-    code: "POISON001",
+    id: 'mot_andrew',
+    code: "MOTIVE_ANDREW",
+    targetSuspect: 'char_andrew',
+    targetName: "Andrew Pereira",
+    title: "Motive: Andrew Pereira",
+    content: "Andrew published an exposé on Rohan's company—data manipulation, fake engagement, selling user data to political campaigns. Rohan's lawyers buried the story and nearly bankrupted Andrew's publication. Andrew discovered new evidence that Rohan was planning to flee the country before charges could be filed.",
+    roundReq: 2,
+    type: "MOTIVE"
+  },
+  {
+    id: 'mot_fatema',
+    code: "MOTIVE_FATEMA",
+    targetSuspect: 'char_fatema',
+    targetName: "Fatema",
+    title: "Motive: Fatema",
+    content: "Fatema and Rohan dated briefly in their twenties. When Fatema ended the relationship, Rohan retaliated by convincing a major gallery to cancel her first solo show, claiming she'd threatened him. She has a physical scar 'from an accident' during their relationship. The art world is small; whispers followed her for years.",
+    roundReq: 2,
+    type: "MOTIVE"
+  },
+  {
+    id: 'mot_surya',
+    code: "MOTIVE_SURYA",
+    targetSuspect: 'char_surya',
+    targetName: "Surya Peket",
+    title: "Motive: Surya Peket",
+    content: "Surya was lead developer on Rohan's flagship product. He worked 80-hour weeks for two years, was promised significant equity, then was fired the day before his vesting period. This cost Surya approximately ₹2 crores. He was meeting with a lawyer about suing Rohan—a lawsuit that would be worthless if Rohan died first.",
+    roundReq: 2,
+    type: "MOTIVE"
+  },
+  {
+    id: 'mot_anusha',
+    code: "MOTIVE_ANUSHA",
+    targetSuspect: 'char_anusha',
+    targetName: "Anusha",
+    title: "Motive: Anusha",
+    content: "Anusha worked in content moderation at Rohan's company. She flagged harmful content being promoted algorithmically; Rohan overruled her. When she went to HR, she was quietly 'made redundant.' The content she flagged led to real-world harm—she knows the victims' names and carries that guilt.",
+    roundReq: 2,
+    type: "MOTIVE"
+  },
+  {
+    id: 'mot_chaaya',
+    code: "MOTIVE_CHAAYA",
+    targetSuspect: 'char_chaaya',
+    targetName: "Chaaya",
+    title: "Motive: Chaaya",
+    content: "Rohan bullied Chaaya mercilessly throughout high school—mocking her weight, her art, her quietness. He once destroyed an entire portfolio she'd spent months creating for an art school application. She lost her spot. She's been in therapy for over a decade dealing with trauma that started with his bullying.",
+    roundReq: 2,
+    type: "MOTIVE"
+  },
+  {
+    id: 'mot_tanishka',
+    code: "MOTIVE_TANISHKA",
+    targetSuspect: 'char_tanishka',
+    targetName: "Tanishka Sheokand",
+    title: "Motive: Tanishka Sheokand",
+    content: "Rohan invested in Tanishka's first fashion line, then pulled funding at the last minute when a competitor offered him a better deal. She lost her entire savings, her team, and her reputation. Starting over in her 30s while watching Rohan thrive was excruciating. She had a lawsuit pending against him.",
+    roundReq: 2,
+    type: "MOTIVE"
+  },
+  {
+    id: 'mot_poshika',
+    code: "MOTIVE_POSHIKA",
+    targetSuspect: 'char_poshika',
+    targetName: "Dr. Poshika Singh",
+    title: "Motive: Dr. Poshika Singh",
+    content: "Rohan brought an injured animal to Dr. Poshika's clinic. She saved it, then realized the injuries weren't accidental—they were consistent with deliberate harm. Before she could report it, Rohan threatened her veterinary license with fabricated complaints. She's spent years wondering if she should have done more.",
+    roundReq: 2,
+    type: "MOTIVE"
+  }
+];
+
+// ============================================
+// EVIDENCE CLUES (Round 3)
+// Forensic and documentary evidence
+// ============================================
+
+export const EVIDENCE_CLUES = [
+  {
+    id: 'ev_tox',
+    code: "EVIDENCE_TOX",
     title: "Toxicology Report",
-    content: "Slow-acting synthetic toxin. NO residue on glass rim. NO residue on bottle. Conclusion: Introduced via something melting in the drink.",
+    content: "SUBSTANCE IDENTIFIED: Sodium Azide. A fast-acting toxin affecting cellular respiration. Time to death: 20-45 minutes from ingestion. CRITICAL: No residue found on glass rim or bottle exterior. Trace amounts detected in stomach contents mixed with melted ice water. Conclusion: Poison introduced via something that dissolved IN the drink over time.",
     roundReq: 3,
     type: "FORENSICS"
   },
   {
-    id: 'c6',
-    code: "ICECUBES006",
-    title: "Ice Preference",
-    content: "Taher insisted on small ice cubes. They melt faster. He specifically requested them for his drink.",
+    id: 'ev_search',
+    code: "EVIDENCE_SEARCH",
+    title: "Search History Analysis",
+    content: "DEVICES ANALYZED: 4 laptops, 6 phones belonging to guests.\n\nFLAGGED SEARCHES:\n- 'Sodium azide purchase' (VPN masked)\n- 'Undetectable poisons' (Incognito mode)\n- 'How long does poison take to work'\n- 'Life insurance suicide clause'\n\nNote: Search origin devices could not be definitively identified due to VPN usage and shared networks.",
     roundReq: 3,
-    type: "CLUE"
+    type: "EVIDENCE"
   },
   {
-    id: 'c7',
-    code: "WIFE007",
-    title: "The Survivor",
-    content: "Priya took a sip from Taher's glass immediately after pouring. She survived. Why? Because the ice hadn't melted yet.",
+    id: 'ev_items',
+    code: "EVIDENCE_ITEMS",
+    title: "Bar Request List",
+    content: "EMAIL FROM: Esha <esha.sharma@email.com>\nTO: For the Record Bar Management\nSUBJECT: Special items for Rohan's party\n\nHi Marcus,\n\nFor Rohan's party, we'll be bringing some personal items:\n- 50-year-old Macallan scotch (sealed, Rohan's prized bottle)\n- Premium artisanal ice spheres (specialty ice company, for the scotch)\n- Three-tier celebration cake\n- Our cat Whiskers in a carrier (Rohan's emotional support)\n\nPlease store the ice in your freezer upon arrival. DO NOT use for other drinks.\n\nThanks,\nEsha",
     roundReq: 3,
-    type: "REVELATION"
+    type: "EVIDENCE"
   },
   {
-    id: 'c7b',
-    code: "CCTVKITCHEN008",
-    title: "Kitchen CCTV",
-    content: "Footage shows the assistant placing a bag labeled 'Premium Ice' in the freezer at 6:50 PM.",
+    id: 'ev_insurance',
+    code: "EVIDENCE_INSURANCE",
+    title: "Life Insurance Policy",
+    content: "POLICY HOLDER: Rohan Sharma\nBENEFICIARY: Esha Sharma (Wife) - 100%\nCOVERAGE: ₹5,00,00,000 (Five Crores)\n\nKEY CLAUSE - Section 7.2: 'In the event of suicide, whether sane or insane, within the first 3 years of policy inception, no death benefit shall be payable.'\n\nPOLICY START DATE: March 15, 2024\nCURRENT STATUS: Within 3-year suicide exclusion period\n\nNote: If death is ruled suicide, beneficiary receives ₹0. If ruled homicide or accident, full payout applies.",
+    roundReq: 3,
+    type: "EVIDENCE"
+  },
+  {
+    id: 'ev_witness',
+    code: "EVIDENCE_WITNESS",
+    title: "Witness Statement Summary",
+    content: "COMPILED STATEMENTS:\n\n1. 'The scotch bottle was definitely sealed. Rohan broke the seal himself.' (Multiple witnesses)\n\n2. 'Esha sipped from his glass right after he added ice. If it was poisoned then, she'd be dead too.' (6 witnesses)\n\n3. 'Rohan's glass was unattended multiple times while he circulated.' (Bartender)\n\n4. 'I saw at least 4 different people near his booth area.' (Server)\n\n5. 'Nobody else used that specific ice container. It was labeled for Rohan only.' (Bar manager)",
+    roundReq: 3,
+    type: "EVIDENCE"
+  },
+  {
+    id: 'ev_bottle',
+    code: "EVIDENCE_BOTTLE",
+    title: "Scotch Bottle Analysis",
+    content: "ITEM: 50-Year-Old Macallan Scotch Bottle\n\nFINDINGS:\n- Seal was intact until opened at 8:15 PM (video confirmed)\n- No tampering with cork or bottle\n- Remaining liquid tested NEGATIVE for toxins\n- Fingerprints: Rohan (primary), Esha (secondary), Bartender (minor)\n\nCONCLUSION: Poison was NOT in the bottle. Delivery method was something added AFTER pouring.",
+    roundReq: 3,
+    type: "FORENSICS"
+  },
+  {
+    id: 'ev_ice',
+    code: "EVIDENCE_ICE",
+    title: "Ice Container Evidence",
+    content: "ITEM: Insulated container labeled 'ROHAN'S ICE - DO NOT USE FOR OTHER DRINKS'\n\nFINDINGS:\n- Container brought by Esha at 5:00 PM\n- Stored in bar freezer until 8:17 PM\n- Ice was spherical, 'artisanal' style\n- Only Rohan used ice from this container\n- Trace amounts of sodium azide detected in meltwater residue inside container\n\nCRITICAL: The ice itself was the delivery mechanism for the poison.",
+    roundReq: 3,
+    type: "FORENSICS"
+  },
+  {
+    id: 'ev_cat',
+    code: "EVIDENCE_CAT",
+    title: "The Cat Note",
+    content: "OBSERVATION: A cat named 'Whiskers' was present at the venue in a carrier.\n\nSTATEMENT FROM BAR STAFF: 'Esha said Rohan needed the cat for anxiety. Weird for a party, but rich people do weird things.'\n\nSTATEMENT FROM DR. POSHIKA: 'The cat seemed agitated all night. Animals can sense things. It was meowing loudly right before Rohan collapsed.'\n\nNOTE: Cat tested negative for any substances. Likely brought as cover for the ice container transport.",
+    roundReq: 3,
+    type: "EVIDENCE"
+  },
+  {
+    id: 'ev_phone',
+    code: "EVIDENCE_PHONE",
+    title: "Phone Records Summary",
+    content: "ROHAN'S PHONE - Last 24 hours:\n- Multiple calls to insurance company (Duration: 45 mins total)\n- Text to Esha: 'It's almost time. I love you.'\n- Text to unknown number: 'Delete everything after tonight.'\n- Deleted folder recovered: Photos of medical documents\n\nESHA'S PHONE:\n- Search: 'How long does ice take to melt in whiskey'\n- Search: 'Can sodium azide be detected in autopsy'\n- Text to Rohan: 'I'll handle everything. Trust me.'",
+    roundReq: 3,
+    type: "EVIDENCE"
+  },
+  {
+    id: 'ev_cctv',
+    code: "EVIDENCE_CCTV",
+    title: "CCTV Summary",
+    content: "CAMERA 1 - Bar Area:\n- 8:15 PM: Rohan opens scotch, pours drinks\n- 8:17 PM: Rohan retrieves ice container from freezer\n- 8:17 PM: Rohan adds 2 ice spheres to his drink\n- 8:18 PM: Esha sips from glass, returns it\n- 8:19 PM: Toast, everyone drinks\n- 8:20-8:40 PM: Rohan circulates, drink in hand\n\nCAMERA 2 - Freezer Area:\n- 5:30 PM: Esha places labeled container in freezer\n- No other access to container until Rohan at 8:17 PM\n\nNote: 10+ people passed near Rohan's booth while drink was unattended at various points.",
     roundReq: 3,
     type: "CCTV"
-  },
-  // Round 4
-  {
-    id: 'c8',
-    code: "MOTIVE001",
-    title: "Motive Analysis",
-    content: "Everyone had a motive. But Opportunity matters more. Who had access to the kitchen before 8:00 PM?",
-    roundReq: 4,
-    type: "INTERROGATION"
-  },
-  {
-    id: 'c8b',
-    code: "OPPORTUNITY002",
-    title: "Who Had Access?",
-    content: "The poison ice was in the kitchen since 6:50 PM. Only bar staff and the assistant had authorized access.",
-    roundReq: 4,
-    type: "CLUE"
-  },
-  // Round 5
-  {
-    id: 'c9',
-    code: "BOMBSHELL001",
-    title: "The Assistant's Debt",
-    content: "Vikram had a massive gambling debt. Taher bought it and used it to control him. Vikram was trapped.",
-    roundReq: 5,
-    type: "BOMBSHELL"
-  },
-  {
-    id: 'c10',
-    code: "COOLER001",
-    title: "The Cooler",
-    content: "Traces of poison found in Vikram's personal cooler. He brought the poisoned ice from home.",
-    roundReq: 5,
-    type: "EVIDENCE"
   }
 ];
 
-export const CASE_FILES = [
+// ============================================
+// REVELATION CLUES (Round 4)
+// The suicide twist
+// ============================================
+
+export const REVELATION_CLUES = [
   {
-    id: 'f1',
-    type: 'REPORT',
-    title: 'INCIDENT REPORT',
-    date: 'Jan 2026',
-    content: "Victim: Taher Merchant (38). Cause of death: Poisoning. Incident occurred at 'For the Record' bar during a private event. All guests detainded.",
-    stamped: true
+    id: 'rev_journal',
+    code: "REVEAL_JOURNAL",
+    title: "Rohan's Journal Excerpts",
+    content: "PERSONAL JOURNAL OF ROHAN SHARMA (Selected Entries)\n\nOctober 15: The doctors confirmed it today. Stage 4 pancreatic cancer. Metastasized. Six months, maybe less. How do I tell Esha?\n\nOctober 28: I've been thinking about how I want to go. Not slowly, not in a hospital bed, wasting away. I want to choose my moment.\n\nNovember 10: The apology party idea feels right. Everyone I've wronged, gathered together. My last act will be asking for forgiveness.\n\nNovember 20: 'I've decided not to wait for the cancer to take me. I want to choose my moment, on my terms. The party will be my farewell, my apology, and my exit. I've already obtained what I need—sodium azide, fast-acting, relatively painless. Esha doesn't know. She can't know. I won't burden her with this.'\n\nDecember 5: Esha found the journal. She knows everything now.",
+    roundReq: 4,
+    type: "REVELATION"
   },
   {
-    id: 'f2',
-    type: 'IMAGE',
-    title: 'CCTV: BAR',
-    caption: "8:05 PM: Taher pours drinks. No one touches his glass. He adds ice from a specific bucket.",
-    sketchType: 'CCTV_BAR'
+    id: 'rev_cancer',
+    code: "REVEAL_CANCER",
+    title: "Medical Diagnosis",
+    content: "CONFIDENTIAL MEDICAL RECORD\n\nPATIENT: Rohan Sharma\nDIAGNOSIS: Pancreatic Adenocarcinoma, Stage IV\nMETASTASIS: Liver, Lymph Nodes\n\nPROGNOSIS: 4-6 months with palliative care. Patient has declined aggressive treatment.\n\nDOCTOR'S NOTES: Patient showed signs of depression following diagnosis. Recommended psychiatric evaluation and support. Patient declined, stating he 'had his own plans for dealing with this.'\n\nLAST APPOINTMENT: January 10, 2026\nNOTE: Patient appeared at peace. Mentioned 'putting affairs in order.'",
+    roundReq: 4,
+    type: "REVELATION"
   },
   {
-    id: 'f3',
-    type: 'IMAGE',
-    title: 'CCTV: KITCHEN',
-    caption: "6:50 PM: Assistant places a bag labeled 'Premium Ice' in the freezer.",
-    sketchType: 'CCTV_KITCHEN'
+    id: 'rev_debt',
+    code: "REVEAL_DEBT",
+    title: "Financial Records",
+    content: "FINANCIAL SUMMARY - ROHAN SHARMA\n\nASSETS:\n- Company shares: ₹3.2 Cr (frozen pending investigation)\n- Property: ₹1.8 Cr (mortgaged)\n- Savings: ₹12 Lakhs\n\nLIABILITIES:\n- Medical bills: ₹45 Lakhs\n- Legal settlements: ₹1.2 Cr (ongoing)\n- Mortgage: ₹95 Lakhs\n- Business debts: ₹2.1 Cr\n\nNET WORTH: Approximately -₹1 Crore\n\nNOTE: Multiple creditors have initiated recovery proceedings. Esha would inherit significant debt if Rohan died naturally or by suicide. However, life insurance payout would clear all debts with surplus.",
+    roundReq: 4,
+    type: "REVELATION"
+  },
+  {
+    id: 'rev_search2',
+    code: "REVEAL_SEARCH2",
+    title: "Rohan's Personal Searches",
+    content: "ROHAN'S BROWSER HISTORY (Personal Laptop)\n\nSeptember:\n- 'Stage 4 pancreatic cancer survival rate' \n- 'How long does pancreatic cancer patient live'\n- 'Hospice care Goa'\n\nOctober:\n- 'Painless ways to die'\n- 'Dignified death options India'\n- 'Sodium azide where to buy'\n- 'How to make death look natural'\n\nNovember:\n- 'Life insurance suicide clause'\n- 'How to make suicide look like murder'\n- 'Murder vs suicide insurance payout'\n\nDecember:\n- 'Ice cube poison delivery'\n- 'How long for ice to melt in whiskey'\n- 'Untraceable poison methods'\n\nNote: These searches suggest Rohan was actively planning his own death AND researching how to make it appear as murder.",
+    roundReq: 4,
+    type: "REVELATION"
+  },
+  {
+    id: 'rev_letter',
+    code: "REVEAL_LETTER",
+    title: "Unsent Letter to Esha",
+    content: "DRAFT EMAIL (Never Sent) - Found on Rohan's laptop\n\nTo: esha.sharma@email.com\nSubject: When you read this, I'll be gone\n\n---\n\nMy dearest Esha,\n\nIf you're reading this, the party happened, and I'm no longer there. I want you to know that everything that happened tonight was my choice. You didn't know—I made sure of that. I couldn't burden you with this decision.\n\nThe cancer was going to take me anyway. This way, I got to apologize to everyone, and you'll be taken care of. The insurance will pay out. Don't feel guilty. You did nothing wrong.\n\nI love you. I'm sorry I wasn't a better man sooner.\n\nForever yours,\nRohan\n\n---\n\nNOTE: This draft was never sent. It was modified on December 6th, one day after the journal entry mentions Esha 'found out.'",
+    roundReq: 4,
+    type: "REVELATION"
   }
 ];
+
+// ============================================
+// THE CONFESSION (Round 6 - Murderer Only)
+// ============================================
+
+export const CONFESSION_CLUE = {
+  id: 'confession',
+  code: "THE_TRUTH",
+  title: "The Truth",
+  content: "You did it. Together with Rohan, you planned his death to look like murder.\n\nThe poisoned ice was your idea—elegant, delayed, untraceable without knowing where to look. The 'special ice' from the 'premium company' was frozen in your kitchen with sodium azide dissolved throughout.\n\nRohan wanted to die on his terms. You made sure his death would provide for your future. The ₹5 crore insurance policy has a suicide exclusion clause—if he killed himself, you'd get nothing and inherit his debts.\n\nYou told yourself it was mercy. You told yourself he was going to die anyway. You took that tiny sip from his glass to prove it was 'safe'—knowing the ice hadn't melted enough to release a lethal dose yet.\n\nBut as you watch the room full of people he wronged, you wonder: did you help him die... or did you murder your husband for the money?\n\nThe answer, perhaps, is both.\n\nThe game is over. Confess to the room—or take this secret to your grave.",
+  roundReq: 6,
+  type: "CONFESSION",
+  forCharacter: 'char_esha'
+};
+
+// ============================================
+// CASE FILES (Round-Gated)
+// ============================================
+
+export const CASE_FILES = [
+  // Round 0 - Incident Report
+  {
+    id: 'f_incident',
+    type: 'REPORT',
+    title: 'INCIDENT REPORT',
+    date: 'January 25, 2026',
+    content: "GOA POLICE - CRIMINAL INVESTIGATION DIVISION\n\nINCIDENT TYPE: Suspicious Death\nVICTIM: Rohan Sharma, Male, 34\nLOCATION: 'For the Record' Bar, Panjim, Goa\nDATE/TIME: January 25, 2026, 8:45 PM\n\nSUMMARY:\nVictim collapsed during a private party. Preliminary examination indicates poisoning. Victim was hosting an 'apology party' for approximately 32 guests, all of whom had grievances against him.\n\nThe victim opened a sealed bottle of expensive scotch, poured drinks for guests, added ice to his own glass, and made a toast. His wife, Esha Sharma, took a sip from his glass before the toast (she survived). Victim collapsed approximately 25 minutes later.\n\nAll 32 guests have been detained for questioning.\n\nSTATUS: Active Investigation\nLEAD INVESTIGATOR: Inspector Maria Fernandes",
+    stamped: true,
+    roundReq: 0
+  },
+  // Round 3 - Evidence Files
+  {
+    id: 'f_toxreport',
+    type: 'REPORT',
+    title: 'TOXICOLOGY REPORT',
+    date: 'January 25, 2026',
+    content: "FORENSIC LABORATORY - GOA\n\nCASE: Rohan Sharma\nSPECIMEN: Blood, Stomach Contents, Glass Residue\n\nFINDINGS:\n- Cause of death: Sodium azide poisoning\n- Estimated dose: 250-300mg (lethal)\n- Time between ingestion and death: ~25 minutes\n- Glass residue: Sodium azide traces in liquid, NOT on rim\n- Bottle residue: NEGATIVE for toxins\n- Ice container residue: POSITIVE for sodium azide\n\nCONCLUSION:\nPoison was delivered via ice cubes, which released the toxin as they melted in the drink. This explains why the wife survived her small sip (ice hadn't sufficiently melted yet).",
+    stamped: true,
+    roundReq: 3
+  },
+  {
+    id: 'f_cctv_bar',
+    type: 'IMAGE',
+    title: 'CCTV STILL: BAR AREA',
+    caption: "8:17 PM - Rohan retrieves labeled ice container from freezer and adds spheres to his drink. Wife Esha visible in background.",
+    sketchType: 'CCTV_BAR',
+    roundReq: 3
+  },
+  {
+    id: 'f_cctv_freezer',
+    type: 'IMAGE',
+    title: 'CCTV STILL: FREEZER',
+    caption: "5:30 PM - Esha places labeled container 'ROHAN'S ICE' in the bar freezer. No other access recorded until Rohan at 8:17 PM.",
+    sketchType: 'CCTV_FREEZER',
+    roundReq: 3
+  },
+  {
+    id: 'f_insurance',
+    type: 'REPORT',
+    title: 'INSURANCE POLICY SUMMARY',
+    date: 'March 2024',
+    content: "LIFE INSURANCE CORPORATION OF INDIA\n\nPOLICY SUMMARY\n\nInsured: Rohan Sharma\nBeneficiary: Esha Sharma (100%)\nSum Assured: ₹5,00,00,000\n\nIMPORTANT EXCLUSIONS:\n- Suicide within 3 years of policy start: NO PAYOUT\n- Death during commission of crime: NO PAYOUT\n- Death by homicide: FULL PAYOUT\n- Death by accident: FULL PAYOUT\n\nPolicy commenced: March 15, 2024\nSuicide exclusion period ends: March 15, 2027\n\nNote: Death occurred within exclusion period. If ruled suicide, beneficiary receives nothing.",
+    stamped: true,
+    roundReq: 3
+  },
+  // Round 4 - Revelation Files
+  {
+    id: 'f_medical',
+    type: 'REPORT',
+    title: 'MEDICAL RECORDS',
+    date: 'October 2025',
+    content: "CONFIDENTIAL MEDICAL FILE\n\nPatient: Rohan Sharma\nDiagnosis: Pancreatic Adenocarcinoma, Stage IV\n\nHISTORY:\n- Initial symptoms: August 2025\n- Diagnosis confirmed: October 15, 2025\n- Metastasis identified: Liver, lymph nodes\n\nPROGNOSIS:\n- Expected survival: 4-6 months\n- Treatment options: Palliative only\n- Patient declined chemotherapy\n\nPSYCHOLOGICAL NOTES:\n- Patient exhibited signs of depression\n- Declined psychiatric referral\n- Stated he wanted to 'handle things his own way'\n- Last visit January 10, 2026: Patient appeared 'at peace'",
+    stamped: true,
+    roundReq: 4
+  },
+  {
+    id: 'f_journal',
+    type: 'REPORT',
+    title: 'JOURNAL ENTRIES',
+    date: 'October-December 2025',
+    content: "EXTRACTS FROM ROHAN SHARMA'S PERSONAL JOURNAL\n(Recovered from home office)\n\nOct 15: The diagnosis is in. Terminal. 6 months.\n\nOct 28: I keep thinking about all the people I've hurt. I want to make it right before I go.\n\nNov 10: The party idea - invite everyone I've wronged. One big apology.\n\nNov 20: I've found a way out. Quick, painless. Better than wasting away.\n\nNov 25: The poison is obtained. I'll put it in my drink myself. No one else will know.\n\nDec 5: Esha found the journal. She was crying. She said she understood. She said she'd help me.\n\nDec 6: We talked all night. She convinced me there's a better way. The insurance, she said. Don't leave me with nothing. We have a plan now.\n\nJan 20: Everything is ready. The ice is prepared. The guest list is finalized.\n\nJan 25: Today is the day. I'm not afraid. I'm ready.",
+    stamped: true,
+    roundReq: 4
+  },
+  {
+    id: 'f_financial',
+    type: 'REPORT',
+    title: 'FINANCIAL STATEMENT',
+    date: 'January 2026',
+    content: "ESTATE OF ROHAN SHARMA - FINANCIAL OVERVIEW\n\nASSETS:\n- Company shares: ₹3.2 Cr (FROZEN)\n- Residential property: ₹1.8 Cr (MORTGAGED)\n- Savings accounts: ₹12 Lakhs\n- Vehicles: ₹35 Lakhs\n\nLIABILITIES:\n- Outstanding medical bills: ₹45 Lakhs\n- Ongoing legal settlements: ₹1.2 Cr\n- Property mortgage: ₹95 Lakhs\n- Business creditors: ₹2.1 Cr\n\nNET POSITION: -₹1.03 Crores (NEGATIVE)\n\nNOTE: Without insurance payout, spouse inherits debt. With insurance payout of ₹5 Cr, spouse clears all debts and retains ~₹4 Cr.",
+    stamped: true,
+    roundReq: 4
+  }
+];
+
+// ============================================
+// ALL CLUES COMBINED (for code validation)
+// ============================================
+
+export const CLUE_DB = [
+  ...ACCUSATION_CLUES,
+  ...MOTIVE_CLUES,
+  ...EVIDENCE_CLUES,
+  ...REVELATION_CLUES,
+  CONFESSION_CLUE
+];
+
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+
+// Get accusation assigned to a specific character
+export const getAssignedAccusation = (characterId) => {
+  return ACCUSATION_CLUES.find(acc => acc.assignedTo.includes(characterId));
+};
+
+// Get all suspects
+export const getSuspects = () => {
+  return CHARACTERS.filter(c => c.isSuspect);
+};
+
+// Get all witnesses (non-suspects)
+export const getWitnesses = () => {
+  return CHARACTERS.filter(c => !c.isSuspect && c.role !== 'MURDERER');
+};
+
+// Check if character is the murderer
+export const isMurderer = (characterId) => {
+  const char = CHARACTERS.find(c => c.id === characterId);
+  return char?.role === 'MURDERER';
+};

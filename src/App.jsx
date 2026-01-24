@@ -15,7 +15,7 @@ import { DecoderModal } from './components/modals/DecoderModal';
 import { VoteResultsModal } from './components/modals/VoteResultsModal';
 import { CharacterSelect } from './components/CharacterSelect';
 import { HostPanel } from './components/HostPanel';
-import { ROUNDS, CHARACTERS, CLUE_DB } from './data/gameData';
+import { ROUNDS, CHARACTERS, CLUE_DB, getAssignedAccusation, CONFESSION_CLUE } from './data/gameData';
 import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase } from './firebase/config';
 
 export default function App() {
@@ -29,6 +29,9 @@ export default function App() {
   const [unlockedClues, setUnlockedClues] = useState([]);
   const [votes, setVotes] = useState({}); // { userId: { round: suspectId } }
   const [voteCounts, setVoteCounts] = useState({}); // { suspectId: count }
+  const [unlockedFiles, setUnlockedFiles] = useState(['f_incident']); // Files unlocked by host
+  const [voteResultsVisible, setVoteResultsVisible] = useState(false); // Host controls this
+  const [revealedToMurderer, setRevealedToMurderer] = useState(false); // Round 6 reveal
   
   // Local UI State
   const [inputCode, setInputCode] = useState("");
@@ -45,6 +48,17 @@ export default function App() {
 
   const currentRoundData = ROUNDS[currentRound] || ROUNDS[ROUNDS.length - 1];
 
+  // Get the accusation card assigned to this player (for Round 1+)
+  const myAccusation = useMemo(() => {
+    if (!currentUser || currentRound < 1) return null;
+    return getAssignedAccusation(currentUser);
+  }, [currentUser, currentRound]);
+
+  // Check if player should see the confession (murderer in Round 6)
+  const shouldShowConfession = useMemo(() => {
+    return currentUser === 'char_esha' && revealedToMurderer && currentRound >= 6;
+  }, [currentUser, revealedToMurderer, currentRound]);
+
   // --- FIREBASE SYNC ---
   
   // Initialize game state on first load
@@ -58,6 +72,9 @@ export default function App() {
     const unsubscribe = subscribeToGameState((gameState) => {
       setCurrentRound(gameState.currentRound || 0);
       setIsVotingOpen(gameState.isVotingOpen || false);
+      setUnlockedFiles(gameState.unlockedFiles || ['f_incident']);
+      setVoteResultsVisible(gameState.voteResultsVisible || false);
+      setRevealedToMurderer(gameState.revealedToMurderer || false);
     });
 
     return () => unsubscribe();
@@ -166,6 +183,9 @@ export default function App() {
           isOpen={hostPanelOpen}
           currentRound={currentRound}
           isVotingOpen={isVotingOpen}
+          voteResultsVisible={voteResultsVisible}
+          revealedToMurderer={revealedToMurderer}
+          unlockedFiles={unlockedFiles}
           onClose={() => setHostPanelOpen(false)}
         />
 
@@ -218,7 +238,12 @@ export default function App() {
         )}
 
         {activeTab === 'intel' && (
-          <IntelView unlockedClues={unlockedClues} />
+          <IntelView 
+            unlockedClues={unlockedClues} 
+            myAccusation={myAccusation}
+            confession={shouldShowConfession ? CONFESSION_CLUE : null}
+            currentRound={currentRound}
+          />
         )}
 
         {activeTab === 'chat' && (
@@ -230,7 +255,7 @@ export default function App() {
         )}
 
         {activeTab === 'files' && (
-          <FilesView />
+          <FilesView unlockedFiles={unlockedFiles} currentRound={currentRound} />
         )}
 
         {activeTab === 'dossier' && (
@@ -248,6 +273,7 @@ export default function App() {
             votes={votes[currentUser] || {}}
             voteCounts={voteCounts}
             onVote={submitVote}
+            voteResultsVisible={voteResultsVisible}
           />
         )}
 
@@ -256,6 +282,9 @@ export default function App() {
           isOpen={hostPanelOpen}
           currentRound={currentRound}
           isVotingOpen={isVotingOpen}
+          voteResultsVisible={voteResultsVisible}
+          revealedToMurderer={revealedToMurderer}
+          unlockedFiles={unlockedFiles}
           onClose={() => setHostPanelOpen(false)}
         />
 

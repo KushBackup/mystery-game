@@ -1,4 +1,4 @@
-# 🔍 THE TAHER PARTY - Murder Mystery Game
+# 🔍 THE ROHAN SHARMA CASE - Murder Mystery Game
 ## Complete Project Context & Instructions
 
 ---
@@ -8,84 +8,93 @@
 **Game Type:** Interactive Murder Mystery Party Game  
 **Platform:** Web Application (React + Vite + Tailwind CSS)  
 **Theme:** Detective noir with hand-drawn sketch aesthetic  
-**Players:** 11 characters (1 murderer, 1 victim, 9 suspects/innocents)  
+**Players:** 32 characters (1 murderer, 9 suspects, 22 witnesses, 1 victim)  
 **Gameplay Duration:** ~2-3 hours across 7 rounds  
 
 ### **Story Premise**
-Taher Merchant, a reformed serial bully, invites all his past victims to an apology party at "For the Record" bar. During his apology speech, he collapses and dies from poisoning. Players must investigate, gather clues, and vote to identify the murderer.
+Rohan Sharma, 34, a tech entrepreneur with terminal cancer, invites 32 people he's wronged to an "apology party" at "For the Record" bar in Panjim, Goa on January 25, 2026. During the party, he collapses and dies from poisoning. The twist: Rohan orchestrated his own suicide with his wife Esha to look like murder, securing a ₹5 crore life insurance payout that excludes suicide.
 
 ### **Murder Method**
-- **Weapon:** Slow-acting synthetic toxin
-- **Delivery:** Poisoned ice cubes in Taher's drink
-- **Murderer:** Vikram (Personal Assistant)
-- **Motive:** Gambling debt exploitation by Taher
+- **Weapon:** Sodium azide (fast-acting poison)
+- **Delivery:** Poisoned ice cubes that melted slowly in Rohan's scotch
+- **Mastermind:** Esha Sharma (wife) - planned with Rohan
+- **Motive:** Life insurance fraud - ₹5 crore policy with suicide exclusion
+- **The Twist:** It was assisted suicide made to look like murder
 
 ---
 
 ## 🎮 GAME MECHANICS
 
 ### **Core Gameplay Loop**
-1. **Character Selection** - Players choose their character identity
-2. **Round Progression** - Host advances through 7 rounds
-3. **Clue Discovery** - Players enter codes to unlock evidence
-4. **Social Interaction** - Players share character codes to "meet" each other
-5. **Voting** - Players vote for suspects when host opens voting
-6. **Investigation** - Review timelines, forensics, and interrogations
-7. **Reveal** - Final round reveals the murderer
+1. **Character Selection** - Players choose from 32 character identities
+2. **Round Progression** - Host advances through 7 rounds with specific unlocks
+3. **Accusation Distribution** - Round 1: Players receive pre-assigned accusation cards
+4. **Clue Discovery** - Players enter motive/revelation codes from printed cards
+5. **Evidence Unlocking** - Host unlocks case files at specific rounds (0, 3, 4)
+6. **Voting** - Players vote for suspects when host opens voting
+7. **Results Control** - Host controls when vote results are visible
+8. **Final Reveal** - Round 6: Murderer (Esha) sees private confession
 
 ### **Code System**
-- Each character has a unique code (e.g., "ASSISTANT_V")
-- Clues have codes that unlock evidence (e.g., "POISON001")
+- **Accusation Codes:** Pre-assigned, each player gets 1 unique accusation card
+- **Motive Codes:** Distributed in Round 2 via printed cards (10 motives)
+- **Revelation Codes:** Distributed in Round 4 (5 suicide-twist clues)
+- **Evidence Files:** Host-controlled unlocking (no player codes needed)
 - Codes can only be unlocked if current round >= clue's required round
-- Players physically exchange codes in-person or via print materials
 
 ### **Round Structure**
 ```
-Round 0: Pre-Game (Arrivals & Mingling)
-Round 1: The Apology (Backstories & Grudges)
-Round 2: The Incident (Timelines & Alibis) - Timelines unlock
-Round 3: Forensics (Toxicology & Physical Evidence)
-Round 4: Interrogations (Motives & Confessions)
-Round 5: The Bombshell (Deep Secrets Revealed)
-Round 6: The Reveal (Case Closed)
+Round 0: The Incident (Incident Report unlocked by host, explore profiles)
+Round 1: Accusations (Each player receives 1 accusation card, shared verbally)
+Round 2: Motives (Enter printed motive codes - why suspects wanted Rohan dead)
+Round 3: Evidence (Host unlocks forensic files - toxicology, CCTV, witness statements)
+Round 4: Revelations (Host unlocks suicide evidence - journal, medical records)
+Round 5: Discussion (Final debate, hidden vote results)
+Round 6: The Reveal (Vote results shown, Esha sees confession clue)
 ```
 
 ---
 
 ## 👥 CHARACTER ROSTER
 
-### **The Murderer**
-- **Vikram** - Personal Assistant (ASSISTANT_V)
-  - Motive: Gambling debt controlled by Taher
-  - Method: Pre-prepared poisoned ice placed in kitchen
+### **The Mastermind**
+- **Esha Sharma** - Design Scientist, Rohan's Wife (char_esha)
+  - Public Role: MURDERER
+  - Private Truth: Orchestrated assisted suicide with Rohan for insurance money
+  - Sees confession clue in Round 6 when host triggers reveal
 
 ### **The Victim**
-- **Taher Merchant** - The Host (deceased at 8:19 PM)
+- **Rohan Sharma** - Tech Entrepreneur (deceased at 8:45 PM)
+  - Had Stage 4 pancreatic cancer
+  - Planned his own death with Esha
 
-### **The Suspects** (10 characters)
-1. **Anish Shirwant** - Industrialist (ANISH_S)
-2. **Anubhav Raina** - Self-Employed (ANUBHAV_R)
-3. **Ishank Mahale** - Digital Marketing (ISHANK_M)
-4. **Esha** - Design Scientist (ESHA_D)
-5. **Ajay Jain** - Product Manager (AJAY_J)
-6. **Tanishka Sheokand** - Fashion Designer (TANISHKA_S)
-7. **Andrew Pereira** - Journalist (ANDREW_P)
-8. **Bharath Raj** - Student (BHARATH_R)
-9. **Anika** - Life Coach/Singer (ANIKA_L)
-10. **Priya** - Taher's Wife (PRIYA_W) - INNOCENT survivor
+### **The 9 Suspects** (Each receives accusations from 3-4 players)
+1. **Re'a** - Animator/Artist (char_rea)
+2. **Govind** - House Husband (char_govind)
+3. **Andrew Pereira** - Journalist (char_andrew)
+4. **Fatema** - Artist (char_fatema)
+5. **Surya Peket** - Software Developer (char_surya)
+6. **Anusha** - Audio Description Writer (char_anusha)
+7. **Chaaya** - Artist/Illustrator (char_chaaya)
+8. **Tanishka Sheokand** - Fashion Designer (char_tanishka)
+9. **Dr. Poshika Singh** - Lead Veterinarian Surgeon (char_poshika)
+
+### **The 22 Witnesses** (Non-suspects who also had grudges)
+Anish, Ishank, Shreyash, Rashmi, Anubhav, Antara, Gautam, Shannon, Anika, Amrit, Pallavi, Sukriti, Arjun, Sneha, Soham, Dr. Nikita, Shardul, Srinjan, Rahul, Akash, Bharath, Adish
 
 ### **Character Data Structure**
 ```javascript
 {
-  id: 'char_vikram',
-  name: "Vikram",
-  role: "MURDERER" | "SUSPECT" | "VICTIM" | "INNOCENT",
-  profession: "Personal Assistant",
+  id: 'char_esha',
+  name: "Esha Sharma",
+  role: "MURDERER" | "SUSPECT" | "WITNESS" | "VICTIM",
+  profession: "Design Scientist",
   bio: "Background description",
-  quirk: "Personality trait/fun fact",
-  secret: "Hidden information/motive",
-  code: "ASSISTANT_V",
-  timeline: "Time-stamped alibi"
+  quirk: "Personality trait",
+  secret: "Hidden truth",
+  relationship: "Connection to Rohan",
+  isSuspect: true | false,
+  timeline: "Time-stamped movements during the party"
 }
 ```
 
@@ -94,10 +103,9 @@ Round 6: The Reveal (Case Closed)
 ## 🔎 EVIDENCE & CLUES
 
 ### **Clue Categories**
-- **BACKSTORY** - Character history and relationships
-- **TIMELINE** - Where characters were during key moments
-- **FORENSICS** - Physical evidence and toxicology
-- **CLUE** - Investigative findings
+- **ACCUSATION** - What witnesses saw suspects do (10 accusations, pre-assigned to players)
+- **MOTIVE** - Why suspects wanted Rohan dead (10 motives, Round 2 codes)
+- **EVIDENCE** - Forensic files (host-unlocked in Round 3)
 - **CCTV** - Security footage evidence
 - **REVELATION** - Major plot reveals
 - **BOMBSHELL** - Game-changing discoveries
@@ -582,23 +590,50 @@ Players collectively identify Vikram as the murderer through:
 ### **Debugging Tips**
 - Check browser console for errors
 - Use React DevTools to inspect state
-- Host Panel shows current round/voting status
+- Host Panel shows current round/voting status and unlocked files
 - Toast feedback shows code validation results
+- Check Firebase console for real-time data sync
+
+---
+
+## 📊 GAME DATA STRUCTURE (gameData.js)
+
+### **Key Exports**
+- `CHARACTERS` (32 characters) - All player identities with roles, bios, timelines
+- `ACCUSATION_CLUES` (10 clues) - Pre-assigned accusations with `assignedTo[]` arrays
+- `MOTIVE_CLUES` (10 clues) - Round 2 codes revealing why suspects wanted Rohan dead
+- `EVIDENCE_CLUES` (10 clues) - Forensic evidence (deprecated - moved to CASE_FILES)
+- `REVELATION_CLUES` (5 clues) - Round 4 codes revealing suicide twist
+- `CONFESSION_CLUE` (1 clue) - Special clue for Esha only in Round 6
+- `CASE_FILES` (8 files) - Host-unlocked documents with `roundReq` field
+- `CLUE_DB` - Combined array of all motive + revelation clues for decoder
+
+### **Helper Functions**
+- `getAssignedAccusation(characterId)` - Returns accusation assigned to player
+- `getSuspects()` - Returns all characters with `isSuspect: true`
+- `getWitnesses()` - Returns non-suspect characters
+- `isMurderer(characterId)` - Checks if character is Esha
+
+### **File Round Requirements**
+- **Round 0:** Incident Report (f_incident)
+- **Round 3:** Toxicology, CCTV, Bar Items, Insurance, Witness Statements
+- **Round 4:** Medical Records, Journal, Financial Records
 
 ---
 
 ## 📄 LICENSE & CREDITS
 
-**Project:** The Taher Party - Murder Mystery Game  
+**Project:** The Rohan Sharma Case - Murder Mystery Game  
 **Framework:** React + Vite + Tailwind CSS  
 **Icons:** Custom SVG components (inline)  
 **Fonts:** System fonts with handwritten fallbacks  
+**Story:** Original murder mystery with insurance fraud twist
 
 ---
 
-**Last Updated:** January 24, 2026  
-**Version:** 2.1.0  
-**Status:** Production PWA with Metro UI and real-time multiplayer features
+**Last Updated:** January 25, 2026  
+**Version:** 3.0.0  
+**Status:** Production PWA with 32-player support, host controls, and real-time multiplayer
 
 ---
 
@@ -606,16 +641,18 @@ Players collectively identify Vikram as the murderer through:
 
 - [ ] Clone repository
 - [ ] Run `npm install`
+- [ ] Configure Firebase (see FIREBASE_SETUP.md)
 - [ ] Run `npm run dev`
 - [ ] Open http://localhost:5173
-- [ ] Select a character
-- [ ] Try entering code: "ASSISTANT_V"
-- [ ] Try entering clue: "BULLY001"
+- [ ] Select a character (try Esha for murderer experience)
 - [ ] Triple-tap ghost logo for Host Panel
-- [ ] Change round and watch all devices update
+- [ ] Advance to Round 1 to see accusation card
+- [ ] Try entering code: "MOTIVE_ESHA" (Round 2+)
+- [ ] Unlock files from Host Panel
 - [ ] Open voting from Host Panel
-- [ ] Vote for a suspect in Dossier tab
-- [ ] Switch to Chat tab and see 📊 vote button
+- [ ] Vote for a suspect in Voting tab
+- [ ] Toggle vote results visibility
+- [ ] Advance to Round 6 and trigger murderer reveal (Esha sees confession)
 - [ ] View animated vote results
 - [ ] Send chat messages and feel vibration
 - [ ] Explore all 5 tabs (ID, Clues, Chat, Files, Guests)

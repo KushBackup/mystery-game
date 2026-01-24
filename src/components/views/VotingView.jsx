@@ -9,13 +9,15 @@ export const VotingView = ({
   currentRound, 
   votes, 
   voteCounts,
+  voteResultsVisible = false,
   onVote 
 }) => {
   const [selectedSuspect, setSelectedSuspect] = useState(votes[currentRound] || null);
   const [showResults, setShowResults] = useState(false);
   const [confirmingVote, setConfirmingVote] = useState(null);
 
-  const suspects = CHARACTERS.filter(char => char.role !== 'VICTIM');
+  // Filter to only show suspects (MURDERER + SUSPECT roles)
+  const suspects = CHARACTERS.filter(char => char.role === 'MURDERER' || char.role === 'SUSPECT');
   const hasVoted = votes[currentRound] !== undefined;
   const hasAnyVotes = Object.keys(voteCounts || {}).length > 0;
 
@@ -100,7 +102,7 @@ export const VotingView = ({
         </div>
 
         {/* View Results Button */}
-        {hasAnyVotes && (
+        {hasAnyVotes && voteResultsVisible && (
           <button
             onClick={() => setShowResults(true)}
             className="w-full mb-6 bg-gradient-to-r from-pink-600 to-red-600 hover:from-pink-700 hover:to-red-700 text-white p-4 border-4 border-stone-900 shadow-[4px_4px_0px_#1c1917] font-black text-lg uppercase tracking-wide transition-all active:translate-y-1 active:shadow-none flex items-center justify-center gap-3"
@@ -108,6 +110,14 @@ export const VotingView = ({
             <span className="text-2xl">📊</span>
             View Vote Results
           </button>
+        )}
+
+        {/* Results Locked Message */}
+        {hasAnyVotes && !voteResultsVisible && (
+          <div className="mb-6 bg-stone-200 border-2 border-dashed border-stone-400 p-4 rounded text-center">
+            <Lock size={20} className="inline-block mr-2 text-stone-500" />
+            <span className="text-stone-600 font-bold">Vote results are currently hidden by the host</span>
+          </div>
         )}
 
         {/* Suspects Grid */}
