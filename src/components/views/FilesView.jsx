@@ -19,7 +19,7 @@ export const FilesView = ({ unlockedFiles = [], currentRound = 0 }) => {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in">
-      <h2 className="text-2xl sm:text-3xl font-black text-stone-900 text-center uppercase decoration-wavy underline decoration-stone-500">Archives</h2>
+      <h2 className="text-2xl sm:text-3xl font-black text-white text-center uppercase decoration-wavy underline decoration-stone-500">Archives</h2>
       
       {/* Locked Files Indicator */}
       {lockedFilesInfo.length > 0 && (

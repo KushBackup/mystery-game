@@ -207,7 +207,7 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
         </p>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes pulse-slow {
           0%, 100% {
             opacity: 1;

@@ -1,53 +1,83 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Creepster&display=swap');
 
 @theme {
-  --font-handwritten: 'Gloria Hallelujah', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', sans-serif;
+  --font-casual: 'Fredoka', 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive;
+  --font-spooky: 'Creepster', cursive;
 }
 
-/* Custom Utilities if needed, though v4 handles most via @theme */
+/* Halloween Background */
+body {
+  background: linear-gradient(135deg, #2B2D42 0%, #1a1b2e 100%);
+  font-family: 'Fredoka', 'Comic Sans MS', cursive;
+}
+
+/* Custom Utilities */
 .pb-safe { 
   padding-bottom: env(safe-area-inset-bottom); 
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar - Halloween Theme */
 .custom-scrollbar::-webkit-scrollbar { 
-  width: 6px; 
+  width: 8px; 
 }
 .custom-scrollbar::-webkit-scrollbar-track { 
-  background: #e7e5e4; 
+  background: #2B2D42; 
 }
 .custom-scrollbar::-webkit-scrollbar-thumb { 
-  background: #ea580c; 
-  border: 2px solid #e7e5e4; 
-  border-radius: 0; 
+  background: #FF6B35; 
+  border-radius: 10px;
+  border: 2px solid #2B2D42; 
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #F72585;
 }
 
-/* Shadow Utilities */
-.shadow-sketch { 
-  box-shadow: 2px 2px 0px 0px #1c1917; 
+/* Halloween Shadow Utilities */
+.shadow-halloween { 
+  box-shadow: 0 4px 0px 0px #7209B7, 0 8px 20px rgba(114, 9, 183, 0.3); 
 }
-.shadow-sketch-lg { 
-  box-shadow: 4px 4px 0px 0px #1c1917; 
+.shadow-halloween-lg { 
+  box-shadow: 0 6px 0px 0px #7209B7, 0 12px 30px rgba(114, 9, 183, 0.4); 
+}
+.shadow-glow-orange {
+  box-shadow: 0 0 20px rgba(255, 107, 53, 0.6), 0 0 40px rgba(255, 107, 53, 0.3);
+}
+.shadow-glow-purple {
+  box-shadow: 0 0 20px rgba(114, 9, 183, 0.6), 0 0 40px rgba(114, 9, 183, 0.3);
 }
 
-/* Background Texture */
-.bg-texture {
-  background-image: radial-gradient(#d6d3d1 1px, transparent 1px);
-  background-size: 20px 20px;
+/* Playful Background Pattern */
+.bg-pattern {
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(114, 9, 183, 0.1) 0%, transparent 50%);
 }
 
 /* Animations */
 @keyframes fadeIn { 
-  from { opacity: 0; transform: translateY(10px); } 
-  to { opacity: 1; transform: translateY(0); } 
+  from { opacity: 0; transform: translateY(20px) scale(0.95); } 
+  to { opacity: 1; transform: translateY(0) scale(1); } 
 }
 .animate-fade-in { 
-  animation: fadeIn 0.3s ease-out forwards; 
+  animation: fadeIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
 }
 
 @keyframes bounceShort { 
-  0%, 100% { transform: translateY(0) rotate(1deg); } 
-  50% { transform: translateY(-5px) rotate(1deg); } 
+  0%, 100% { transform: translateY(0); } 
+  50% { transform: translateY(-8px); } 
+}
+.animate-bounce-short {
+  animation: bounceShort 0.6s ease-in-out;
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); opacity: 0; }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.animate-pop-in {
+  animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 .animate-bounce-short { 
   animation: bounceShort 0.5s ease-in-out 1; 

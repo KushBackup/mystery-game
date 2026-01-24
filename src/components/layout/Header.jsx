@@ -3,15 +3,15 @@ import { Ghost } from '../icons/IconComponents';
 
 export const Header = ({ currentRound, currentRoundData, onSecretTap }) => {
   return (
-    <header className="sticky top-0 z-30 bg-[#f4f1ea]/95 border-b-4 border-stone-900 p-3 sm:p-4 shadow-sm">
+    <header className="sticky top-0 z-30 bg-gradient-to-r from-halloween-orange to-halloween-pink border-b-4 border-halloween-purple p-4 shadow-halloween backdrop-blur-sm">
       <div className="flex justify-center items-center max-w-2xl mx-auto">
-        <div className="flex items-center gap-3" onClick={onSecretTap}>
-          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-orange-500 border-2 border-stone-900 rounded-lg flex items-center justify-center rotate-3 shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-            <Ghost size={20} className="text-white sm:w-6 sm:h-6" />
+        <div className="flex items-center gap-3 cursor-pointer" onClick={onSecretTap}>
+          <div className="w-12 h-12 bg-gradient-to-br from-halloween-yellow to-halloween-orange border-4 border-white rounded-2xl flex items-center justify-center shadow-glow-orange animate-bounce-slow">
+            <Ghost size={24} className="text-white" />
           </div>
           <div>
-            <h2 className="text-lg sm:text-xl font-black leading-none text-stone-900 uppercase">ROUND {currentRound}</h2>
-            <span className="text-[10px] sm:text-xs text-red-600 font-bold tracking-widest bg-red-100 px-1">{currentRoundData.title}</span>
+            <h2 className="text-2xl font-black leading-none text-white uppercase tracking-wide drop-shadow-lg" style={{ fontFamily: 'Fredoka, cursive' }}>🎃 ROUND {currentRound}</h2>
+            <span className="text-sm text-halloween-yellow font-black tracking-wide bg-black/30 px-2 py-0.5 rounded-full">{currentRoundData.title}</span>
           </div>
         </div>
       </div>

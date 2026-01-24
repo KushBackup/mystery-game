@@ -44,6 +44,13 @@ const LogoutIcon = ({ className }) => (
   </svg>
 );
 
+const HelpIcon = ({ className }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/>
+    <path d="M11 11h2v6h-2zm0-4h2v2h-2z"/>
+  </svg>
+);
+
 export default function GridMenu({ onNavigate, voteCounts }) {
   const [hoveredTile, setHoveredTile] = useState(null);
 
@@ -52,49 +59,56 @@ export default function GridMenu({ onNavigate, voteCounts }) {
       id: 'dashboard', 
       label: 'ID', 
       icon: FingerprintIcon, 
-      color: 'bg-red-600',
-      size: 'large' // Takes 2x2 space
+      color: 'bg-gradient-to-br from-halloween-orange to-halloween-pink',
+      size: 'medium'
     },
     { 
       id: 'intel', 
       label: 'CLUES', 
       icon: ClipboardIcon, 
-      color: 'bg-amber-600',
+      color: 'bg-gradient-to-br from-halloween-purple to-purple-600',
       size: 'medium'
     },
     { 
       id: 'chat', 
       label: 'CHAT', 
       icon: ChatIcon, 
-      color: 'bg-blue-600',
+      color: 'bg-gradient-to-br from-blue-500 to-purple-600',
       size: 'medium'
     },
     { 
       id: 'votes', 
       label: 'VOTES', 
       icon: ChartIcon, 
-      color: 'bg-pink-600',
+      color: 'bg-gradient-to-br from-halloween-pink to-red-500',
       size: 'medium'
     },
     { 
       id: 'files', 
       label: 'FILES', 
       icon: FolderIcon, 
-      color: 'bg-emerald-600',
+      color: 'bg-gradient-to-br from-halloween-green to-emerald-600',
       size: 'medium'
     },
     { 
       id: 'dossier', 
       label: 'GUESTS', 
       icon: UsersIcon, 
-      color: 'bg-purple-600',
+      color: 'bg-gradient-to-br from-halloween-yellow to-halloween-orange',
+      size: 'medium'
+    },
+    { 
+      id: 'help', 
+      label: 'HELP', 
+      icon: HelpIcon, 
+      color: 'bg-gradient-to-br from-cyan-500 to-blue-600',
       size: 'medium'
     },
     { 
       id: 'logout', 
       label: 'LOGOUT', 
       icon: LogoutIcon, 
-      color: 'bg-stone-600',
+      color: 'bg-gradient-to-br from-gray-700 to-halloween-dark',
       size: 'medium'
     }
   ];
@@ -108,16 +122,27 @@ export default function GridMenu({ onNavigate, voteCounts }) {
   };
 
   return (
-    <div className="min-h-screen bg-stone-100 overflow-hidden font-handwritten">
-      {/* Header */}
-      <div className="bg-stone-900 text-white p-6 shadow-lg">
-        <h1 className="text-3xl font-bold tracking-tight">Astral Project's Murder Mystery Experience</h1>
-        <p className="text-stone-300 text-sm mt-1">Ultimate mystery solver gadget</p>
+    <div className="min-h-screen bg-gradient-to-br from-halloween-dark via-purple-900 to-halloween-dark overflow-hidden">
+      {/* Spooky Header with floating ghosts effect */}
+      <div className="bg-gradient-to-r from-halloween-orange to-halloween-pink text-white p-6 shadow-halloween relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-full opacity-20">
+          <div className="absolute top-2 left-10 text-6xl animate-float">👻</div>
+          <div className="absolute top-4 right-20 text-4xl animate-float" style={{animationDelay: '0.5s'}}>🎃</div>
+          <div className="absolute bottom-2 right-10 text-5xl animate-float" style={{animationDelay: '1s'}}>🦇</div>
+        </div>
+        <p className="text-xl font-semibold tracking-wide relative z-10 text-center text-white/90" 
+            style={{ fontFamily: 'Fredoka, cursive' }}>
+          Astral Project presents
+        </p>
+        <h1 className="text-5xl sm:text-6xl font-black tracking-tight relative z-10 text-center mt-2 animate-wiggle" 
+            style={{ fontFamily: 'Fredoka, cursive' }}>
+          The Murder Mystery Experience!
+        </h1>
       </div>
 
-      {/* Metro Grid */}
-      <div className="p-4 max-w-4xl mx-auto">
-        <div className="grid grid-cols-2 gap-4 auto-rows-[140px]">
+      {/* Casual Grid */}
+      <div className="p-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 gap-6 auto-rows-[160px]">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const isLarge = item.size === 'large';
@@ -133,58 +158,52 @@ export default function GridMenu({ onNavigate, voteCounts }) {
                 className={`
                   ${item.color}
                   ${isLarge ? 'col-span-2 row-span-2' : 'col-span-1'}
-                  relative overflow-hidden
+                  relative overflow-hidden rounded-3xl
                   text-white font-bold
-                  transition-all duration-200 ease-out
-                  active:scale-95
-                  shadow-lg hover:shadow-xl
-                  ${hoveredTile === item.id ? 'brightness-110 scale-[1.02]' : 'brightness-100'}
-                  metro-tile
+                  transition-all duration-300 ease-out
+                  active:scale-90
+                  shadow-halloween hover:shadow-halloween-lg
+                  ${hoveredTile === item.id ? 'brightness-125 scale-105 -rotate-2' : 'brightness-100'}
+                  casual-tile border-4 border-white/20
                 `}
                 style={{
-                  animation: `slideInUp 0.4s ease-out ${index * 0.1}s both`,
+                  animation: `slideInUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.1}s both`,
                 }}
               >
-                {/* Background Pattern */}
-                <div className="absolute inset-0 opacity-10">
-                  <div className="absolute inset-0" 
-                    style={{
-                      backgroundImage: `repeating-linear-gradient(
-                        45deg,
-                        transparent,
-                        transparent 10px,
-                        rgba(255,255,255,0.1) 10px,
-                        rgba(255,255,255,0.1) 20px
-                      )`
-                    }}
-                  />
+                {/* Playful Background Pattern */}
+                <div className="absolute inset-0 opacity-20">
+                  <div className="absolute top-2 right-2 text-3xl">✨</div>
+                  <div className="absolute bottom-2 left-2 text-2xl">⭐</div>
                 </div>
 
                 {/* Content */}
                 <div className={`
                   relative z-10 h-full flex flex-col 
-                  ${isLarge ? 'justify-end items-start p-8' : 'justify-between p-6'}
+                  ${isLarge ? 'justify-center items-center p-8' : 'justify-center items-center p-4'}
                 `}>
                   <Icon className={`
-                    ${isLarge ? 'w-24 h-24 mb-4' : 'w-12 h-12'}
-                    drop-shadow-lg
+                    ${isLarge ? 'w-28 h-28 mb-4' : 'w-14 h-14 mb-2'}
+                    drop-shadow-2xl filter brightness-110
+                    ${hoveredTile === item.id ? 'animate-bounce' : ''}
                   `} />
                   <span className={`
-                    ${isLarge ? 'text-4xl' : 'text-xl'}
-                    tracking-wider font-black
-                    drop-shadow-md
-                  `}>
+                    ${isLarge ? 'text-5xl' : 'text-2xl'}
+                    tracking-wide font-black
+                    drop-shadow-2xl
+                    ${hoveredTile === item.id ? 'animate-pulse' : ''}
+                  `}
+                  style={{ fontFamily: 'Fredoka, cursive' }}>
                     {item.label}
                   </span>
                 </div>
 
-                {/* Shimmer Effect */}
+                {/* Glow Effect */}
                 {hoveredTile === item.id && (
                   <div 
-                    className="absolute inset-0 opacity-30"
+                    className="absolute inset-0"
                     style={{
-                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent)',
-                      animation: 'shimmer 0.6s ease-out'
+                      background: 'radial-gradient(circle at center, rgba(255,255,255,0.3), transparent)',
+                      animation: 'glow 1s ease-in-out infinite'
                     }}
                   />
                 )}

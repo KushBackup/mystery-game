@@ -10,6 +10,7 @@ import { DossierView } from './components/views/DossierView';
 import { ChatView } from './components/views/ChatView';
 import { VotingView } from './components/views/VotingView';
 import { TimelineView } from './components/views/TimelineView';
+import { HelpView } from './components/views/HelpView';
 import { GuestProfileModal } from './components/modals/GuestProfileModal';
 import { DecoderModal } from './components/modals/DecoderModal';
 import { VoteResultsModal } from './components/modals/VoteResultsModal';
@@ -40,8 +41,8 @@ export default function App() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [hostPanelOpen, setHostPanelOpen] = useState(false);
-  const [secretTapCount, setSecretTapCount] = useState(0);
   const [showVoteResults, setShowVoteResults] = useState(false);
+  const [isHost, setIsHost] = useState(false);
 
   const myCharacter = useMemo(() => 
     CHARACTERS.find(c => c.id === currentUser), 
@@ -107,9 +108,14 @@ export default function App() {
 
   // --- ACTIONS ---
 
-  const handleLogin = (id) => {
+  const handleLogin = (id, isHostLogin = false) => {
     setCurrentUser(id);
-    setActiveTab(null); // Show grid menu after login
+    setIsHost(isHostLogin);
+    if (isHostLogin) {
+      setActiveTab('host'); // Go directly to host interface
+    } else {
+      setActiveTab(null); // Show grid menu after login
+    }
   };
 
   const handleCodeSubmit = (e) => {
@@ -160,17 +166,7 @@ export default function App() {
     }
   };
 
-  // --- HOST CONTROLS (Hidden) ---
-  const toggleHostPanel = () => {
-     setSecretTapCount(prev => {
-         const newCount = prev + 1;
-         if (newCount >= 3) {
-             setHostPanelOpen(true);
-             return 0;
-         }
-         return newCount;
-     });
-  };
+
 
   // --- RENDER ---
 
@@ -191,26 +187,6 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#f4f1ea]">
         <GridMenu onNavigate={handleNavigate} voteCounts={voteCounts} />
-        
-        {/* Host Panel Access */}
-        <div 
-          className="fixed top-4 left-4 text-stone-900 opacity-10 hover:opacity-100 cursor-pointer z-50" 
-          onClick={toggleHostPanel}
-        >
-          👻
-        </div>
-
-        {/* Host Controls Panel */}
-        <HostPanel
-          isOpen={hostPanelOpen}
-          currentRound={currentRound}
-          isVotingOpen={isVotingOpen}
-          voteResultsVisible={voteResultsVisible}
-          revealedToMurderer={revealedToMurderer}
-          unlockedFiles={unlockedFiles}
-          revealedClues={revealedClues}
-          onClose={() => setHostPanelOpen(false)}
-        />
 
         {/* Decoder Modal */}
         <DecoderModal
@@ -229,16 +205,17 @@ export default function App() {
 
   // Full Screen View with Close Button
   return (
-    <div className="min-h-screen bg-[#f4f1ea] text-stone-900 font-handwritten relative overflow-hidden bg-texture view-container">
-      {/* Background Decor */}
-      <div className="fixed top-0 left-0 w-full h-2 bg-red-700 z-50"></div>
+    <div className="min-h-screen bg-gradient-to-br from-halloween-dark via-purple-900 to-halloween-dark text-white relative overflow-hidden view-container">
+      {/* Decorative top bar */}
+      <div className="fixed top-0 left-0 w-full h-2 bg-gradient-to-r from-halloween-orange via-halloween-pink to-halloween-purple z-50"></div>
       
       {/* Close Button */}
       <button
         onClick={() => setActiveTab(null)}
-        className="fixed top-4 right-4 z-50 w-12 h-12 bg-red-600 border-3 border-stone-900 text-white rounded-full shadow-[3px_3px_0px_#1c1917] flex items-center justify-center hover:scale-110 transition-all active:scale-95"
+        className="fixed top-4 right-4 z-50 w-14 h-14 bg-gradient-to-br from-halloween-orange to-halloween-pink border-4 border-white text-white rounded-full shadow-halloween-lg flex items-center justify-center hover:scale-110 transition-all active:scale-95 animate-bounce-slow opacity-100"
+        style={{ backgroundColor: '#FF6B35' }}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={4} stroke="currentColor" className="w-7 h-7">
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
@@ -247,7 +224,6 @@ export default function App() {
       <Header 
         currentRound={currentRound}
         currentRoundData={currentRoundData}
-        onSecretTap={toggleHostPanel}
       />
 
       {/* Main Content */}
@@ -256,6 +232,19 @@ export default function App() {
         <FeedbackToast feedback={feedback} />
 
         {/* View Routing */}
+        {activeTab === 'host' && (
+          <HostPanel
+            isOpen={true}
+            currentRound={currentRound}
+            isVotingOpen={isVotingOpen}
+            voteResultsVisible={voteResultsVisible}
+            revealedToMurderer={revealedToMurderer}
+            unlockedFiles={unlockedFiles}
+            revealedClues={revealedClues}
+            onClose={() => setActiveTab(null)}
+          />
+        )}
+
         {activeTab === 'dashboard' && (
           <DashboardView myCharacter={myCharacter} currentRound={currentRound} />
         )}
@@ -301,25 +290,18 @@ export default function App() {
           />
         )}
 
-        {/* Host Controls Panel */}
-        <HostPanel
-          isOpen={hostPanelOpen}
-          currentRound={currentRound}
-          isVotingOpen={isVotingOpen}
-          voteResultsVisible={voteResultsVisible}
-          revealedToMurderer={revealedToMurderer}
-          unlockedFiles={unlockedFiles}
-          revealedClues={revealedClues}
-          onClose={() => setHostPanelOpen(false)}
-        />
+        {activeTab === 'help' && (
+          <HelpView />
+        )}
 
         {/* Decoder FAB - Only show on Intel/Clues screen */}
         {activeTab === 'intel' && (
           <button
             onClick={() => setModalOpen(true)}
-            className="fixed bottom-6 right-6 w-14 h-14 sm:w-16 sm:h-16 bg-red-600 border-4 border-stone-900 text-white rounded-full shadow-[4px_4px_0px_#1c1917] flex items-center justify-center hover:scale-110 transition-transform z-40 active:translate-y-1 active:shadow-none"
+            className="fixed bottom-8 right-8 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-halloween-orange to-halloween-pink border-4 border-white text-white rounded-full shadow-halloween-lg flex items-center justify-center hover:scale-110 transition-all z-40 active:scale-95 animate-bounce-slow opacity-100"
+            style={{ backgroundColor: '#FF6B35' }}
           >
-            <Calculator size={28} className="sm:w-8 sm:h-8" />
+            <Calculator size={32} className="sm:w-10 sm:h-10" />
           </button>
         )}
       </main>
@@ -343,7 +325,7 @@ export default function App() {
       />
 
       {/* View Transition Animation */}
-      <style jsx>{`
+      <style>{`
         .view-container {
           animation: slideInFromRight 0.3s ease-out;
         }

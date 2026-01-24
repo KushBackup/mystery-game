@@ -210,7 +210,7 @@ export const TimelineView = ({ myCharacter }) => {
         )}
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes pulse-slow {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.7; }

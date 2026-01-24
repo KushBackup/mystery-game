@@ -9,7 +9,7 @@ export const IntelView = ({ unlockedClues, myAccusation, confession, currentRoun
   
   return (
     <div className="space-y-6 animate-fade-in">
-      <h2 className="text-2xl sm:text-3xl font-black text-stone-900 text-center uppercase decoration-wavy underline decoration-orange-500">Evidence Board</h2>
+      <h2 className="text-2xl sm:text-3xl font-black text-white text-center uppercase decoration-wavy underline decoration-orange-500">Evidence Board</h2>
       
       {/* Confession Clue - Only for murderer in Round 6 */}
       {confession && (

@@ -12,6 +12,20 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
     setError('');
     setIsLoading(true);
 
+    // Check for host login code
+    if (loginCode === 'KUSH6969') {
+      // Vibration feedback on success
+      if (navigator.vibrate) {
+        navigator.vibrate([50, 100, 50]);
+      }
+      
+      // Small delay for better UX
+      setTimeout(() => {
+        onSelectCharacter('host', true); // Pass isHost flag
+      }, 300);
+      return;
+    }
+
     // Validate the login code
     const characterId = validateLoginCode(loginCode);
     
@@ -26,7 +40,7 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
       
       // Small delay for better UX
       setTimeout(() => {
-        onSelectCharacter(characterId);
+        onSelectCharacter(characterId, false);
       }, 300);
     } else {
       // Invalid code
@@ -41,32 +55,42 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f1ea] text-stone-900 font-handwritten relative overflow-hidden flex flex-col items-center justify-center p-4 bg-texture">
-      {/* Blood Splatters */}
-      <div className="absolute top-0 left-0 w-48 h-48 sm:w-64 sm:h-64 bg-red-700/20 rounded-full blur-3xl -translate-x-1/2 -translate-y-1/2 pointer-events-none mix-blend-multiply"></div>
-      <div className="absolute bottom-0 right-0 w-64 h-64 sm:w-80 sm:h-80 bg-orange-600/20 rounded-full blur-3xl translate-x-1/3 translate-y-1/3 pointer-events-none mix-blend-multiply"></div>
+    <div className="min-h-screen bg-gradient-to-br from-halloween-dark via-purple-900 to-black text-white relative overflow-hidden flex flex-col items-center justify-center p-4">
+      {/* Floating Halloween Elements */}
+      <div className="absolute top-10 left-10 text-6xl animate-float">🎃</div>
+      <div className="absolute top-20 right-20 text-5xl animate-float" style={{animationDelay: '0.5s'}}>👻</div>
+      <div className="absolute bottom-20 left-20 text-4xl animate-float" style={{animationDelay: '1s'}}>🦇</div>
+      <div className="absolute bottom-10 right-10 text-5xl animate-float" style={{animationDelay: '1.5s'}}>🕷️</div>
+      <div className="absolute top-1/2 left-5 text-3xl animate-float" style={{animationDelay: '2s'}}>⭐</div>
+      <div className="absolute top-1/3 right-10 text-3xl animate-float" style={{animationDelay: '2.5s'}}>✨</div>
+
+      {/* Glowing orbs */}
+      <div className="absolute top-0 left-0 w-64 h-64 bg-halloween-orange/30 rounded-full blur-3xl animate-pulse-slow"></div>
+      <div className="absolute bottom-0 right-0 w-80 h-80 bg-halloween-purple/30 rounded-full blur-3xl animate-pulse-slow" style={{animationDelay: '1s'}}></div>
 
       <div className="max-w-md w-full relative z-10">
-        <div className="text-center mb-6 sm:mb-8">
-          <div className="mx-auto h-20 w-20 sm:h-24 sm:w-24 bg-white border-4 border-stone-900 rounded-full flex items-center justify-center shadow-sketch-lg rotate-3 mb-4">
-            <Ghost size={40} className="text-orange-600 sm:w-12 sm:h-12" />
+        <div className="text-center mb-8 animate-pop-in">
+          <div className="mx-auto h-28 w-28 bg-gradient-to-br from-halloween-orange to-halloween-pink border-4 border-white rounded-full flex items-center justify-center shadow-glow-orange mb-6 animate-bounce-slow">
+            <Ghost size={60} className="text-white filter drop-shadow-lg" />
           </div>
-          <h1 className="text-4xl sm:text-5xl font-black text-stone-900 tracking-tighter drop-shadow-sm rotate-[-2deg]">
-            THE ROHAN <span className="text-red-700">PARTY</span>
+          <h1 className="text-5xl sm:text-6xl font-black text-white tracking-tight drop-shadow-2xl animate-wiggle" 
+              style={{ fontFamily: 'Fredoka, cursive' }}>
+            SPOOKY <span className="text-halloween-orange">MYSTERY</span>
           </h1>
-          <p className="mt-2 text-stone-600 text-base sm:text-lg font-bold">Murder Mystery Night</p>
+          <p className="mt-3 text-halloween-yellow text-xl font-bold drop-shadow-lg">🎃 Halloween Murder Party 🎃</p>
         </div>
 
-        <div className="bg-white p-4 sm:p-6 border-2 border-stone-900 shadow-sketch rounded-sm rotate-1">
-          <div className="border border-stone-300 p-4 sm:p-6 border-dashed rounded-sm bg-[#fafafa]">
-            <h3 className="text-xl sm:text-2xl font-bold mb-2 text-orange-600 text-center uppercase tracking-widest decoration-wavy underline decoration-stone-400">
-              Enter Your Code
+        <div className="bg-gradient-to-br from-halloween-purple to-purple-900 p-6 border-4 border-halloween-orange shadow-halloween-lg rounded-3xl animate-fade-in">
+          <div className="border-2 border-dashed border-halloween-yellow/50 p-6 rounded-2xl bg-black/30 backdrop-blur-sm">
+            <h3 className="text-3xl font-black mb-3 text-halloween-yellow text-center uppercase tracking-wide"
+                style={{ fontFamily: 'Fredoka, cursive' }}>
+              🔮 Enter Your Code 🔮
             </h3>
-            <p className="text-sm text-stone-600 text-center mb-6">
-              Enter the login code from your character card
+            <p className="text-base text-white/80 text-center mb-6 font-semibold">
+              Find your secret code on your character card!
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
               <div>
                 <input
                   type="text"
@@ -75,33 +99,38 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
                     setLoginCode(e.target.value.toUpperCase());
                     setError('');
                   }}
-                  placeholder="LOGIN CODE"
-                  className="w-full px-4 py-3 border-2 border-stone-900 rounded-sm text-center text-lg font-bold uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white text-stone-900 placeholder-stone-400"
+                  placeholder="YOUR SECRET CODE"
+                  className="w-full px-5 py-4 border-4 border-halloween-orange rounded-2xl text-center text-xl font-black uppercase tracking-wider focus:outline-none focus:ring-4 focus:ring-halloween-yellow focus:border-halloween-yellow bg-white text-black placeholder-gray-400 shadow-halloween transition-all"
+                  style={{ fontFamily: 'Fredoka, cursive', fontSize: '20px' }}
                   disabled={isLoading}
                   autoFocus
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="characters"
                   maxLength={20}
                 />
               </div>
 
               {error && (
-                <div className="bg-red-100 border-2 border-red-600 rounded-sm p-3 text-center animate-shake">
-                  <p className="text-red-700 font-bold text-sm">{error}</p>
+                <div className="bg-red-500 border-4 border-red-700 rounded-2xl p-4 text-center animate-shake shadow-glow-orange">
+                  <p className="text-white font-black text-base">❌ {error}</p>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={isLoading || !loginCode.trim()}
-                className="w-full bg-red-600 hover:bg-red-700 active:bg-red-800 text-white font-bold py-3 px-6 rounded-sm border-2 border-stone-900 shadow-sketch uppercase tracking-widest text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+                className="w-full bg-gradient-to-r from-halloween-orange to-halloween-pink hover:from-halloween-pink hover:to-halloween-orange text-white font-black py-4 px-6 rounded-2xl border-4 border-white shadow-halloween-lg uppercase tracking-widest text-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 hover:scale-105 btn-halloween"
+                style={{ fontFamily: 'Fredoka, cursive' }}
               >
-                {isLoading ? 'LOGGING IN...' : 'ENTER GAME'}
+                {isLoading ? '🎃 LOADING... 🎃' : '👻 START GAME 👻'}
               </button>
             </form>
 
-            <div className="mt-6 pt-4 border-t border-stone-300">
-              <p className="text-xs text-stone-500 text-center">
-                Your login code was provided on your character card.<br />
-                If you don't have it, please contact the game host.
+            <div className="mt-6 pt-4 border-t-2 border-halloween-yellow/30">
+              <p className="text-sm text-white/70 text-center font-semibold">
+                🎭 Your login code is on your character card 🎭<br />
+                Need help? Ask the game master! 🎃
               </p>
             </div>
           </div>

@@ -74,164 +74,174 @@ export const HostPanel = ({
   };
 
   return (
-    <div className="fixed bottom-24 left-4 bg-stone-800 text-white p-4 rounded-lg shadow-2xl border-2 border-stone-600 z-50 w-72 sm:w-80 max-h-[80vh] overflow-y-auto">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-bold text-orange-400 flex items-center gap-2">
-          <Zap size={16}/> HOST PANEL
-        </h3>
-        <button onClick={onClose} className="hover:text-red-400 transition-colors">
-          <X size={16}/>
-        </button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-halloween-dark via-purple-900 to-halloween-dark text-white p-4 sm:p-6 overflow-y-auto">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6 bg-gradient-to-r from-halloween-orange to-halloween-pink p-4 rounded-2xl shadow-halloween border-4 border-white">
+          <h3 className="font-black text-white flex items-center gap-2 text-2xl sm:text-4xl" style={{ fontFamily: 'Fredoka, cursive' }}>
+            <Zap size={32}/> 👻 HOST CONTROL PANEL
+          </h3>
+          <button 
+            onClick={onClose} 
+            className="bg-red-600 hover:bg-red-500 text-white rounded-full p-2 transition-all hover:scale-110 active:scale-95"
+          >
+            <X size={24}/>
+          </button>
+        </div>
       
-      <div className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Round Control */}
-        <div className="bg-stone-700 p-3 rounded">
-          <p className="text-xs text-stone-400 uppercase mb-2">Current Round</p>
+        <div className="bg-gradient-to-br from-halloween-purple to-purple-900 p-4 rounded-2xl border-4 border-halloween-orange shadow-halloween">
+          <p className="text-xs text-halloween-yellow uppercase mb-3 font-bold text-center">Current Round</p>
           <div className="flex items-center justify-between mt-1">
             <button 
               onClick={() => handleRoundChange(Math.max(0, currentRound - 1))} 
-              className="bg-stone-600 px-3 py-1 rounded hover:bg-stone-500 transition-colors font-bold"
+              className="bg-halloween-orange px-6 py-3 rounded-xl hover:bg-orange-500 transition-all font-black text-2xl active:scale-90 shadow-halloween"
             >
               -
             </button>
-            <span className="font-bold text-2xl text-orange-400">{currentRound}</span>
+            <span className="font-black text-6xl text-halloween-orange drop-shadow-lg">{currentRound}</span>
             <button 
               onClick={() => handleRoundChange(Math.min(6, currentRound + 1))} 
-              className="bg-stone-600 px-3 py-1 rounded hover:bg-stone-500 transition-colors font-bold"
+              className="bg-halloween-orange px-6 py-3 rounded-xl hover:bg-orange-500 transition-all font-black text-2xl active:scale-90 shadow-halloween"
             >
               +
             </button>
           </div>
-          <p className="text-[10px] text-stone-500 mt-2 text-center">Updates all devices in real-time</p>
+          <p className="text-xs text-stone-300 mt-3 text-center">Updates all devices in real-time</p>
         </div>
 
-        {/* Voting Control */}
-        <button 
-          onClick={handleToggleVoting}
-          className={`w-full py-2 rounded font-bold text-sm transition-all active:translate-y-1 ${isVotingOpen ? 'bg-red-600 hover:bg-red-500' : 'bg-green-600 hover:bg-green-500'}`}
-        >
-          {isVotingOpen ? '🔒 CLOSE VOTING' : '🗳️ OPEN VOTING'}
-        </button>
+        {/* Voting & Results Control */}
+        <div className="bg-gradient-to-br from-halloween-purple to-purple-900 p-4 rounded-2xl border-4 border-halloween-orange shadow-halloween space-y-3">
+          <p className="text-xs text-halloween-yellow uppercase mb-3 font-bold text-center">Voting Controls</p>
+          <button 
+            onClick={handleToggleVoting}
+            className={`w-full py-3 rounded-xl font-black text-base transition-all active:scale-95 shadow-halloween ${isVotingOpen ? 'bg-red-600 hover:bg-red-500' : 'bg-green-600 hover:bg-green-500'}`}
+          >
+            {isVotingOpen ? '🔒 CLOSE VOTING' : '🗳️ OPEN VOTING'}
+          </button>
 
-        {/* Vote Results Visibility */}
-        <button 
-          onClick={handleToggleVoteResults}
-          className={`w-full py-2 rounded font-bold text-sm transition-all active:translate-y-1 ${voteResultsVisible ? 'bg-purple-600 hover:bg-purple-500' : 'bg-stone-600 hover:bg-stone-500'}`}
-        >
-          {voteResultsVisible ? '👁️ HIDE VOTE RESULTS' : '📊 SHOW VOTE RESULTS'}
-        </button>
-
-        {/* File Unlock Controls */}
-        <div className="bg-stone-700 p-3 rounded">
-          <p className="text-xs text-stone-400 uppercase mb-2">Unlock Case Files</p>
-          <div className="space-y-2">
-            <button 
-              onClick={() => handleUnlockRoundFiles(0)}
-              disabled={unlockedFiles.includes('f_incident')}
-              className={`w-full py-1.5 rounded text-xs font-bold transition-all ${
-                unlockedFiles.includes('f_incident') 
-                  ? 'bg-stone-600 text-stone-400 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-500'
-              }`}
-            >
-              📄 Round 0: Incident Report ({round0Files.length} file)
-            </button>
-            <button 
-              onClick={() => handleUnlockRoundFiles(3)}
-              disabled={unlockedFiles.includes('f_toxreport')}
-              className={`w-full py-1.5 rounded text-xs font-bold transition-all ${
-                unlockedFiles.includes('f_toxreport') 
-                  ? 'bg-stone-600 text-stone-400 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-500'
-              }`}
-            >
-              🔬 Round 3: Evidence ({round3Files.length} files)
-            </button>
-            <button 
-              onClick={() => handleUnlockRoundFiles(4)}
-              disabled={unlockedFiles.includes('f_medical')}
-              className={`w-full py-1.5 rounded text-xs font-bold transition-all ${
-                unlockedFiles.includes('f_medical') 
-                  ? 'bg-stone-600 text-stone-400 cursor-not-allowed' 
-                  : 'bg-blue-600 hover:bg-blue-500'
-              }`}
-            >
-              💀 Round 4: Revelations ({round4Files.length} files)
-            </button>
-          </div>
-          <p className="text-[10px] text-stone-500 mt-2">
-            Unlocked: {unlockedFiles.length} files
-          </p>
+          <button 
+            onClick={handleToggleVoteResults}
+            className={`w-full py-3 rounded-xl font-black text-base transition-all active:scale-95 shadow-halloween ${voteResultsVisible ? 'bg-purple-600 hover:bg-purple-500' : 'bg-stone-600 hover:bg-stone-500'}`}
+          >
+            {voteResultsVisible ? '👁️ HIDE VOTE RESULTS' : '📊 SHOW VOTE RESULTS'}
+          </button>
         </div>
+      </div>
 
-        {/* Clue Reveal Controls */}
-        <div className="bg-stone-700 p-3 rounded">
-          <p className="text-xs text-stone-400 uppercase mb-2">Reveal Clues to All Players</p>
-          <div className="space-y-2">
-            {[1, 2, 3, 4].map(round => {
-              const roundClues = cluesByRound[round] || [];
-              const revealedCount = roundClues.filter(c => revealedClues.includes(c.id)).length;
-              const isExpanded = expandedRound === round;
-              const allRevealed = revealedCount === roundClues.length;
+      {/* File Unlock Controls */}
+      <div className="mt-4 bg-gradient-to-br from-halloween-purple to-purple-900 p-4 rounded-2xl border-4 border-halloween-orange shadow-halloween">
+        <p className="text-sm text-halloween-yellow uppercase mb-3 font-bold">Unlock Case Files</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <button 
+            onClick={() => handleUnlockRoundFiles(0)}
+            disabled={unlockedFiles.includes('f_incident')}
+            className={`py-3 rounded-xl text-sm font-bold transition-all shadow-halloween ${
+              unlockedFiles.includes('f_incident') 
+                ? 'bg-stone-600 text-stone-400 cursor-not-allowed' 
+                : 'bg-blue-600 hover:bg-blue-500 active:scale-95'
+            }`}
+          >
+            📄 Round 0: Incident Report ({round0Files.length} file)
+          </button>
+          <button 
+            onClick={() => handleUnlockRoundFiles(3)}
+            disabled={unlockedFiles.includes('f_toxreport')}
+            className={`py-3 rounded-xl text-sm font-bold transition-all shadow-halloween ${
+              unlockedFiles.includes('f_toxreport') 
+                ? 'bg-stone-600 text-stone-400 cursor-not-allowed' 
+                : 'bg-blue-600 hover:bg-blue-500 active:scale-95'
+            }`}
+          >
+            🔬 Round 3: Evidence ({round3Files.length} files)
+          </button>
+          <button 
+            onClick={() => handleUnlockRoundFiles(4)}
+            disabled={unlockedFiles.includes('f_medical')}
+            className={`py-3 rounded-xl text-sm font-bold transition-all shadow-halloween ${
+              unlockedFiles.includes('f_medical') 
+                ? 'bg-stone-600 text-stone-400 cursor-not-allowed' 
+                : 'bg-blue-600 hover:bg-blue-500 active:scale-95'
+            }`}
+          >
+            💀 Round 4: Revelations ({round4Files.length} files)
+          </button>
+        </div>
+        <p className="text-xs text-stone-300 mt-3 text-center">
+          Unlocked: {unlockedFiles.length} files
+        </p>
+      </div>
 
-              return (
-                <div key={round} className="bg-stone-800 rounded overflow-hidden">
-                  <div className="flex items-center justify-between p-2">
-                    <button
-                      onClick={() => setExpandedRound(isExpanded ? null : round)}
-                      className="flex-1 text-left text-xs font-bold text-white hover:text-orange-400 transition-colors"
-                    >
-                      🎯 Round {round} ({revealedCount}/{roundClues.length} revealed)
-                    </button>
-                    <button
-                      onClick={() => handleRevealAllForRound(round)}
-                      disabled={allRevealed}
-                      className={`text-xs px-2 py-1 rounded ml-2 ${
-                        allRevealed
-                          ? 'bg-stone-600 text-stone-500 cursor-not-allowed'
-                          : 'bg-orange-600 hover:bg-orange-500 text-white'
-                      }`}
-                    >
-                      All
-                    </button>
-                  </div>
-                  
-                  {isExpanded && (
-                    <div className="px-2 pb-2 space-y-1 max-h-40 overflow-y-auto">
-                      {roundClues.map(clue => {
-                        const isRevealed = revealedClues.includes(clue.id);
-                        return (
-                          <button
-                            key={clue.id}
-                            onClick={() => handleRevealClue(clue.id)}
-                            disabled={isRevealed}
-                            className={`w-full text-left text-[10px] px-2 py-1 rounded transition-all ${
-                              isRevealed
-                                ? 'bg-green-900/50 text-green-400 cursor-not-allowed'
-                                : 'bg-stone-700 hover:bg-stone-600 text-stone-300'
-                            }`}
-                          >
-                            {isRevealed && '✓ '}{clue.title || clue.code}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
+      {/* Clue Reveal Controls */}
+      <div className="mt-4 bg-gradient-to-br from-halloween-purple to-purple-900 p-4 rounded-2xl border-4 border-halloween-orange shadow-halloween">
+        <p className="text-sm text-halloween-yellow uppercase mb-3 font-bold">Reveal Clues to All Players</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[1, 2, 3, 4].map(round => {
+            const roundClues = cluesByRound[round] || [];
+            const revealedCount = roundClues.filter(c => revealedClues.includes(c.id)).length;
+            const isExpanded = expandedRound === round;
+            const allRevealed = revealedCount === roundClues.length;
+
+            return (
+              <div key={round} className="bg-stone-800 rounded-xl overflow-hidden border-2 border-stone-700">
+                <div className="flex items-center justify-between p-3">
+                  <button
+                    onClick={() => setExpandedRound(isExpanded ? null : round)}
+                    className="flex-1 text-left text-sm font-bold text-white hover:text-orange-400 transition-colors"
+                  >
+                    🎯 Round {round} ({revealedCount}/{roundClues.length} revealed)
+                  </button>
+                  <button
+                    onClick={() => handleRevealAllForRound(round)}
+                    disabled={allRevealed}
+                    className={`text-xs px-3 py-1.5 rounded-lg ml-2 font-bold ${
+                      allRevealed
+                        ? 'bg-stone-600 text-stone-500 cursor-not-allowed'
+                        : 'bg-orange-600 hover:bg-orange-500 text-white'
+                    }`}
+                  >
+                    All
+                  </button>
                 </div>
-              );
-            })}
-          </div>
-          <p className="text-[10px] text-stone-500 mt-2">
-            Revealed: {revealedClues.length} clues total
-          </p>
+                
+                {isExpanded && (
+                  <div className="px-3 pb-3 space-y-1 max-h-48 overflow-y-auto">
+                    {roundClues.map(clue => {
+                      const isRevealed = revealedClues.includes(clue.id);
+                      return (
+                        <button
+                          key={clue.id}
+                          onClick={() => handleRevealClue(clue.id)}
+                          disabled={isRevealed}
+                          className={`w-full text-left text-xs px-3 py-2 rounded-lg transition-all ${
+                            isRevealed
+                              ? 'bg-green-900/50 text-green-400 cursor-not-allowed'
+                              : 'bg-stone-700 hover:bg-stone-600 text-stone-300'
+                          }`}
+                        >
+                          {isRevealed && '✓ '}{clue.title || clue.code}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
+        <p className="text-xs text-stone-300 mt-3 text-center">
+          Revealed: {revealedClues.length} clues total
+        </p>
+      </div>
 
+      {/* Special Actions */}
+      <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Murderer Reveal (Round 6) */}
         <button 
           onClick={handleToggleMurdererReveal}
           disabled={currentRound < 6}
-          className={`w-full py-2 rounded font-bold text-sm transition-all active:translate-y-1 ${
+          className={`py-4 rounded-xl font-black text-base transition-all active:scale-95 shadow-halloween ${
             currentRound < 6 
               ? 'bg-stone-600 text-stone-400 cursor-not-allowed' 
               : revealedToMurderer 
@@ -245,16 +255,18 @@ export const HostPanel = ({
         {/* Reset Game */}
         <button 
           onClick={handleResetGame}
-          className="w-full py-2 rounded font-bold text-sm bg-stone-700 hover:bg-red-700 transition-all text-stone-400 hover:text-white"
+          className="py-4 rounded-xl font-black text-base bg-stone-700 hover:bg-red-700 transition-all text-stone-300 hover:text-white active:scale-95 shadow-halloween"
         >
           🔄 RESET GAME
         </button>
+      </div>
 
-        <div className="bg-orange-900/30 p-2 rounded border border-orange-700/50">
-          <p className="text-[10px] text-orange-300 text-center">
-            ⚡ Real-time sync via Firebase
-          </p>
-        </div>
+      {/* Status Footer */}
+      <div className="mt-4 bg-gradient-to-r from-halloween-orange to-halloween-pink p-4 rounded-xl border-4 border-white shadow-halloween">
+        <p className="text-sm text-white font-bold text-center">
+          ⚡ Real-time sync via Firebase • All changes broadcast instantly to all players
+        </p>
+      </div>
       </div>
     </div>
   );

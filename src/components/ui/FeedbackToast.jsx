@@ -5,13 +5,15 @@ export const FeedbackToast = ({ feedback }) => {
   if (!feedback) return null;
 
   return (
-    <div className={`fixed top-20 left-4 right-4 z-50 p-4 border-4 shadow-sketch-lg flex items-center gap-3 animate-bounce-short rotate-1 ${
-      feedback.type === 'error' ? 'bg-red-100 border-red-700 text-red-900' : 
-      feedback.type === 'success' ? 'bg-green-100 border-green-700 text-green-900' :
-      'bg-blue-100 border-blue-700 text-blue-900'
+    <div className={`fixed top-24 left-4 right-4 z-50 p-5 border-4 border-white rounded-3xl shadow-halloween-lg flex items-center gap-4 animate-pop-in backdrop-blur-sm ${
+      feedback.type === 'error' ? 'bg-gradient-to-r from-red-500 to-red-600 text-white' : 
+      feedback.type === 'success' ? 'bg-gradient-to-r from-halloween-green to-green-500 text-white' :
+      'bg-gradient-to-r from-halloween-purple to-purple-600 text-white'
     }`}>
-      {feedback.type === 'error' ? <AlertTriangle size={24} /> : <ShieldCheck size={24} />}
-      <span className="font-black text-sm sm:text-lg">{feedback.msg}</span>
+      <div className="text-3xl animate-bounce">
+        {feedback.type === 'error' ? '❌' : feedback.type === 'success' ? '✅' : 'ℹ️'}
+      </div>
+      <span className="font-black text-base sm:text-xl" style={{ fontFamily: 'Fredoka, cursive' }}>{feedback.msg}</span>
     </div>
   );
 };

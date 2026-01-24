@@ -117,7 +117,7 @@ export const VoteResultsModal = ({ isOpen, onClose, voteCounts }) => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         @keyframes slideInRight {
           from {
             opacity: 0;
