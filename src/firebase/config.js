@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, getDocs, deleteDoc, writeBatch } from 'firebase/firestore';
 
 // Firebase project configuration
 const firebaseConfig = {
@@ -136,10 +136,91 @@ export const unlockFilesForRound = async (roundNumber) => {
   }
 };
 
+// Clear all chat messages
+export const clearAllMessages = async () => {
+  try {
+    const messagesRef = collection(db, 'messages');
+    const q = query(messagesRef);
+    const snapshot = await getDocs(q);
+    
+    // Use batch delete for better performance
+    const batch = writeBatch(db);
+    snapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+    
+    await batch.commit();
+    console.log(`Cleared ${snapshot.docs.length} messages`);
+  } catch (error) {
+    console.error('Error clearing messages:', error);
+  }
+};
+
+// --- PLAYER DATA (Unlocked Clues) ---
+
+const PLAYER_DATA_DOC = 'gameState/playerData';
+
+// Initialize player data
+export const initializePlayerData = async () => {
+  const playerDataRef = doc(db, PLAYER_DATA_DOC);
+  try {
+    const docSnap = await getDoc(playerDataRef);
+    if (!docSnap.exists()) {
+      await setDoc(playerDataRef, {
+        unlockedClues: {}, // { userId: [clueId1, clueId2, ...] }
+        lastUpdated: Date.now()
+      });
+    }
+  } catch (error) {
+    console.error('Error initializing player data:', error);
+  }
+};
+
+// Add unlocked clue for a player
+export const addUnlockedClue = async (userId, clueId) => {
+  const playerDataRef = doc(db, PLAYER_DATA_DOC);
+  try {
+    const docSnap = await getDoc(playerDataRef);
+    const data = docSnap.exists() ? docSnap.data() : { unlockedClues: {} };
+    
+    const unlockedClues = data.unlockedClues || {};
+    const userClues = unlockedClues[userId] || [];
+    
+    if (!userClues.includes(clueId)) {
+      userClues.push(clueId);
+      unlockedClues[userId] = userClues;
+      
+      await setDoc(playerDataRef, {
+        unlockedClues,
+        lastUpdated: Date.now()
+      });
+    }
+  } catch (error) {
+    console.error('Error adding unlocked clue:', error);
+    throw error;
+  }
+};
+
+// Subscribe to player data changes
+export const subscribeToPlayerData = (callback) => {
+  const playerDataRef = doc(db, PLAYER_DATA_DOC);
+  return onSnapshot(playerDataRef, (doc) => {
+    if (doc.exists()) {
+      callback(doc.data());
+    } else {
+      callback({ unlockedClues: {} });
+    }
+  });
+};
+
 // Reset game state (for new game)
 export const resetGameState = async () => {
   const gameStateRef = doc(db, GAME_STATE_DOC);
+  const votesRef = doc(db, VOTES_DOC);
+  const playerDataRef = doc(db, 'gameState/playerData');
+  
   try {
+    // Reset main game state
     await setDoc(gameStateRef, {
       currentRound: 0,
       isVotingOpen: false,
@@ -148,6 +229,23 @@ export const resetGameState = async () => {
       revealedToMurderer: false,
       lastUpdated: Date.now()
     });
+
+    // Reset votes
+    await setDoc(votesRef, {
+      votes: {},
+      voteCounts: {},
+      lastUpdated: Date.now()
+    });
+
+    // Reset player data (unlocked clues)
+    await setDoc(playerDataRef, {
+      unlockedClues: {},
+      lastUpdated: Date.now()
+    });
+
+    // Clear all chat messages
+    await clearAllMessages();
+
   } catch (error) {
     console.error('Error resetting game state:', error);
   }

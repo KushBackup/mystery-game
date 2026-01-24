@@ -74,6 +74,8 @@ export const IntelView = ({ unlockedClues, myAccusation, confession, currentRoun
         {unlockedClueItems.map((clue, idx) => {
           const rotation = idx % 2 === 0 ? 'rotate-1' : 'rotate-[-1deg]';
           const isRevelation = clue.type === 'REVELATION';
+          const isAccusation = clue.type === 'ACCUSATION';
+          const clueText = isAccusation ? clue.accusation : clue.content;
           
           return (
             <div 
@@ -87,7 +89,7 @@ export const IntelView = ({ unlockedClues, myAccusation, confession, currentRoun
               </div>
               <div>
                 <span className={`text-[10px] ${isRevelation ? 'bg-purple-200' : 'bg-stone-200'} px-2 py-1 rounded font-bold uppercase mb-2 inline-block`}>{clue.type}</span>
-                <p className="text-base sm:text-lg font-bold text-stone-800 leading-snug font-serif italic mb-2">"{clue.content}"</p>
+                <p className="text-base sm:text-lg font-bold text-stone-800 leading-snug font-serif italic mb-2">"{clueText}"</p>
               </div>
             </div>
           );

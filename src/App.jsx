@@ -16,7 +16,7 @@ import { VoteResultsModal } from './components/modals/VoteResultsModal';
 import { CharacterSelect } from './components/CharacterSelect';
 import { HostPanel } from './components/HostPanel';
 import { ROUNDS, CHARACTERS, CLUE_DB, getAssignedAccusation, CONFESSION_CLUE } from './data/gameData';
-import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase } from './firebase/config';
+import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue } from './firebase/config';
 
 export default function App() {
   // Global State
@@ -65,6 +65,7 @@ export default function App() {
   useEffect(() => {
     initializeGameState();
     initializeVotes();
+    initializePlayerData();
   }, []);
 
   // Subscribe to real-time game state changes
@@ -90,6 +91,18 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  // Subscribe to player data changes (unlocked clues)
+  useEffect(() => {
+    const unsubscribe = subscribeToPlayerData((playerData) => {
+      if (currentUser) {
+        const userClues = playerData.unlockedClues?.[currentUser] || [];
+        setUnlockedClues(userClues);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [currentUser]);
+
   // --- ACTIONS ---
 
   const handleLogin = (id) => {
@@ -112,10 +125,17 @@ export default function App() {
       } else if (unlockedClues.includes(foundClue.id)) {
         setFeedback({ type: 'info', msg: "Already in your files." });
       } else {
-        setUnlockedClues([...unlockedClues, foundClue.id]);
-        setFeedback({ type: 'success', msg: `EVIDENCE ADDED: ${foundClue.title}` });
-        setModalOpen(false);
-        setActiveTab('intel'); // Changed from 'INTEL' to 'intel'
+        // Add to Firebase
+        addUnlockedClue(currentUser, foundClue.id)
+          .then(() => {
+            setFeedback({ type: 'success', msg: `EVIDENCE ADDED: ${foundClue.title}` });
+            setModalOpen(false);
+            setActiveTab('intel');
+          })
+          .catch((error) => {
+            console.error('Error adding clue:', error);
+            setFeedback({ type: 'error', msg: "Failed to add clue" });
+          });
       }
     } else if (foundChar) {
        setFeedback({ type: 'success', msg: `MET: ${foundChar.name}.` });

@@ -16,8 +16,8 @@ export const VotingView = ({
   const [showResults, setShowResults] = useState(false);
   const [confirmingVote, setConfirmingVote] = useState(null);
 
-  // Filter to only show suspects (MURDERER + SUSPECT roles)
-  const suspects = CHARACTERS.filter(char => char.role === 'MURDERER' || char.role === 'SUSPECT');
+  // Show all characters for voting
+  const suspects = CHARACTERS;
   const hasVoted = votes[currentRound] !== undefined;
   const hasAnyVotes = Object.keys(voteCounts || {}).length > 0;
 
