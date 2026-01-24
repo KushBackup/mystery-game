@@ -984,3 +984,48 @@ export const isMurderer = (characterId) => {
   const char = CHARACTERS.find(c => c.id === characterId);
   return char?.role === 'MURDERER';
 };
+
+// ============================================
+// LOGIN CODE MAPPING
+// ============================================
+
+export const LOGIN_CODE_MAP = {
+  'KFC': 'char_anish',
+  'HACKERMAN': 'char_ishank',
+  'NOWORRIES': 'char_shreyash',
+  'INDORI': 'char_esha',
+  'WEDDING': 'char_govind',
+  'TRUFFLES': 'char_rashmi',
+  'BATMAN': 'char_adish',
+  'WOODWORK': 'char_anubhav',
+  'BLUETOOTH': 'char_antara',
+  'SWIFTY': 'char_gautam',
+  'YALLA': 'char_shannon',
+  'ILOVEGOA': 'char_tanishka',
+  'TINTIN': 'char_andrew',
+  'IMPOSTER': 'char_anika',
+  'ALIENCAT': 'char_rea',
+  'SAILOR': 'char_bharath',
+  'DOUGH': 'char_chaaya',
+  'MILEY': 'char_amrit',
+  'ARTSY': 'char_pallavi',
+  'SHAZAM': 'char_anusha',
+  'TRUSTNOT': 'char_sukriti',
+  'MEOW': 'char_poshika',
+  'COWBOY': 'char_arjun',
+  'MARIE': 'char_sneha',
+  'BOOM': 'char_soham',
+  'VV': 'char_nikita',
+  'ZAMEENDAR': 'char_shardul',
+  'SAFEDRIVER': 'char_srinjan',
+  'MINDFREAK': 'char_rahul',
+  'WHOSPOKE': 'char_fatema',
+  'PARTYSMART': 'char_surya',
+  'CREATE': 'char_akash'
+};
+
+// Validate login code and return character ID
+export const validateLoginCode = (code) => {
+  const upperCode = code.trim().toUpperCase();
+  return LOGIN_CODE_MAP[upperCode] || null;
+};
