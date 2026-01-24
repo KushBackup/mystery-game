@@ -33,16 +33,18 @@ export const initializeGameState = async () => {
         unlockedFiles: ['f_incident'], // Incident report unlocked by default
         voteResultsVisible: false,
         revealedToMurderer: false,
+        revealedClues: [], // Host-revealed clues
         lastUpdated: Date.now()
       });
     } else {
       // Ensure new fields exist in existing game state
       const data = docSnap.data();
-      if (!data.unlockedFiles || !('voteResultsVisible' in data) || !('revealedToMurderer' in data)) {
+      if (!data.unlockedFiles || !('voteResultsVisible' in data) || !('revealedToMurderer' in data) || !data.revealedClues) {
         await updateDoc(gameStateRef, {
           unlockedFiles: data.unlockedFiles || ['f_incident'],
           voteResultsVisible: data.voteResultsVisible ?? false,
           revealedToMurderer: data.revealedToMurderer ?? false,
+          revealedClues: data.revealedClues || [],
           lastUpdated: Date.now()
         });
       }
@@ -133,6 +135,35 @@ export const unlockFilesForRound = async (roundNumber) => {
   const filesToUnlock = roundFiles[roundNumber] || [];
   if (filesToUnlock.length > 0) {
     await unlockFiles(filesToUnlock);
+  }
+};
+
+// Reveal clues by adding clue IDs to revealedClues array
+export const revealClues = async (clueIds) => {
+  const gameStateRef = doc(db, GAME_STATE_DOC);
+  try {
+    const docSnap = await getDoc(gameStateRef);
+    const data = docSnap.data();
+    const currentRevealed = data.revealedClues || [];
+    const newRevealed = [...new Set([...currentRevealed, ...clueIds])];
+    
+    await updateDoc(gameStateRef, {
+      revealedClues: newRevealed,
+      lastUpdated: Date.now()
+    });
+  } catch (error) {
+    console.error('Error revealing clues:', error);
+  }
+};
+
+// Reveal all clues for a specific round
+export const revealCluesForRound = async (roundNumber) => {
+  // Import will be done at runtime
+  const { CLUE_DB } = await import('../data/gameData.js');
+  
+  const roundClues = CLUE_DB.filter(c => c.roundReq === roundNumber).map(c => c.id);
+  if (roundClues.length > 0) {
+    await revealClues(roundClues);
   }
 };
 
@@ -227,6 +258,7 @@ export const resetGameState = async () => {
       unlockedFiles: ['f_incident'],
       voteResultsVisible: false,
       revealedToMurderer: false,
+      revealedClues: [],
       lastUpdated: Date.now()
     });
 

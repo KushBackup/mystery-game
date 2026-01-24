@@ -32,6 +32,7 @@ export default function App() {
   const [unlockedFiles, setUnlockedFiles] = useState(['f_incident']); // Files unlocked by host
   const [voteResultsVisible, setVoteResultsVisible] = useState(false); // Host controls this
   const [revealedToMurderer, setRevealedToMurderer] = useState(false); // Round 6 reveal
+  const [revealedClues, setRevealedClues] = useState([]); // Host-revealed clues
   
   // Local UI State
   const [inputCode, setInputCode] = useState("");
@@ -76,6 +77,7 @@ export default function App() {
       setUnlockedFiles(gameState.unlockedFiles || ['f_incident']);
       setVoteResultsVisible(gameState.voteResultsVisible || false);
       setRevealedToMurderer(gameState.revealedToMurderer || false);
+      setRevealedClues(gameState.revealedClues || []);
     });
 
     return () => unsubscribe();
@@ -206,6 +208,7 @@ export default function App() {
           voteResultsVisible={voteResultsVisible}
           revealedToMurderer={revealedToMurderer}
           unlockedFiles={unlockedFiles}
+          revealedClues={revealedClues}
           onClose={() => setHostPanelOpen(false)}
         />
 
@@ -263,6 +266,7 @@ export default function App() {
             myAccusation={myAccusation}
             confession={shouldShowConfession ? CONFESSION_CLUE : null}
             currentRound={currentRound}
+            revealedClues={revealedClues}
           />
         )}
 
@@ -305,6 +309,7 @@ export default function App() {
           voteResultsVisible={voteResultsVisible}
           revealedToMurderer={revealedToMurderer}
           unlockedFiles={unlockedFiles}
+          revealedClues={revealedClues}
           onClose={() => setHostPanelOpen(false)}
         />
 

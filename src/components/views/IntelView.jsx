@@ -2,9 +2,10 @@ import React from 'react';
 import { Unlock, AlertTriangle, Target, Skull } from '../icons/IconComponents';
 import { CLUE_DB } from '../../data/gameData';
 
-export const IntelView = ({ unlockedClues, myAccusation, confession, currentRound = 0 }) => {
-  // Get unlocked clues from CLUE_DB (motive/revelation clues entered via decoder)
-  const unlockedClueItems = CLUE_DB.filter(c => unlockedClues.includes(c.id));
+export const IntelView = ({ unlockedClues, myAccusation, confession, currentRound = 0, revealedClues = [] }) => {
+  // Get clues from CLUE_DB (either unlocked by player OR revealed by host)
+  const allAvailableClueIds = [...new Set([...unlockedClues, ...revealedClues])];
+  const unlockedClueItems = CLUE_DB.filter(c => allAvailableClueIds.includes(c.id));
   
   return (
     <div className="space-y-6 animate-fade-in">

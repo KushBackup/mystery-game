@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { X, Zap } from './icons/IconComponents';
 import { 
   updateCurrentRound, 
@@ -6,9 +6,11 @@ import {
   updateVoteResultsVisibility, 
   updateMurdererReveal,
   unlockFilesForRound,
+  revealClues,
+  revealCluesForRound,
   resetGameState 
 } from '../firebase/config';
-import { CASE_FILES } from '../data/gameData';
+import { CASE_FILES, CLUE_DB } from '../data/gameData';
 
 export const HostPanel = ({ 
   isOpen, 
@@ -17,8 +19,11 @@ export const HostPanel = ({
   voteResultsVisible = false,
   revealedToMurderer = false,
   unlockedFiles = [],
+  revealedClues = [],
   onClose
 }) => {
+  const [expandedRound, setExpandedRound] = useState(null);
+  
   if (!isOpen) return null;
 
   const handleRoundChange = async (newRound) => {
@@ -47,10 +52,26 @@ export const HostPanel = ({
     }
   };
 
+  const handleRevealClue = async (clueId) => {
+    await revealClues([clueId]);
+  };
+
+  const handleRevealAllForRound = async (round) => {
+    await revealCluesForRound(round);
+  };
+
   // Get counts of files per round
   const round0Files = CASE_FILES.filter(f => f.roundReq === 0);
   const round3Files = CASE_FILES.filter(f => f.roundReq === 3);
   const round4Files = CASE_FILES.filter(f => f.roundReq === 4);
+
+  // Group clues by round (excluding confession which is handled separately)
+  const cluesByRound = {
+    1: CLUE_DB.filter(c => c.roundReq === 1 && c.type !== 'CONFESSION'),
+    2: CLUE_DB.filter(c => c.roundReq === 2 && c.type !== 'CONFESSION'),
+    3: CLUE_DB.filter(c => c.roundReq === 3 && c.type !== 'CONFESSION'),
+    4: CLUE_DB.filter(c => c.roundReq === 4 && c.type !== 'CONFESSION'),
+  };
 
   return (
     <div className="fixed bottom-24 left-4 bg-stone-800 text-white p-4 rounded-lg shadow-2xl border-2 border-stone-600 z-50 w-72 sm:w-80 max-h-[80vh] overflow-y-auto">
@@ -141,6 +162,68 @@ export const HostPanel = ({
           </div>
           <p className="text-[10px] text-stone-500 mt-2">
             Unlocked: {unlockedFiles.length} files
+          </p>
+        </div>
+
+        {/* Clue Reveal Controls */}
+        <div className="bg-stone-700 p-3 rounded">
+          <p className="text-xs text-stone-400 uppercase mb-2">Reveal Clues to All Players</p>
+          <div className="space-y-2">
+            {[1, 2, 3, 4].map(round => {
+              const roundClues = cluesByRound[round] || [];
+              const revealedCount = roundClues.filter(c => revealedClues.includes(c.id)).length;
+              const isExpanded = expandedRound === round;
+              const allRevealed = revealedCount === roundClues.length;
+
+              return (
+                <div key={round} className="bg-stone-800 rounded overflow-hidden">
+                  <div className="flex items-center justify-between p-2">
+                    <button
+                      onClick={() => setExpandedRound(isExpanded ? null : round)}
+                      className="flex-1 text-left text-xs font-bold text-white hover:text-orange-400 transition-colors"
+                    >
+                      🎯 Round {round} ({revealedCount}/{roundClues.length} revealed)
+                    </button>
+                    <button
+                      onClick={() => handleRevealAllForRound(round)}
+                      disabled={allRevealed}
+                      className={`text-xs px-2 py-1 rounded ml-2 ${
+                        allRevealed
+                          ? 'bg-stone-600 text-stone-500 cursor-not-allowed'
+                          : 'bg-orange-600 hover:bg-orange-500 text-white'
+                      }`}
+                    >
+                      All
+                    </button>
+                  </div>
+                  
+                  {isExpanded && (
+                    <div className="px-2 pb-2 space-y-1 max-h-40 overflow-y-auto">
+                      {roundClues.map(clue => {
+                        const isRevealed = revealedClues.includes(clue.id);
+                        return (
+                          <button
+                            key={clue.id}
+                            onClick={() => handleRevealClue(clue.id)}
+                            disabled={isRevealed}
+                            className={`w-full text-left text-[10px] px-2 py-1 rounded transition-all ${
+                              isRevealed
+                                ? 'bg-green-900/50 text-green-400 cursor-not-allowed'
+                                : 'bg-stone-700 hover:bg-stone-600 text-stone-300'
+                            }`}
+                          >
+                            {isRevealed && '✓ '}{clue.title || clue.code}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-[10px] text-stone-500 mt-2">
+            Revealed: {revealedClues.length} clues total
           </p>
         </div>
 
