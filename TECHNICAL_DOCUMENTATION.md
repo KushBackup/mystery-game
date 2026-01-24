@@ -1,4 +1,4 @@
-# 🔧 Murder Mystery Game - Technical Documentation
+# 🔧 Astral Project's Murder Mystery Experience - Technical Documentation
 ## Complete Application Architecture & Features
 
 ---
@@ -24,6 +24,7 @@
 ## 📖 OVERVIEW
 
 **Application Type:** Interactive multiplayer web-based murder mystery party game  
+**Branding:** Astral Project's Murder Mystery Experience - Ultimate mystery solver gadget
 **Platform:** Progressive Web App (PWA)  
 **Architecture:** React Single Page Application with real-time Firebase backend  
 **Design Theme:** Detective noir with hand-drawn sketch aesthetic  
@@ -103,16 +104,16 @@ mystery-game/
 │   │   │   └── FeedbackToast.jsx         # Toast notification system
 │   │   │
 │   │   ├── views/
-│   │   │   ├── DashboardView.jsx         # ID Card view (character info)
+│   │   │   ├── DashboardView.jsx         # ID Card view (no "Innocent Bystander" badge, no timeline display)
 │   │   │   ├── DossierView.jsx           # Guest Profiles view (32 characters)
-│   │   │   ├── FilesView.jsx             # Archives/Files view (round-gated)
-│   │   │   ├── IntelView.jsx             # Evidence Board (accusation cards, clues, confession)
+│   │   │   ├── FilesView.jsx             # Archives/Files view (round-gated, whitespace-pre-line formatting)
+│   │   │   ├── IntelView.jsx             # Evidence Board (type-based color coding, whitespace-pre-line formatting)
 │   │   │   ├── ChatView.jsx              # Real-time chat interface
 │   │   │   ├── VotingView.jsx            # Voting interface (10 suspects only)
-│   │   │   └── TimelineView.jsx          # Character timeline (murder timeline for suspects only)
+│   │   │   └── TimelineView.jsx          # Character timeline (removed from GridMenu navigation)
 │   │   │
 │   │   ├── CharacterSelect.jsx           # Login/character selection screen
-│   │   ├── GridMenu.jsx                  # Metro-style tile-based home hub
+│   │   ├── GridMenu.jsx                  # Metro-style tile-based home hub (ID, CLUES, CHAT, VOTES, FILES, GUESTS, LOGOUT)
 │   │   └── HostPanel.jsx                 # Admin control panel (expanded controls)
 │   │
 │   ├── data/
@@ -157,20 +158,20 @@ mystery-game/
 - **Host Controls:** Real-time propagation of file unlocks, vote visibility, murderer reveal
 - **Instant Updates:** Changes propagate to all connected clients within milliseconds
 
-### **3. Metro-Style Navigation** ✅
+### **3. Metro-Style Navigation** ✅ UPDATED
 - **Windows 8/Nokia Lumia Inspired:** Animated tile-based interface
-- **8 Navigation Tiles:**
+- **7 Navigation Tiles:** (Timeline tile removed)
   1. ID Card (2x2 large tile)
-  2. Clues/Evidence Board (shows accusation cards, unlocked clues, confession)
+  2. Clues/Evidence Board (shows accusation cards, unlocked clues, confession with color-coded types)
   3. Real-time Chat
-  4. Timeline View (personal timeline + murder context for suspects)
-  5. Voting Interface (10 suspects only, controlled visibility)
-  6. Files/Archives (round-gated file unlocking)
-  7. Guest Profiles (all 32 characters)
-  8. Logout
+  4. Voting Interface (10 suspects only, controlled visibility)
+  5. Files/Archives (round-gated file unlocking)
+  6. Guest Profiles (all 32 characters)
+  7. Logout
 - **Smooth Animations:** Slide-up entrance, shimmer effects, scale on hover
 - **Full-Screen Views:** Each tile opens a dedicated full-screen interface
 - **Universal Close Button:** Red circular button (top-right) returns to grid
+- **UI Improvements:** Removed "Innocent Bystander" badges, removed timeline tile, improved clue card text formatting
 
 ### **4. Pre-Assigned Accusation System** ✅ NEW
 - **Accusation Distribution:** Each player automatically receives 1 of 10 accusations

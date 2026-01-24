@@ -1,4 +1,4 @@
-# 🔍 THE ROHAN SHARMA CASE - Murder Mystery Game
+# 🔍 Astral Project's Murder Mystery Experience
 ## Complete Project Context & Instructions
 
 ---
@@ -7,6 +7,7 @@
 
 **Game Type:** Interactive Murder Mystery Party Game  
 **Platform:** Web Application (React + Vite + Tailwind CSS)  
+**Branding:** Ultimate mystery solver gadget
 **Theme:** Detective noir with hand-drawn sketch aesthetic  
 **Players:** 32 characters (1 murderer, 9 suspects, 22 witnesses, 1 victim)  
 **Gameplay Duration:** ~2-3 hours across 7 rounds  
@@ -92,11 +93,14 @@ Anish, Ishank, Shreyash, Rashmi, Anubhav, Antara, Gautam, Shannon, Anika, Amrit,
   bio: "Background description",
   quirk: "Personality trait",
   secret: "Hidden truth",
-  relationship: "Connection to Rohan",
   isSuspect: true | false,
-  timeline: "Time-stamped movements during the party"
+  motive: "Why they wanted Rohan dead",
+  timeline: "Time-stamped movements during the party",
+  code: "Access code for login"
 }
 ```
+
+**Note:** Character cards no longer display "Innocent Bystander" badges. Timeline display has been removed from the dashboard view to reduce clutter.
 
 ---
 
