@@ -765,7 +765,7 @@ export const EVIDENCE_CLUES = [
   },
   {
     id: 'ev_phone',
-    code: "EVIDENCE_PHONE",
+    code: "SAFEKEY09",
     title: "Phone Records Summary",
     content: "ROHAN'S PHONE - Last 24 hours:\n- Multiple calls to insurance company (Duration: 45 mins total)\n- Text to Esha: 'It's almost time. I love you.'\n- Text to unknown number: 'Delete everything after tonight.'\n- Deleted folder recovered: Photos of medical documents\n\nESHA'S PHONE:\n- Text to Rohan: 'I'll handle everything. Trust me.'\n- Call to unknown number (Jan 18, duration: 12 minutes)\n- Encrypted messaging app with deleted conversation history\n\nSURYA'S PHONE:\n- Encrypted chat application installed Jan 17\n- Multiple messages to user 'A_Pereira' (suspected to be Andrew)\n- Deleted voice note (recovery in progress)\n\nANDREW'S PHONE:\n- Encrypted messages to user 'Dev_SP' (suspected to be Surya)\n- Text fragment recovered: '...bar has blind spot near freezer...'\n- Contact labeled 'Lab Supply - Pune'\n\nNote: Multiple suspects used encryption and deleted message histories.",
     roundReq: 3,
@@ -773,7 +773,7 @@ export const EVIDENCE_CLUES = [
   },
   {
     id: 'ev_cctv',
-    code: "EVIDENCE_CCTV",
+    code: "NEEDLE88",
     title: "CCTV Summary",
     content: "Storage Room (Adjacent to Freezer):\n- 7:44 PM: Motion detected, person entering frame at edge\n- 7:45 PM: Partial view of someone's back near freezer door (clothing: dark jacket, unable to identify)\n- 7:46 PM: Same person exits frame\n\nNote: 10+ people passed near Rohan's booth while drink was unattended at various points. Multiple guests wore dark jackets that evening.",
     roundReq: 3,
