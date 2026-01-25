@@ -17,6 +17,7 @@ import { VoteResultsModal } from './components/modals/VoteResultsModal';
 import { CharacterSelect } from './components/CharacterSelect';
 import { HostPanel } from './components/HostPanel';
 import { SplashScreen } from './components/SplashScreen';
+import { OutroSplash } from './components/OutroSplash';
 import { ROUNDS, CHARACTERS, CLUE_DB, getAssignedAccusation, CONFESSION_CLUE } from './data/gameData';
 import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue } from './firebase/config';
 
@@ -36,6 +37,7 @@ export default function App() {
   const [voteResultsVisible, setVoteResultsVisible] = useState(false); // Host controls this
   const [revealedToMurderer, setRevealedToMurderer] = useState(false); // Round 6 reveal
   const [revealedClues, setRevealedClues] = useState([]); // Host-revealed clues
+  const [gameEnded, setGameEnded] = useState(false); // Game ended flag
   
   // Local UI State
   const [inputCode, setInputCode] = useState("");
@@ -81,6 +83,7 @@ export default function App() {
       setVoteResultsVisible(gameState.voteResultsVisible || false);
       setRevealedToMurderer(gameState.revealedToMurderer || false);
       setRevealedClues(gameState.revealedClues || []);
+      setGameEnded(gameState.gameEnded || false);
     });
 
     return () => unsubscribe();
@@ -175,6 +178,11 @@ export default function App() {
   // Show splash screen on first load
   if (!splashComplete) {
     return <SplashScreen onComplete={() => setSplashComplete(true)} />;
+  }
+
+  // Show outro splash when game ends (but not for host)
+  if (gameEnded && currentUser && !isHost) {
+    return <OutroSplash playerName={myCharacter?.name || 'Player'} />;
   }
 
   if (!currentUser) {

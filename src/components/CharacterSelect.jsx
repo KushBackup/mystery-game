@@ -112,10 +112,10 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
               <button
                 type="submit"
                 disabled={isLoading || !loginCode.trim()}
-                className="w-full group relative overflow-hidden bg-mystery-ink text-mystery-paper font-typewriter font-bold py-4 px-6 shadow-lg uppercase tracking-[0.2em] transition-all hover:bg-black disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full group relative overflow-hidden bg-mystery-ink text-mystery-paper font-typewriter font-bold py-5 px-8 shadow-2xl uppercase tracking-[0.3em] transition-all hover:bg-black hover:shadow-[0_0_30px_rgba(220,38,38,0.5)] border-2 border-mystery-paper/20 hover:border-mystery-blood disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] hover:scale-[1.02]"
               >
-                <span className="relative z-10">
-                  {isLoading ? 'Verifying...' : 'Access Case File'}
+                <span className="relative z-10 text-lg">
+                  {isLoading ? 'Verifying...' : '▶ Access Case File'}
                 </span>
                 <div className="absolute inset-0 bg-mystery-blood transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out z-0 opacity-80"></div>
               </button>

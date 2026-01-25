@@ -8,7 +8,8 @@ import {
   unlockFilesForRound,
   revealClues,
   revealCluesForRound,
-  resetGameState 
+  resetGameState,
+  endGame 
 } from '../firebase/config';
 import { CASE_FILES, CLUE_DB } from '../data/gameData';
 
@@ -49,6 +50,12 @@ export const HostPanel = ({
   const handleResetGame = async () => {
     if (window.confirm('Are you sure you want to reset the game? This will clear all progress.')) {
       await resetGameState();
+    }
+  };
+
+  const handleEndGame = async () => {
+    if (window.confirm('Are you sure you want to end the game? All players will see the outro screen.')) {
+      await endGame();
     }
   };
 
@@ -252,10 +259,20 @@ export const HostPanel = ({
           {revealedToMurderer ? '🔓 CONFESSION REVEALED' : '🎭 REVEAL TO MURDERER'}
         </button>
 
-        {/* Reset Game */}
+        {/* End Game Button */}
+        <button 
+          onClick={handleEndGame}
+          className="py-4 rounded-xl font-black text-base bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 transition-all active:scale-95 shadow-halloween"
+        >
+          🎬 END GAME
+        </button>
+      </div>
+
+      {/* Reset Game Button */}
+      <div className="mt-4">
         <button 
           onClick={handleResetGame}
-          className="py-4 rounded-xl font-black text-base bg-stone-700 hover:bg-red-700 transition-all text-stone-300 hover:text-white active:scale-95 shadow-halloween"
+          className="w-full py-4 rounded-xl font-black text-base bg-stone-700 hover:bg-red-700 transition-all text-stone-300 hover:text-white active:scale-95 shadow-halloween"
         >
           🔄 RESET GAME
         </button>

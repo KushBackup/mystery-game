@@ -34,17 +34,19 @@ export const initializeGameState = async () => {
         voteResultsVisible: false,
         revealedToMurderer: false,
         revealedClues: [], // Host-revealed clues
+        gameEnded: false, // Track if game has ended
         lastUpdated: Date.now()
       });
     } else {
       // Ensure new fields exist in existing game state
       const data = docSnap.data();
-      if (!data.unlockedFiles || !('voteResultsVisible' in data) || !('revealedToMurderer' in data) || !data.revealedClues) {
+      if (!data.unlockedFiles || !('voteResultsVisible' in data) || !('revealedToMurderer' in data) || !data.revealedClues || !('gameEnded' in data)) {
         await updateDoc(gameStateRef, {
           unlockedFiles: data.unlockedFiles || ['f_incident'],
           voteResultsVisible: data.voteResultsVisible ?? false,
           revealedToMurderer: data.revealedToMurderer ?? false,
           revealedClues: data.revealedClues || [],
+          gameEnded: data.gameEnded ?? false,
           lastUpdated: Date.now()
         });
       }
@@ -103,6 +105,19 @@ export const updateMurdererReveal = async (isRevealed) => {
     });
   } catch (error) {
     console.error('Error updating murderer reveal:', error);
+  }
+};
+
+// End the game (show outro splash to all players)
+export const endGame = async () => {
+  const gameStateRef = doc(db, GAME_STATE_DOC);
+  try {
+    await updateDoc(gameStateRef, {
+      gameEnded: true,
+      lastUpdated: Date.now()
+    });
+  } catch (error) {
+    console.error('Error ending game:', error);
   }
 };
 
@@ -259,6 +274,7 @@ export const resetGameState = async () => {
       voteResultsVisible: false,
       revealedToMurderer: false,
       revealedClues: [],
+      gameEnded: false,
       lastUpdated: Date.now()
     });
 
