@@ -11,7 +11,7 @@ export const GuestProfileModal = ({
   if (!guest) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-mystery-dark/95 backdrop-blur-sm animate-fade-in p-0 sm:p-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black animate-fade-in p-0 sm:p-4">
       <div className="bg-mystery-paper w-full max-w-md p-6 border-t-4 sm:border-2 border-mystery-ink shadow-2xl relative rotate-0 sm:rotate-1 overflow-y-auto max-h-[85vh] sm:rounded-none rounded-t-2xl">
         <div className="w-12 h-1 bg-mystery-aged rounded-full mx-auto mb-4 sm:hidden"></div>
         <button 

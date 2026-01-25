@@ -16,11 +16,13 @@ import { DecoderModal } from './components/modals/DecoderModal';
 import { VoteResultsModal } from './components/modals/VoteResultsModal';
 import { CharacterSelect } from './components/CharacterSelect';
 import { HostPanel } from './components/HostPanel';
+import { SplashScreen } from './components/SplashScreen';
 import { ROUNDS, CHARACTERS, CLUE_DB, getAssignedAccusation, CONFESSION_CLUE } from './data/gameData';
 import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue } from './firebase/config';
 
 export default function App() {
   // Global State
+  const [splashComplete, setSplashComplete] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [activeTab, setActiveTab] = useState(null); // null = show grid menu
   
@@ -169,6 +171,11 @@ export default function App() {
 
 
   // --- RENDER ---
+
+  // Show splash screen on first load
+  if (!splashComplete) {
+    return <SplashScreen onComplete={() => setSplashComplete(true)} />;
+  }
 
   if (!currentUser) {
     return <CharacterSelect onSelectCharacter={handleLogin} />;

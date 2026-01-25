@@ -889,7 +889,7 @@ export const CONFESSION_CLUE = {
 // ============================================
 
 export const CASE_FILES = [
-  // Round 0 - Incident Report
+  // Round 1 - Incident Report
   {
     id: 'f_incident',
     type: 'REPORT',
@@ -897,7 +897,7 @@ export const CASE_FILES = [
     date: 'January 25, 2026',
     content: "GOA POLICE - CRIMINAL INVESTIGATION DIVISION\n\nINCIDENT TYPE: Suspicious Death\nVICTIM: Rohan Sharma, Male, 34\nLOCATION: 'For the Record' Bar, Panjim, Goa\nDATE/TIME: January 25, 2026, 8:45 PM\n\nSUMMARY:\nVictim collapsed during a private party. Victim was hosting an 'apology party' for approximately 32 guests, all of whom had grievances against him.\n\nThe victim opened a sealed bottle of expensive scotch, poured drinks for guests, added ice, and made a toast. His wife, Esha Sharma, took a sip from his glass before the toast. Victim collapsed approximately 25 minutes later.\n\nAll 32 guests have been detained for questioning.\n\nSTATUS: Active Investigation\nLEAD INVESTIGATOR: Inspector Maria Fernandes",
     stamped: true,
-    roundReq: 0
+    roundReq: 1
   },
   // Round 3 - Evidence Files
   {
