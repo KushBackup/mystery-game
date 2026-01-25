@@ -11,8 +11,8 @@ export const DecoderModal = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md animate-fade-in p-0 sm:p-4">
-      <div className="bg-gradient-to-br from-halloween-purple to-purple-900 w-full max-w-md p-8 border-4 border-halloween-orange shadow-halloween-lg relative rounded-t-3xl sm:rounded-3xl">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/80 backdrop-blur-md animate-fade-in p-0 sm:p-4">
+      <div className="bg-gradient-to-br from-halloween-purple to-purple-900 w-full max-w-md p-8 border-4 border-halloween-orange shadow-halloween-lg relative rounded-b-3xl sm:rounded-3xl mt-0">
         <button 
             onClick={onClose}
             className="absolute top-4 right-4 bg-halloween-orange text-white p-3 rounded-full hover:bg-halloween-pink transition-all shadow-lg border-2 border-white hover:scale-110"

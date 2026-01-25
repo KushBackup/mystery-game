@@ -601,7 +601,7 @@ export const ACCUSATION_CLUES = [
 export const MOTIVE_CLUES = [
   {
     id: 'mot_esha',
-    code: "MOTIVE_ESHA",
+    code: "COWSHARK",
     targetSuspect: 'char_esha',
     targetName: "Esha",
     title: "Motive: Esha (Wife)",
@@ -611,7 +611,7 @@ export const MOTIVE_CLUES = [
   },
   {
     id: 'mot_rea',
-    code: "MOTIVE_REA",
+    code: "BATMAN1",
     targetSuspect: 'char_rea',
     targetName: "Re'a",
     title: "Motive: Re'a",
@@ -621,7 +621,7 @@ export const MOTIVE_CLUES = [
   },
   {
     id: 'mot_govind',
-    code: "MOTIVE_GOVIND",
+    code: "SOURD8",
     targetSuspect: 'char_govind',
     targetName: "Govind",
     title: "Motive: Govind",
@@ -631,7 +631,7 @@ export const MOTIVE_CLUES = [
   },
   {
     id: 'mot_andrew',
-    code: "MOTIVE_ANDREW",
+    code: "VOICELOCK7",
     targetSuspect: 'char_andrew',
     targetName: "Andrew Pereira",
     title: "Motive: Andrew Pereira",
@@ -641,7 +641,7 @@ export const MOTIVE_CLUES = [
   },
   {
     id: 'mot_fatema',
-    code: "MOTIVE_FATEMA",
+    code: "CHILLI999",
     targetSuspect: 'char_fatema',
     targetName: "Fatema",
     title: "Motive: Fatema",
@@ -651,7 +651,7 @@ export const MOTIVE_CLUES = [
   },
   {
     id: 'mot_surya',
-    code: "MOTIVE_SURYA",
+    code: "RADIO777",
     targetSuspect: 'char_surya',
     targetName: "Surya Peket",
     title: "Motive: Surya Peket",
@@ -661,7 +661,7 @@ export const MOTIVE_CLUES = [
   },
   {
     id: 'mot_anusha',
-    code: "MOTIVE_ANUSHA",
+    code: "MATH314",
     targetSuspect: 'char_anusha',
     targetName: "Anusha",
     title: "Motive: Anusha",
@@ -671,7 +671,7 @@ export const MOTIVE_CLUES = [
   },
   {
     id: 'mot_chaaya',
-    code: "MOTIVE_CHAAYA",
+    code: "WOOD666",
     targetSuspect: 'char_chaaya',
     targetName: "Chaaya",
     title: "Motive: Chaaya",
@@ -681,7 +681,7 @@ export const MOTIVE_CLUES = [
   },
   {
     id: 'mot_tanishka',
-    code: "MOTIVE_TANISHKA",
+    code: "WEDDING2",
     targetSuspect: 'char_tanishka',
     targetName: "Tanishka Sheokand",
     title: "Motive: Tanishka Sheokand",
@@ -691,7 +691,7 @@ export const MOTIVE_CLUES = [
   },
   {
     id: 'mot_poshika',
-    code: "MOTIVE_POSHIKA",
+    code: "WALLFLOWER",
     targetSuspect: 'char_poshika',
     targetName: "Dr. Poshika Singh",
     title: "Motive: Dr. Poshika Singh",
@@ -717,7 +717,7 @@ export const EVIDENCE_CLUES = [
   // },
   {
     id: 'ev_search',
-    code: "EVIDENCE_SEARCH",
+    code: "BIRDWATCH3",
     title: "Search History Analysis",
     content: "DEVICES ANALYZED: 12 laptops, 18 phones belonging to guests.\n\nFLAGGED SEARCHES (from public WiFi at Café Sunrise, Panjim):\n- 'Sodium azide purchase' (Jan 18, 2:47 PM)\n- 'Undetectable poisons' (Jan 18, 3:12 PM)\n- 'How long does poison take to work' (Jan 19, 11:23 AM)\n-\nCAFÉ SECURITY FOOTAGE: Multiple persons of interest visited this café during the relevant timeframe: Esha Sharma (Jan 18), Dr. Poshika Singh (Jan 18), Anusha (Jan 19), Re'a (Jan 20).\n\nNote: Searches made from public WiFi. Device attribution inconclusive.",
     roundReq: 3,
@@ -725,7 +725,7 @@ export const EVIDENCE_CLUES = [
   },
   {
     id: 'ev_items',
-    code: "EVIDENCE_ITEMS",
+    code: "REPLICA404",
     title: "Bar Request List",
     content: "EMAIL FROM: Esha <esha.sharma@email.com>\nTO: For the Record Bar Management\nSUBJECT: Special items for Rohan's party\n\nHi Marcus,\n\nFor Rohan's party, we'll be bringing some personal items:\n- 50-year-old Macallan scotch (sealed, Rohan's prized bottle)\n- Premium artisanal ice spheres (specialty ice company, for the scotch)\n- Three-tier celebration cake\n- Our cat Whiskers in a carrier (Rohan's emotional support)\nAll items are reserved for this party only. Please ensure they are handled with care.\n\nThanks,\nEsha Sharma\n\nBAR MANAGEMENT RESPONSE:\nConfirmed receipt of special items. All items logged and secured as per request.",
     roundReq: 3,
@@ -733,7 +733,7 @@ export const EVIDENCE_CLUES = [
   },
   {
     id: 'ev_witness',
-    code: "EVIDENCE_WITNESS",
+    code: "SKEPTICO1",
     title: "Witness Statement Summary",
     content: "COMPILED STATEMENTS:\n\n1. 'The scotch bottle was definitely sealed. Rohan broke the seal himself.' (Multiple witnesses)\n\n2. 'Esha sipped from his glass right after he added ice. If it was poisoned then, she'd be dead too.' (6 witnesses)\n\n3. 'Rohan's glass was unattended multiple times while he circulated.' (Bartender)\n\n4. 'I saw at least 4 different people near his booth area.' (Server)",
     roundReq: 3,
@@ -741,7 +741,7 @@ export const EVIDENCE_CLUES = [
   },
   {
     id: 'ev_bottle',
-    code: "EVIDENCE_BOTTLE",
+    code: "HORROR404",
     title: "Scotch Bottle Analysis",
     content: "ITEM: 50-Year-Old Macallan Scotch Bottle\n\nFINDINGS:\n- Seal was intact until opened at 8:15 PM (video confirmed)\n- No tampering with cork or bottle\n- Remaining liquid tested NEGATIVE for toxins\n- Fingerprints: Rohan (primary), Esha (secondary), Re'a (minor)\n\nCONCLUSION: Poison was NOT in the bottle. Delivery method was something added AFTER pouring.",
     roundReq: 3,
@@ -757,7 +757,7 @@ export const EVIDENCE_CLUES = [
   // },
   {
     id: 'ev_cat',
-    code: "EVIDENCE_CAT",
+    code: "VOICE101",
     title: "The Cat Note",
     content: "OBSERVATION: A cat named 'Whiskers' was present at the venue in a carrier.\n\nSTATEMENT FROM BAR STAFF: 'Esha said Rohan needed the cat for anxiety. Weird for a party, but rich people do weird things.'\n\nSTATEMENT FROM DR. POSHIKA: 'The cat seemed agitated all night. Animals can sense things. It was meowing loudly right before Rohan collapsed.'\n\nNOTE: Cat tested negative for any substances.",
     roundReq: 3,
@@ -878,7 +878,7 @@ export const CONFESSION_CLUE = {
   id: 'confession',
   code: "THE_TRUTH",
   title: "The Truth",
-  content: "You did it. Together with Rohan, you planned his death to look like murder.\n\nThe poisoned ice was your idea—elegant, delayed, untraceable without knowing where to look. The 'special ice' from the 'premium company' was actually frozen in your kitchen with sodium azide dissolved throughout. You cancelled the real ice order and made your own.\n\nRohan wanted to die on his terms. You made sure his death would provide for your future. The ₹1.5 crore insurance policy has a suicide exclusion clause—if he killed himself, you'd get nothing and inherit his massive debts.\n\nYou told yourself it was mercy. You told yourself he was going to die anyway. You took that tiny sip from his glass to prove it was 'safe'—knowing the ice hadn't melted enough to release a lethal dose yet.\n\nBut now others have been implicated. The Surya-Andrew messages. Dr. Poshika's missing sodium azide. Re'a's ice company connection. You let them twist in suspicion while you played the grieving widow.\n\nBut as you watch the room full of people he wronged, you wonder: did you help him die with dignity... or did you murder your husband for money while framing his victims?\n\nThe answer, perhaps, is both.\n\nThe game is over. Confess to the room—or take this secret to your grave.",
+  content: "I did it. God help me, I did it. Together with Rohan, I planned his death to look like murder. I can't believe what I've become.\n\nThe poisoned ice... that was my idea. I thought I was being so clever—frozen in my kitchen with sodium azide dissolved throughout. I cancelled the real ice order and made my own. My hands were shaking the whole time.\n\nRohan was dying. He wanted to go on his terms, he begged me. But I made sure his death would provide for my future. The insurance policy... if he killed himself, I'd get nothing and inherit all his debts. I told myself I was helping him. I told myself it was mercy.\n\nBut was it? Or was I just thinking about the money? I hate myself for not knowing the answer.\n\nI took that tiny sip from his glass to prove it was 'safe'—my heart was racing, knowing the ice hadn't melted enough yet. Everyone saw me drink. I played my part perfectly.\n\nAnd now... God, now I see what I've done. Surya and Andrew with their messages. Dr. Poshika's missing poison. Re'a's connection to the ice company. All of them under suspicion because of me. I watched them suffer, watched them suspect each other, while I played the grieving widow. What kind of monster does that?\n\nI'm so scared. I'm so sorry. Did I help my husband die with dignity... or did I murder him for money while letting innocent people take the blame?\n\nI don't know anymore. I don't know who I am.\n\nI'm terrified of what happens next. But I can't carry this alone anymore.",
   roundReq: 6,
   type: "CONFESSION",
   forCharacter: 'char_esha'

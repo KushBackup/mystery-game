@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'The Taher Party - Murder Mystery',
-        short_name: 'Taher Party',
+        name: 'Astral Project The Murder Mystery Experience',
+        short_name: 'The Murder Mystery Experience',
         description: 'An interactive murder mystery party game where you investigate clues and vote for the killer',
         theme_color: '#dc2626',
         background_color: '#1c1917',
