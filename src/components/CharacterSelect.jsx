@@ -14,84 +14,77 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
 
     // Check for host login code
     if (loginCode === 'KUSH6969') {
-      // Vibration feedback on success
       if (navigator.vibrate) {
-        navigator.vibrate([50, 100, 50]);
+        navigator.vibrate([200]);
       }
-      
-      // Small delay for better UX
       setTimeout(() => {
-        onSelectCharacter('host', true); // Pass isHost flag
-      }, 300);
+        onSelectCharacter('host', true);
+      }, 500);
       return;
     }
 
-    // Validate the login code
     const characterId = validateLoginCode(loginCode);
     
     if (characterId) {
-      // Find the character to show their name
-      const character = CHARACTERS.find(c => c.id === characterId);
-      
-      // Vibration feedback on success
       if (navigator.vibrate) {
-        navigator.vibrate([50, 100, 50]);
+        navigator.vibrate([50, 50]);
       }
-      
-      // Small delay for better UX
       setTimeout(() => {
         onSelectCharacter(characterId, false);
-      }, 300);
+      }, 500);
     } else {
-      // Invalid code
-      setError('Invalid login code. Please check and try again.');
+      setError('ACCESS DENIED: INVALID CREDENTIALS');
       setIsLoading(false);
-      
-      // Vibration feedback on error
       if (navigator.vibrate) {
-        navigator.vibrate([100, 50, 100]);
+        navigator.vibrate([200, 100, 200]);
       }
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-halloween-dark via-purple-900 to-black text-white relative overflow-hidden flex flex-col items-center justify-center p-4">
-      {/* Floating Halloween Elements */}
-      <div className="absolute top-10 left-10 text-6xl animate-float">🎃</div>
-      <div className="absolute top-20 right-20 text-5xl animate-float" style={{animationDelay: '0.5s'}}>👻</div>
-      <div className="absolute bottom-20 left-20 text-4xl animate-float" style={{animationDelay: '1s'}}>🦇</div>
-      <div className="absolute bottom-10 right-10 text-5xl animate-float" style={{animationDelay: '1.5s'}}>🕷️</div>
-      <div className="absolute top-1/2 left-5 text-3xl animate-float" style={{animationDelay: '2s'}}>⭐</div>
-      <div className="absolute top-1/3 right-10 text-3xl animate-float" style={{animationDelay: '2.5s'}}>✨</div>
-
-      {/* Glowing orbs */}
-      <div className="absolute top-0 left-0 w-64 h-64 bg-halloween-orange/30 rounded-full blur-3xl animate-pulse-slow"></div>
-      <div className="absolute bottom-0 right-0 w-80 h-80 bg-halloween-purple/30 rounded-full blur-3xl animate-pulse-slow" style={{animationDelay: '1s'}}></div>
+    <div className="min-h-screen bg-mystery-dark text-mystery-paper flex flex-col items-center justify-center p-4 relative" style={{
+      backgroundImage: `
+        linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.9)),
+        url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E")
+      `
+    }}>
+      {/* Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-10 right-10 w-64 h-64 bg-mystery-blood/10 rounded-full blur-[100px]"></div>
+        <div className="absolute bottom-10 left-10 w-96 h-96 bg-mystery-ink/50 rounded-full blur-[80px]"></div>
+      </div>
 
       <div className="max-w-md w-full relative z-10">
-        <div className="text-center mb-8 animate-pop-in">
-          <div className="mx-auto h-28 w-28 bg-gradient-to-br from-halloween-orange to-halloween-pink border-4 border-white rounded-full flex items-center justify-center shadow-glow-orange mb-6 animate-bounce-slow">
-            <Ghost size={60} className="text-white filter drop-shadow-lg" />
+        {/* Header - Classified Folder Look */}
+        <div className="text-center mb-8">
+          <div className="inline-block border-4 border-mystery-paper p-4 rotate-1 bg-black/50 backdrop-blur-sm shadow-xl">
+             <h1 className="text-3xl sm:text-4xl font-typewriter font-bold text-mystery-paper tracking-[0.2em] uppercase">
+              CONFIDENTIAL
+            </h1>
           </div>
-          <h1 className="text-5xl sm:text-6xl font-black text-white tracking-tight drop-shadow-2xl animate-wiggle" 
-              style={{ fontFamily: 'Fredoka, cursive' }}>
-            SPOOKY <span className="text-halloween-orange">MYSTERY</span>
-          </h1>
-          <p className="mt-3 text-halloween-yellow text-xl font-bold drop-shadow-lg">🎃 Halloween Murder Party 🎃</p>
+          <p className="mt-6 text-xl tracking-widest font-typewriter text-mystery-aged uppercase border-b border-mystery-blood/50 inline-block pb-1">
+            Case: Rohan Sharma
+          </p>
         </div>
 
-        <div className="bg-gradient-to-br from-halloween-purple to-purple-900 p-6 border-4 border-halloween-orange shadow-halloween-lg rounded-3xl animate-fade-in">
-          <div className="border-2 border-dashed border-halloween-yellow/50 p-6 rounded-2xl bg-black/30 backdrop-blur-sm">
-            <h3 className="text-3xl font-black mb-3 text-halloween-yellow text-center uppercase tracking-wide"
-                style={{ fontFamily: 'Fredoka, cursive' }}>
-              🔮 Enter Your Code 🔮
-            </h3>
-            <p className="text-base text-white/80 text-center mb-6 font-semibold">
-              Find your secret code on your character card!
-            </p>
+        {/* Login Form - Paper pinned to board */}
+        <div className="bg-mystery-paper text-mystery-ink p-1 shadow-2xl transform -rotate-1 relative">
+          {/* Pin */}
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-black shadow-lg z-20 border border-gray-600"></div>
+          <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-12 h-12 bg-black/20 blur-sm rounded-full -z-10"></div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
+          <div className="border border-mystery-ink/20 p-6 sm:p-8">
+            <div className="mb-6 text-center">
+              <h3 className="text-2xl font-bold mb-2 font-typewriter uppercase tracking-tighter">
+                Identity Verification
+              </h3>
+              <p className="font-handwriting text-xl text-gray-600 -rotate-1">
+                Enter your access code below...
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="relative group">
                 <input
                   type="text"
                   value={loginCode}
@@ -99,41 +92,48 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
                     setLoginCode(e.target.value.toUpperCase());
                     setError('');
                   }}
-                  placeholder="YOUR SECRET CODE"
-                  className="w-full px-5 py-4 border-4 border-halloween-orange rounded-2xl text-center text-xl font-black uppercase tracking-wider focus:outline-none focus:ring-4 focus:ring-halloween-yellow focus:border-halloween-yellow bg-white text-black placeholder-gray-400 shadow-halloween transition-all"
-                  style={{ fontFamily: 'Fredoka, cursive', fontSize: '20px' }}
+                  className="w-full bg-mystery-aged/30 border-b-2 border-mystery-ink/50 p-4 text-center text-3xl font-typewriter font-bold uppercase tracking-widest focus:outline-none focus:border-mystery-blood focus:bg-mystery-aged/50 transition-all placeholder-mystery-ink/20"
+                  placeholder="CODE"
                   disabled={isLoading}
                   autoFocus
-                  autoComplete="off"
-                  autoCorrect="off"
-                  autoCapitalize="characters"
                   maxLength={20}
                 />
+                <div className="absolute bottom-0 left-0 w-full h-[1px] bg-mystery-blood transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
               </div>
 
               {error && (
-                <div className="bg-red-500 border-4 border-red-700 rounded-2xl p-4 text-center animate-shake shadow-glow-orange">
-                  <p className="text-white font-black text-base">❌ {error}</p>
+                <div className="text-center animate-shake">
+                  <p className="text-mystery-blood font-bold font-typewriter text-sm tracking-widest border border-mystery-blood p-2 inline-block transform rotate-1">
+                    {error}
+                  </p>
                 </div>
               )}
 
               <button
                 type="submit"
                 disabled={isLoading || !loginCode.trim()}
-                className="w-full bg-gradient-to-r from-halloween-orange to-halloween-pink hover:from-halloween-pink hover:to-halloween-orange text-white font-black py-4 px-6 rounded-2xl border-4 border-white shadow-halloween-lg uppercase tracking-widest text-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95 hover:scale-105 btn-halloween"
-                style={{ fontFamily: 'Fredoka, cursive' }}
+                className="w-full group relative overflow-hidden bg-mystery-ink text-mystery-paper font-typewriter font-bold py-4 px-6 shadow-lg uppercase tracking-[0.2em] transition-all hover:bg-black disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isLoading ? '🎃 LOADING... 🎃' : '👻 START GAME 👻'}
+                <span className="relative z-10">
+                  {isLoading ? 'Verifying...' : 'Access Case File'}
+                </span>
+                <div className="absolute inset-0 bg-mystery-blood transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out z-0 opacity-80"></div>
               </button>
             </form>
 
-            <div className="mt-6 pt-4 border-t-2 border-halloween-yellow/30">
-              <p className="text-sm text-white/70 text-center font-semibold">
-                🎭 Your login code is on your character card 🎭<br />
-                Need help? Ask the game master! 🎃
+            <div className="mt-8 pt-4 border-t border-dashed border-mystery-ink/30 text-center">
+               <p className="font-handwriting text-lg text-gray-500">
+                Unauthorized access is strictly prohibited.
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className="mt-8 text-center opacity-40">
+           <p className="font-typewriter text-xs text-mystery-aged">
+             SECURE CONNECTION ESTABLISHED
+           </p>
         </div>
       </div>
     </div>

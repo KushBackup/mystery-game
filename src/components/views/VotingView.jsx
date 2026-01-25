@@ -39,46 +39,46 @@ export const VotingView = ({
     <div className="fixed inset-x-0 top-[4.5rem] bottom-0 overflow-y-auto animate-fade-in">
       <div className="max-w-2xl mx-auto p-4 pb-8">
         {/* Header Card */}
-        <div className={`p-6 mb-6 border-4 shadow-[8px_8px_0px_rgba(0,0,0,0.2)] relative overflow-hidden ${
+        <div className={`p-6 mb-6 border-2 shadow-2xl relative overflow-hidden ${
           isVotingOpen 
-            ? 'bg-gradient-to-br from-green-500 to-emerald-600 border-green-800' 
-            : 'bg-gradient-to-br from-stone-600 to-stone-700 border-stone-900'
+            ? 'bg-emerald-900 border-emerald-700' 
+            : 'bg-mystery-charcoal border-mystery-ink'
         }`}>
           <div className="relative z-10">
             {isVotingOpen ? (
               <>
                 <div className="flex items-center justify-center gap-3 mb-2">
-                  <Vote size={32} className="text-white animate-pulse" />
-                  <h2 className="text-3xl font-black text-white uppercase tracking-wide">
+                  <Vote size={32} className="text-emerald-400 animate-pulse" />
+                  <h2 className="text-3xl font-typewriter font-bold text-white uppercase tracking-wide">
                     Voting Open
                   </h2>
                 </div>
-                <p className="text-center text-white/90 text-sm font-bold mb-3">
+                <p className="text-center text-emerald-200 text-sm font-body mb-3">
                   Round {currentRound} • Cast your vote for the prime suspect
                 </p>
                 {hasVoted ? (
-                  <div className="bg-white/20 backdrop-blur-sm border-2 border-white/40 p-3 rounded-lg text-center">
-                    <p className="text-white font-black text-lg">✓ VOTE RECORDED</p>
-                    <p className="text-white/80 text-sm mt-1">
-                      Suspect: <span className="font-black">{CHARACTERS.find(c => c.id === selectedSuspect)?.name}</span>
+                  <div className="bg-white/10 backdrop-blur-sm border-2 border-white/30 p-3">
+                    <p className="text-white font-typewriter font-bold text-lg">✓ VOTE RECORDED</p>
+                    <p className="text-white/80 text-sm mt-1 font-body">
+                      Suspect: <span className="font-typewriter font-bold">{CHARACTERS.find(c => c.id === selectedSuspect)?.name}</span>
                     </p>
-                    <p className="text-white/60 text-xs mt-2">Tap another suspect to change your vote</p>
+                    <p className="text-white/60 text-xs mt-2 font-body">Tap another suspect to change your vote</p>
                   </div>
                 ) : (
-                  <div className="bg-white/10 backdrop-blur-sm border-2 border-white/30 p-3 rounded-lg text-center">
-                    <p className="text-white/90 text-sm">Tap a suspect to select, tap again to confirm</p>
+                  <div className="bg-white/5 backdrop-blur-sm border-2 border-white/20 p-3">
+                    <p className="text-white/90 text-sm font-body">Tap a suspect to select, tap again to confirm</p>
                   </div>
                 )}
               </>
             ) : (
               <>
                 <div className="flex items-center justify-center gap-3 mb-2">
-                  <Lock size={32} className="text-white/60" />
-                  <h2 className="text-3xl font-black text-white/80 uppercase tracking-wide">
+                  <Lock size={32} className="text-mystery-aged" />
+                  <h2 className="text-3xl font-typewriter font-bold text-mystery-aged uppercase tracking-wide">
                     Voting Closed
                   </h2>
                 </div>
-                <p className="text-center text-white/60 text-sm font-bold">
+                <p className="text-center text-mystery-aged/60 text-sm font-body">
                   Waiting for host to open voting...
                 </p>
               </>
@@ -135,52 +135,52 @@ export const VotingView = ({
                 onClick={() => handleVoteClick(suspect.id)}
                 disabled={!isVotingOpen}
                 className={`
-                  relative p-4 border-4 transition-all duration-200
+                  relative p-4 border-2 transition-all duration-200
                   ${isVotingOpen ? 'cursor-pointer hover:scale-[1.02]' : 'cursor-not-allowed opacity-60'}
-                  ${isSelected && isVotingOpen ? 'border-orange-500 bg-orange-50 shadow-[6px_6px_0px_#f97316] scale-105' : 'border-stone-900 bg-white shadow-[4px_4px_0px_#1c1917]'}
-                  ${isMyVote ? 'ring-4 ring-green-500' : ''}
+                  ${isSelected && isVotingOpen ? 'border-amber-500 bg-amber-900/50 shadow-xl scale-105' : 'border-mystery-ink bg-mystery-paper shadow-lg'}
+                  ${isMyVote ? 'ring-4 ring-emerald-500' : ''}
                   ${isConfirming ? 'animate-pulse' : ''}
                   active:translate-y-1 active:shadow-none
                 `}
               >
                 {/* Vote Count Badge */}
                 {voteCount > 0 && hasAnyVotes && (
-                  <div className="absolute -top-3 -right-3 w-10 h-10 bg-red-600 border-3 border-stone-900 rounded-full flex items-center justify-center shadow-lg z-10">
-                    <span className="text-white font-black text-sm">{voteCount}</span>
+                  <div className="absolute -top-3 -right-3 w-10 h-10 bg-mystery-blood border-2 border-white rounded-full flex items-center justify-center shadow-lg z-10">
+                    <span className="text-white font-typewriter font-bold text-sm">{voteCount}</span>
                   </div>
                 )}
 
                 {/* Character Avatar */}
                 <div className={`
-                  w-16 h-16 mx-auto mb-3 rounded-full border-4 flex items-center justify-center font-black text-2xl shadow-lg
-                  ${isMe ? 'bg-orange-500 text-white border-orange-700' : 'bg-stone-200 text-stone-700 border-stone-900'}
+                  w-16 h-16 mx-auto mb-3 rounded-full border-4 flex items-center justify-center font-typewriter font-bold text-2xl shadow-lg
+                  ${isMe ? 'bg-mystery-blood text-white border-red-800' : 'bg-mystery-aged text-mystery-ink border-mystery-ink'}
                 `}>
                   {suspect.name.charAt(0)}
                 </div>
 
                 {/* Character Info */}
-                <h3 className="font-black text-lg text-stone-900 text-center mb-1">
+                <h3 className="font-typewriter font-bold text-lg text-mystery-ink text-center mb-1">
                   {suspect.name}
-                  {isMe && <span className="ml-2 text-xs bg-stone-900 text-white px-2 py-1 rounded">(YOU)</span>}
+                  {isMe && <span className="ml-2 text-xs bg-mystery-ink text-white px-2 py-1 font-typewriter">(YOU)</span>}
                 </h3>
-                <p className="text-xs font-bold text-red-600 uppercase tracking-wide text-center mb-2">
+                <p className="text-xs font-typewriter font-bold text-mystery-blood uppercase tracking-wide text-center mb-2">
                   {suspect.profession}
                 </p>
 
                 {/* Vote Status Indicators */}
-                <div className="mt-3 pt-3 border-t-2 border-stone-200">
+                <div className="mt-3 pt-3 border-t-2 border-mystery-ink/20">
                   {isMyVote && (
-                    <div className="flex items-center justify-center gap-2 text-green-600 font-black text-sm">
+                    <div className="flex items-center justify-center gap-2 text-emerald-600 font-typewriter font-bold text-sm">
                       <span className="text-lg">✓</span> YOUR VOTE
                     </div>
                   )}
                   {isSelected && !isMyVote && isVotingOpen && (
-                    <div className="flex items-center justify-center gap-2 text-orange-600 font-black text-sm">
+                    <div className="flex items-center justify-center gap-2 text-amber-600 font-typewriter font-bold text-sm">
                       <span className="text-lg">👆</span> TAP AGAIN TO CONFIRM
                     </div>
                   )}
                   {!isSelected && !isMyVote && isVotingOpen && (
-                    <div className="text-stone-400 text-xs text-center">
+                    <div className="text-mystery-sepia text-xs text-center font-body">
                       Tap to select
                     </div>
                   )}
@@ -188,7 +188,7 @@ export const VotingView = ({
 
                 {/* Role Badge */}
                 {suspect.role === 'MURDERER' && currentRound >= 6 && (
-                  <div className="absolute top-2 left-2 bg-red-900 text-white text-xs font-black px-2 py-1 rounded border-2 border-red-950">
+                  <div className="absolute top-2 left-2 bg-mystery-blood text-white text-xs font-typewriter font-bold px-2 py-1 border-2 border-red-950">
                     MURDERER
                   </div>
                 )}
@@ -199,9 +199,9 @@ export const VotingView = ({
 
         {/* Helper Text */}
         {isVotingOpen && (
-          <div className="mt-6 p-4 bg-blue-50 border-2 border-blue-300 rounded">
-            <p className="text-sm text-blue-900 text-center font-bold">
-              💡 <span className="font-black">TIP:</span> Tap once to select, tap again to confirm your vote. You can change votes anytime before voting closes.
+          <div className="mt-6 p-4 bg-blue-900/50 border-2 border-blue-700">
+            <p className="text-sm text-blue-200 text-center font-body">
+              💡 <span className="font-typewriter font-bold">TIP:</span> Tap once to select, tap again to confirm your vote. You can change votes anytime before voting closes.
             </p>
           </div>
         )}

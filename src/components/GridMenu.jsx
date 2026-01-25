@@ -1,53 +1,51 @@
 import React, { useState } from 'react';
 
-// Custom Icons
+// Custom Sketched Icons
 const FingerprintIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M7.05 14.121c.188 3.205 2.782 5.729 5.95 5.729 3.168 0 5.762-2.524 5.95-5.729h2.05c-.195 4.362-3.765 7.829-8 7.829s-7.805-3.467-8-7.829h2.05zm4.95-11.121c-3.866 0-7 3.134-7 7h2c0-2.757 2.243-5 5-5s5 2.243 5 5h2c0-3.866-3.134-7-7-7zm0 3c-2.209 0-4 1.791-4 4h2c0-1.103.897-2 2-2s2 .897 2 2h2c0-2.209-1.791-4-4-4z"/>
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.131A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
   </svg>
 );
 
 const ClipboardIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M6 2c-1.103 0-2 .897-2 2v16c0 1.103.897 2 2 2h12c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2h-3.5A2.5 2.5 0 0 0 14 0h-4a2.5 2.5 0 0 0-2.5 2H6zm8 0h-4a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1zM6 4h2.5a2.5 2.5 0 0 0 2.5 2.5h2A2.5 2.5 0 0 0 15.5 4H18v16H6V4zm3 5h6v2H9V9zm0 4h6v2H9v-2zm0 4h4v2H9v-2z"/>
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
   </svg>
 );
 
 const ChatIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M20 2H4c-1.103 0-2 .897-2 2v18l4-4h14c1.103 0 2-.897 2-2V4c0-1.103-.897-2-2-2zM8 14H6v-2h2v2zm4 0h-2v-2h2v2zm4 0h-2v-2h2v2z"/>
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
   </svg>
 );
 
 const FolderIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M20 5h-8.586L9.707 3.293A.997.997 0 0 0 9 3H4c-1.103 0-2 .897-2 2v14c0 1.103.897 2 2 2h16c1.103 0 2-.897 2-2V7c0-1.103-.897-2-2-2z"/>
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
   </svg>
 );
 
 const UsersIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M12 2C9.243 2 7 4.243 7 7s2.243 5 5 5 5-2.243 5-5-2.243-5-5-5zm0 8c-1.654 0-3-1.346-3-3s1.346-3 3-3 3 1.346 3 3-1.346 3-3 3zm0 4c-4.338 0-8 2.019-8 4.5V21h16v-2.5c0-2.481-3.662-4.5-8-4.5z"/>
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 005.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
   </svg>
 );
 
 const ChartIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M3 3v18h18V3H3zm16 16H5V5h14v14zM7 17h2v-6H7v6zm4 0h2V7h-2v10zm4 0h2v-4h-2v4z"/>
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
   </svg>
 );
 
 const LogoutIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M16 13v-2H7V8l-5 4 5 4v-3z"/>
-    <path d="M20 3h-9c-1.103 0-2 .897-2 2v4h2V5h9v14h-9v-4H9v4c0 1.103.897 2 2 2h9c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2z"/>
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
   </svg>
 );
 
 const HelpIcon = ({ className }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
-    <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z"/>
-    <path d="M11 11h2v6h-2zm0-4h2v2h-2z"/>
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
 
@@ -57,95 +55,112 @@ export default function GridMenu({ onNavigate, voteCounts }) {
   const menuItems = [
     { 
       id: 'dashboard', 
-      label: 'ID', 
+      label: 'IDENTITY', 
+      subtext: 'CONFIDENTIAL',
       icon: FingerprintIcon, 
-      color: 'bg-gradient-to-br from-halloween-orange to-halloween-pink',
-      size: 'medium'
+      rotate: '-rotate-1',
+      bgType: 'bg-mystery-paper',
+      textColor: 'text-mystery-ink'
     },
     { 
       id: 'intel', 
-      label: 'CLUES', 
+      label: 'EVIDENCE', 
+      subtext: 'BOARD',
       icon: ClipboardIcon, 
-      color: 'bg-gradient-to-br from-halloween-purple to-purple-600',
-      size: 'medium'
+      rotate: 'rotate-2',
+      bgType: 'bg-mystery-paper',
+       textColor: 'text-mystery-ink'
     },
     { 
       id: 'chat', 
-      label: 'CHAT', 
+      label: 'COMMS', 
+      subtext: 'ENCRYPTED',
       icon: ChatIcon, 
-      color: 'bg-gradient-to-br from-blue-500 to-purple-600',
-      size: 'medium'
+      rotate: '-rotate-2',
+      bgType: 'bg-mystery-paper',
+       textColor: 'text-mystery-ink'
     },
     { 
       id: 'votes', 
-      label: 'VOTES', 
+      label: 'VOTE', 
+      subtext: 'SUSPECT LIST',
       icon: ChartIcon, 
-      color: 'bg-gradient-to-br from-halloween-pink to-red-500',
-      size: 'medium'
+      rotate: 'rotate-1',
+      bgType: 'bg-mystery-blood',
+      textColor: 'text-white'
     },
     { 
       id: 'files', 
-      label: 'FILES', 
+      label: 'ARCHIVES', 
+      subtext: 'CASE FILES',
       icon: FolderIcon, 
-      color: 'bg-gradient-to-br from-halloween-green to-emerald-600',
-      size: 'medium'
+      rotate: '-rotate-1',
+      bgType: 'bg-mystery-aged',
+      textColor: 'text-mystery-ink'
     },
     { 
       id: 'dossier', 
-      label: 'GUESTS', 
+      label: 'SUSPECTS', 
+      subtext: 'PROFILES',
       icon: UsersIcon, 
-      color: 'bg-gradient-to-br from-halloween-yellow to-halloween-orange',
-      size: 'medium'
+      rotate: 'rotate-2',
+      bgType: 'bg-mystery-paper',
+       textColor: 'text-mystery-ink'
     },
     { 
       id: 'help', 
-      label: 'HELP', 
+      label: 'GUIDE', 
+      subtext: 'READ ME',
       icon: HelpIcon, 
-      color: 'bg-gradient-to-br from-cyan-500 to-blue-600',
-      size: 'medium'
+      rotate: '-rotate-2',
+      bgType: 'bg-mystery-sepia',
+      textColor: 'text-white'
     },
     { 
       id: 'logout', 
-      label: 'LOGOUT', 
+      label: 'EXIT', 
+      subtext: '',
       icon: LogoutIcon, 
-      color: 'bg-gradient-to-br from-gray-700 to-halloween-dark',
-      size: 'medium'
+      rotate: 'rotate-1',
+      bgType: 'bg-mystery-charcoal',
+      textColor: 'text-white'
     }
   ];
 
   const handleTileClick = (itemId) => {
-    // Add haptic feedback
     if (navigator.vibrate) {
-      navigator.vibrate(10);
+      navigator.vibrate(20);
     }
     onNavigate(itemId);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-halloween-dark via-purple-900 to-halloween-dark overflow-hidden">
-      {/* Spooky Header with floating ghosts effect */}
-      <div className="bg-gradient-to-r from-halloween-orange to-halloween-pink text-white p-6 shadow-halloween relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full opacity-20">
-          <div className="absolute top-2 left-10 text-6xl animate-float">👻</div>
-          <div className="absolute top-4 right-20 text-4xl animate-float" style={{animationDelay: '0.5s'}}>🎃</div>
-          <div className="absolute bottom-2 right-10 text-5xl animate-float" style={{animationDelay: '1s'}}>🦇</div>
-        </div>
-        <p className="text-xl font-semibold tracking-wide relative z-10 text-center text-white/90" 
-            style={{ fontFamily: 'Fredoka, cursive' }}>
-          Astral Project presents
+    <div className="min-h-screen bg-mystery-dark overflow-y-auto pb-10" style={{
+      backgroundImage: `
+        radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 0.9), rgba(0, 0, 0, 1)),
+        url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E")
+      `
+    }}>
+      {/* Cinematic Header */}
+      <div className="pt-8 pb-6 px-4 text-center relative">
+        <p className="font-typewriter text-mystery-aged tracking-[0.2em] text-xs sm:text-sm uppercase mb-2">
+          Astral Project Presents
         </p>
-        <h1 className="text-5xl sm:text-6xl font-black tracking-tight relative z-10 text-center mt-2 animate-wiggle" 
-            style={{ fontFamily: 'Fredoka, cursive' }}>
-          The Murder Mystery Experience!
+        <h1 className="font-typewriter text-4xl sm:text-5xl font-bold text-mystery-paper tracking-tighter uppercase border-b-2 border-mystery-blood inline-block pb-2 transform -rotate-1 shadow-lg">
+          The Murder Mystery Experience @ For the Record
         </h1>
+        <div className="mt-4 transform rotate-1">
+          <span className="font-handwriting text-2xl text-mystery-blood bg-black/10 px-4 py-1 rounded inline-block">
+            "Trust No One."
+          </span>
+        </div>
       </div>
 
-      {/* Casual Grid */}
-      <div className="p-6 max-w-4xl mx-auto">
-        <div className="grid grid-cols-2 gap-6 auto-rows-[160px]">
+      {/* Investigation Desk Grid */}
+      <div className="p-4 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 gap-4 sm:gap-6 mt-4">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
-            const isLarge = item.size === 'large';
             
             return (
               <button
@@ -153,60 +168,56 @@ export default function GridMenu({ onNavigate, voteCounts }) {
                 onClick={() => handleTileClick(item.id)}
                 onMouseEnter={() => setHoveredTile(item.id)}
                 onMouseLeave={() => setHoveredTile(null)}
-                onTouchStart={() => setHoveredTile(item.id)}
-                onTouchEnd={() => setHoveredTile(null)}
                 className={`
-                  ${item.color}
-                  ${isLarge ? 'col-span-2 row-span-2' : 'col-span-1'}
-                  relative overflow-hidden rounded-3xl
-                  text-white font-bold
+                  relative group ${item.bgType} ${item.rotate}
+                  aspect-[4/3] w-full
+                  flex flex-col items-center justify-center
+                  shadow-[0_10px_25px_-5px_rgba(0,0,0,0.4),0_8px_10px_-6px_rgba(0,0,0,0.3)]
+                  hover:shadow-[0_20px_40px_-5px_rgba(0,0,0,0.5),0_15px_20px_-6px_rgba(0,0,0,0.4)]
+                  hover:scale-[1.03] hover:z-10 hover:-translate-y-1
                   transition-all duration-300 ease-out
-                  active:scale-90
-                  shadow-halloween hover:shadow-halloween-lg
-                  ${hoveredTile === item.id ? 'brightness-125 scale-105 -rotate-2' : 'brightness-100'}
-                  casual-tile border-4 border-white/20
+                  border border-black/10 select-none
+                  before:content-[''] before:absolute before:inset-0 before:bg-[url('https://www.transparenttextures.com/patterns/paper.png')] before:opacity-30 before:pointer-events-none
                 `}
                 style={{
-                  animation: `slideInUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.1}s both`,
+                  animation: `slideInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.1}s backwards`
                 }}
               >
-                {/* Playful Background Pattern */}
-                <div className="absolute inset-0 opacity-20">
-                  <div className="absolute top-2 right-2 text-3xl">✨</div>
-                  <div className="absolute bottom-2 left-2 text-2xl">⭐</div>
+                {/* Pin effect - centered at top */}
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full shadow-md z-20 pointer-events-none">
+                  <div className="absolute inset-0.5 bg-gradient-to-br from-gray-300 to-gray-500 rounded-full"></div>
+                  <div className="absolute top-1 left-1 w-1.5 h-1.5 bg-white/60 rounded-full"></div>
                 </div>
+                
+                {/* Pin shadow underneath the note */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-8 bg-black/20 blur-sm pointer-events-none"></div>
 
-                {/* Content */}
+                {/* Content Container */}
                 <div className={`
-                  relative z-10 h-full flex flex-col 
-                  ${isLarge ? 'justify-center items-center p-8' : 'justify-center items-center p-4'}
+                  w-full h-full 
+                  flex flex-col items-center justify-center 
+                  p-2
+                  ${item.textColor}
+                  relative z-10
                 `}>
                   <Icon className={`
-                    ${isLarge ? 'w-28 h-28 mb-4' : 'w-14 h-14 mb-2'}
-                    drop-shadow-2xl filter brightness-110
-                    ${hoveredTile === item.id ? 'animate-bounce' : ''}
+                    w-10 h-10 sm:w-12 sm:h-12 mb-2 stroke-[1.5px] opacity-90 group-hover:opacity-100 transition-opacity
+                    ${hoveredTile === item.id ? 'scale-105' : 'scale-100'}
                   `} />
+                  
                   <span className={`
-                    ${isLarge ? 'text-5xl' : 'text-2xl'}
-                    tracking-wide font-black
-                    drop-shadow-2xl
-                    ${hoveredTile === item.id ? 'animate-pulse' : ''}
-                  `}
-                  style={{ fontFamily: 'Fredoka, cursive' }}>
+                    text-xl sm:text-3xl font-typewriter font-bold uppercase tracking-widest
+                    ${hoveredTile === item.id ? 'underline decoration-mystery-blood decoration-2' : ''}
+                  `}>
                     {item.label}
                   </span>
+                  
+                  {item.subtext && (
+                    <span className="hidden sm:block mt-1 font-handwriting text-lg sm:text-xl opacity-70">
+                      {item.subtext}
+                    </span>
+                  )}
                 </div>
-
-                {/* Glow Effect */}
-                {hoveredTile === item.id && (
-                  <div 
-                    className="absolute inset-0"
-                    style={{
-                      background: 'radial-gradient(circle at center, rgba(255,255,255,0.3), transparent)',
-                      animation: 'glow 1s ease-in-out infinite'
-                    }}
-                  />
-                )}
               </button>
             );
           })}

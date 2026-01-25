@@ -19,18 +19,18 @@ export const FilesView = ({ unlockedFiles = [], currentRound = 0 }) => {
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in">
-      <h2 className="text-2xl sm:text-3xl font-black text-white text-center uppercase decoration-wavy underline decoration-stone-500">Archives</h2>
+      <h2 className="text-2xl sm:text-3xl font-typewriter font-bold text-mystery-paper text-center uppercase tracking-widest">Archives</h2>
       
       {/* Locked Files Indicator */}
       {lockedFilesInfo.length > 0 && (
-        <div className="bg-stone-200 border-2 border-dashed border-stone-400 p-4 rounded">
-          <div className="flex items-center gap-2 text-stone-600 mb-2">
+        <div className="bg-mystery-charcoal border-2 border-dashed border-mystery-aged/30 p-4">
+          <div className="flex items-center gap-2 text-mystery-aged mb-2">
             <Lock size={16} />
-            <span className="font-bold text-sm uppercase">Awaiting Authorization</span>
+            <span className="font-typewriter font-bold text-sm uppercase">Awaiting Authorization</span>
           </div>
           <div className="space-y-1">
             {lockedFilesInfo.map(info => (
-              <p key={info.round} className="text-xs text-stone-500">
+              <p key={info.round} className="text-xs text-mystery-aged/70 font-body">
                 🔒 {info.label} ({info.count} {info.count === 1 ? 'file' : 'files'}) - Round {info.round}+
               </p>
             ))}
@@ -42,8 +42,8 @@ export const FilesView = ({ unlockedFiles = [], currentRound = 0 }) => {
       {availableFiles.length === 0 && (
         <div className="text-center py-12">
           <div className="text-6xl mb-4">📁</div>
-          <p className="text-stone-500 font-bold">No files available yet</p>
-          <p className="text-stone-400 text-sm mt-2">The host will unlock evidence as the investigation progresses</p>
+          <p className="text-mystery-aged font-typewriter font-bold">No files available yet</p>
+          <p className="text-mystery-aged/70 text-sm mt-2 font-body">The host will unlock evidence as the investigation progresses</p>
         </div>
       )}
 
@@ -51,22 +51,22 @@ export const FilesView = ({ unlockedFiles = [], currentRound = 0 }) => {
       {availableFiles.map((file, idx) => {
         const rotate = idx % 2 === 0 ? 'rotate-[1deg]' : 'rotate-[-1deg]';
         return (
-          <div key={file.id} className={`bg-white border-2 border-stone-900 shadow-sketch-lg p-4 relative ${rotate}`}>
-            <div className="absolute -top-4 right-8 text-stone-400 transform -rotate-45">
+          <div key={file.id} className={`bg-mystery-paper border-2 border-mystery-ink shadow-2xl p-4 relative ${rotate}`}>
+            <div className="absolute -top-4 right-8 text-mystery-ink/40 transform -rotate-45">
               <Paperclip size={32} className="sm:w-10 sm:h-10" />
             </div>
             {/* Round Badge */}
-            <div className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded">
+            <div className="absolute top-2 left-2 bg-mystery-blood text-white text-[10px] font-typewriter font-bold px-2 py-0.5">
               R{file.roundReq}
             </div>
             {file.type === 'REPORT' && (
               <div className="relative overflow-hidden pt-4">
                 <DoodleCoffeeStain />
-                <div className="border-b-4 border-stone-900 pb-2 mb-4 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-1">
-                  <h3 className="text-xl sm:text-2xl font-black uppercase text-stone-800 leading-none">{file.title}</h3>
-                  <span className="font-mono text-[10px] sm:text-xs bg-stone-200 px-2 py-1 w-fit">{file.date}</span>
+                <div className="border-b-2 border-mystery-ink pb-2 mb-4 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-1">
+                  <h3 className="text-xl sm:text-2xl font-typewriter font-bold uppercase text-mystery-ink leading-none">{file.title}</h3>
+                  <span className="font-typewriter text-[10px] sm:text-xs bg-mystery-aged/30 px-2 py-1 w-fit">{file.date}</span>
                 </div>
-                <p className="font-serif text-base sm:text-lg leading-relaxed text-stone-800 whitespace-pre-line">{file.content}</p>
+                <p className="font-body text-base sm:text-lg leading-relaxed text-mystery-ink whitespace-pre-line">{file.content}</p>
               </div>
             )}
             {file.type === 'IMAGE' && (
@@ -75,9 +75,9 @@ export const FilesView = ({ unlockedFiles = [], currentRound = 0 }) => {
                   <div className="bg-white aspect-square w-full flex items-center justify-center overflow-hidden border border-stone-200">
                     <DoodleCCTV type={file.sketchType} />
                   </div>
-                  <p className="text-white font-handwritten text-center mt-2 text-xs sm:text-sm">{file.title}</p>
+                  <p className="text-white font-handwriting text-center mt-2 text-xs sm:text-sm">{file.title}</p>
                 </div>
-                <p className="mt-4 text-center font-bold text-stone-600 italic bg-stone-100 px-4 py-2 transform -rotate-1 shadow-sm border border-stone-200 text-xs sm:text-base">"{file.caption}"</p>
+                <p className="mt-4 text-center font-handwriting text-xl text-mystery-ink italic bg-mystery-aged/30 px-4 py-2 transform -rotate-1 shadow-sm border border-mystery-ink/20">"{file.caption}"</p>
               </div>
             )}
           </div>

@@ -185,7 +185,7 @@ export default function App() {
     };
 
     return (
-      <div className="min-h-screen bg-[#f4f1ea]">
+      <div className="min-h-screen bg-mystery-dark">
         <GridMenu onNavigate={handleNavigate} voteCounts={voteCounts} />
 
         {/* Decoder Modal */}
@@ -205,17 +205,24 @@ export default function App() {
 
   // Full Screen View with Close Button
   return (
-    <div className="min-h-screen bg-gradient-to-br from-halloween-dark via-purple-900 to-halloween-dark text-white relative overflow-hidden view-container">
-      {/* Decorative top bar */}
-      <div className="fixed top-0 left-0 w-full h-2 bg-gradient-to-r from-halloween-orange via-halloween-pink to-halloween-purple z-50"></div>
+    <div className="min-h-screen bg-mystery-paper text-mystery-ink relative overflow-hidden view-container">
+       {/* Background Texture */}
+       <div 
+        className="absolute inset-0 opacity-10 pointer-events-none z-0"
+        style={{
+          backgroundImage: "url('https://www.transparenttextures.com/patterns/aged-paper.png')"
+        }}
+      />
       
-      {/* Close Button */}
+      {/* Decorative top bar (Tape) */}
+      <div className="fixed top-0 left-0 w-full h-1 bg-mystery-blood/50 z-50"></div>
+      
+      {/* Close Button - Red Stamp Style */}
       <button
         onClick={() => setActiveTab(null)}
-        className="fixed top-4 right-4 z-50 w-14 h-14 bg-gradient-to-br from-halloween-orange to-halloween-pink border-4 border-white text-white rounded-full shadow-halloween-lg flex items-center justify-center hover:scale-110 transition-all active:scale-95 animate-bounce-slow opacity-100"
-        style={{ backgroundColor: '#FF6B35' }}
+        className="fixed top-3 right-3 z-50 w-12 h-12 bg-mystery-blood text-white rounded-full flex items-center justify-center hover:bg-red-700 transition-all active:scale-95 shadow-lg border-2 border-white/20"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={4} stroke="currentColor" className="w-7 h-7">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6">
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
       </button>
@@ -227,7 +234,7 @@ export default function App() {
       />
 
       {/* Main Content */}
-      <main className="p-3 sm:p-4 max-w-2xl mx-auto space-y-6 sm:space-y-8 pb-6">
+      <main className="relative z-10 p-3 sm:p-4 max-w-2xl mx-auto space-y-6 sm:space-y-8 pb-24">
         {/* Feedback Toast */}
         <FeedbackToast feedback={feedback} />
 
@@ -298,10 +305,10 @@ export default function App() {
         {activeTab === 'intel' && (
           <button
             onClick={() => setModalOpen(true)}
-            className="fixed bottom-8 right-8 w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-halloween-orange to-halloween-pink border-4 border-white text-white rounded-full shadow-halloween-lg flex items-center justify-center hover:scale-110 transition-all z-40 active:scale-95 animate-bounce-slow opacity-100"
-            style={{ backgroundColor: '#FF6B35' }}
+            className="fixed bottom-6 right-6 w-16 h-16 bg-mystery-ink text-mystery-paper border-2 border-mystery-paper rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-all z-40 active:scale-95"
           >
-            <Calculator size={32} className="sm:w-10 sm:h-10" />
+            <Calculator size={32} className="opacity-80" />
+            <div className="absolute inset-0 rounded-full border border-white/10"></div>
           </button>
         )}
       </main>
@@ -327,17 +334,17 @@ export default function App() {
       {/* View Transition Animation */}
       <style>{`
         .view-container {
-          animation: slideInFromRight 0.3s ease-out;
+          animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         
-        @keyframes slideInFromRight {
+        @keyframes slideInUp {
           from {
             opacity: 0;
-            transform: translateX(100%);
+            transform: translateY(20px);
           }
           to {
             opacity: 1;
-            transform: translateX(0);
+            transform: translateY(0);
           }
         }
       `}</style>
