@@ -7,6 +7,15 @@
   --font-body: 'Courier Prime', monospace;
 }
 
+/* Convenience classes to use across project */
+.font-primary { font-family: var(--font-body); }
+.font-secondary { font-family: var(--font-handwriting); }
+
+/* Backwards-compatible names used in components */
+.font-typewriter { font-family: var(--font-typewriter); }
+.font-handwriting { font-family: var(--font-handwriting); }
+.font-body { font-family: var(--font-body); }
+
 /* Mystery Background */
 body {
   background-color: #0f0f0f;
@@ -14,7 +23,7 @@ body {
     radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 0.8), rgba(0, 0, 0, 1)),
     url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
   color: #e3dac9;
-  font-family: 'Courier Prime', monospace;
+  font-family: var(--font-primary);
 }
 
 /* Custom Utilities */
