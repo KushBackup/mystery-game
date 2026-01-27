@@ -249,6 +249,9 @@ export default function App() {
         currentRoundData={currentRoundData}
       />
 
+      {/* Global murderer reveal overlay (host-controlled). Renders regardless of active tab */}
+      <MurdererReveal voteCounts={voteCounts} isRevealOpen={voteResultsVisible} />
+
       {/* Main Content */}
       <main className="relative z-10 p-3 sm:p-4 max-w-2xl mx-auto space-y-6 sm:space-y-8 pb-24">
         {/* Feedback Toast */}

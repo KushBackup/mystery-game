@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { CHARACTERS } from '../../data/gameData';
 
-export const MurdererReveal = ({ currentRound, voteCounts, isRevealOpen }) => {
+export const MurdererReveal = ({ voteCounts, isRevealOpen }) => {
   const topSuspect = useMemo(() => {
     if (!voteCounts) return null;
     const entries = Object.entries(voteCounts);
@@ -11,7 +11,7 @@ export const MurdererReveal = ({ currentRound, voteCounts, isRevealOpen }) => {
     return CHARACTERS.find(c => c.id === id) || null;
   }, [voteCounts]);
 
-  if (!isRevealOpen || currentRound < 6 || !topSuspect) return null;
+  if (!isRevealOpen || !topSuspect) return null;
 
   return (
     <div className="fixed inset-0 z-60 flex items-center justify-center bg-red-900/90 backdrop-blur-sm p-4">
