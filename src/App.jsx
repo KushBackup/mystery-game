@@ -14,6 +14,7 @@ import { HelpView } from './components/views/HelpView';
 import { GuestProfileModal } from './components/modals/GuestProfileModal';
 import { DecoderModal } from './components/modals/DecoderModal';
 import { VoteResultsModal } from './components/modals/VoteResultsModal';
+import { MurdererReveal } from './components/modals/MurdererReveal';
 import { CharacterSelect } from './components/CharacterSelect';
 import { HostPanel } from './components/HostPanel';
 import { SplashScreen } from './components/SplashScreen';
