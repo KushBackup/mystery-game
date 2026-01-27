@@ -31,13 +31,20 @@ export const TimelineView = ({ myCharacter }) => {
 
   // Animate events in sequence
   useEffect(() => {
-    setVisibleEvents([]);
-    timelineEvents.forEach((event, index) => {
+    // Reset visible events asynchronously to avoid cascading synchronous state updates
+    const resetTimer = setTimeout(() => setVisibleEvents([]), 0);
+
+    const timers = timelineEvents.map((event, index) =>
       setTimeout(() => {
         setVisibleEvents(prev => [...prev, event.id]);
-      }, index * 200); // Stagger by 200ms
-    });
-  }, [myCharacter.id]);
+      }, index * 200)
+    );
+
+    return () => {
+      clearTimeout(resetTimer);
+      timers.forEach(t => clearTimeout(t));
+    };
+  }, [timelineEvents]);
 
   // Key murder timeline context (only shown to suspects after revelation)
   const murderContext = [

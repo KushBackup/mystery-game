@@ -45,8 +45,6 @@ export default function App() {
   const [feedback, setFeedback] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState(null);
-  const [hostPanelOpen, setHostPanelOpen] = useState(false);
-  const [showVoteResults, setShowVoteResults] = useState(false);
   const [isHost, setIsHost] = useState(false);
 
   const myCharacter = useMemo(() => 
@@ -166,7 +164,8 @@ export default function App() {
       await submitVoteToFirebase(currentUser, suspectId, currentRound);
       setFeedback({ type: 'success', msg: "VOTE RECORDED" });
       setTimeout(() => setFeedback(null), 3000);
-    } catch (error) {
+    } catch (err) {
+      console.error('Error submitting vote:', err);
       setFeedback({ type: 'error', msg: "Failed to submit vote" });
       setTimeout(() => setFeedback(null), 3000);
     }

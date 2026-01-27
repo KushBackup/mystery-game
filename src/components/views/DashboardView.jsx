@@ -2,7 +2,7 @@ import React from 'react';
 import { Fingerprint } from '../icons/IconComponents';
 import { DoodleCoffeeStain } from '../ui/Doodles';
 
-export const DashboardView = ({ myCharacter, currentRound }) => {
+export const DashboardView = ({ myCharacter }) => {
   return (
     <div className="space-y-6 animate-fade-in relative z-10 w-full max-w-3xl mx-auto">
       {/* Identity Card */}

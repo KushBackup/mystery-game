@@ -49,7 +49,7 @@ const HelpIcon = ({ className }) => (
   </svg>
 );
 
-export default function GridMenu({ onNavigate, voteCounts }) {
+export default function GridMenu({ onNavigate }) {
   const [hoveredTile, setHoveredTile] = useState(null);
 
   const menuItems = [

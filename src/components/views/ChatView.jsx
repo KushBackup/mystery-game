@@ -3,7 +3,7 @@ import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp,
 import { db } from '../../firebase/config';
 import { Send } from '../icons/ChatIcons';
 
-export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
+export const ChatView = ({ myCharacter }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -18,9 +18,6 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
   const chatContainerRef = useRef(null);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
-
-  // Check if any voting has occurred (after first round)
-  const hasVotingOccurred = Object.keys(voteCounts || {}).length > 0;
 
   // Vibration function - works on mobile devices
   const vibrate = (pattern = [200]) => {

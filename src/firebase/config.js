@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, getDocs, deleteDoc, writeBatch } from 'firebase/firestore';
+import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, getDocs, writeBatch } from 'firebase/firestore';
 
 // Firebase project configuration
 const firebaseConfig = {

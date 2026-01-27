@@ -3,7 +3,7 @@ import { Paperclip, Lock } from '../icons/IconComponents';
 import { DoodleCoffeeStain, DoodleCCTV } from '../ui/Doodles';
 import { CASE_FILES } from '../../data/gameData';
 
-export const FilesView = ({ unlockedFiles = [], currentRound = 0 }) => {
+export const FilesView = ({ unlockedFiles = [] }) => {
   // Filter files that are unlocked
   const availableFiles = CASE_FILES.filter(file => unlockedFiles.includes(file.id));
   
