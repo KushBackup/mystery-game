@@ -32,7 +32,7 @@ export const SplashScreen = ({ onComplete }) => {
 
   return (
     <div 
-      className={`fixed inset-0 z-[100] bg-mystery-dark flex flex-col items-center justify-center transition-opacity duration-1000 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}
+      className={`fixed inset-0 z-[100] bg-mystery-dark flex flex-col items-center justify-center transition-opacity duration-1000 ${fadeOut ? 'opacity-0' : 'opacity-100'} font-body`}
       style={{
         backgroundImage: `
           radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 0.9), rgba(0, 0, 0, 1)),
