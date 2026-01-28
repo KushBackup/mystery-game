@@ -1,0 +1,8 @@
+{
+  "id": "lumina-1",
+  "title": "First Light",
+  "tone": "wistful",
+  "scene": [
+    {"text": "You stand beneath a metal canopy. A child tosses a paper boat into a puddle.", "choices": [{"text":"Follow the boat","result":"clue:boat"},{"text":"Call out","result":"mood:connection"}]}
+  ]
+}
