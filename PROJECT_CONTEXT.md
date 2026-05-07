@@ -18,14 +18,14 @@
 **Gameplay Duration:** ~2-3 hours across 7 rounds  
 
 ### **Story Premise**
-Rohan Sharma, 34, a tech entrepreneur with terminal cancer, invites 32 people he's wronged to an "apology party" at "For the Record" bar in Panjim, Goa on January 25, 2026. During the party, he collapses and dies from poisoning. The twist: Rohan orchestrated his own suicide with his wife Esha to look like murder, securing a ₹5 crore life insurance payout that excludes suicide.
+The TripleSpeed office gathers at the founders' Penthouse (4th floor, Indiranagar, Bangalore) on the evening of May 23, 2026 — for a Series B funding-round announcement. During the party, **Nikhil**, the head of marketing, collapses on the balcony and is pronounced dead at 9:02 PM. The twist: Nikhil — terminally ill with Stage 4 pancreatic cancer AND about to be indicted in a SEBI inquiry into TripleSpeed's cooked engagement metrics — staged his own death with **Alam** (Head of HR, longtime fraud co-conspirator) to look like a murder. A homicide pays out the life insurance (suicide voids it) AND collapses the SEBI case (which would otherwise drag through Nikhil's estate and expose Alam).
 
 ### **Murder Method**
 - **Weapon:** Sodium azide (fast-acting poison)
-- **Delivery:** Poisoned ice cubes that melted slowly in Rohan's scotch
-- **Mastermind:** Esha Sharma (wife) - planned with Rohan
-- **Motive:** Life insurance fraud - ₹5 crore policy with suicide exclusion
-- **The Twist:** It was assisted suicide made to look like murder
+- **Delivery:** Poisoned vape cartridge — Alam swapped Nikhil's clean cartridge with the toxin-loaded twin during a 25-min window when he was alone in the Penthouse the morning of the party
+- **Mastermind:** Alam (Head of HR) — co-planned with Nikhil himself
+- **Motive:** ₹2 Cr personal life insurance (Trust beneficiary; Alam is trustee) + ₹5 Cr key-person insurance to TripleSpeed + collapse of the SEBI case
+- **The Twist:** Assisted suicide made to look like a murder for the insurance + halts the fraud investigation
 
 ---
 
@@ -39,24 +39,24 @@ Rohan Sharma, 34, a tech entrepreneur with terminal cancer, invites 32 people he
 5. **Evidence Unlocking** - Host unlocks case files at specific rounds (0, 3, 4)
 6. **Voting** - Players vote for suspects when host opens voting
 7. **Results Control** - Host controls when vote results are visible
-8. **Final Reveal** - Round 6: Murderer (Esha) sees private confession
+8. **Final Reveal** - Round 6: Murderer (Alam) sees private confession
 
 ### **Code System**
 - **Accusation Codes:** Pre-assigned, each player gets 1 unique accusation card
 - **Motive Codes:** Distributed in Round 2 via printed cards (10 motives)
-- **Revelation Codes:** Distributed in Round 4 (5 suicide-twist clues)
-- **Evidence Files:** Host-controlled unlocking (no player codes needed)
+- **Evidence Codes:** Distributed in Round 3 (7 forensic/document clues)
+- **Revelation Codes:** Distributed in Rounds 4-5 (6 cancer + fraud + insurance + HR-trail clues)
 - Codes can only be unlocked if current round >= clue's required round
 
 ### **Round Structure**
 ```
-Round 0: The Incident (Incident Report unlocked by host, explore profiles)
+Round 0: The Incident (Incident Report unlocked, explore TripleSpeed profiles)
 Round 1: Accusations (Each player receives 1 accusation card, shared verbally)
-Round 2: Motives (Enter printed motive codes - why suspects wanted Rohan dead)
-Round 3: Evidence (Host unlocks forensic files - toxicology, CCTV, witness statements)
-Round 4: Revelations (Host unlocks suicide evidence - journal, medical records)
-Round 5: Discussion (Final debate, hidden vote results)
-Round 6: The Reveal (Vote results shown, Esha sees confession clue)
+Round 2: Motives (Enter printed motive codes - why suspects wanted Nikhil dead)
+Round 3: Evidence (Toxicology, vape analysis, Penthouse CCTV, funding/SEBI/HR docs)
+Round 4: Revelations (Cancer diagnosis, voice notes, fraud reveal, insurance policy)
+Round 5: Late-Game Bombshells (HR trail showing Alam's January cleanup, Nikhil's unsent voice memo)
+Round 6: The Reveal (Vote results shown, Alam sees confession clue)
 ```
 
 ---
@@ -64,44 +64,47 @@ Round 6: The Reveal (Vote results shown, Esha sees confession clue)
 ## 👥 CHARACTER ROSTER
 
 ### **The Mastermind**
-- **Esha Sharma** - Design Scientist, Rohan's Wife (char_esha)
+- **Alam** - Head of HR, "court poet" (char_alam)
   - Public Role: MURDERER
-  - Private Truth: Orchestrated assisted suicide with Rohan for insurance money
+  - Private Truth: Helped Nikhil stage his own death; co-conspirator in the underlying TripleSpeed marketing fraud; trustee on Nikhil's life-insurance trust
   - Sees confession clue in Round 6 when host triggers reveal
 
 ### **The Victim**
-- **Rohan Sharma** - Tech Entrepreneur (deceased at 8:45 PM)
-  - Had Stage 4 pancreatic cancer
-  - Planned his own death with Esha
+- **Nikhil** - Head of Marketing, TripleSpeed (deceased at 9:02 PM)
+  - Had Stage 4 pancreatic cancer (4-6 month prognosis)
+  - Was about to be indicted in SEBI's TripleSpeed metric-fraud investigation
+  - Planned his own staged-murder with Alam
+  - Not a real TripleSpeed employee — fictional character invented for the game
 
 ### **The 9 Suspects** (Each receives accusations from 3-4 players)
-1. **Re'a** - Animator/Artist (char_rea)
-2. **Govind** - House Husband (char_govind)
-3. **Andrew Pereira** - Journalist (char_andrew)
-4. **Fatema** - Artist (char_fatema)
-5. **Surya Peket** - Software Developer (char_surya)
-6. **Anusha** - Audio Description Writer (char_anusha)
-7. **Chaaya** - Artist/Illustrator (char_chaaya)
-8. **Tanishka Sheokand** - Fashion Designer (char_tanishka)
-9. **Dr. Poshika Singh** - Lead Veterinarian Surgeon (char_poshika)
+1. **Elias Bothell** - Co-Founder, Marketing (char_elias)
+2. **Sukhans Asrani** - Co-Founder (char_sukhans)
+3. **Priyanshu** - Penthouse roommate, vibe coder (char_priyanshu)
+4. **Yash Shindey** - Crime-scene photographer (char_yash_s)
+5. **Pranav Ahlawat** - Self-styled PI / TripleSpeed strategy (char_pranav)
+6. **Vadini** - SEO (char_vadini)
+7. **Ishika Goel** - Email Marketing (char_ishika)
+8. **Neha Mittal** - Creative Strategist (char_neha)
+9. **Mohit Aasirwal** - Software / analytics pipeline author (char_mohit)
 
-### **The 22 Witnesses** (Non-suspects who also had grudges)
-Anish, Ishank, Shreyash, Rashmi, Anubhav, Antara, Gautam, Shannon, Anika, Amrit, Pallavi, Sukriti, Arjun, Sneha, Soham, Dr. Nikita, Shardul, Srinjan, Rahul, Akash, Bharath, Adish
+### **The 22 Witnesses** (Non-suspects with mild grievances against Nikhil)
+Ashish, Sonia, Prakarsh, Mihir, OG Yash, Amisha, Arush, Adi, Anusha (Ops), Prerna, Vidi, Tejas, Tauseef, Shashwat, Tushar, Kush, Meenakshi, Navya, Vipin, Riya, Xans, Bharatpreet
 
 ### **Character Data Structure**
 ```javascript
 {
-  id: 'char_esha',
-  name: "Esha Sharma",
-  role: "MURDERER" | "SUSPECT" | "WITNESS" | "VICTIM",
-  profession: "Design Scientist",
+  id: 'char_alam',
+  name: "Alam",
+  role: "MURDERER" | "SUSPECT" | "WITNESS",
+  profession: "Head of HR — 'A court poet'",
   bio: "Background description",
   quirk: "Personality trait",
   secret: "Hidden truth",
+  neverDo: "Personal red line",
   isSuspect: true | false,
-  motive: "Why they wanted Rohan dead",
+  motive: "Why they wanted Nikhil dead",
   timeline: "Time-stamped movements during the party",
-  code: "Access code for login"
+  code: "Per-character social code (distinct from login code)"
 }
 ```
 
@@ -120,31 +123,27 @@ Anish, Ishank, Shreyash, Rashmi, Anubhav, Antara, Gautam, Shannon, Anika, Amrit,
 - **BOMBSHELL** - Game-changing discoveries
 - **INTERROGATION** - Motive analysis
 
-### **Key Evidence Codes**
-```
-BULLY001        - Taher's History
-APOLOGY002      - The Sudden Change
-TIMELINE001     - Official Timelines
-PHONECALL004    - The Angry Call
-ASSISTANT005    - The Assistant's Role
-POISON001       - Toxicology Report
-ICECUBES006     - Ice Preference
-WIFE007         - The Survivor
-CCTVKITCHEN008  - Kitchen CCTV
-MOTIVE001       - Motive Analysis
-OPPORTUNITY002  - Who Had Access?
-BOMBSHELL001    - The Assistant's Debt
-COOLER001       - The Cooler (smoking gun)
-```
+### **Clue Code Index**
+See [CLUE_CODES.md](CLUE_CODES.md) for the full list. Categories:
+- 10 Accusation codes (`ACCUSE_*`) — Round 1
+- 10 Motive codes (themed to suspects' form quirks) — Round 2
+- 7 Evidence codes (`EVIDENCE_*`) — Round 3
+- 6 Revelation codes (`REVEAL_*`) — Rounds 4-5
+- 1 Confession code (`THE_TRUTH`) — Round 6, Alam-only
+- 32 Login codes (`LOGIN_CODE_MAP`)
 
 ### **Critical Timeline**
-- 6:00 PM - Vikram begins setup
-- 6:50 PM - Vikram places poisoned ice in kitchen freezer
-- 7:00-8:00 PM - Various guests arrive and mingle
-- 8:00 PM - Taher begins speech
-- 8:05 PM - Taher pours drinks and adds ice
-- 8:10 PM - Priya sips from glass (survives - ice not melted yet)
-- 8:19 PM - Taher collapses and dies
+- 5:30-5:55 PM — Alam alone in the Penthouse, swaps Nikhil's vape cartridge for the toxin-loaded twin
+- 6:30 PM — Catering arrives
+- 7:00-7:45 PM — Guests trickle in. Nikhil drops his vape on the coffee-table tray
+- 8:00 PM — Sukhans + Elias on stage. Series B at ₹400 Cr announced
+- 8:15 PM — Nikhil takes the mic for his thank-you toast
+- 8:18 PM — Nikhil hits his vape on stage. Toxin clock starts
+- 8:25 PM — Power flicker, hallway CCTV out for ~3 minutes (red herring; real swap was hours earlier)
+- 8:40 PM — Nikhil sits on the balcony bench, looking pale
+- 8:45 PM — Nikhil collapses. Alam first to him
+- 9:02 PM — Pronounced dead at the scene
+- 9:30 PM — Bangalore Police arrive. Inspector Reema Mathur takes lead
 
 ---
 
@@ -535,19 +534,20 @@ npm run deploy       # Deploy to GitHub Pages
 - **Fairness:** All players have equal access to public evidence
 
 ### **Key Mystery Elements**
-- **Motive:** All suspects have motives (Taher wronged everyone)
-- **Opportunity:** Only Vikram had kitchen access for poisoned ice
-- **Method:** Ice cube poisoning is clever and untraceable initially
-- **Red Herrings:** Anubhav's "Murder" secret, Ishank's hidden cam
-- **Critical Evidence:** Timeline + CCTV + Survivor testimony = solution
+- **Motive:** All 10 suspects have motives — fraud-adjacent (Elias, Sukhans, Vadini, Ishika, Neha, Mohit) + personal-leverage (Alam, Priyanshu, Yash Shindey, Pranav)
+- **Opportunity:** Communal vape station gives many suspects plausible access; the actual swap window was BEFORE the party (5:30-5:55 PM, Alam alone)
+- **Method:** Sodium-azide-laced vape cartridge, swapped for an identical-looking clean one
+- **Red Herrings:** 8:25 PM CCTV power flicker (unrelated), Mohit's Megadeth-fueled disappearance, Neha's poisoning-subplot manuscript, Vadini's Kill Bill GIF, Pranav's "podcast research" questions
+- **Critical Evidence (for the surface answer 'who murdered Nikhil'):** Vape forensics + HR access logs + insurance trust amendment + Nikhil's voice notes
+- **The Real Answer:** It wasn't a murder in the way the room thinks. Alam swapped the cartridge, but Nikhil planned it with him. The "murder" is staged-suicide-as-insurance-fraud-as-fraud-case-collapse
 
 ### **Winning Condition**
-Players collectively identify Vikram as the murderer through:
-1. Analyzing timelines (who had kitchen access)
-2. Forensic evidence (poison in ice, not glass)
-3. Priya's survival (ice hadn't melted when she sipped)
-4. Motive discovery (gambling debt control)
-5. Physical evidence (poison traces in Vikram's cooler)
+Players collectively identify Alam as the killer through:
+1. HR access-log timing (out-of-hours edits in January 2026 timed with the SEBI tip)
+2. Trust-deed amendment naming Alam trustee with self-dealing rights
+3. Nikhil's voice notes (recovered) explicitly naming Alam as accomplice
+4. Vape cartridge forensics (wiped, fresh swap)
+5. Alam's behavior at the scene (composed, first to victim, phone in airplane mode)
 
 ---
 
@@ -610,38 +610,38 @@ Players collectively identify Vikram as the murderer through:
 ### **Key Exports**
 - `CHARACTERS` (32 characters) - All player identities with roles, bios, timelines
 - `ACCUSATION_CLUES` (10 clues) - Pre-assigned accusations with `assignedTo[]` arrays
-- `MOTIVE_CLUES` (10 clues) - Round 2 codes revealing why suspects wanted Rohan dead
-- `EVIDENCE_CLUES` (10 clues) - Forensic evidence (deprecated - moved to CASE_FILES)
-- `REVELATION_CLUES` (5 clues) - Round 4 codes revealing suicide twist
-- `CONFESSION_CLUE` (1 clue) - Special clue for Esha only in Round 6
-- `CASE_FILES` (8 files) - Host-unlocked documents with `roundReq` field
-- `CLUE_DB` - Combined array of all motive + revelation clues for decoder
+- `MOTIVE_CLUES` (10 clues) - Round 2 codes revealing why suspects wanted Nikhil dead
+- `EVIDENCE_CLUES` (7 clues) - Round 3 forensic + document codes
+- `REVELATION_CLUES` (6 clues) - Rounds 4-5 codes revealing the cancer + fraud + insurance + HR-trail twist
+- `CONFESSION_CLUE` (1 clue) - Special clue for Alam only in Round 6
+- `CASE_FILES` (6 files) - Host-unlocked documents with `roundReq` field
+- `CLUE_DB` - Combined array of all clues for decoder validation
 
 ### **Helper Functions**
 - `getAssignedAccusation(characterId)` - Returns accusation assigned to player
 - `getSuspects()` - Returns all characters with `isSuspect: true`
 - `getWitnesses()` - Returns non-suspect characters
-- `isMurderer(characterId)` - Checks if character is Esha
+- `isMurderer(characterId)` - Checks if character is Alam (`char_alam`)
 
 ### **File Round Requirements**
 - **Round 0:** Incident Report (f_incident)
-- **Round 3:** Toxicology, CCTV, Bar Items, Insurance, Witness Statements
-- **Round 4:** Medical Records, Journal, Financial Records
+- **Round 3:** Toxicology Report, Funding Round Dossier
+- **Round 4:** Medical Records, Insurance Policy Summary, SEBI Inquiry Extract
 
 ---
 
 ## 📄 LICENSE & CREDITS
 
-**Project:** The Rohan Sharma Case - Murder Mystery Game  
+**Project:** The Nikhil Murder Mystery (TripleSpeed Edition)  
 **Framework:** React + Vite + Tailwind CSS  
 **Icons:** Custom SVG components (inline)  
 **Fonts:** System fonts with handwritten fallbacks  
-**Story:** Original murder mystery with insurance fraud twist
+**Story:** TripleSpeed office activity — fictional staged-murder + corporate-fraud twist; cast = real colleagues
 
 ---
 
-**Last Updated:** January 25, 2026  
-**Version:** 3.0.0  
+**Last Updated:** May 8, 2026  
+**Version:** 4.0.0 (TripleSpeed Edition)  
 **Status:** Production PWA with 32-player support, host controls, and real-time multiplayer
 
 ---
@@ -653,15 +653,15 @@ Players collectively identify Vikram as the murderer through:
 - [ ] Configure Firebase (see FIREBASE_SETUP.md)
 - [ ] Run `npm run dev`
 - [ ] Open http://localhost:5173
-- [ ] Select a character (try Esha for murderer experience)
+- [ ] Select a character (try login code `COURTPOET` for Alam — murderer experience)
 - [ ] Triple-tap ghost logo for Host Panel
 - [ ] Advance to Round 1 to see accusation card
-- [ ] Try entering code: "MOTIVE_ESHA" (Round 2+)
+- [ ] Try entering code: `COURTPOET` (Round 2+ motive clue for Alam)
 - [ ] Unlock files from Host Panel
 - [ ] Open voting from Host Panel
 - [ ] Vote for a suspect in Voting tab
 - [ ] Toggle vote results visibility
-- [ ] Advance to Round 6 and trigger murderer reveal (Esha sees confession)
+- [ ] Advance to Round 6 and trigger murderer reveal (Alam sees `THE_TRUTH` confession)
 - [ ] View animated vote results
 - [ ] Send chat messages and feel vibration
 - [ ] Explore all 5 tabs (ID, Clues, Chat, Files, Guests)

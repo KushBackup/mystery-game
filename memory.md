@@ -30,11 +30,14 @@
 - **Owner:** Kushagra (kushagra@triplespeed.ai)
 - **Brand:** Astral Project
 - **Game name:** Astral Project's Murder Mystery Experience
+- **Real-world purpose:** Office activity for TripleSpeed (Kushagra's company). Cast = real colleagues. The game's events are *not real* — it's a fictional murder mystery using the office as the setting.
 - **Player count:** 32 (the data model is built around exactly 32 character slots)
-- **Live game date in fiction:** 2026-01-25, set in Goa, India
-- **Murderer reveal (spoiler):** Esha (Rohan Sharma's wife). She and Rohan staged his death together for ₹5 crore in life insurance — the "murder" is actually a suicide/insurance-fraud reveal in Round 4-6.
-- **Round structure:** 7 rounds (0–6) with codes unlocked progressively (accusation → motive → revelation).
-- **Special clue `THE_TRUTH`:** only valid for the Esha character — gates the final confession reveal.
+- **Live game date in fiction:** 2026-05-23, set at the founders' Penthouse, 4th floor, Indiranagar, Bangalore.
+- **Victim (spoiler):** Nikhil — fictional Head of Marketing at TripleSpeed. NOT a real person on the team.
+- **Murderer reveal (spoiler):** Alam (Head of HR). Nikhil and Alam staged his death together. Nikhil had Stage 4 pancreatic cancer AND was about to be indicted in a SEBI inquiry into TripleSpeed's cooked engagement metrics. Suicide voids the insurance and the SEBI case continues posthumously through Nikhil's estate; a clean homicide pays out (Trust + key-person policy) AND collapses the SEBI case. Alam was Nikhil's HR-side fraud co-conspirator and is the named trustee on the personal life-insurance policy.
+- **Murder method:** sodium azide–laced vape cartridge, swapped during a 25-min window when Alam was alone in the Penthouse the morning of the party.
+- **Round structure:** 7 rounds (0–6) with codes unlocked progressively (accusation → motive → evidence → revelation → confession).
+- **Special clue `THE_TRUTH`:** only valid for the Alam character (`char_alam`) — gates the final confession reveal.
 
 ## Infrastructure
 
