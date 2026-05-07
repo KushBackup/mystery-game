@@ -18,6 +18,7 @@ import { CharacterSelect } from './components/CharacterSelect';
 import { HostPanel } from './components/HostPanel';
 import { SplashScreen } from './components/SplashScreen';
 import { OutroSplash } from './components/OutroSplash';
+import { MurdererRevealOverlay } from './components/MurdererRevealOverlay';
 import { ROUNDS, CHARACTERS, CLUE_DB, getAssignedAccusation, CONFESSION_CLUE, isMurderer } from './data/gameData';
 import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue } from './firebase/config';
 
@@ -178,6 +179,14 @@ export default function App() {
   // Show splash screen on first load
   if (!splashComplete) {
     return <SplashScreen onComplete={() => setSplashComplete(true)} />;
+  }
+
+  // Public murderer reveal — terminal screen for all non-host players except
+  // the murderer themselves (Alam falls through to the OutroSplash branch).
+  // Must come before the gameEnded check so it wins over OutroSplash for everyone else.
+  if (revealedToMurderer && currentUser && !isHost && !isMurderer(currentUser)) {
+    const murdererCharacter = CHARACTERS.find(c => c.role === 'MURDERER');
+    return <MurdererRevealOverlay murderer={murdererCharacter} />;
   }
 
   // Show outro splash when game ends (but not for host)

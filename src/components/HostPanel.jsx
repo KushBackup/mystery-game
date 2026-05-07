@@ -39,8 +39,11 @@ export const HostPanel = ({
     await updateVoteResultsVisibility(!voteResultsVisible);
   };
 
-  const handleToggleMurdererReveal = async () => {
-    await updateMurdererReveal(!revealedToMurderer);
+  const handleRevealMurderer = async () => {
+    if (revealedToMurderer) return;
+    if (window.confirm('Reveal the murderer to ALL 32 players? This ends the game and cannot be undone except by Reset Game.')) {
+      await updateMurdererReveal(true);
+    }
   };
 
   const handleUnlockRoundFiles = async (round) => {
@@ -244,19 +247,19 @@ export const HostPanel = ({
 
       {/* Special Actions */}
       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Murderer Reveal (Round 6) */}
-        <button 
-          onClick={handleToggleMurdererReveal}
-          disabled={currentRound < 6}
+        {/* Murderer Reveal (Round 6) — public, ends the game for everyone */}
+        <button
+          onClick={handleRevealMurderer}
+          disabled={currentRound < 6 || revealedToMurderer}
           className={`py-4 rounded-xl font-black text-base transition-all active:scale-95 shadow-halloween ${
-            currentRound < 6 
-              ? 'bg-stone-600 text-stone-400 cursor-not-allowed' 
-              : revealedToMurderer 
-                ? 'bg-red-700 hover:bg-red-600' 
+            currentRound < 6
+              ? 'bg-stone-600 text-stone-400 cursor-not-allowed'
+              : revealedToMurderer
+                ? 'bg-red-700 cursor-not-allowed'
                 : 'bg-amber-600 hover:bg-amber-500'
           }`}
         >
-          {revealedToMurderer ? '🔓 CONFESSION REVEALED' : '🎭 REVEAL TO MURDERER'}
+          {revealedToMurderer ? '🔓 MURDERER REVEALED' : '🎭 REVEAL MURDERER'}
         </button>
 
         {/* End Game Button */}

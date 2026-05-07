@@ -39,7 +39,7 @@ The TripleSpeed office gathers at the founders' Penthouse (4th floor, Indiranaga
 5. **Evidence Unlocking** - Host unlocks case files at specific rounds (0, 3, 4)
 6. **Voting** - Players vote for suspects when host opens voting
 7. **Results Control** - Host controls when vote results are visible
-8. **Final Reveal** - Round 6: Murderer (Alam) sees private confession
+8. **Final Reveal** - Round 6: Host presses "REVEAL MURDERER" → big red full-screen overlay shows on every non-host player's phone naming Alam, **except Alam's own device** (Alam falls through to the regular OutroSplash). The action also flips `gameEnded` so players are locked into the terminal screen. Reset Game is the only way to undo.
 
 ### **Code System**
 - **Accusation Codes:** Pre-assigned, each player gets 1 unique accusation card
@@ -56,7 +56,7 @@ Round 2: Motives (Enter printed motive codes - why suspects wanted Nikhil dead)
 Round 3: Evidence (Toxicology, vape analysis, Penthouse CCTV, funding/SEBI/HR docs)
 Round 4: Revelations (Cancer diagnosis, voice notes, fraud reveal, insurance policy)
 Round 5: Late-Game Bombshells (HR trail showing Alam's January cleanup, Nikhil's unsent voice memo)
-Round 6: The Reveal (Vote results shown, Alam sees confession clue)
+Round 6: The Reveal (Vote results shown; host presses "REVEAL MURDERER" → 31 players see a full-screen red overlay naming Alam; Alam's device skips the overlay and shows OutroSplash; game ends)
 ```
 
 ---
@@ -67,7 +67,7 @@ Round 6: The Reveal (Vote results shown, Alam sees confession clue)
 - **Alam** - Head of HR, "court poet" (char_alam)
   - Public Role: MURDERER
   - Private Truth: Helped Nikhil stage his own death; co-conspirator in the underlying TripleSpeed marketing fraud; trustee on Nikhil's life-insurance trust
-  - Sees confession clue in Round 6 when host triggers reveal
+  - In Round 6, host triggers the public murderer reveal — every other player sees a full-screen red overlay naming Alam, while Alam's own device falls through to OutroSplash. The action ends the game.
 
 ### **The Victim**
 - **Nikhil** - Head of Marketing, TripleSpeed (deceased at 9:02 PM)
@@ -661,7 +661,7 @@ Players collectively identify Alam as the killer through:
 - [ ] Open voting from Host Panel
 - [ ] Vote for a suspect in Voting tab
 - [ ] Toggle vote results visibility
-- [ ] Advance to Round 6 and trigger murderer reveal (Alam sees `THE_TRUTH` confession)
+- [ ] Advance to Round 6 and trigger murderer reveal (every player's screen flips to a full-screen red overlay naming Alam; game ends)
 - [ ] View animated vote results
 - [ ] Send chat messages and feel vibration
 - [ ] Explore all 5 tabs (ID, Clues, Chat, Files, Guests)

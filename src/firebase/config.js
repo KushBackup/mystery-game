@@ -95,12 +95,15 @@ export const updateVoteResultsVisibility = async (isVisible) => {
   }
 };
 
-// Toggle murderer reveal
+// Public murderer reveal — locks the game into its terminal state by also
+// setting gameEnded so players can't navigate past the reveal overlay.
+// Reset Game clears both flags.
 export const updateMurdererReveal = async (isRevealed) => {
   const gameStateRef = doc(db, GAME_STATE_DOC);
   try {
     await updateDoc(gameStateRef, {
       revealedToMurderer: isRevealed,
+      ...(isRevealed ? { gameEnded: true } : {}),
       lastUpdated: Date.now()
     });
   } catch (error) {

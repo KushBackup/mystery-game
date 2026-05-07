@@ -44,7 +44,7 @@ This application provides a digital platform for hosting and playing murder myst
 - **Pre-assigned accusations:** Each player receives 1 of 10 accusation cards
 - **Host-controlled evidence:** Files unlock at specific rounds by host action
 - **Vote visibility control:** Host decides when results are shown to players
-- **Murderer revelation:** Special confession clue appears only for Esha in Round 6
+- **Murderer revelation:** Round 6 host action flips a Firestore flag that pushes a full-screen red overlay to every player naming Alam — *except Alam's own device, which falls through to OutroSplash* — and ends the game
 - **Real-time multiplayer:** All players see synchronized game state via Firebase
 - **Mobile-first:** Optimized for mobile devices with touch interactions
 
@@ -948,14 +948,17 @@ export const unlockFilesForRound = async (roundNumber) => {
 ```
 
 **Trigger Murderer Reveal:**
+Sets `revealedToMurderer` and, when revealing, also sets `gameEnded: true` so players are locked into the terminal state. Reset Game clears both.
 ```javascript
 export const updateMurdererReveal = async (isRevealed) => {
   await updateDoc(doc(db, 'gameState', 'current'), {
     revealedToMurderer: isRevealed,
+    ...(isRevealed ? { gameEnded: true } : {}),
     lastUpdated: serverTimestamp()
   });
 };
 ```
+On the client, `App.jsx` checks `revealedToMurderer && !isHost && !isMurderer(currentUser)` *before* the `gameEnded` outro branch so the public reveal overlay (`MurdererRevealOverlay`) wins over `OutroSplash` — except for the murderer themselves (Alam), who falls through to `OutroSplash`.
 
 **Reset Game State:**
 ```javascript
@@ -1677,11 +1680,12 @@ Three buttons for batch file unlocking:
 - Buttons disabled after unlocking (gray state)
 - Display shows count: "Unlocked: X files"
 
-**5. Murderer Reveal (Round 6)**
-- **🎭 REVEAL TO MURDERER** - Triggers confession clue for Esha only
+**5. Murderer Reveal (Round 6) — public, terminal**
+- **🎭 REVEAL MURDERER** - Pushes a full-screen red overlay naming Alam to every connected non-host player and ends the game
 - Disabled until Round 6
-- Button turns red when activated: **🔓 CONFESSION REVEALED**
-- Only Esha's device shows the private confession message
+- Confirmation prompt before firing (this is one-way; only Reset Game can undo)
+- Button locks into red disabled state after firing: **🔓 MURDERER REVEALED**
+- Renders [src/components/MurdererRevealOverlay.jsx](src/components/MurdererRevealOverlay.jsx) on every player's screen, taking precedence over `OutroSplash`
 
 **6. Reset Game**
 - **🔄 RESET GAME** button
@@ -1718,7 +1722,7 @@ Three buttons for batch file unlocking:
 │ [💀 Round 4: Revelations (3)]  │
 │ Unlocked: 6 files               │
 ├─────────────────────────────────┤
-│ [🎭 REVEAL TO MURDERER]         │
+│ [🎭 REVEAL MURDERER]            │
 │ (Disabled - Round 6+ required)  │
 ├─────────────────────────────────┤
 │ [🔄 RESET GAME]                 │
@@ -1761,11 +1765,11 @@ Three buttons for batch file unlocking:
 - Verify `voteResultsVisible` in Firebase
 - Check VotingView receives `voteResultsVisible` prop
 
-**Murderer confession not showing:**
-- Only works for character ID: char_esha
-- Requires Round 6+
-- Host must click "REVEAL TO MURDERER" button
-- Check `revealedToMurderer` and `currentRound` in Firebase
+**Murderer reveal overlay not showing:**
+- Requires Round 6+ (host button is disabled until then)
+- Host must click "REVEAL MURDERER" and confirm the prompt
+- Check `revealedToMurderer` and `gameEnded` in Firebase — both should flip to `true` when revealed
+- The overlay is rendered for non-host players from `App.jsx` and looks up the murderer via `CHARACTERS.find(c => c.role === 'MURDERER')`
 
 **PWA not installing:**
 - Must be served over HTTPS (or localhost)
