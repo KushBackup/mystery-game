@@ -1,6 +1,11 @@
 # 🔍 Astral Project's Murder Mystery Experience
 ## Complete Project Context & Instructions
 
+<<<<<<< Updated upstream
+=======
+> **Maintenance note for Claude:** This is a living document. Update it whenever the game flow, mechanics, scope, or feature set changes. See [Claude.md](Claude.md) for the full doc map and session-start primer.
+
+>>>>>>> Stashed changes
 ---
 
 ## 📖 GAME OVERVIEW

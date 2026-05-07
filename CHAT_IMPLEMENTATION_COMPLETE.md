@@ -1,5 +1,10 @@
 # 🎉 CHAT FEATURE - COMPLETE IMPLEMENTATION SUMMARY
 
+<<<<<<< Updated upstream
+=======
+> **Maintenance note for Claude:** This is a living document. Update it whenever chat behavior, message schema, or chat UI changes. See [Claude.md](Claude.md) for the full doc map and session-start primer.
+
+>>>>>>> Stashed changes
 ## ✅ ALL FILES CREATED & READY
 
 ### 📁 New Files Added:

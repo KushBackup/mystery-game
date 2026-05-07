@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(try { Invoke-WebRequest -Uri \"https://kushbackup.github.io/mystery-game/\" -Method Head -UseBasicParsing -ErrorAction Stop | Select-Object StatusCode, StatusDescription } catch { $_.Exception.Response.StatusCode.value__; $_.Exception.Message })"
+    ]
+  }
+}

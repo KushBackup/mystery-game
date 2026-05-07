@@ -1,5 +1,10 @@
 # 🔥 Firebase Real-Time Chat Setup Guide
 
+<<<<<<< Updated upstream
+=======
+> **Maintenance note for Claude:** This is a living document. Update it whenever Firebase configuration, environment variables, or Firestore setup steps change. See [Claude.md](Claude.md) for the full doc map and session-start primer.
+
+>>>>>>> Stashed changes
 ## Step 1: Install Firebase Dependencies
 
 Run this command in your terminal:

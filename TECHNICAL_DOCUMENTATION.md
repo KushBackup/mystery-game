@@ -1,6 +1,11 @@
 # 🔧 Astral Project's Murder Mystery Experience - Technical Documentation
 ## Complete Application Architecture & Features
 
+<<<<<<< Updated upstream
+=======
+> **Maintenance note for Claude:** This is a living document. Update it whenever architecture, components, state management, or build/deploy details change. See [Claude.md](Claude.md) for the full doc map and session-start primer.
+
+>>>>>>> Stashed changes
 ---
 
 ## 📋 TABLE OF CONTENTS

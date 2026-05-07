@@ -1,6 +1,11 @@
 # 🔍 THE ROHAN SHARMA MURDER MYSTERY
 ## Complete Story Bible & Game Narrative
 
+<<<<<<< Updated upstream
+=======
+> **Maintenance note for Claude:** This is a living document. Update it whenever characters, backstories, the timeline, or story-revealing clues change. See [Claude.md](Claude.md) for the full doc map and session-start primer.
+
+>>>>>>> Stashed changes
 ---
 
 ## 📖 PROLOGUE: THE PARTY INVITATION

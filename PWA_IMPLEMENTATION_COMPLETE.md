@@ -1,5 +1,10 @@
 # 📱 PWA + VIBRATION FEATURE - IMPLEMENTATION COMPLETE
 
+<<<<<<< Updated upstream
+=======
+> **Maintenance note for Claude:** This is a living document. Update it whenever PWA config, service worker behavior, offline caching, or vibration/haptic logic changes. See [Claude.md](Claude.md) for the full doc map and session-start primer.
+
+>>>>>>> Stashed changes
 ## ✅ PHASE 2 COMPLETE - PWA WITH HAPTIC FEEDBACK
 
 ### 🎯 Features Implemented

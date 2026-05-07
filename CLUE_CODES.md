@@ -1,5 +1,10 @@
 # Mystery Game - All Clue Codes
 
+<<<<<<< Updated upstream
+=======
+> **Maintenance note for Claude:** This is a living document. Update it whenever a clue code is added, removed, or renamed in [src/data/gameData.js](src/data/gameData.js). See [Claude.md](Claude.md) for the full doc map and session-start primer.
+
+>>>>>>> Stashed changes
 ## Accusation Clues (Round 1)
 - ACCUSE_ESHA
 - ACCUSE_REA
