@@ -62,9 +62,6 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
               CONFIDENTIAL
             </h1>
           </div>
-          <p className="mt-6 text-xl tracking-widest font-typewriter text-mystery-aged uppercase border-b border-mystery-blood/50 inline-block pb-1">
-            Case: Rohan Sharma
-          </p>
         </div>
 
         {/* Login Form - Paper pinned to board */}

@@ -41,14 +41,15 @@ export const TimelineView = ({ myCharacter }) => {
 
   // Key murder timeline context (only shown to suspects after revelation)
   const murderContext = [
-    { time: '8:00 PM', event: 'Rohan begins his apology speech', icon: '🎤' },
-    { time: '8:15 PM', event: 'Speech ends, sealed scotch bottle opened', icon: '🥃' },
-    { time: '8:17 PM', event: 'Rohan adds special ice to his drink', icon: '❄️' },
-    { time: '8:18 PM', event: 'Esha takes a small sip from his glass', icon: '💧' },
-    { time: '8:19 PM', event: 'Toast made, everyone drinks', icon: '🥂' },
-    { time: '8:45 PM', event: 'ROHAN COLLAPSES - CRITICAL MOMENT', icon: '💀' },
-    { time: '9:02 PM', event: 'Rohan pronounced dead', icon: '⚰️' },
-    { time: '9:30 PM', event: 'Police arrive, bar locked down', icon: '🚨' }
+    { time: '5:30 PM', event: 'Alam alone in the Penthouse during HR-prep', icon: '🔑' },
+    { time: '8:00 PM', event: 'Sukhans + Elias announce Series B', icon: '🎤' },
+    { time: '8:15 PM', event: "Nikhil's thank-you toast on stage", icon: '🥂' },
+    { time: '8:18 PM', event: 'Nikhil hits his vape (toxin clock starts)', icon: '💨' },
+    { time: '8:25 PM', event: 'Power flicker; hallway CCTV out ~3 min', icon: '⚡' },
+    { time: '8:40 PM', event: 'Nikhil sits on balcony, looking pale', icon: '😶' },
+    { time: '8:45 PM', event: 'NIKHIL COLLAPSES - CRITICAL MOMENT', icon: '💀' },
+    { time: '9:02 PM', event: 'Nikhil pronounced dead', icon: '⚰️' },
+    { time: '9:30 PM', event: 'Bangalore Police arrive, Penthouse sealed', icon: '🚨' }
   ];
 
   // Only show murder timeline to suspects (roles: MURDERER, SUSPECT)
@@ -71,10 +72,10 @@ export const TimelineView = ({ myCharacter }) => {
             </p>
             <div className="bg-white/20 backdrop-blur-sm border-2 border-white/40 p-3 rounded-lg text-center">
               <p className="text-white text-xs font-bold">
-                📍 Location: <span className="font-black">For The Record Bar</span>
+                📍 Location: <span className="font-black">Penthouse, Indiranagar</span>
               </p>
               <p className="text-white text-xs font-bold mt-1">
-                📅 Date: <span className="font-black">January 25, 2026</span>
+                📅 Date: <span className="font-black">May 23, 2026</span>
               </p>
             </div>
           </div>

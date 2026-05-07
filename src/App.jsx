@@ -18,7 +18,7 @@ import { CharacterSelect } from './components/CharacterSelect';
 import { HostPanel } from './components/HostPanel';
 import { SplashScreen } from './components/SplashScreen';
 import { OutroSplash } from './components/OutroSplash';
-import { ROUNDS, CHARACTERS, CLUE_DB, getAssignedAccusation, CONFESSION_CLUE } from './data/gameData';
+import { ROUNDS, CHARACTERS, CLUE_DB, getAssignedAccusation, CONFESSION_CLUE, isMurderer } from './data/gameData';
 import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue } from './firebase/config';
 
 export default function App() {
@@ -62,7 +62,7 @@ export default function App() {
 
   // Check if player should see the confession (murderer in Round 6)
   const shouldShowConfession = useMemo(() => {
-    return currentUser === 'char_esha' && revealedToMurderer && currentRound >= 6;
+    return isMurderer(currentUser) && revealedToMurderer && currentRound >= 6;
   }, [currentUser, revealedToMurderer, currentRound]);
 
   // --- FIREBASE SYNC ---

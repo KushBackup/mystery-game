@@ -143,8 +143,8 @@ export const unlockFiles = async (fileIds) => {
 export const unlockFilesForRound = async (roundNumber) => {
   const roundFiles = {
     0: ['f_incident'],
-    3: ['f_toxreport', 'f_cctv_bar', 'f_cctv_freezer', 'f_insurance'],
-    4: ['f_medical', 'f_journal', 'f_financial']
+    3: ['f_toxreport', 'f_funding'],
+    4: ['f_medical', 'f_insurance', 'f_sebi']
   };
   
   const filesToUnlock = roundFiles[roundNumber] || [];

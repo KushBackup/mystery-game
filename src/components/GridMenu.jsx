@@ -147,7 +147,7 @@ export default function GridMenu({ onNavigate, voteCounts }) {
           Astral Project Presents
         </p>
         <h1 className="font-typewriter text-4xl sm:text-5xl font-bold text-mystery-paper tracking-tighter uppercase border-b-2 border-mystery-blood inline-block pb-2 transform -rotate-1 shadow-lg">
-          The Murder Mystery Experience @ For the Record
+          The Murder Mystery Experience @ The Penthouse
         </h1>
         <div className="mt-4 transform rotate-1">
           <span className="font-handwriting text-2xl text-mystery-blood bg-black/10 px-4 py-1 rounded inline-block">

@@ -16,8 +16,18 @@ export const VotingView = ({
   const [showResults, setShowResults] = useState(false);
   const [confirmingVote, setConfirmingVote] = useState(null);
 
-  // Show all characters for voting
-  const suspects = CHARACTERS;
+  // Show all characters for voting. Move the murderer out of the first slot
+  // so players don't see Alam's name immediately and form a bias against him.
+  const suspects = React.useMemo(() => {
+    const list = [...CHARACTERS];
+    const murdererIdx = list.findIndex(c => c.role === 'MURDERER');
+    if (murdererIdx > -1) {
+      const [murderer] = list.splice(murdererIdx, 1);
+      const middle = Math.floor(list.length / 2);
+      list.splice(middle, 0, murderer);
+    }
+    return list;
+  }, []);
   const hasVoted = votes[currentRound] !== undefined;
   const hasAnyVotes = Object.keys(voteCounts || {}).length > 0;
 
