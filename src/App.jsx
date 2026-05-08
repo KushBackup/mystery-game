@@ -272,6 +272,13 @@ export default function App() {
             revealedToMurderer={revealedToMurderer}
             unlockedFiles={unlockedFiles}
             revealedClues={revealedClues}
+            setCurrentRound={setCurrentRound}
+            setIsVotingOpen={setIsVotingOpen}
+            setVoteResultsVisible={setVoteResultsVisible}
+            setRevealedToMurderer={setRevealedToMurderer}
+            setUnlockedFiles={setUnlockedFiles}
+            setRevealedClues={setRevealedClues}
+            setGameEnded={setGameEnded}
             onClose={() => setActiveTab(null)}
           />
         )}

@@ -16,15 +16,25 @@ export const VotingView = ({
   const [showResults, setShowResults] = useState(false);
   const [confirmingVote, setConfirmingVote] = useState(null);
 
-  // Show all characters for voting. Move the murderer out of the first slot
-  // so players don't see Alam's name immediately and form a bias against him.
+  // Stable hash-sort the suspect list so every player sees the SAME jumbled
+  // order (so chat references like "the 3rd one" still translate), but the
+  // ordering doesn't betray suspects-vs-witnesses or put the murderer near
+  // the top. Belt-and-suspenders: if the hash happens to place the murderer
+  // in the first row of the 2-col grid, push them past the midpoint.
   const suspects = React.useMemo(() => {
-    const list = [...CHARACTERS];
+    const stableHash = (str) => {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) {
+        h = ((h << 5) - h) + str.charCodeAt(i);
+        h |= 0;
+      }
+      return h;
+    };
+    const list = [...CHARACTERS].sort((a, b) => stableHash(a.id) - stableHash(b.id));
     const murdererIdx = list.findIndex(c => c.role === 'MURDERER');
-    if (murdererIdx > -1) {
+    if (murdererIdx > -1 && murdererIdx < 6) {
       const [murderer] = list.splice(murdererIdx, 1);
-      const middle = Math.floor(list.length / 2);
-      list.splice(middle, 0, murderer);
+      list.splice(Math.floor(list.length / 2) + 3, 0, murderer);
     }
     return list;
   }, []);

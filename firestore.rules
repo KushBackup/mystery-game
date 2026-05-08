@@ -1,0 +1,24 @@
+rules_version = '2';
+
+// Open rules suitable for an unauthenticated party-game lobby.
+// The game runs on a private invite link with no Firebase Auth — the host is
+// the trust boundary, not the database. Anyone who can load the app can write.
+//
+// Collections used by the app (see src/firebase/config.js):
+//   gameState/current      - round, voting flags, unlocked files, revealed clues
+//   gameState/votes        - per-player vote records and aggregate counts
+//   gameState/playerData   - per-player unlocked clue list
+//   messages/{id}          - chat messages
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /gameState/{docId} {
+      allow read, write: if true;
+    }
+
+    match /messages/{messageId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+  }
+}
