@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Caveat:wght@400;700&family=Courier+Prime&display=swap');
 
+/* Tailwind v4 does NOT pick up tailwind.config.js automatically — without this
+   line the whole `mystery-*` palette and the custom keyframes resolve to
+   nothing, and every bg-mystery-paper / text-mystery-ink / animate-fade-in in
+   the app silently renders unstyled. Keep the config file authoritative rather
+   than duplicating the palette into @theme below. */
+@config "../tailwind.config.js";
+
 @theme {
   --font-typewriter: 'Special Elite', 'Courier New', monospace;
   --font-handwriting: 'Caveat', cursive;

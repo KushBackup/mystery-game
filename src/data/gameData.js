@@ -983,3 +983,107 @@ export const validateLoginCode = (code) => {
   const upperCode = code.trim().toUpperCase();
   return LOGIN_CODE_MAP[upperCode] || null;
 };
+
+// ============================================
+// HOST RUN SHEET
+// ============================================
+// The round-by-round script the host reads from during the live event. Rendered
+// by HostPanel. `id` matches the round number so the panel can auto-highlight
+// the entry for the current round; 'pregame' sits before Round 0.
+// Each entry: setup (do before announcing) → announce (read aloud) → during →
+// end (the transition cue).
+
+export const HOST_SCRIPT = [
+  {
+    id: 'pregame',
+    title: 'Pre-Game · Welcome',
+    duration: '~5 min',
+    setup: 'Before you start: confirm all 32 players have arrived and have their printed login-code cards. Have the three stacks of printed cards ready by round — Motives (Round 2), Evidence (Round 3), Revelations (Rounds 4 & 5).',
+    announce: `"Welcome to the TripleSpeed Penthouse — 4th floor, Indiranagar. The night is May 23rd, 2026, and we're here for the Series B announcement party. By the end of the night, one of us is dead.
+
+Ground rules. Your phone is your evidence kit — log in with the code on your card. When you receive a printed card later tonight, type the CODE, not the title, into the decoder. Codes only work in their assigned round. Don't show your phone to anyone. Your secrets stay yours. Stay in character. Lie. Mingle. Accuse. The host moves the rounds when the room is ready."`,
+    during: 'Help anyone struggling with their login code. Make sure everyone has reached the grid hub before you advance to Round 0.',
+    end: 'When all 32 are in, press the "+" button to begin Round 0.'
+  },
+  {
+    id: 0,
+    title: 'Round 0 · The Incident',
+    duration: '10–15 min',
+    setup: 'The Incident Report is unlocked by default. Nothing to distribute yet — players are getting their bearings.',
+    announce: `"Round 0. The Incident. At 8:45 PM tonight, Nikhil — our Head of Marketing — collapsed on the balcony. He was pronounced dead at 9:02. All 32 of us are detained on-site for questioning by Inspector Reema Mathur.
+
+Open the FILES tab. Read the Incident Report. Then open GUESTS — see who else is in this room with you tonight. Don't accuse anyone yet. Get the lay of the land. Mingle in character. We move to Round 1 in about 10 minutes."`,
+    during: 'Walk the room. Make sure people have actually opened the Incident Report — first-time players sometimes miss the FILES tab. Encourage in-character introductions.',
+    end: 'When the room feels warmed up, press "+" to advance to Round 1.'
+  },
+  {
+    id: 1,
+    title: 'Round 1 · Accusations',
+    duration: '~15 min',
+    setup: "No physical cards in this round — each player's accusation card is automatically revealed in their INTEL tab the moment Round 1 starts. 32 players, 10 accusations: every suspect is accused by 3–4 people.",
+    announce: `"Round 1. Accusations. Each of you has been handed an accusation by another guest tonight — someone swears they saw a specific person do something suspicious. Open INTEL. Read your accusation.
+
+What you do with it is your choice. Shout it across the room. Whisper it to one person. Use it as leverage. Pretend you never got one. Lie about who's accused. The CHAT tab is your investigation room — start working it. We move to Round 2 in 15 minutes."`,
+    during: "Watch the chat. If it's quiet, single-out a player and ask 'who did you get?' to break the ice.",
+    end: 'Press "+" to advance to Round 2.'
+  },
+  {
+    id: 2,
+    title: 'Round 2 · Motives',
+    duration: '~15 min',
+    setup: 'Hand out the 10 printed MOTIVE cards now. Each card has a unique code. Suggested distribution: hand each suspect their own motive card so they can decide whether to spin or hide it; sprinkle the rest among witnesses for cross-pollination.',
+    announce: `"Round 2. Motives. Some of you just received a printed card. Open the decoder — the floating red button on the CLUES screen — and type the CODE, not the title. The motive will appear in your INTEL tab.
+
+These ten motives are the reasons each of our nine suspects might have wanted Nikhil dead. If you got someone's motive card, you decide whether to share it, twist it, or sit on it. If you didn't get one, your job is to pry. We move to Round 3 in 15 minutes."`,
+    during: "If anyone can't find the decoder: it's the floating red button on the CLUES screen.",
+    end: 'Press "+" to advance to Round 3. Forensics next.'
+  },
+  {
+    id: 3,
+    title: 'Round 3 · Evidence',
+    duration: '~15–20 min',
+    setup: `1) In this panel, press "🔬 Round 3: Evidence" to unlock the Toxicology Report and Funding Round Dossier.
+2) Hand out the 7 printed EVIDENCE cards.
+3) Press "🗳️ OPEN VOTING" — first vote is now live.`,
+    announce: `"Round 3. Evidence. Forensics is in. Open FILES — Toxicology and the Funding Dossier are now unlocked. Cause of death: acute sodium azide poisoning. Delivered through Nikhil's personal vape. Some of you also just received Evidence codes — enter them in the decoder.
+
+Voting is now OPEN. Cast your suspicion. You can change your vote at any point before voting closes."`,
+    during: 'This is when the room starts theorizing in earnest. Stay quiet, let them work. Glance at the vote tally if you have it visible.',
+    end: 'Press "+" to advance to Round 4. The story is about to flip.'
+  },
+  {
+    id: 4,
+    title: 'Round 4 · Revelations',
+    duration: '~15–20 min',
+    setup: `1) Press "💀 Round 4: Revelations" to unlock Medical Records, Insurance Policy Summary, and SEBI Inquiry Extract.
+2) Hand out the first 4 REVELATION cards (the ones marked Round 4).`,
+    announce: `"Round 4. Revelations. Three new files are open: Nikhil's medical records, his insurance policies, and an extract from a SEBI inquiry. New revelation codes are in some of your hands.
+
+The story you thought you knew is changing. Nikhil was dying. Nikhil was about to be indicted for fraud. Talk amongst yourselves. We move to Round 5 in 15 minutes."`,
+    during: 'Players will start connecting cancer + fraud + insurance. Watch the chat — let the dominoes fall.',
+    end: 'Press "+" to advance to Round 5. Last chance to change minds.'
+  },
+  {
+    id: 5,
+    title: 'Round 5 · Finale',
+    duration: '~10 min',
+    setup: `1) Hand out the final 2 REVELATION cards (the ones marked Round 5) — the HR access trail and Nikhil's unsent voice memo.
+2) Optionally press "📊 SHOW VOTE RESULTS" so the room sees the standings before final lock-in.`,
+    announce: '"Round 5. The last bombshells. Two final cards have been handed out. Out-of-hours HR access logs from January. An unsent voice memo from Nikhil. Take 10 minutes — talk it through in CHAT. When voting closes, you cannot change your vote."',
+    during: 'Build dramatic tension. About a minute before time, call out "voting closes in 60 seconds."',
+    end: 'Press "🔒 CLOSE VOTING". Then press "+" to advance to Round 6.'
+  },
+  {
+    id: 6,
+    title: 'Round 6 · The Reveal',
+    duration: '~5 min',
+    setup: 'Make sure "📊 SHOW VOTE RESULTS" is on. Pause for effect.',
+    announce: `"Round 6. The Reveal. The votes are in." — read the top 3 vote-getters aloud, slowly.
+
+"But before we name a killer, there is one thing you do not know. Nikhil planned this. He had four months to live and a fraud case waiting to bury his name. He chose a different ending — and he found someone willing to help him.
+
+The murderer is in this room. The murderer was holding the cartridge. The murderer is — " pause — "Alam."`,
+    during: `Press "🎭 REVEAL MURDERER" in this panel. Every phone except Alam's flashes red and names him. Alam's screen flips to the OutroSplash with one final code unlocked.`,
+    end: 'Turn to Alam. "Your phone has one last code on it. Read it aloud." After Alam reads the confession, press "🎬 END GAME" to send everyone to the outro. Debrief in person.'
+  }
+];

@@ -1,17 +1,44 @@
 import React, { useState } from 'react';
 import { X, Zap } from './icons/IconComponents';
-import { 
-  updateCurrentRound, 
-  updateVotingStatus, 
-  updateVoteResultsVisibility, 
+import {
+  updateCurrentRound,
+  updateVotingStatus,
+  updateVoteResultsVisibility,
   updateMurdererReveal,
   unlockFilesForRound,
   revealClues,
   revealCluesForRound,
   resetGameState,
-  endGame 
+  triggerForceRefresh,
+  endGame
 } from '../firebase/config';
-import { CASE_FILES, CLUE_DB } from '../data/gameData';
+import { CASE_FILES, CLUE_DB, HOST_SCRIPT } from '../data/gameData';
+
+// Tabs across the top of the run sheet. Kept separate from HOST_SCRIPT so the
+// script entries stay pure content.
+const SCRIPT_TABS = [
+  { id: 'pregame', label: 'Pre' },
+  { id: 0, label: 'R0' },
+  { id: 1, label: 'R1' },
+  { id: 2, label: 'R2' },
+  { id: 3, label: 'R3' },
+  { id: 4, label: 'R4' },
+  { id: 5, label: 'R5' },
+  { id: 6, label: 'R6' },
+];
+
+const ScriptBlock = ({ label, body, highlight }) => (
+  <div>
+    <p className="text-xs text-mystery-aged font-bold uppercase tracking-wide mb-1.5">{label}</p>
+    <p className={`text-sm whitespace-pre-line leading-relaxed ${
+      highlight
+        ? 'bg-mystery-dark/70 border-l-4 border-mystery-blood pl-3 py-2 italic text-white'
+        : 'text-stone-200'
+    }`}>
+      {body}
+    </p>
+  </div>
+);
 
 export const HostPanel = ({
   isOpen,
@@ -31,6 +58,22 @@ export const HostPanel = ({
   onClose
 }) => {
   const [expandedRound, setExpandedRound] = useState(null);
+
+  const [scriptOpen, setScriptOpen] = useState(true);
+
+  // The run sheet follows the live round, but the host can tab away to read
+  // ahead. Only an explicit tap sets an override, and advancing the round
+  // clears it — done as a render-phase adjustment rather than an effect so the
+  // panel never paints one frame of the stale tab.
+  const [scriptTabOverride, setScriptTabOverride] = useState(null);
+  const [seenRound, setSeenRound] = useState(currentRound);
+  if (seenRound !== currentRound) {
+    setSeenRound(currentRound);
+    setScriptTabOverride(null);
+  }
+  const scriptTab = scriptTabOverride ?? currentRound;
+
+  const activeScript = HOST_SCRIPT.find(s => s.id === scriptTab) || HOST_SCRIPT[0];
 
   if (!isOpen) return null;
 
@@ -72,6 +115,12 @@ export const HostPanel = ({
   const handleResetGame = async () => {
     if (window.confirm('Are you sure you want to reset the game? This will clear all progress.')) {
       await resetGameState();
+    }
+  };
+
+  const handleForceRefresh = () => {
+    if (window.confirm("Force every player's device to reload? Players stay logged in — they'll see a brief blip then snap back to the current round.")) {
+      triggerForceRefresh();
     }
   };
 
@@ -122,7 +171,54 @@ export const HostPanel = ({
             <X size={24}/>
           </button>
         </div>
-      
+
+      {/* Host Run Sheet — what to set up, say, and watch for, per round */}
+      <div className="mb-4 bg-mystery-charcoal border-4 border-mystery-blood rounded-2xl shadow-xl overflow-hidden">
+        <button
+          onClick={() => setScriptOpen(!scriptOpen)}
+          className="w-full bg-mystery-blood text-white px-4 py-3 flex items-center justify-between hover:bg-red-800 transition-colors"
+        >
+          <span className="font-black uppercase tracking-wide text-sm sm:text-base">
+            📜 Host Script — {activeScript.title}
+          </span>
+          <span className="text-xs font-bold">{scriptOpen ? '▲ Collapse' : '▼ Expand'}</span>
+        </button>
+
+        {scriptOpen && (
+          <div className="p-4 space-y-4">
+            <div className="flex flex-wrap gap-1.5">
+              {SCRIPT_TABS.map(tab => {
+                const isActive = scriptTab === tab.id;
+                // Ring marks where the game actually is, so a host who has
+                // tabbed ahead can always find their way back.
+                const isLive = currentRound === tab.id;
+                return (
+                  <button
+                    key={String(tab.id)}
+                    onClick={() => setScriptTabOverride(tab.id)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      isActive ? 'bg-mystery-blood text-white' : 'bg-stone-700 text-stone-300 hover:bg-stone-600'
+                    } ${isLive && !isActive ? 'ring-2 ring-mystery-aged' : ''}`}
+                  >
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-baseline justify-between gap-3 border-b border-mystery-blood/30 pb-2">
+              <h4 className="font-black text-lg text-mystery-aged">{activeScript.title}</h4>
+              <span className="text-xs text-stone-400 font-bold whitespace-nowrap">{activeScript.duration}</span>
+            </div>
+
+            <ScriptBlock label="🛠️ Setup — do this first" body={activeScript.setup} />
+            <ScriptBlock label="🎙️ Announce — say this aloud" body={activeScript.announce} highlight />
+            <ScriptBlock label="👀 During the round" body={activeScript.during} />
+            <ScriptBlock label="⏭️ End / transition" body={activeScript.end} />
+          </div>
+        )}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Round Control */}
         <div className="bg-gradient-to-br from-mystery-charcoal to-purple-900 p-4 rounded-2xl border-4 border-mystery-blood shadow-xl">
@@ -295,9 +391,22 @@ export const HostPanel = ({
         </button>
       </div>
 
+      {/* Force Sync — recovery hatch for a wedged or stale device */}
+      <div className="mt-4">
+        <button
+          onClick={handleForceRefresh}
+          className="w-full py-4 rounded-xl font-black text-base bg-blue-700 hover:bg-blue-600 transition-all text-white active:scale-95 shadow-xl"
+        >
+          🔄 FORCE SYNC ALL PLAYERS
+        </button>
+        <p className="text-xs text-stone-300 mt-1.5 text-center">
+          Reloads every connected device. Logins persist — no one gets kicked out.
+        </p>
+      </div>
+
       {/* Reset Game Button */}
       <div className="mt-4">
-        <button 
+        <button
           onClick={handleResetGame}
           className="w-full py-4 rounded-xl font-black text-base bg-stone-700 hover:bg-red-700 transition-all text-stone-300 hover:text-white active:scale-95 shadow-xl"
         >

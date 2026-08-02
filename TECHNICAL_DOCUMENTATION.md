@@ -252,6 +252,8 @@ mystery-game/
 - **Remote Sync:** All changes instantly propagate to all players
 - **Visual Feedback:** Displays current game state and control status
 - **Firebase-Powered:** Uses Firestore to broadcast changes
+- **Host Run Sheet:** Collapsible per-round script (`HOST_SCRIPT` in [src/data/gameData.js](src/data/gameData.js)) with Setup / Announce / During / End blocks. Tabs follow the live round automatically; the host can tab ahead to read on, and the live round keeps a ring marker. Advancing the round clears the override.
+- **Force Sync:** Broadcasts `forceRefreshAt: Date.now()`; every connected device reloads ~150 ms later. Re-triggerable because each press writes a strictly larger timestamp. Depends on session persistence — see below. `resetGameState()` bumps the same field so a reset lands everyone on the clean state.
 
 ### **9. Haptic Feedback** ✅
 - **Chat Messages:** Double buzz when receiving new messages
@@ -307,6 +309,37 @@ hostPanelOpen: boolean                  // Admin panel visibility
 secretTapCount: number                  // Counter for host panel unlock (3 taps)
 ```
 
+### **Session Persistence**
+
+`currentUser` and `isHost` are mirrored to `localStorage` under the key
+`astral.session`, and both `useState` calls seed themselves from it. A reload —
+host force-sync, a service-worker update, or a player swiping the tab away —
+therefore restores the player where they were instead of at the login screen.
+A restored host session also re-enters `activeTab: 'host'` directly.
+
+Logging out clears both the state and the stored key. All access is wrapped in
+`try/catch` because private-mode Safari throws on `localStorage`; if storage is
+unavailable the app still works, it just stops surviving reloads.
+
+> ⚠️ Session persistence is a hard dependency of **Force Sync**. Remove it and
+> the host's refresh button dumps all 32 players back at the login screen
+> mid-game.
+
+### **Firestore Offline Persistence**
+
+`db` is created with `initializeFirestore(app, { localCache: persistentLocalCache(...) })`
+— not `getFirestore(app)` — so Firestore keeps an IndexedDB cache. On party wifi
+the app keeps rendering the last-known round, files and clues through a dropped
+connection and replays queued writes on reconnect.
+
+`persistentMultipleTabManager()` is required, not optional: players routinely
+have the installed PWA and a browser tab open at once, and the single-tab
+manager throws *"Failed to obtain exclusive access to the persistence layer"*
+in that situation. Settings can only be supplied before any other call touches
+the instance, which is why this must be `initializeFirestore`.
+
+Cost: roughly **+84 KB** of minified JS.
+
 ### **Firebase Firestore Schema**
 
 ```javascript
@@ -314,6 +347,12 @@ secretTapCount: number                  // Counter for host panel unlock (3 taps
 {
   currentRound: number,           // 0-6
   isVotingOpen: boolean,          // true/false
+  unlockedFiles: string[],        // Case-file IDs the host has released
+  voteResultsVisible: boolean,    // Host reveals the live tally to the room
+  revealedToMurderer: boolean,    // Round 6 public murderer reveal
+  revealedClues: string[],        // Clue IDs the host pushed to everyone
+  gameEnded: boolean,             // Players are on the outro splash
+  forceRefreshAt: number,         // Host force-sync broadcast (epoch ms; 0 = never)
   lastUpdated: timestamp          // Server timestamp
 }
 
@@ -958,7 +997,17 @@ export const updateMurdererReveal = async (isRevealed) => {
   });
 };
 ```
-On the client, `App.jsx` checks `revealedToMurderer && !isHost && !isMurderer(currentUser)` *before* the `gameEnded` outro branch so the public reveal overlay (`MurdererRevealOverlay`) wins over `OutroSplash` — except for the murderer themselves (Alam), who falls through to `OutroSplash`.
+On the client, `App.jsx` checks `revealedToMurderer && !isHostUser && !isMurderer(currentUser)` *before* the `gameEnded` outro branch so the public reveal overlay (`MurdererRevealOverlay`) wins over `OutroSplash` — except for the murderer themselves (Alam), who falls through to `OutroSplash`.
+
+**Render-order invariant (do not reorder):**
+
+```
+SplashScreen  →  CharacterSelect (login gate)  →  MurdererRevealOverlay  →  OutroSplash  →  GridMenu / views
+```
+
+Both terminal screens are unconditional early returns, so they **must** sit *after* the `!currentUser` login gate. If they run before it, any device holding a restored session is pinned to the end-game screen with no route back to login — which locks the host out of [src/components/HostPanel.jsx](src/components/HostPanel.jsx) exactly when the reveal is live.
+
+Host exclusion uses `isHostUser = isHost || currentUser === 'host'` rather than the `isHost` flag alone. `currentUser === 'host'` is the durable signal (`'host'` is not a real character id), so a lost or stale flag can never drop the admin onto a player-facing terminal screen.
 
 **Reset Game State:**
 ```javascript

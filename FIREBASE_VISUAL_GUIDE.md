@@ -300,6 +300,41 @@ DELETE message
     └── ... (up to 100 messages loaded)
 ```
 
+### Game State Document (`gameState/current`):
+```
+/gameState (collection)
+    │
+    └── current (document)
+        ├── currentRound: 0..6
+        ├── isVotingOpen: false
+        ├── unlockedFiles: ["f_incident"]     ← host releases case files
+        ├── voteResultsVisible: false         ← host shows the live tally
+        ├── revealedToMurderer: false         ← Round 6 public reveal
+        ├── revealedClues: []                 ← clues pushed to everyone
+        ├── gameEnded: false
+        ├── forceRefreshAt: 0                 ← host force-sync broadcast
+        └── lastUpdated: 1705968000000
+```
+
+**`forceRefreshAt`** is an epoch-millisecond timestamp, not a boolean. Each
+press of *Force Sync All Players* writes a strictly larger value; every client
+compares it against the value it booted with and reloads only when it sees a
+newer one. That is what makes the button re-triggerable and what stops the
+first snapshot after page load from causing a reload loop. `0` means never
+fired. `resetGameState()` also bumps it, so a reset lands every device on the
+clean state.
+
+`initializeGameState()` back-fills any of these fields that are missing from an
+existing document, so an in-progress game picks up new fields without a manual
+migration.
+
+### Offline Persistence
+
+`db` is built with `initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) })`.
+Reads are served from an IndexedDB cache when the network drops and writes are
+queued and replayed on reconnect. The multi-tab manager is required because
+players commonly have the installed PWA and a browser tab open simultaneously.
+
 ---
 
 ## ⚡ Real-Time Sync Explained

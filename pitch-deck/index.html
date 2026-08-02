@@ -1,0 +1,2381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astral Project — Murder Mystery · Master Handbook</title>
+
+<!-- ===========================================================
+     FONTS — three families, three strict roles.
+     Big Shoulders Display .... display / headlines / numerals
+     Newsreader ............... narrative body + pull quotes
+     IBM Plex Mono ............ every label, tag, chrome element
+     Loaded as separate <link>s so one failure can't kill the rest.
+     =========================================================== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ===========================================================
+   1. THEME TOKENS — "EVIDENCE ROOM"
+   Change these to re-skin the entire deck.
+   Palette rule: ink is the world, bone is paper, RED is the only
+   hot accent, amber is reserved exclusively for numerals/data.
+   =========================================================== */
+:root{
+  --ink:#0C0D0F;          /* canvas */
+  --ink-2:#141518;        /* raised panel */
+  --ink-3:#1C1E22;        /* panel hover / table stripe */
+  --bone:#EDE7DA;         /* paper + primary text on ink */
+  --bone-2:#D8D0BF;       /* aged paper */
+  --red:#E03127;          /* THE accent — tags, rules, emphasis */
+  --red-deep:#8E1811;     /* accent on bone surfaces */
+  --amber:#D8A33C;        /* numerals and data ONLY */
+  --line:rgba(237,231,218,.16);   /* hairline on ink */
+  --line-2:rgba(237,231,218,.08); /* faint hairline on ink */
+  --line-b:rgba(12,13,15,.22);    /* hairline on bone */
+  --dim:rgba(237,231,218,.62);    /* secondary text on ink */
+  --dim-2:rgba(237,231,218,.42);  /* tertiary text on ink */
+
+  --f-disp:'Big Shoulders Display','Big Shoulders',Impact,sans-serif;
+  --f-read:'Newsreader',Georgia,serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+
+  --ease:cubic-bezier(.16,1,.3,1);
+  --stage-bg:#000;
+  --slide-bg:var(--ink);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+
+/* ===========================================================
+   2. FIXED 16:9 STAGE — viewport-base.css, verbatim.
+   Slides are authored at 1920x1080 and the whole stage is
+   scaled by one transform. Never reflow slide content.
+   =========================================================== */
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--stage-bg,#000)}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:var(--stage-bg,#000)}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:var(--slide-bg,#fff)}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;display:block;visibility:hidden;opacity:0;pointer-events:none;background:var(--slide-bg,#fff)}
+.slide.active,.slide.visible{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+img,video,canvas,svg{max-width:100%;max-height:100%}
+.deck-controls{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:1000}
+@media print{
+  html,body{width:1920px;height:auto;overflow:visible;background:#fff}
+  .deck-viewport{position:static;overflow:visible;background:#fff}
+  .deck-stage{position:static;width:auto;height:auto;transform:none!important;background:none}
+  .slide{position:relative;display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;width:1920px;height:1080px;break-after:page;page-break-after:always}
+  .slide:last-child{break-after:auto;page-break-after:auto}
+  .deck-controls{display:none!important}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.2s!important}
+}
+
+/* ===========================================================
+   3. ATMOSPHERE — halftone grain, lamp pool, vignette.
+   Applied per-slide so every slide sits in the same room.
+   =========================================================== */
+.dots{position:absolute;inset:0;pointer-events:none;opacity:.42;
+  background-image:radial-gradient(circle,rgba(237,231,218,.10) 1px,transparent 1.4px);
+  background-size:14px 14px}
+.lamp{position:absolute;left:-200px;top:-380px;width:1500px;height:1500px;pointer-events:none;
+  background:radial-gradient(circle,rgba(216,163,60,.11),rgba(216,163,60,.03) 42%,transparent 66%)}
+.lamp.r{left:auto;right:-320px;top:auto;bottom:-520px;
+  background:radial-gradient(circle,rgba(224,49,39,.08),transparent 62%)}
+.vig{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 320px 80px rgba(0,0,0,.8)}
+
+/* ===========================================================
+   4. CHROME — top/bottom rails + corner metadata.
+   Every standard slide carries these; covers and dividers don't.
+   =========================================================== */
+.railT{position:absolute;top:112px;left:96px;right:96px;height:1px;background:var(--line)}
+.railB{position:absolute;bottom:106px;left:96px;right:96px;height:1px;background:var(--line)}
+.mono{font-family:var(--f-mono);letter-spacing:.24em;text-transform:uppercase;font-size:17px;font-weight:500}
+.chrome{position:absolute;color:var(--dim-2)}
+.c-tl{top:64px;left:96px;color:var(--bone)}
+.c-tr{top:64px;right:96px;color:var(--red)}
+.c-bl{bottom:56px;left:96px}
+.c-br{bottom:56px;right:96px;color:var(--dim-2)}
+
+/* ===========================================================
+   5. HEADLINE BLOCK + CONTENT REGION
+   .head sits at y=156. .pad is the safe content box:
+   96px side margins, y 306 -> 932 (626px of usable height).
+   .pad-hi is for slides with no kicker (starts higher).
+   =========================================================== */
+.head{position:absolute;left:96px;right:96px;top:156px}
+.kick{font-family:var(--f-mono);font-size:17px;font-weight:500;letter-spacing:.28em;
+  text-transform:uppercase;color:var(--red);margin-bottom:16px}
+h2{font-family:var(--f-disp);font-weight:800;font-size:74px;line-height:.94;
+  color:var(--bone);text-transform:uppercase;letter-spacing:-.01em}
+h2 .hot{color:var(--red)}
+.dek{margin-top:18px;font-family:var(--f-read);font-weight:300;font-size:26px;line-height:1.5;
+  color:var(--dim);max-width:1180px}
+.dek em{font-style:italic;color:var(--bone)}
+.pad{position:absolute;left:96px;right:96px;top:306px;bottom:148px}
+.pad-hi{top:270px}
+.pad-lo{top:376px}
+
+/* ===========================================================
+   6. COMPONENT VOCABULARY
+   tag / card / bone card / stat / table / rail / pin-card /
+   redaction bars / thread. Reused across every slide.
+   =========================================================== */
+
+/* red block tag — the deck's smallest atomic accent */
+.tag{display:inline-block;background:var(--red);color:#fff;padding:8px 16px 6px;
+  font-family:var(--f-mono);font-size:15px;font-weight:500;letter-spacing:.24em;text-transform:uppercase}
+.tag.ghost{background:transparent;border:1px solid var(--red);color:var(--red)}
+.tag.bone{background:var(--bone);color:var(--ink)}
+.tag.amber{background:transparent;border:1px solid var(--amber);color:var(--amber)}
+
+/* dark panel */
+.card{background:var(--ink-2);border:1px solid var(--line);padding:28px 28px 26px;position:relative}
+.card.t-red{border-top:3px solid var(--red)}
+.card.t-amber{border-top:3px solid var(--amber)}
+.card.t-bone{border-top:3px solid var(--bone-2)}
+.card h3{font-family:var(--f-disp);font-weight:700;font-size:33px;line-height:1.02;
+  text-transform:uppercase;color:var(--bone);letter-spacing:.005em;margin-bottom:14px}
+.card h3 .n{color:var(--red);margin-right:10px}
+.card p{font-family:var(--f-read);font-weight:300;font-size:21px;line-height:1.52;color:var(--dim)}
+.card p+p{margin-top:12px}
+.card .lbl{font-family:var(--f-mono);font-size:14px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--dim-2);margin-bottom:12px}
+.card em{font-style:italic;color:var(--bone)}
+.card strong{font-weight:400;color:var(--bone)}
+
+/* bone paper card — the "document" surface */
+.card.bone{background:var(--bone);border:1px solid var(--line-b);color:var(--ink)}
+.card.bone h3{color:var(--ink)}
+.card.bone p{color:#4A453C}
+.card.bone .lbl{color:var(--red-deep)}
+.card.bone em,.card.bone strong{color:var(--ink)}
+
+/* mono bullet list — em-dash markers in red */
+.list{list-style:none}
+.list li{position:relative;padding-left:30px;font-family:var(--f-read);font-weight:300;
+  font-size:21px;line-height:1.5;color:var(--dim);margin-bottom:11px}
+.list li:last-child{margin-bottom:0}
+.list li::before{content:"—";position:absolute;left:0;top:0;font-family:var(--f-mono);
+  font-size:17px;color:var(--red)}
+.list li b{font-weight:400;color:var(--bone)}
+.card.bone .list li{color:#4A453C}
+.card.bone .list li b{color:var(--ink)}
+.card.bone .list li::before{color:var(--red-deep)}
+
+/* statistics — amber numerals, mono labels */
+.stat .n{font-family:var(--f-disp);font-weight:700;font-size:78px;line-height:.86;color:var(--amber)}
+.stat .n small{font-size:30px;color:var(--dim);font-weight:500}
+.stat .l{font-family:var(--f-mono);font-size:14px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--dim-2);margin-top:10px}
+.statrow{display:flex;border-top:1px solid var(--line)}
+.statrow .stat{padding:24px 44px 0 0;margin-right:44px;border-right:1px solid var(--line-2)}
+.statrow .stat:last-child{border-right:0;margin-right:0;padding-right:0}
+
+/* evidence-log table */
+.tbl{width:100%;border-collapse:collapse;font-family:var(--f-read);font-weight:300}
+.tbl th{font-family:var(--f-mono);font-size:14px;font-weight:500;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--red);text-align:left;padding:0 18px 14px 0;
+  border-bottom:1px solid var(--line)}
+.tbl td{font-size:20px;line-height:1.4;color:var(--dim);padding:17px 18px 17px 0;
+  border-bottom:1px solid var(--line-2);vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.k{font-family:var(--f-mono);font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone)}
+.tbl td.num{font-family:var(--f-disp);font-weight:700;font-size:34px;color:var(--amber);line-height:1}
+.tbl td b{font-weight:400;color:var(--bone)}
+
+/* pinned bone card with pushpin — used for quotes + exhibits */
+.pin{background:var(--bone);color:var(--ink);box-shadow:0 34px 76px rgba(0,0,0,.66);
+  padding:34px 30px 28px;position:relative}
+.pin::before{content:"";position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  width:24px;height:24px;border-radius:50%;background:var(--red);
+  box-shadow:0 6px 10px rgba(0,0,0,.6),inset 0 -4px 6px rgba(0,0,0,.32)}
+.pin .ph{font-family:var(--f-mono);font-size:14px;letter-spacing:.24em;text-transform:uppercase;
+  color:var(--red-deep);padding-bottom:14px;margin-bottom:18px;border-bottom:2px solid var(--ink)}
+.pin .q{font-family:var(--f-read);font-style:italic;font-weight:300;font-size:27px;line-height:1.4}
+.pin .a{margin-top:20px;padding-top:16px;border-top:1px dashed rgba(12,13,15,.35);
+  font-family:var(--f-mono);font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:#5A544A}
+
+/* fill-in field — every unknown number is visibly a blank, never invented */
+.fill{display:inline-block;min-width:110px;padding:2px 12px;background:rgba(224,49,39,.12);
+  border-bottom:2px dashed var(--red);font-family:var(--f-mono);font-size:15px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--red)}
+.card.bone .fill{background:rgba(142,24,17,.09);border-bottom-color:var(--red-deep);color:var(--red-deep)}
+
+/* red thread — the connective device between pinned things */
+.thread{position:absolute;inset:0;pointer-events:none}
+.thread path{stroke-dasharray:2600;stroke-dashoffset:2600;
+  transition:stroke-dashoffset 2.1s var(--ease) .35s}
+.slide.visible .thread path{stroke-dashoffset:0}
+
+/* grids */
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:26px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.g6{display:grid;grid-template-columns:repeat(6,1fr);gap:20px}
+.rows2{display:grid;grid-template-rows:repeat(2,1fr);gap:24px}
+.h100{height:100%}
+
+/* ===========================================================
+   7. COVER + CHAPTER DIVIDER LAYOUTS (chromeless)
+   =========================================================== */
+.cover-h{font-family:var(--f-disp);font-weight:800;font-size:230px;line-height:.80;
+  color:var(--bone);text-transform:uppercase;letter-spacing:-.012em}
+.cover-h .hot{color:var(--red);position:relative;display:inline-block}
+.cover-h .hot::after{content:"";position:absolute;left:0;right:0;bottom:16px;height:8px;
+  background:var(--red);opacity:.28}
+
+.div-no{font-family:var(--f-disp);font-weight:800;font-size:300px;line-height:.8;
+  color:transparent;-webkit-text-stroke:2px rgba(237,231,218,.14);position:absolute;
+  right:96px;top:150px}
+.div-t{font-family:var(--f-disp);font-weight:800;font-size:150px;line-height:.88;
+  color:var(--bone);text-transform:uppercase;letter-spacing:-.012em}
+.div-t .hot{color:var(--red)}
+.div-rule{width:180px;height:3px;background:var(--red);margin:36px 0 30px}
+.div-list{font-family:var(--f-mono);font-size:19px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--dim-2);line-height:2.1}
+.div-list b{color:var(--bone);font-weight:500}
+
+/* ===========================================================
+   8. PHONE FRAMES (Chapter 08)
+   Each .screen holds a real screenshot of the running app,
+   captured at 390x844 @2x. The frame is sized to that exact
+   aspect ratio (246/532 = 0.4624) so nothing gets cropped.
+   To refresh a screen: re-capture at 390x844 and overwrite
+   the matching PNG in ./assets/ — no markup change needed.
+   =========================================================== */
+.phone{width:262px;position:relative}
+.phone .body{width:262px;height:548px;border-radius:30px;background:var(--ink-3);
+  border:1px solid rgba(237,231,218,.22);padding:8px;
+  box-shadow:0 30px 70px rgba(0,0,0,.7)}
+.phone .notch{position:absolute;top:15px;left:50%;transform:translateX(-50%);
+  width:66px;height:6px;border-radius:6px;background:#000;z-index:3}
+.screen{width:100%;height:100%;border-radius:23px;overflow:hidden;position:relative;background:#0A0A0B}
+.shot{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.phone .cap{margin-top:16px;font-family:var(--f-mono);font-size:14px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--red)}
+.phone .note{margin-top:8px;font-family:var(--f-read);font-weight:300;font-size:18px;
+  line-height:1.42;color:var(--dim)}
+.phone .note b{font-weight:400;color:var(--bone)}
+
+/* ===========================================================
+   9. TIMELINE + JOURNEY RAILS
+   =========================================================== */
+.rail{position:relative;padding-top:56px}
+.rail::before{content:"";position:absolute;top:22px;left:0;right:0;height:2px;background:var(--red);opacity:.5}
+.rail .stop{position:relative}
+.rail .stop::before{content:"";position:absolute;top:-42px;left:0;width:15px;height:15px;
+  border-radius:50%;background:var(--red);box-shadow:0 0 0 5px var(--ink)}
+.rail .yr{font-family:var(--f-mono);font-size:15px;letter-spacing:.16em;color:var(--amber);margin-bottom:10px}
+.rail .tt{font-family:var(--f-disp);font-weight:700;font-size:27px;line-height:1.04;
+  text-transform:uppercase;color:var(--bone);margin-bottom:9px}
+.rail .td{font-family:var(--f-read);font-weight:300;font-size:18px;line-height:1.45;color:var(--dim-2)}
+.rail .stop.now::before{background:var(--amber);width:19px;height:19px;top:-44px}
+.rail .stop.now .tt{color:var(--amber)}
+
+.jrail{position:relative;padding-left:56px}
+.jrail::before{content:"";position:absolute;left:20px;top:6px;bottom:6px;width:2px;
+  background:linear-gradient(180deg,var(--red),rgba(224,49,39,.18))}
+.jstep{position:relative;margin-bottom:20px}
+.jstep:last-child{margin-bottom:0}
+.jstep::before{content:"";position:absolute;left:-43px;top:7px;width:13px;height:13px;
+  border-radius:50%;background:var(--red);box-shadow:0 0 0 4px var(--ink)}
+.jstep .jt{font-family:var(--f-disp);font-weight:700;font-size:25px;line-height:1;
+  text-transform:uppercase;color:var(--bone)}
+.jstep .jd{font-family:var(--f-read);font-weight:300;font-size:19px;line-height:1.45;
+  color:var(--dim-2);margin-top:6px}
+.jstep .jm{font-family:var(--f-mono);font-size:13px;letter-spacing:.18em;color:var(--amber);
+  position:absolute;left:-160px;top:9px;width:100px;text-align:right}
+
+/* ===========================================================
+   10. ANIMATION — one orchestrated load per slide, staggered.
+   =========================================================== */
+.reveal{opacity:0;transform:translateY(26px);
+  transition:opacity .85s var(--ease),transform .85s var(--ease)}
+.slide.visible .reveal{opacity:1;transform:none}
+.slide.visible .r1{transition-delay:.06s}  .slide.visible .r2{transition-delay:.15s}
+.slide.visible .r3{transition-delay:.24s}  .slide.visible .r4{transition-delay:.33s}
+.slide.visible .r5{transition-delay:.42s}  .slide.visible .r6{transition-delay:.51s}
+.slide.visible .r7{transition-delay:.60s}  .slide.visible .r8{transition-delay:.69s}
+.slide.visible .r9{transition-delay:.78s}  .slide.visible .r10{transition-delay:.87s}
+
+.drop{opacity:0;transform:rotate(6deg) translateY(-38px);
+  transition:opacity 1s cubic-bezier(.34,1.4,.5,1),transform 1s cubic-bezier(.34,1.4,.5,1)}
+.slide.visible .drop{opacity:1;transform:rotate(1.6deg) translateY(0)}
+.drop.l{transform:rotate(-6deg) translateY(-38px)}
+.slide.visible .drop.l{transform:rotate(-1.4deg) translateY(0)}
+
+/* redaction bars that wipe open to reveal the line beneath */
+.rd{position:relative;display:inline-block}
+.rd::after{content:"";position:absolute;inset:-3px -6px;background:var(--red);
+  transform-origin:left;transform:scaleX(1);transition:transform .9s var(--ease)}
+.slide.visible .rd::after{transform:scaleX(0);transition-delay:.9s}
+
+/* Case studies are parked until real event data lands. Restore by changing
+   class="slide-archived" back to class="slide" on those two <section>s. */
+.slide-archived{display:none}
+
+/* ===========================================================
+   11. DECK CHROME — progress bar, counter, edit affordance
+   All of this lives OUTSIDE the 1920x1080 stage.
+   =========================================================== */
+.prog{position:fixed;left:0;top:0;height:3px;background:var(--red);z-index:1200;
+  transition:width .4s var(--ease);box-shadow:0 0 12px rgba(224,49,39,.6)}
+/* Slide numbering lives INSIDE the stage (.c-br) so it survives PDF export —
+   the only fixed chrome is the progress bar and a transient nav hint. */
+.hint{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:1200;
+  font-family:var(--f-mono);font-size:12px;letter-spacing:.2em;color:rgba(237,231,218,.3);
+  transition:opacity .6s ease;pointer-events:none}
+.hint.gone{opacity:0}
+.edit-hotzone{position:fixed;top:0;left:0;width:80px;height:80px;z-index:10000;cursor:pointer}
+.edit-toggle{position:fixed;top:16px;left:16px;z-index:10001;width:46px;height:46px;
+  border-radius:50%;border:1px solid rgba(237,231,218,.28);background:rgba(12,13,15,.9);
+  color:var(--bone);font-size:18px;cursor:pointer;opacity:0;pointer-events:none;
+  transition:opacity .3s ease}
+.edit-toggle.show,.edit-toggle.active{opacity:1;pointer-events:auto}
+.edit-toggle.active{background:var(--red);border-color:var(--red);color:#fff}
+.edit-bar{position:fixed;top:16px;left:74px;z-index:10001;display:none;gap:8px}
+.edit-bar.on{display:flex}
+.edit-bar button{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+  background:rgba(12,13,15,.9);color:var(--bone);border:1px solid rgba(237,231,218,.28);
+  padding:11px 15px;cursor:pointer}
+.edit-bar button:hover{border-color:var(--red);color:var(--red)}
+[contenteditable="true"]{outline:1px dashed rgba(224,49,39,.8);outline-offset:3px;cursor:text}
+</style>
+</head>
+<body>
+
+<div class="prog" id="prog"></div>
+
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+<!-- ============================================================
+     SLIDE 01 — COVER
+     ============================================================ -->
+<section class="slide active visible">
+  <div class="lamp"></div><div class="dots"></div>
+  <svg class="thread" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+    <path d="M96 900 C 520 830, 760 980, 1180 760 S 1620 520, 1824 300" fill="none" stroke="#E03127" stroke-width="2.5" opacity=".5"/>
+    <path d="M96 1010 C 600 960, 980 1040, 1400 880 S 1740 700, 1824 640" fill="none" stroke="#E03127" stroke-width="1.5" opacity=".26"/>
+  </svg>
+  <div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Astral&nbsp;Project</div>
+  <div class="chrome mono c-tr">● Case Open</div>
+  <div class="chrome mono c-bl">Master Handbook · v1.0</div>
+  <div class="chrome mono c-br">01</div>
+
+  <div style="position:absolute;left:96px;top:222px;width:1120px">
+    <span class="tag reveal r1">Live social gaming platform</span>
+    <h1 class="cover-h reveal r2" style="margin-top:32px">Murder<br><span class="hot">Mystery</span></h1>
+    <p class="reveal r3" style="margin-top:42px;font-family:var(--f-read);font-weight:300;font-size:33px;line-height:1.5;color:var(--dim);max-width:940px">
+      Thirty-two strangers. One story. Every player holds a piece nobody else has —
+      <em style="font-style:italic;color:var(--bone)">and the only way out is to talk to each other.</em></p>
+  </div>
+
+  <div class="statrow reveal r4" style="position:absolute;left:96px;bottom:180px">
+    <div class="stat"><div class="n">32</div><div class="l">Players / event</div></div>
+    <div class="stat"><div class="n">07</div><div class="l">Story rounds</div></div>
+    <div class="stat"><div class="n">1</div><div class="l">Host needed</div></div>
+    <div class="stat"><div class="n">0</div><div class="l">App-store installs</div></div>
+  </div>
+
+  <div class="pin drop" style="position:absolute;right:118px;top:250px;width:470px">
+    <div class="ph">Exhibit A — Guest debrief</div>
+    <div class="q">“I spoke to more people in two hours than I did in six months at this office.”</div>
+    <div class="a">Corporate event · 32 attendees</div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 02 — CASE INDEX (the 20 chapters)
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Astral&nbsp;Project</div>
+  <div class="chrome mono c-tr">Contents</div>
+  <div class="chrome mono c-bl">Master Handbook · v1.0</div>
+  <div class="chrome mono c-br">02</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Twenty chapters</div>
+    <h2 class="reveal r2">Case <span class="hot">Index</span></h2>
+  </div>
+
+  <div class="pad" style="top:296px">
+    <div class="g3 reveal r3" style="gap:0 60px;font-family:var(--f-mono);font-size:19px;letter-spacing:.1em;line-height:2.36;text-transform:uppercase;color:var(--dim)">
+      <div>
+        <div><span style="color:var(--red)">01</span> &nbsp;Executive Summary</div>
+        <div><span style="color:var(--red)">02</span> &nbsp;Company Vision</div>
+        <div><span style="color:var(--red)">03</span> &nbsp;The Problem We Solve</div>
+        <div><span style="color:var(--red)">04</span> &nbsp;Evolution of Social Ent.</div>
+        <div><span style="color:var(--red)">05</span> &nbsp;What Is Astral Project?</div>
+        <div><span style="color:var(--red)">06</span> &nbsp;The Player Experience</div>
+        <div><span style="color:var(--red)">07</span> &nbsp;The Technology Platform</div>
+      </div>
+      <div>
+        <div><span style="color:var(--red)">08</span> &nbsp;Inside the Application</div>
+        <div><span style="color:var(--red)">09</span> &nbsp;Character System</div>
+        <div><span style="color:var(--red)">10</span> &nbsp;Storytelling Engine</div>
+        <div><span style="color:var(--red)">11</span> &nbsp;Game Mechanics</div>
+        <div><span style="color:var(--red)">12</span> &nbsp;Event Operations</div>
+        <div><span style="color:var(--red)">13</span> &nbsp;The Host Experience</div>
+        <div><span style="color:var(--red)">14</span> &nbsp;Why It Works</div>
+      </div>
+      <div>
+        <div><span style="color:var(--red)">16</span> &nbsp;Testimonials</div>
+        <div><span style="color:var(--red)">17</span> &nbsp;Business Model</div>
+        <div><span style="color:var(--red)">18</span> &nbsp;Scalability</div>
+        <div><span style="color:var(--red)">19</span> &nbsp;Roadmap</div>
+        <div><span style="color:var(--red)">20</span> &nbsp;Conclusion</div>
+      </div>
+    </div>
+    <div class="reveal r5" style="position:absolute;left:0;right:0;bottom:0;border-top:1px solid var(--line);padding-top:24px;font-family:var(--f-read);font-style:italic;font-weight:300;font-size:24px;color:var(--dim-2)">
+      One engine. One story shipped. A format built to be repeated.
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 03 — DIVIDER I
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div>
+  <svg class="thread" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+    <path d="M0 760 C 420 700, 700 880, 1120 640 S 1600 420, 1920 260" fill="none" stroke="#E03127" stroke-width="2" opacity=".4"/>
+  </svg>
+  <div class="vig"></div>
+  <div class="div-no">I</div>
+  <div style="position:absolute;left:96px;top:340px;width:1080px">
+    <span class="tag reveal r1">Part one</span>
+    <h2 class="div-t reveal r2" style="margin-top:30px">The<br><span class="hot">Thesis</span></h2>
+    <div class="div-rule reveal r3"></div>
+    <div class="div-list reveal r4">
+      <div><b>01</b> &nbsp;Executive Summary</div>
+      <div><b>02</b> &nbsp;Company Vision</div>
+      <div><b>03</b> &nbsp;The Problem We Solve</div>
+      <div><b>04</b> &nbsp;The Evolution of Social Entertainment</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 04 — CH 01 EXECUTIVE SUMMARY
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 01</div>
+  <div class="chrome mono c-tr">Executive Summary</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">04</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 01 · Executive Summary</div>
+    <h2 class="reveal r2">A live game engine for <span class="hot">real rooms</span></h2>
+    <p class="dek reveal r3">Astral Project Murder Mystery is a technology-powered live social gaming platform.
+      Every participant becomes a unique character inside an interactive story. The custom application handles
+      onboarding, character delivery, clues, objectives, evidence, progression and voting —
+      <em>so events scale without losing quality.</em></p>
+  </div>
+
+  <div class="pad" style="top:430px">
+    <div class="g4" style="height:280px">
+      <div class="card t-red reveal r4">
+        <div class="lbl">Layer 01</div>
+        <h3>The Story</h3>
+        <p>A three-hour narrative with a verifiable solution. 32 characters, a hidden truth, and a chain of evidence that only assembles when people compare notes.</p>
+      </div>
+      <div class="card t-red reveal r5">
+        <div class="lbl">Layer 02</div>
+        <h3>The App</h3>
+        <p>A phone becomes the character sheet, the evidence locker, the comms channel and the ballot box. No install, no rulebook, no downtime.</p>
+      </div>
+      <div class="card t-red reveal r6">
+        <div class="lbl">Layer 03</div>
+        <h3>The Room</h3>
+        <p>Everything that matters happens face to face. The app never lets a player finish alone — progress requires another human.</p>
+      </div>
+      <div class="card t-red reveal r7">
+        <div class="lbl">Layer 04</div>
+        <h3>The Reveal</h3>
+        <p>A synchronised ending across every device in the venue. One shared moment the whole room experiences at the same second.</p>
+      </div>
+    </div>
+    <div class="statrow reveal r8" style="margin-top:34px">
+      <div class="stat"><div class="n">32</div><div class="l">Simultaneous players</div></div>
+      <div class="stat"><div class="n">7</div><div class="l">Host-gated rounds</div></div>
+      <div class="stat"><div class="n">3<small> hrs</small></div><div class="l">Typical runtime</div></div>
+      <div class="stat"><div class="n">1</div><div class="l">Host per event</div></div>
+      <div class="stat"><div class="n">0</div><div class="l">Actors required</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 05 — CH 02 COMPANY VISION
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="lamp r"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 02</div>
+  <div class="chrome mono c-tr">Company Vision</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">05</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 02 · Company Vision</div>
+    <h2 class="reveal r2">Build the world's leading platform for<br><span class="hot">real-world multiplayer entertainment</span></h2>
+  </div>
+
+  <div class="pad" style="top:392px">
+    <div style="display:grid;grid-template-columns:1fr 620px;gap:44px;height:100%">
+      <div>
+        <p class="reveal r3" style="font-family:var(--f-read);font-weight:300;font-size:29px;line-height:1.5;color:var(--dim)">
+          Murder Mystery is not the company. It is the <em style="font-style:italic;color:var(--bone)">first experience</em>
+          built on a reusable technology platform — and the proof that the platform works.
+        </p>
+        <div class="card t-amber reveal r4" style="margin-top:32px">
+          <div class="lbl">The strategic claim</div>
+          <p>The hard parts of a live social game — synchronising 32 devices, gating information by round,
+            arming a non-expert host, and landing an ending everyone feels at once — are
+            <strong>identical across genres</strong>. Solve them once, and every new world is a content problem,
+            not an engineering problem.</p>
+        </div>
+        <ul class="list reveal r5" style="margin-top:30px">
+          <li><b>Content is data, not code.</b> A new story ships as a pack, not a release.</li>
+          <li><b>Delivery is a URL.</b> No store review, no install friction, no per-venue rig.</li>
+          <li><b>Capacity is set by the room</b>, not by the equipment.</li>
+        </ul>
+      </div>
+      <div>
+        <div class="reveal r4" style="font-family:var(--f-mono);font-size:15px;letter-spacing:.24em;text-transform:uppercase;color:var(--red);padding-bottom:16px;border-bottom:1px solid var(--line);margin-bottom:22px">
+          One engine · many worlds
+        </div>
+        <div class="g2" style="gap:16px">
+          <div class="card reveal r5" style="padding:20px"><span class="tag" style="font-size:12px;padding:5px 10px 4px">Shipped</span>
+            <h3 style="font-size:27px;margin-top:12px;margin-bottom:6px">Murder Mystery</h3>
+            <p style="font-size:18px">Whodunnit, 32 players, 7 rounds.</p></div>
+          <div class="card reveal r6" style="padding:20px"><span class="tag ghost" style="font-size:12px;padding:5px 10px 4px">Roadmap</span>
+            <h3 style="font-size:27px;margin-top:12px;margin-bottom:6px">Espionage</h3>
+            <p style="font-size:18px">Competing factions, double agents.</p></div>
+          <div class="card reveal r6" style="padding:20px"><span class="tag ghost" style="font-size:12px;padding:5px 10px 4px">Roadmap</span>
+            <h3 style="font-size:27px;margin-top:12px;margin-bottom:6px">Fantasy</h3>
+            <p style="font-size:18px">Quest lines, factions, artefacts.</p></div>
+          <div class="card reveal r7" style="padding:20px"><span class="tag ghost" style="font-size:12px;padding:5px 10px 4px">Roadmap</span>
+            <h3 style="font-size:27px;margin-top:12px;margin-bottom:6px">Horror</h3>
+            <p style="font-size:18px">Survival pacing, hidden infection.</p></div>
+          <div class="card reveal r7" style="padding:20px"><span class="tag ghost" style="font-size:12px;padding:5px 10px 4px">Roadmap</span>
+            <h3 style="font-size:27px;margin-top:12px;margin-bottom:6px">Treasure Hunt</h3>
+            <p style="font-size:18px">Location-gated, venue-native.</p></div>
+          <div class="card reveal r8" style="padding:20px"><span class="tag ghost" style="font-size:12px;padding:5px 10px 4px">Roadmap</span>
+            <h3 style="font-size:27px;margin-top:12px;margin-bottom:6px">Branded &amp; Edu</h3>
+            <p style="font-size:18px">Client IP, onboarding, training.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 06 — CH 03 THE PROBLEM
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 03</div>
+  <div class="chrome mono c-tr">The Problem</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">06</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 03 · The Problem We Solve</div>
+    <h2 class="reveal r2">Putting people in a room <span class="hot">does not make them meet</span></h2>
+    <p class="dek reveal r3">Parties, offsites, networking nights and mixers all share one failure mode: people arrive
+      in a group and leave in the same group. Nothing in the format gives a stranger a reason to start talking — or a way to stop.</p>
+  </div>
+
+  <div class="pad" style="top:436px">
+    <div class="g3 reveal r4" style="height:250px">
+      <div class="card t-red">
+        <div class="lbl">Failure 01</div>
+        <h3>The Cluster</h3>
+        <p>Guests default to the people they came with. Attendance is high, mixing is near zero, and the host
+          has no lever to change it beyond asking nicely.</p>
+      </div>
+      <div class="card t-red">
+        <div class="lbl">Failure 02</div>
+        <h3>The Capacity Ceiling</h3>
+        <p>Escape rooms and immersive theatre create real interaction, but cap at 6–10 people per run and need
+          a built set, a rig, or trained actors.</p>
+      </div>
+      <div class="card t-red">
+        <div class="lbl">Failure 03</div>
+        <h3>The Friendship Tax</h3>
+        <p>Board games and party games assume existing rapport. They deepen groups that already work; they don't
+          create new ones.</p>
+      </div>
+    </div>
+
+    <div class="reveal r6" style="margin-top:34px;border-top:1px solid var(--line);padding-top:30px;display:grid;grid-template-columns:280px 1fr;gap:44px;align-items:start">
+      <div>
+        <span class="tag">The mechanism</span>
+        <div style="margin-top:16px;font-family:var(--f-disp);font-weight:800;font-size:52px;line-height:.95;text-transform:uppercase;color:var(--bone)">Information<br>asymmetry</div>
+      </div>
+      <p style="font-family:var(--f-read);font-weight:300;font-size:27px;line-height:1.5;color:var(--dim)">
+        Astral Project distributes unique information across every single player. No one can finish alone, and no one
+        can finish with only their own table. <em style="font-style:italic;color:var(--bone)">Talking to a stranger stops being
+        social bravery and becomes the optimal move.</em> The awkwardness is designed out — the game gives you the opening line.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 07 — CH 03b COMPARISON TABLE
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 03</div>
+  <div class="chrome mono c-tr">Category Comparison</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">07</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 03 · Where we sit</div>
+    <h2 class="reveal r2">The gap in the <span class="hot">category</span></h2>
+  </div>
+
+  <div class="pad" style="top:340px">
+    <table class="tbl reveal r3">
+      <tr>
+        <th style="width:250px">Format</th>
+        <th style="width:150px">Capacity</th>
+        <th style="width:210px">Mixes strangers</th>
+        <th style="width:230px">Setup cost</th>
+        <th>Why it stalls</th>
+      </tr>
+      <tr><td class="k">Escape room</td><td><b>6–10</b></td><td>Partially</td><td>Built set per room</td>
+        <td>Physical capacity is the product. Scaling means building another room.</td></tr>
+      <tr><td class="k">Immersive theatre</td><td><b>20–200</b></td><td>Rarely</td><td>Cast, venue, rehearsal</td>
+        <td>Audiences watch performers. Guests interact with the show, not each other.</td></tr>
+      <tr><td class="k">Board / party games</td><td><b>4–12</b></td><td>No</td><td>Low</td>
+        <td>Assumes existing rapport. Doesn't scale past one table.</td></tr>
+      <tr><td class="k">Standard party or mixer</td><td><b>Unlimited</b></td><td>No</td><td>Low</td>
+        <td>No structure. Guests self-sort into the groups they arrived with.</td></tr>
+      <tr style="background:rgba(224,49,39,.07)">
+        <td class="k" style="color:var(--red)">Astral Project</td><td class="num">32<span style="font-size:16px;color:var(--dim);font-family:var(--f-mono)">+</span></td>
+        <td style="color:var(--bone)">By design — required</td><td>One host, printed cards</td>
+        <td style="color:var(--bone)">Nothing yet. Story supply and trained hosts are the scaling constraint — both are solvable.</td></tr>
+    </table>
+    <div class="reveal r5" style="position:absolute;left:0;right:0;bottom:0;font-family:var(--f-mono);font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim-2);border-top:1px solid var(--line-2);padding-top:20px">
+      Capacity figures are category norms · Astral capacity is set by the story pack, currently 32 characters
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 08 — CH 04 EVOLUTION TIMELINE
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 04</div>
+  <div class="chrome mono c-tr">Evolution</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">08</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 04 · The Evolution of Social Entertainment</div>
+    <h2 class="reveal r2">Ninety years of trying to make a room <span class="hot">play together</span></h2>
+  </div>
+
+  <div class="pad" style="top:372px">
+    <div class="rail g6 reveal r3">
+      <div class="stop"><div class="yr">1930s</div><div class="tt">Parlour<br>Mysteries</div>
+        <div class="td">Dinner-party whodunnits. Charming, but hand-run and capped at a table.</div></div>
+      <div class="stop"><div class="yr">1974</div><div class="tt">Tabletop<br>RPGs</div>
+        <div class="td">Character sheets and a game master. Deep immersion, steep entry, tiny groups.</div></div>
+      <div class="stop"><div class="yr">2007</div><div class="tt">Escape<br>Rooms</div>
+        <div class="td">Real-space puzzles go global. Repeatable quality — but built sets and hard capacity limits.</div></div>
+      <div class="stop"><div class="yr">2011</div><div class="tt">Immersive<br>Theatre</div>
+        <div class="td">Audiences enter the story world. Enormous production cost, and guests still mostly watch.</div></div>
+      <div class="stop"><div class="yr">2014–20</div><div class="tt">App-Assisted<br>Party Games</div>
+        <div class="td">Phones become controllers. Huge reach, but the game lives on a screen, not in the room.</div></div>
+      <div class="stop now"><div class="yr">Today</div><div class="tt">App-Orchestrated<br>Live Play</div>
+        <div class="td">The app runs the machinery; the people are the game. Theatre-grade immersion at party-grade capacity.</div></div>
+    </div>
+
+    <div class="reveal r6" style="position:absolute;left:0;right:0;bottom:0;border-top:1px solid var(--line);padding-top:26px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:40px">
+      <div><div class="lbl" style="font-family:var(--f-mono);font-size:14px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);margin-bottom:10px">The pattern</div>
+        <p style="font-family:var(--f-read);font-weight:300;font-size:20px;line-height:1.45;color:var(--dim)">Every wave raised immersion. Every wave paid for it in capacity, cost, or rehearsal.</p></div>
+      <div><div style="font-family:var(--f-mono);font-size:14px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);margin-bottom:10px">The unlock</div>
+        <p style="font-family:var(--f-read);font-weight:300;font-size:20px;line-height:1.45;color:var(--dim)">Everyone now carries a synchronised, networked screen. The game master can be software.</p></div>
+      <div><div style="font-family:var(--f-mono);font-size:14px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);margin-bottom:10px">The position</div>
+        <p style="font-family:var(--f-read);font-weight:300;font-size:20px;line-height:1.45;color:var(--dim)">Immersion of theatre. Capacity of a party. Operating cost of a quiz night.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 09 — DIVIDER II
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div>
+  <svg class="thread" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+    <path d="M0 340 C 420 420, 760 220, 1180 460 S 1620 700, 1920 820" fill="none" stroke="#E03127" stroke-width="2" opacity=".4"/>
+  </svg>
+  <div class="vig"></div>
+  <div class="div-no">II</div>
+  <div style="position:absolute;left:96px;top:340px;width:1080px">
+    <span class="tag reveal r1">Part two</span>
+    <h2 class="div-t reveal r2" style="margin-top:30px">The<br><span class="hot">Experience</span></h2>
+    <div class="div-rule reveal r3"></div>
+    <div class="div-list reveal r4">
+      <div><b>05</b> &nbsp;What Is Astral Project Murder Mystery?</div>
+      <div><b>06</b> &nbsp;The Complete Player Experience</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 10 — CH 05 WHAT IS IT
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 05</div>
+  <div class="chrome mono c-tr">Definition</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">10</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 05 · What is Astral Project Murder Mystery?</div>
+    <h2 class="reveal r2">A three-hour story <span class="hot">played by the whole room</span></h2>
+    <p class="dek reveal r3">Up to 32 guests log in as characters in a single murder case. Each one receives a private
+      identity, a secret, a motive and a timeline. A host advances the story in rounds; the app releases information;
+      players trade what they know face to face; the room votes; the truth is revealed on every screen at once.</p>
+  </div>
+
+  <div class="pad" style="top:452px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:26px;height:100%">
+      <div class="card t-red reveal r4">
+        <div class="lbl">Layer — Story</div>
+        <h3>What the guests are inside</h3>
+        <ul class="list" style="margin-top:12px">
+          <li>A death at a company party, with a fixed and provable truth</li>
+          <li>Every character is a real position in that truth — no filler roles</li>
+          <li>Red herrings are authored, not accidental</li>
+          <li>The ending reframes the whole evening</li>
+        </ul>
+      </div>
+      <div class="card t-red reveal r5">
+        <div class="lbl">Layer — Social</div>
+        <h3>What the guests actually do</h3>
+        <ul class="list" style="margin-top:12px">
+          <li>Interrogate, bargain, bluff and form alliances in person</li>
+          <li>Trade codes from printed cards to unlock each other's evidence</li>
+          <li>Publicly accuse — and publicly defend</li>
+          <li>Vote, watch the room turn, and vote again</li>
+        </ul>
+      </div>
+      <div class="card t-red reveal r6">
+        <div class="lbl">Layer — System</div>
+        <h3>What the platform runs</h3>
+        <ul class="list" style="margin-top:12px">
+          <li>Identity delivery and per-player private briefs</li>
+          <li>Round-gated unlocks so nobody can skip ahead</li>
+          <li>Live chat, live vote tallies, live host control</li>
+          <li>A synchronised reveal across every device</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 11 — CH 05b ANATOMY OF A GAME
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="lamp r"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 05</div>
+  <div class="chrome mono c-tr">Anatomy</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">11</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 05 · Anatomy of one game</div>
+    <h2 class="reveal r2">Thirty-two characters. <span class="hot">One of them did it.</span></h2>
+  </div>
+
+  <div class="pad" style="top:352px">
+    <div style="display:grid;grid-template-columns:1fr 560px;gap:48px;height:100%">
+      <div>
+        <div class="g2" style="gap:22px">
+          <div class="card t-red reveal r3"><div class="lbl">Role</div><h3>The Murderer</h3>
+            <p>One player, playing against the room, with a private path to a confession only they can unlock.</p></div>
+          <div class="card t-amber reveal r4"><div class="lbl">Role</div><h3>The Suspects</h3>
+            <p>Ten characters carry a public motive. Each is genuinely plausible — and each is genuinely innocent bar one.</p></div>
+          <div class="card t-bone reveal r5"><div class="lbl">Role</div><h3>The Witnesses</h3>
+            <p>Everyone else. Each holds one observation that matters to somebody. There are no spectators.</p></div>
+          <div class="card reveal r6"><div class="lbl">Role</div><h3>The Victim</h3>
+            <p>Present in files, forensics, messages and CCTV rather than in the room — the case's centre of gravity.</p></div>
+        </div>
+        <div class="statrow reveal r7" style="margin-top:30px">
+          <div class="stat"><div class="n">30</div><div class="l">Clue codes in play</div></div>
+          <div class="stat"><div class="n">6</div><div class="l">Unlockable case files</div></div>
+          <div class="stat"><div class="n">5</div><div class="l">Evidence categories</div></div>
+        </div>
+      </div>
+      <div>
+        <div class="card bone reveal r4" style="height:100%">
+          <div class="lbl">Character brief — every field, every player</div>
+          <table class="tbl" style="margin-top:6px">
+            <tr><td class="k" style="color:var(--ink);width:190px;padding:12px 12px 12px 0;border-bottom:1px solid var(--line-b)">Identity</td>
+              <td style="color:#4A453C;font-size:19px;padding:12px 0;border-bottom:1px solid var(--line-b)">Name, role and profession</td></tr>
+            <tr><td class="k" style="color:var(--ink);padding:12px 12px 12px 0;border-bottom:1px solid var(--line-b)">Bio</td>
+              <td style="color:#4A453C;font-size:19px;padding:12px 0;border-bottom:1px solid var(--line-b)">Where they fit in the world of the story</td></tr>
+            <tr><td class="k" style="color:var(--ink);padding:12px 12px 12px 0;border-bottom:1px solid var(--line-b)">Quirk</td>
+              <td style="color:#4A453C;font-size:19px;padding:12px 0;border-bottom:1px solid var(--line-b)">How to play them without acting experience</td></tr>
+            <tr><td class="k" style="color:var(--ink);padding:12px 12px 12px 0;border-bottom:1px solid var(--line-b)">Secret</td>
+              <td style="color:#4A453C;font-size:19px;padding:12px 0;border-bottom:1px solid var(--line-b)">The thing they will lie to protect</td></tr>
+            <tr><td class="k" style="color:var(--ink);padding:12px 12px 12px 0;border-bottom:1px solid var(--line-b)">Never-do</td>
+              <td style="color:#4A453C;font-size:19px;padding:12px 0;border-bottom:1px solid var(--line-b)">Their red line — the improv guardrail</td></tr>
+            <tr><td class="k" style="color:var(--ink);padding:12px 12px 12px 0;border-bottom:1px solid var(--line-b)">Timeline</td>
+              <td style="color:#4A453C;font-size:19px;padding:12px 0;border-bottom:1px solid var(--line-b)">Time-stamped movements to defend or attack</td></tr>
+            <tr><td class="k" style="color:var(--ink);padding:12px 12px 12px 0">Code</td>
+              <td style="color:#4A453C;font-size:19px;padding:12px 0">A personal code others must obtain in person</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 12 — CH 06 PLAYER JOURNEY
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 06</div>
+  <div class="chrome mono c-tr">Player Journey</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">12</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 06 · The Complete Player Experience</div>
+    <h2 class="reveal r2">Door to <span class="hot">verdict</span></h2>
+  </div>
+
+  <div class="pad" style="top:330px">
+    <div style="display:grid;grid-template-columns:1fr 470px;gap:64px;height:100%">
+      <div class="jrail reveal r3" style="padding-left:180px">
+        <div class="jstep"><span class="jm">0:00</span><div class="jt">Arrival &amp; scan</div>
+          <div class="jd">A QR code at the door opens the experience in the browser. No download, no account, no queue at a laptop.</div></div>
+        <div class="jstep"><span class="jm">0:10</span><div class="jt">Character reveal</div>
+          <div class="jd">The guest enters a code and becomes someone. Private bio, secret, motive and timeline land on their phone alone.</div></div>
+        <div class="jstep"><span class="jm">0:25</span><div class="jt">Round 0 — the incident</div>
+          <div class="jd">The case opens. Guests read the incident report, browse suspects, and start moving around the venue in character.</div></div>
+        <div class="jstep"><span class="jm">0:45</span><div class="jt">Round 1 — accusations</div>
+          <div class="jd">Every player is handed one thing they saw. Saying it out loud is the icebreaker — and it names someone in the room.</div></div>
+        <div class="jstep"><span class="jm">1:10</span><div class="jt">Rounds 2–3 — motives &amp; evidence</div>
+          <div class="jd">Printed cards circulate. Codes are traded, typed, and unlocked. Forensics and documents open on the host's cue.</div></div>
+        <div class="jstep"><span class="jm">1:50</span><div class="jt">Rounds 4–5 — revelations</div>
+          <div class="jd">The story turns. What looked like motive becomes cover, and the room's leading theory collapses at least once.</div></div>
+        <div class="jstep"><span class="jm">2:20</span><div class="jt">The vote</div>
+          <div class="jd">Voting opens. Tallies move live. Players lobby, defend and switch — publicly.</div></div>
+        <div class="jstep"><span class="jm">2:40</span><div class="jt">Round 6 — the reveal</div>
+          <div class="jd">Every screen in the venue turns at the same instant. Then the debrief, the photos, and the arguing that lasts for weeks.</div></div>
+      </div>
+      <div>
+        <div class="pin drop reveal r5" style="margin-top:8px">
+          <div class="ph">Design constraint</div>
+          <div class="q">“No player should ever be able to make progress without speaking to another human being.”</div>
+          <div class="a">Core rule of the information graph</div>
+        </div>
+        <div class="card t-amber reveal r7" style="margin-top:38px">
+          <div class="lbl">Why the rounds exist</div>
+          <p>Left unstructured, a mystery collapses in twenty minutes — the loudest table solves it and everyone else
+            spectates. Round gating means <strong>nobody can run ahead</strong>, the room stays synchronised, and every
+            guest re-enters the story at each beat.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 13 — CH 06b THE THREE MODES
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 06</div>
+  <div class="chrome mono c-tr">Modes of Play</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">13</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 06 · What a guest is actually doing</div>
+    <h2 class="reveal r2">Three modes, <span class="hot">cycling all night</span></h2>
+  </div>
+
+  <div class="pad" style="top:340px">
+    <div class="g3" style="height:420px">
+      <div class="card t-red reveal r3">
+        <div class="lbl">Mode 01</div>
+        <h3 style="font-size:44px">Investigate</h3>
+        <p style="margin-top:14px">Read the files. Compare timelines. Find the two statements that cannot both be true.</p>
+        <ul class="list" style="margin-top:18px">
+          <li>Unlock evidence with codes from printed cards</li>
+          <li>Cross-reference the victim's timeline against alibis</li>
+          <li>Open case files as the host releases them</li>
+        </ul>
+      </div>
+      <div class="card t-red reveal r4">
+        <div class="lbl">Mode 02</div>
+        <h3 style="font-size:44px">Negotiate</h3>
+        <p style="margin-top:14px">Information is currency. You have some. You need more. Everything is a trade.</p>
+        <ul class="list" style="margin-top:18px">
+          <li>Swap codes face to face to unlock each other's clues</li>
+          <li>Protect your own secret while extracting theirs</li>
+          <li>Form and betray alliances in real time</li>
+        </ul>
+      </div>
+      <div class="card t-red reveal r5">
+        <div class="lbl">Mode 03</div>
+        <h3 style="font-size:44px">Decide</h3>
+        <p style="margin-top:14px">Take a public position. Defend it in front of thirty-one people. Change it if you're wrong.</p>
+        <ul class="list" style="margin-top:18px">
+          <li>Vote — and see the tally move live</li>
+          <li>Lobby the room when the count turns against you</li>
+          <li>Commit before the reveal</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="reveal r7" style="margin-top:36px;border-top:1px solid var(--line);padding-top:28px;display:grid;grid-template-columns:auto 1fr;gap:44px;align-items:center">
+      <span class="tag">The introvert clause</span>
+      <p style="font-family:var(--f-read);font-weight:300;font-size:25px;line-height:1.5;color:var(--dim)">
+        A quiet guest is never stranded. The app always hands them a specific reason to approach a specific person —
+        <em style="font-style:italic;color:var(--bone)">a code to obtain, an alibi to check, an accusation to deliver.</em>
+        The character is the cover story, and the objective is the opening line.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 14 — DIVIDER III
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div>
+  <svg class="thread" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+    <path d="M0 620 C 400 540, 720 760, 1140 540 S 1580 320, 1920 420" fill="none" stroke="#E03127" stroke-width="2" opacity=".4"/>
+  </svg>
+  <div class="vig"></div>
+  <div class="div-no">III</div>
+  <div style="position:absolute;left:96px;top:300px;width:1080px">
+    <span class="tag reveal r1">Part three</span>
+    <h2 class="div-t reveal r2" style="margin-top:30px">The<br><span class="hot">System</span></h2>
+    <div class="div-rule reveal r3"></div>
+    <div class="div-list reveal r4">
+      <div><b>07</b> &nbsp;The Technology Platform</div>
+      <div><b>08</b> &nbsp;Inside the Mobile Application</div>
+      <div><b>09</b> &nbsp;Character System</div>
+      <div><b>10</b> &nbsp;Storytelling Engine</div>
+      <div><b>11</b> &nbsp;Game Mechanics</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 15 — CH 07 TECHNOLOGY PLATFORM
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 07</div>
+  <div class="chrome mono c-tr">Technology</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">15</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 07 · The Technology Platform</div>
+    <h2 class="reveal r2">The application is a <span class="hot">live game engine</span></h2>
+    <p class="dek reveal r3">It synchronises story chapters, distributes information, stores evidence, manages objectives
+      and lets a host control pacing from their own phone — which is what makes stories reusable and the platform licensable.</p>
+  </div>
+
+  <div class="pad" style="top:452px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:26px;height:290px">
+      <div class="card t-amber reveal r4">
+        <div class="lbl">Tier 01 — Client</div>
+        <h3>Installable web app</h3>
+        <p>An installable progressive web app. Opens from a QR code in any mobile browser, adds to the home screen,
+          keeps working through patchy venue wifi, and buzzes on new messages.</p>
+        <div style="margin-top:14px;font-family:var(--f-mono);font-size:14px;letter-spacing:.14em;color:var(--dim-2)">
+          NO APP STORE · NO ACCOUNTS · NO INSTALL WAIT</div>
+      </div>
+      <div class="card t-amber reveal r5">
+        <div class="lbl">Tier 02 — Realtime state</div>
+        <h3>One shared truth</h3>
+        <p>Round, voting status, tallies, unlocked files and chat live in a realtime database. When the host moves the
+          story, thirty-two devices change within a second — no refresh, no “did everyone get that?”</p>
+        <div style="margin-top:14px;font-family:var(--f-mono);font-size:14px;letter-spacing:.14em;color:var(--dim-2)">
+          LIVE SYNC · SERVER TIMESTAMPS · NO PER-EVENT SERVER</div>
+      </div>
+      <div class="card t-amber reveal r6">
+        <div class="lbl">Tier 03 — Content</div>
+        <h3>The story pack</h3>
+        <p>Characters, clue database, case files, round definitions and access codes are <strong>data</strong>. A new
+          mystery is a new pack against the same engine — no rebuild of the game logic.</p>
+        <div style="margin-top:14px;font-family:var(--f-mono);font-size:14px;letter-spacing:.14em;color:var(--dim-2)">
+          SWAPPABLE · VERSIONED · THE LICENSABLE ASSET</div>
+      </div>
+    </div>
+
+    <div class="reveal r8" style="margin-top:32px;border-top:1px solid var(--line);padding-top:28px;display:grid;grid-template-columns:auto 1fr;gap:44px;align-items:start">
+      <span class="tag">Why this matters commercially</span>
+      <p style="font-family:var(--f-read);font-weight:300;font-size:24px;line-height:1.5;color:var(--dim)">
+        Because content and engine are separated, the marginal cost of a new experience is
+        <em style="font-style:italic;color:var(--bone)">writing, not engineering</em> — and the marginal cost of a new
+        venue is <em style="font-style:italic;color:var(--bone)">a link, not a build-out</em>. That is the whole basis of
+        the licensing and franchise lines in Chapter 17.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 16 — CH 08 APP SCREENS 1/3
+     NOTE: each .screen holds a CSS recreation of the live UI.
+     To swap in a real screenshot, replace the .screen contents
+     with:  <img src="assets/screen-01.png" class="shot">
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 08</div>
+  <div class="chrome mono c-tr">Application · 1 of 3</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">16</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 08 · Inside the mobile application</div>
+    <h2 class="reveal r2">Onboarding &amp; <span class="hot">identity</span></h2>
+  </div>
+
+  <div class="pad" style="top:276px">
+    <div style="display:grid;grid-template-columns:420px 1fr;gap:60px;height:100%">
+      <div>
+        <p class="reveal r3" style="font-family:var(--f-read);font-weight:300;font-size:24px;line-height:1.55;color:var(--dim)">
+          The first four minutes decide whether a guest plays or watches. The app compresses onboarding into
+          <em style="font-style:italic;color:var(--bone)">scan → code → you are someone else</em> — with no account,
+          no tutorial and no host explaining rules to thirty-two people at once.</p>
+        <div class="card t-red reveal r4" style="margin-top:28px">
+          <div class="lbl">Operational payoff</div>
+          <ul class="list">
+            <li>No registration desk and no laptop bottleneck at the door</li>
+            <li>Late arrivals self-onboard without pausing the game</li>
+            <li>The rules live in the app, so the host never runs a briefing</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:44px;justify-content:flex-end">
+        <!-- SCREEN 01 — LOGIN -->
+        <div class="phone reveal r4">
+          <div class="notch"></div>
+          <div class="body"><div class="screen">
+            <img src="assets/screen-01-login.png" class="shot" alt="Join screen — access-code entry">
+          </div></div>
+          <div class="cap">Screen 01 · Join</div>
+          <div class="note">A QR code and a private access code. <b>No account, no download, no queue.</b></div>
+        </div>
+
+        <!-- SCREEN 02 — GRID HUB -->
+        <div class="phone reveal r5">
+          <div class="notch"></div>
+          <div class="body"><div class="screen">
+            <img src="assets/screen-02-grid.png" class="shot" alt="The Board — pinned tile hub">
+          </div></div>
+          <div class="cap">Screen 02 · The Board</div>
+          <div class="note">Pinned-note tiles, not a menu. <b>Every route in is one tap deep.</b></div>
+        </div>
+
+        <!-- SCREEN 03 — IDENTITY -->
+        <div class="phone reveal r6">
+          <div class="notch"></div>
+          <div class="body"><div class="screen">
+            <img src="assets/screen-03-identity.png" class="shot" alt="Identity — private character brief">
+          </div></div>
+          <div class="cap">Screen 03 · Identity</div>
+          <div class="note">Bio, quirk, secret, red line and a code. <b>Enough to play someone you never rehearsed.</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 17 — CH 08 APP SCREENS 2/3
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 08</div>
+  <div class="chrome mono c-tr">Application · 2 of 3</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">17</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 08 · Inside the mobile application</div>
+    <h2 class="reveal r2">Evidence, decoding &amp; <span class="hot">comms</span></h2>
+  </div>
+
+  <div class="pad" style="top:276px">
+    <div style="display:grid;grid-template-columns:420px 1fr;gap:60px;height:100%">
+      <div>
+        <p class="reveal r3" style="font-family:var(--f-read);font-weight:300;font-size:24px;line-height:1.55;color:var(--dim)">
+          This is the loop the whole evening runs on: <em style="font-style:italic;color:var(--bone)">get a code from a
+          person, type it in, watch the case change.</em> The physical card is the social object; the app is what makes
+          it mean something.</p>
+        <div class="card t-red reveal r4" style="margin-top:28px">
+          <div class="lbl">Why codes and not taps</div>
+          <ul class="list">
+            <li>A code has to be <b>obtained from someone</b> — the app can't hand it over</li>
+            <li>Round-gating rejects codes entered too early, so nobody outruns the story</li>
+            <li>Printed cards keep hands and eyes in the room, not on a screen</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:44px;justify-content:flex-end">
+        <!-- SCREEN 04 — EVIDENCE BOARD -->
+        <div class="phone reveal r4">
+          <div class="notch"></div>
+          <div class="body"><div class="screen">
+            <img src="assets/screen-04-evidence.png" class="shot" alt="Evidence board — unlocked clues">
+          </div></div>
+          <div class="cap">Screen 04 · Evidence</div>
+          <div class="note">A case board that grows all night. <b>Locked rows show what you're still missing.</b></div>
+        </div>
+
+        <!-- SCREEN 05 — DECODER -->
+        <div class="phone reveal r5">
+          <div class="notch"></div>
+          <div class="body"><div class="screen">
+            <img src="assets/screen-05-decoder.png" class="shot" alt="Decoder — clue code entry">
+          </div></div>
+          <div class="cap">Screen 05 · Decoder</div>
+          <div class="note">One input, three outcomes: <b>unlocked, locked-for-this-round, or invalid.</b> The rules enforce themselves.</div>
+        </div>
+
+        <!-- SCREEN 06 — COMMS -->
+        <div class="phone reveal r6">
+          <div class="notch"></div>
+          <div class="body"><div class="screen">
+            <img src="assets/screen-06-comms.png" class="shot" alt="Comms — live room-wide chat">
+          </div></div>
+          <div class="cap">Screen 06 · Comms</div>
+          <div class="note">Room-wide chat with haptic alerts. <b>The public record everyone is held to.</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 18 — CH 08 APP SCREENS 3/3
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 08</div>
+  <div class="chrome mono c-tr">Application · 3 of 3</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">18</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 08 · Inside the mobile application</div>
+    <h2 class="reveal r2">Verdict, archives &amp; <span class="hot">host control</span></h2>
+  </div>
+
+  <div class="pad" style="top:276px">
+    <div style="display:grid;grid-template-columns:420px 1fr;gap:60px;height:100%">
+      <div>
+        <p class="reveal r3" style="font-family:var(--f-read);font-weight:300;font-size:24px;line-height:1.55;color:var(--dim)">
+          The endgame is where most social games fall apart — ambiguity, a shrug, everyone drifts to the bar. Here it is
+          <em style="font-style:italic;color:var(--bone)">a public vote, a live tally, and one synchronised reveal</em>
+          fired by the host from their pocket.</p>
+        <div class="card t-red reveal r4" style="margin-top:28px">
+          <div class="lbl">Operational payoff</div>
+          <ul class="list">
+            <li>The host runs the entire evening from one phone, anywhere in the venue</li>
+            <li>No scoring by hand, no counting ballots, no announcements over noise</li>
+            <li>The ending lands on 32 screens in the same second</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:44px;justify-content:flex-end">
+        <!-- SCREEN 07 — VOTE -->
+        <div class="phone reveal r4">
+          <div class="notch"></div>
+          <div class="body"><div class="screen">
+            <img src="assets/screen-07-vote.png" class="shot" alt="Vote — suspect list with live counts">
+          </div></div>
+          <div class="cap">Screen 07 · Verdict</div>
+          <div class="note">Two-tap confirm, live counts, changeable votes. <b>Public commitment, publicly visible.</b></div>
+        </div>
+
+        <!-- SCREEN 08 — ARCHIVES -->
+        <div class="phone reveal r5">
+          <div class="notch"></div>
+          <div class="body"><div class="screen">
+            <img src="assets/screen-08-archives.png" class="shot" alt="Archives — host-released case files">
+          </div></div>
+          <div class="cap">Screen 08 · Archives</div>
+          <div class="note">Host-released documents with visible locks. <b>Guests can see the story has further to go.</b></div>
+        </div>
+
+        <!-- SCREEN 09 — HOST CONSOLE -->
+        <div class="phone reveal r6">
+          <div class="notch"></div>
+          <div class="body"><div class="screen">
+            <img src="assets/screen-09-host.png" class="shot" alt="Host console — live event controls">
+          </div></div>
+          <div class="cap">Screen 09 · Host</div>
+          <div class="note">Hidden behind a secret gesture. <b>The whole evening, from one pocket.</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 19 — CH 09 CHARACTER SYSTEM
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="lamp r"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 09</div>
+  <div class="chrome mono c-tr">Character System</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">19</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 09 · Character System</div>
+    <h2 class="reveal r2">Thirty-two roles, <span class="hot">zero dead ends</span></h2>
+    <p class="dek reveal r3">The hardest problem in a large-group social game is not the puzzle — it is making sure the
+      thirty-second-most-important person still matters at 10pm. The character system is built entirely around that constraint.</p>
+  </div>
+
+  <div class="pad" style="top:456px">
+    <div class="g4" style="height:280px">
+      <div class="card t-red reveal r4">
+        <div class="lbl">Principle 01</div>
+        <h3>No spectators</h3>
+        <p>Every character — including every witness — holds at least one piece of information another player needs.
+          Being minor in the plot never means being idle in the room.</p>
+      </div>
+      <div class="card t-red reveal r5">
+        <div class="lbl">Principle 02</div>
+        <h3>Improv guardrails</h3>
+        <p>A quirk tells you how to behave; a never-do tells you what to protect. Two lines are enough for a guest with
+          no acting experience to stay in character for three hours.</p>
+      </div>
+      <div class="card t-red reveal r6">
+        <div class="lbl">Principle 03</div>
+        <h3>Plausible guilt</h3>
+        <p>Ten characters carry a motive strong enough to convict on. The room has to reason from evidence,
+          not vibes — and the wrong answer has to feel right first.</p>
+      </div>
+      <div class="card t-red reveal r7">
+        <div class="lbl">Principle 04</div>
+        <h3>Nothing to memorise</h3>
+        <p>The brief stays in the pocket, searchable, all night. Guests re-read their own timeline mid-argument
+          instead of bluffing from memory.</p>
+      </div>
+    </div>
+
+    <div class="reveal r8" style="margin-top:34px;border-top:1px solid var(--line);padding-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:56px">
+      <div>
+        <div style="font-family:var(--f-mono);font-size:14px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);margin-bottom:14px">Why 32 is the number</div>
+        <p style="font-family:var(--f-read);font-weight:300;font-size:21px;line-height:1.5;color:var(--dim)">
+          Large enough that no one can talk to everybody — so information genuinely has to travel through the room —
+          and small enough that a single host can pace it and one venue can hold it. The pack format allows other cast sizes;
+          32 is the tested configuration.</p>
+      </div>
+      <div>
+        <div style="font-family:var(--f-mono);font-size:14px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);margin-bottom:14px">Casting is a host decision</div>
+        <p style="font-family:var(--f-read);font-weight:300;font-size:21px;line-height:1.5;color:var(--dim)">
+          Characters are assigned, not chosen at random by guests. That lets a host seed the loudest personalities into
+          suspect roles and put quieter guests where a single well-timed observation lands hardest.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 20 — CH 10 STORYTELLING ENGINE
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 10</div>
+  <div class="chrome mono c-tr">Storytelling Engine</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">20</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 10 · Storytelling Engine</div>
+    <h2 class="reveal r2">The real asset is the <span class="hot">information graph</span></h2>
+  </div>
+
+  <div class="pad" style="top:314px">
+    <div style="display:grid;grid-template-columns:1fr 620px;gap:52px;height:100%">
+      <div>
+        <p class="reveal r3" style="font-family:var(--f-read);font-weight:300;font-size:25px;line-height:1.5;color:var(--dim)">
+          A story pack is not prose. It is a structure: who knows what, who can prove it, when it becomes available, and
+          which two facts contradict each other. <em style="font-style:italic;color:var(--bone)">Writing the story is the easy half.
+          Wiring the graph is the intellectual property.</em></p>
+
+        <div class="card t-amber reveal r4" style="margin-top:30px">
+          <div class="lbl">Authoring pipeline</div>
+          <ul class="list">
+            <li><b>Premise</b> — the crime, the venue, the hour of death</li>
+            <li><b>Cast</b> — roles, relationships, and who benefits</li>
+            <li><b>Timeline of truth</b> — what actually happened, minute by minute</li>
+            <li><b>Information graph</b> — who observes which fragment, and what it contradicts</li>
+            <li><b>Round gating</b> — the order fragments become legal to reveal</li>
+            <li><b>Code sheets</b> — printed artefacts that force the trade</li>
+            <li><b>Playtest</b> — solve-time, dead-end audit, red-herring calibration</li>
+          </ul>
+        </div>
+      </div>
+
+      <div>
+        <div class="card bone reveal r5" style="height:100%">
+          <div class="lbl">What ships inside one story pack</div>
+          <table class="tbl" style="margin-top:8px">
+            <tr><td class="k" style="color:var(--ink);width:230px;padding:11px 12px 11px 0;border-bottom:1px solid var(--line-b)">Characters</td>
+              <td style="color:#4A453C;font-size:19px;padding:11px 0;border-bottom:1px solid var(--line-b)">Full private briefs and per-player access codes</td></tr>
+            <tr><td class="k" style="color:var(--ink);padding:11px 12px 11px 0;border-bottom:1px solid var(--line-b)">Accusations</td>
+              <td style="color:#4A453C;font-size:19px;padding:11px 0;border-bottom:1px solid var(--line-b)">Pre-assigned so every guest opens with something to say</td></tr>
+            <tr><td class="k" style="color:var(--ink);padding:11px 12px 11px 0;border-bottom:1px solid var(--line-b)">Motives</td>
+              <td style="color:#4A453C;font-size:19px;padding:11px 0;border-bottom:1px solid var(--line-b)">One per suspect, all individually convincing</td></tr>
+            <tr><td class="k" style="color:var(--ink);padding:11px 12px 11px 0;border-bottom:1px solid var(--line-b)">Evidence</td>
+              <td style="color:#4A453C;font-size:19px;padding:11px 0;border-bottom:1px solid var(--line-b)">Forensics, documents and footage, round-gated</td></tr>
+            <tr><td class="k" style="color:var(--ink);padding:11px 12px 11px 0;border-bottom:1px solid var(--line-b)">Revelations</td>
+              <td style="color:#4A453C;font-size:19px;padding:11px 0;border-bottom:1px solid var(--line-b)">Late-game turns that invalidate the obvious reading</td></tr>
+            <tr><td class="k" style="color:var(--ink);padding:11px 12px 11px 0;border-bottom:1px solid var(--line-b)">Confession</td>
+              <td style="color:#4A453C;font-size:19px;padding:11px 0;border-bottom:1px solid var(--line-b)">A private endgame path only the guilty player can open</td></tr>
+            <tr><td class="k" style="color:var(--ink);padding:11px 12px 11px 0">Case files</td>
+              <td style="color:#4A453C;font-size:19px;padding:11px 0">Host-released documents attached to specific rounds</td></tr>
+          </table>
+          <p style="margin-top:16px;font-style:italic">Swap the pack, keep the engine. That single property is what makes
+            espionage, horror and branded experiences a writing exercise rather than a rebuild.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 21 — CH 11 GAME MECHANICS (ROUND TABLE)
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 11</div>
+  <div class="chrome mono c-tr">Game Mechanics</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">21</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 11 · Game Mechanics</div>
+    <h2 class="reveal r2">Seven rounds, <span class="hot">one release valve at a time</span></h2>
+  </div>
+
+  <div class="pad" style="top:330px">
+    <table class="tbl reveal r3">
+      <tr>
+        <th style="width:110px">Round</th>
+        <th style="width:270px">Beat</th>
+        <th style="width:330px">What unlocks</th>
+        <th style="width:210px">Guest behaviour</th>
+        <th>Host action</th>
+      </tr>
+      <tr><td class="num">0</td><td class="k">The Incident</td><td>Incident report; all character profiles</td><td>Reading, mingling, sizing people up</td><td>Open the case; set the tone</td></tr>
+      <tr><td class="num">1</td><td class="k">Accusations</td><td>One pre-assigned accusation per player</td><td>First public naming of a suspect</td><td>Advance round; prompt the room</td></tr>
+      <tr><td class="num">2</td><td class="k">Motives</td><td>Ten motive codes on printed cards</td><td>Trading begins in earnest</td><td>Distribute motive cards</td></tr>
+      <tr><td class="num">3</td><td class="k">Evidence</td><td>Forensics, documents, footage</td><td>Theories harden; factions form</td><td>Release case files; open voting</td></tr>
+      <tr><td class="num">4</td><td class="k">Revelations</td><td>Records and correspondence that reframe motive</td><td>The leading theory starts to crack</td><td>Release second file wave</td></tr>
+      <tr><td class="num">5</td><td class="k">Bombshells</td><td>Final revelation codes; access trails</td><td>Panic, re-lobbying, vote switching</td><td>Reopen voting; hold results</td></tr>
+      <tr style="background:rgba(224,49,39,.07)"><td class="num" style="color:var(--red)">6</td><td class="k" style="color:var(--red)">The Reveal</td>
+        <td style="color:var(--bone)">Final tally shown; confession path opens</td><td style="color:var(--bone)">The room commits, then finds out</td>
+        <td style="color:var(--bone)">Show results, then fire the reveal</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 22 — CH 11b THE CODE SYSTEM
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 11</div>
+  <div class="chrome mono c-tr">The Code System</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">22</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 11 · The mechanic that forces the room to talk</div>
+    <h2 class="reveal r2">Codes are <span class="hot">social objects</span></h2>
+  </div>
+
+  <div class="pad" style="top:340px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:26px;height:330px">
+      <div class="card t-red reveal r3">
+        <div class="lbl">Step 01 — Obtain</div>
+        <h3>Held by a person, not a screen</h3>
+        <p>Codes arrive on printed cards, or belong to a specific character. The only way to get one you don't have is
+          to persuade someone to give it to you.</p>
+      </div>
+      <div class="card t-red reveal r4">
+        <div class="lbl">Step 02 — Enter</div>
+        <h3>Gated by the round</h3>
+        <p>A valid code entered too early is rejected as locked. Nobody can sprint to the ending, and a leaked code is
+          worth nothing until the story has caught up.</p>
+      </div>
+      <div class="card t-red reveal r5">
+        <div class="lbl">Step 03 — Change the case</div>
+        <h3>Permanent, visible, yours</h3>
+        <p>The unlocked fragment joins that player's evidence board. They now hold something worth trading —
+          and the loop restarts one conversation deeper.</p>
+      </div>
+    </div>
+
+    <div class="reveal r7" style="margin-top:34px;border-top:1px solid var(--line);padding-top:30px;display:grid;grid-template-columns:repeat(5,1fr);gap:24px">
+      <div class="stat"><div class="n">10</div><div class="l">Accusation codes · R1</div></div>
+      <div class="stat"><div class="n">10</div><div class="l">Motive codes · R2</div></div>
+      <div class="stat"><div class="n">7</div><div class="l">Evidence codes · R3</div></div>
+      <div class="stat"><div class="n">6</div><div class="l">Revelation codes · R4–5</div></div>
+      <div class="stat"><div class="n">1</div><div class="l">Confession · R6, murderer only</div></div>
+    </div>
+    <div class="reveal r8" style="margin-top:26px;font-family:var(--f-read);font-style:italic;font-weight:300;font-size:23px;color:var(--dim-2)">
+      Plus one personal code per character — thirty-two more reasons to introduce yourself to a stranger.
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 23 — DIVIDER IV
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div>
+  <svg class="thread" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+    <path d="M0 300 C 460 380, 700 180, 1160 420 S 1600 640, 1920 560" fill="none" stroke="#E03127" stroke-width="2" opacity=".4"/>
+  </svg>
+  <div class="vig"></div>
+  <div class="div-no">IV</div>
+  <div style="position:absolute;left:96px;top:340px;width:1080px">
+    <span class="tag reveal r1">Part four</span>
+    <h2 class="div-t reveal r2" style="margin-top:30px">The<br><span class="hot">Operation</span></h2>
+    <div class="div-rule reveal r3"></div>
+    <div class="div-list reveal r4">
+      <div><b>12</b> &nbsp;Event Operations</div>
+      <div><b>13</b> &nbsp;The Host Experience</div>
+      <div><b>14</b> &nbsp;Why It Works — Psychology &amp; Behavioural Design</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 24 — CH 12 EVENT OPERATIONS
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 12</div>
+  <div class="chrome mono c-tr">Event Operations</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">24</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 12 · Event Operations</div>
+    <h2 class="reveal r2">One host. One venue. <span class="hot">No moving parts.</span></h2>
+  </div>
+
+  <div class="pad" style="top:330px">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:26px;height:300px">
+      <div class="card t-amber reveal r3">
+        <div class="lbl">Before — ~45 minutes</div>
+        <h3>Setup</h3>
+        <ul class="list" style="margin-top:12px">
+          <li>Print character cards and clue cards</li>
+          <li>Assign the cast — loud guests into suspect roles</li>
+          <li>Post the QR code at the entrance</li>
+          <li>Check phone signal and set the room</li>
+        </ul>
+      </div>
+      <div class="card t-amber reveal r4">
+        <div class="lbl">During — 2 to 3 hours</div>
+        <h3>Run</h3>
+        <ul class="list" style="margin-top:12px">
+          <li>Advance a round every 15–20 minutes</li>
+          <li>Hand out that round's printed cards</li>
+          <li>Release case files at the story beats</li>
+          <li>Open and close voting; hold the results</li>
+        </ul>
+      </div>
+      <div class="card t-amber reveal r5">
+        <div class="lbl">After — ~20 minutes</div>
+        <h3>Land it</h3>
+        <ul class="list" style="margin-top:12px">
+          <li>Fire the synchronised reveal</li>
+          <li>Debrief: who suspected whom, and why</li>
+          <li>Photos while everyone is still in character</li>
+          <li>Reset the game state for the next run</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="reveal r7" style="margin-top:32px;border-top:1px solid var(--line);padding-top:28px">
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:44px;align-items:start">
+        <span class="tag">What an event requires</span>
+        <div class="g4">
+          <div class="stat"><div class="n">1</div><div class="l">Trained host</div></div>
+          <div class="stat"><div class="n">0</div><div class="l">Professional actors</div></div>
+          <div class="stat"><div class="n">0</div><div class="l">Built sets or rigs</div></div>
+          <div class="stat"><div class="n">1</div><div class="l">Room with signal</div></div>
+        </div>
+      </div>
+      <p class="reveal r8" style="margin-top:26px;font-family:var(--f-read);font-weight:300;font-size:23px;line-height:1.5;color:var(--dim-2)">
+        The venue requirement is deliberately low: anywhere thirty-two people can stand, sit and move between conversations.
+        Offices, restaurants, terraces, co-working floors, function rooms and homes have all been designed for.
+        <em style="font-style:italic;color:var(--bone)">No fixed installation means no location risk.</em></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 25 — CH 13 HOST EXPERIENCE
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="lamp r"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 13</div>
+  <div class="chrome mono c-tr">The Host</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">25</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 13 · The Host Experience</div>
+    <h2 class="reveal r2">The app is the game master. <span class="hot">The host is the MC.</span></h2>
+    <p class="dek reveal r3">This split is the single most important operating decision in the product. It is what turns a
+      talent-dependent performance into a repeatable service — and what makes franchising possible.</p>
+  </div>
+
+  <div class="pad" style="top:452px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:56px;height:100%">
+      <div>
+        <div style="font-family:var(--f-mono);font-size:14px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);margin-bottom:18px" class="reveal r4">Host console — everything from one phone</div>
+        <div class="g2" style="gap:18px" >
+          <div class="card reveal r5" style="padding:20px"><h3 style="font-size:26px;margin-bottom:8px">Round control</h3><p style="font-size:18px">Advance or step back. Syncs to every device instantly.</p></div>
+          <div class="card reveal r5" style="padding:20px"><h3 style="font-size:26px;margin-bottom:8px">Voting</h3><p style="font-size:18px">Open, close, and decide when the room sees the tally.</p></div>
+          <div class="card reveal r6" style="padding:20px"><h3 style="font-size:26px;margin-bottom:8px">File releases</h3><p style="font-size:18px">Drop each case file on the beat you want it.</p></div>
+          <div class="card reveal r6" style="padding:20px"><h3 style="font-size:26px;margin-bottom:8px">The reveal</h3><p style="font-size:18px">One button. Thirty-two screens. Same second.</p></div>
+        </div>
+        <div class="card t-red reveal r7" style="margin-top:22px">
+          <div class="lbl">Concealed by design</div>
+          <p>The console is hidden behind a secret gesture rather than a visible admin button, so the host can operate it
+            in plain sight, mid-conversation, without breaking the fiction for anyone watching.</p>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-family:var(--f-mono);font-size:14px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);margin-bottom:18px" class="reveal r5">Why the skill floor is deliberately low</div>
+        <ul class="list reveal r6" style="font-size:23px">
+          <li><b>No script to memorise.</b> The narrative lives in the app; the host works from a one-page run sheet.</li>
+          <li><b>No adjudication.</b> Code validity, round gating and vote counting are enforced by software, so there are
+            no rulings to make and no arguments to settle.</li>
+          <li><b>No performance required.</b> The host sets pace and energy. The drama is generated by the guests.</li>
+          <li><b>Recoverable.</b> Rounds step backwards and the game resets, so a mistake costs a minute, not the evening.</li>
+        </ul>
+        <div class="pin drop reveal r8" style="margin-top:34px">
+          <div class="ph">The franchise consequence</div>
+          <div class="q">“If hosting takes a day to learn instead of a season to master, hosts stop being the bottleneck.”</div>
+          <div class="a">See Chapter 18 — Scalability</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 26 — CH 14 WHY IT WORKS
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 14</div>
+  <div class="chrome mono c-tr">Behavioural Design</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">26</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 14 · Why It Works — psychology &amp; behavioural design</div>
+    <h2 class="reveal r2">Six mechanisms doing the <span class="hot">social heavy lifting</span></h2>
+  </div>
+
+  <div class="pad" style="top:326px">
+    <div class="g3 rows2" style="height:100%">
+      <div class="card t-red reveal r3"><h3><span class="n">01</span>Information asymmetry</h3>
+        <p>No player can complete the picture alone. Approaching a stranger stops being a social risk and becomes the
+          rational move — the game supplies both the reason and the opening line.</p></div>
+      <div class="card t-red reveal r4"><h3><span class="n">02</span>Forced reciprocity</h3>
+        <p>Codes are traded, not given. To receive, you have to offer — which manufactures the small mutual
+          vulnerability that ordinary networking events never produce.</p></div>
+      <div class="card t-red reveal r5"><h3><span class="n">03</span>Identity cover</h3>
+        <p>A character licenses behaviour the real person wouldn't risk. Interrogating a senior colleague is fine when
+          it's your character doing it — and everyone knows the difference.</p></div>
+      <div class="card t-red reveal r6"><h3><span class="n">04</span>Paced revelation</h3>
+        <p>Round gating replaces one long puzzle with seven short arcs. Attention resets at every beat, and the
+          player who fell behind gets a fresh entry point instead of giving up.</p></div>
+      <div class="card t-red reveal r7"><h3><span class="n">05</span>Public commitment</h3>
+        <p>A visible vote forces a position, and a position must be defended. Guests argue harder for a theory they've
+          put their name to — which is what makes the reveal land.</p></div>
+      <div class="card t-red reveal r8"><h3><span class="n">06</span>Shared narrative memory</h3>
+        <p>The group leaves with a common story, cast and set of in-jokes. That afterlife is the durable output —
+          and the reason the event gets re-booked.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 27 — DIVIDER V
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div>
+  <svg class="thread" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+    <path d="M0 820 C 420 760, 720 940, 1140 700 S 1600 480, 1920 320" fill="none" stroke="#E03127" stroke-width="2" opacity=".4"/>
+  </svg>
+  <div class="vig"></div>
+  <div class="div-no">V</div>
+  <div style="position:absolute;left:96px;top:360px;width:1080px">
+    <span class="tag reveal r1">Part five</span>
+    <h2 class="div-t reveal r2" style="margin-top:30px">The<br><span class="hot">Evidence</span></h2>
+    <div class="div-rule reveal r3"></div>
+    <div class="div-list reveal r4">
+      <div><b>16</b> &nbsp;Testimonials</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 28 — CH 15 CASE STUDY 01
+     Every unknown figure is a visible .fill blank — nothing invented.
+     ============================================================ -->
+<section class="slide-archived">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 15</div>
+  <div class="chrome mono c-tr">Case Study 01</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">28</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 15 · Case study 01 — the launch event</div>
+    <h2 class="reveal r2">Father <span class="hot">Ethood</span></h2>
+  </div>
+
+  <div class="pad" style="top:330px">
+    <div style="display:grid;grid-template-columns:660px 1fr;gap:48px;height:100%">
+      <div>
+        <!-- PHOTO SLOT — replace with: <img src="assets/case-01.jpg" class="shot"> -->
+        <div class="reveal r3" style="height:352px;background:var(--ink-2);border:1px dashed rgba(237,231,218,.28);
+             display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
+          <div style="font-family:var(--f-mono);font-size:16px;letter-spacing:.3em;color:var(--red)">EVENT PHOTOGRAPH</div>
+          <div style="font-family:var(--f-read);font-style:italic;font-size:20px;color:var(--dim-2)">
+            drop image at pitch-deck/assets/case-01.jpg</div>
+        </div>
+        <div class="g2 reveal r4" style="margin-top:26px;gap:22px">
+          <div class="card"><div class="lbl">Attendance</div><span class="fill">— fill —</span></div>
+          <div class="card"><div class="lbl">Format</div><p style="font-size:19px">Public launch event</p></div>
+          <div class="card"><div class="lbl">Venue &amp; date</div><span class="fill">— fill —</span></div>
+          <div class="card"><div class="lbl">Runtime</div><span class="fill">— fill —</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card t-red reveal r5">
+          <div class="lbl">What we ran</div>
+          <p><span class="fill">— fill —</span> &nbsp;Describe the configuration used: cast size, number of rounds run,
+            which mechanics were live, and anything that differed from the standard 32-player format.</p>
+        </div>
+        <div class="card t-amber reveal r6" style="margin-top:22px">
+          <div class="lbl">Outcome</div>
+          <ul class="list">
+            <li>Business outcome — <span class="fill">— fill —</span></li>
+            <li>Bookings or leads generated — <span class="fill">— fill —</span></li>
+            <li>Completion / engagement observed — <span class="fill">— fill —</span></li>
+          </ul>
+        </div>
+        <div class="pin drop reveal r7" style="margin-top:26px">
+          <div class="ph">Guest testimonial</div>
+          <div class="q">“<span style="opacity:.45">quote to be inserted</span>”</div>
+          <div class="a">Name · role · event</div>
+        </div>
+        <div class="card reveal r8" style="margin-top:22px">
+          <div class="lbl">What we learned</div>
+          <p><span class="fill">— fill —</span> &nbsp;One or two operational lessons that changed how the next event was run.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 29 — CH 15 CASE STUDY 02
+     ============================================================ -->
+<section class="slide-archived">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 15</div>
+  <div class="chrome mono c-tr">Case Study 02</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">29</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 15 · Case study 02 — the corporate event</div>
+    <h2 class="reveal r2">Chimps <span class="hot">Processing</span></h2>
+  </div>
+
+  <div class="pad" style="top:330px">
+    <div style="display:grid;grid-template-columns:660px 1fr;gap:48px;height:100%">
+      <div>
+        <!-- PHOTO SLOT — replace with: <img src="assets/case-02.jpg" class="shot"> -->
+        <div class="reveal r3" style="height:352px;background:var(--ink-2);border:1px dashed rgba(237,231,218,.28);
+             display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px">
+          <div style="font-family:var(--f-mono);font-size:16px;letter-spacing:.3em;color:var(--red)">EVENT PHOTOGRAPH</div>
+          <div style="font-family:var(--f-read);font-style:italic;font-size:20px;color:var(--dim-2)">
+            drop image at pitch-deck/assets/case-02.jpg</div>
+        </div>
+        <div class="g2 reveal r4" style="margin-top:26px;gap:22px">
+          <div class="card"><div class="lbl">Attendance</div><span class="fill">— fill —</span></div>
+          <div class="card"><div class="lbl">Format</div><p style="font-size:19px">Corporate / team event</p></div>
+          <div class="card"><div class="lbl">Venue &amp; date</div><span class="fill">— fill —</span></div>
+          <div class="card"><div class="lbl">Runtime</div><span class="fill">— fill —</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card t-red reveal r5">
+          <div class="lbl">The brief</div>
+          <p><span class="fill">— fill —</span> &nbsp;What the client wanted from the session — team mixing, offsite
+            entertainment, new-joiner integration, client hospitality — and any constraints on time or venue.</p>
+        </div>
+        <div class="card t-amber reveal r6" style="margin-top:22px">
+          <div class="lbl">Outcome</div>
+          <ul class="list">
+            <li>Client feedback — <span class="fill">— fill —</span></li>
+            <li>Repeat or referral business — <span class="fill">— fill —</span></li>
+            <li>Contract value — <span class="fill">— fill —</span></li>
+          </ul>
+        </div>
+        <div class="pin drop reveal r7" style="margin-top:26px">
+          <div class="ph">Client testimonial</div>
+          <div class="q">“<span style="opacity:.45">quote to be inserted</span>”</div>
+          <div class="a">Name · role · company</div>
+        </div>
+        <div class="card reveal r8" style="margin-top:22px">
+          <div class="lbl">What we learned</div>
+          <p><span class="fill">— fill —</span> &nbsp;What corporate audiences need that public audiences don't.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 30 — CH 16 TESTIMONIALS
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="lamp r"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 16</div>
+  <div class="chrome mono c-tr">Testimonials</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">30</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 16 · Testimonials</div>
+    <h2 class="reveal r2">What people say <span class="hot">the next morning</span></h2>
+  </div>
+
+  <div class="pad" style="top:326px">
+    <div class="g3" style="gap:34px;align-content:start">
+      <div class="pin drop l reveal r3" style="margin-top:14px">
+        <div class="ph">Guest · public event</div>
+        <div class="q">“<span style="opacity:.45">quote to be inserted</span>”</div>
+        <div class="a">Name · event</div>
+      </div>
+      <div class="pin drop reveal r4">
+        <div class="ph">Client · corporate event</div>
+        <div class="q">“<span style="opacity:.45">quote to be inserted</span>”</div>
+        <div class="a">Name · role · company</div>
+      </div>
+      <div class="pin drop l reveal r5" style="margin-top:26px">
+        <div class="ph">Guest · corporate event</div>
+        <div class="q">“<span style="opacity:.45">quote to be inserted</span>”</div>
+        <div class="a">Name · role</div>
+      </div>
+      <div class="pin drop reveal r6" style="margin-top:20px">
+        <div class="ph">Venue partner</div>
+        <div class="q">“<span style="opacity:.45">quote to be inserted</span>”</div>
+        <div class="a">Name · venue</div>
+      </div>
+      <div class="pin drop l reveal r7" style="margin-top:6px">
+        <div class="ph">Host</div>
+        <div class="q">“<span style="opacity:.45">quote to be inserted</span>”</div>
+        <div class="a">Name · role</div>
+      </div>
+      <div class="pin drop reveal r8" style="margin-top:30px">
+        <div class="ph">Repeat booker</div>
+        <div class="q">“<span style="opacity:.45">quote to be inserted</span>”</div>
+        <div class="a">Name · organisation</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 31 — DIVIDER VI
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div>
+  <svg class="thread" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+    <path d="M0 480 C 440 560, 760 340, 1180 560 S 1620 780, 1920 700" fill="none" stroke="#E03127" stroke-width="2" opacity=".4"/>
+  </svg>
+  <div class="vig"></div>
+  <div class="div-no">VI</div>
+  <div style="position:absolute;left:96px;top:330px;width:1080px">
+    <span class="tag reveal r1">Part six</span>
+    <h2 class="div-t reveal r2" style="margin-top:30px">The<br><span class="hot">Business</span></h2>
+    <div class="div-rule reveal r3"></div>
+    <div class="div-list reveal r4">
+      <div><b>17</b> &nbsp;Business Model</div>
+      <div><b>18</b> &nbsp;Scalability</div>
+      <div><b>19</b> &nbsp;Roadmap</div>
+      <div><b>20</b> &nbsp;Conclusion</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 32 — CH 17 BUSINESS MODEL
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 17</div>
+  <div class="chrome mono c-tr">Business Model</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">32</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 17 · Business Model</div>
+    <h2 class="reveal r2">Eight ways the same asset <span class="hot">earns</span></h2>
+  </div>
+
+  <div class="pad" style="top:326px">
+    <table class="tbl reveal r3">
+      <tr>
+        <th style="width:250px">Revenue stream</th>
+        <th style="width:210px">Who pays</th>
+        <th style="width:180px">Unit</th>
+        <th style="width:180px">Price</th>
+        <th>What it costs us to deliver</th>
+      </tr>
+      <tr><td class="k">Public ticket sales</td><td>Individual guests</td><td>Per seat</td><td><span class="fill">fill</span></td><td>Venue hire, host fee, printing. Highest marketing cost per head.</td></tr>
+      <tr><td class="k">Corporate events</td><td>Company / HR / culture budget</td><td>Per event</td><td><span class="fill">fill</span></td><td>Host fee and printing. Client supplies the venue — highest margin per hour.</td></tr>
+      <tr><td class="k">Private bookings</td><td>Individuals — birthdays, groups</td><td>Per event</td><td><span class="fill">fill</span></td><td>Same as corporate at smaller cast sizes.</td></tr>
+      <tr><td class="k">Venue partnerships</td><td>Bar, restaurant, hotel, co-working</td><td>Rev-share or fee</td><td><span class="fill">fill</span></td><td>Venue drives footfall and F&amp;B; we supply the format and the host.</td></tr>
+      <tr><td class="k">Universities &amp; institutions</td><td>Student bodies, societies, orientation</td><td>Per event / season</td><td><span class="fill">fill</span></td><td>High volume, price-sensitive, strong word of mouth.</td></tr>
+      <tr><td class="k">Story licensing</td><td>Other operators</td><td>Per pack / per run</td><td><span class="fill">fill</span></td><td>Near-zero marginal cost once a pack is written.</td></tr>
+      <tr><td class="k">Franchise hosts</td><td>Independent hosts in new cities</td><td>Fee + royalty</td><td><span class="fill">fill</span></td><td>Training, run sheets, brand and QA oversight.</td></tr>
+      <tr><td class="k">Software licensing</td><td>Event companies, brands</td><td>Per event / subscription</td><td><span class="fill">fill</span></td><td>Hosting and support only. The most leveraged line.</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 33 — CH 17b UNIT ECONOMICS
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 17</div>
+  <div class="chrome mono c-tr">Unit Economics</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">33</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 17 · The shape of one event</div>
+    <h2 class="reveal r2">Where the money <span class="hot">actually goes</span></h2>
+  </div>
+
+  <div class="pad" style="top:340px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:56px;height:100%">
+      <div>
+        <div class="card bone reveal r3">
+          <div class="lbl">Single corporate event — worked example</div>
+          <table class="tbl" style="margin-top:8px">
+            <tr><td class="k" style="color:var(--ink);width:300px;padding:13px 12px 13px 0;border-bottom:1px solid var(--line-b)">Revenue — one event</td>
+              <td style="padding:13px 0;border-bottom:1px solid var(--line-b);text-align:right"><span class="fill">fill</span></td></tr>
+            <tr><td style="color:#4A453C;font-size:19px;padding:13px 12px 13px 0;border-bottom:1px solid var(--line-b)">Host fee</td>
+              <td style="padding:13px 0;border-bottom:1px solid var(--line-b);text-align:right"><span class="fill">fill</span></td></tr>
+            <tr><td style="color:#4A453C;font-size:19px;padding:13px 12px 13px 0;border-bottom:1px solid var(--line-b)">Printing — character &amp; clue cards</td>
+              <td style="padding:13px 0;border-bottom:1px solid var(--line-b);text-align:right"><span class="fill">fill</span></td></tr>
+            <tr><td style="color:#4A453C;font-size:19px;padding:13px 12px 13px 0;border-bottom:1px solid var(--line-b)">Venue (client-supplied on corporate)</td>
+              <td style="padding:13px 0;border-bottom:1px solid var(--line-b);text-align:right;font-family:var(--f-mono);font-size:15px;letter-spacing:.14em;color:#5A544A">₹0</td></tr>
+            <tr><td style="color:#4A453C;font-size:19px;padding:13px 12px 13px 0;border-bottom:1px solid var(--line-b)">Platform &amp; hosting per event</td>
+              <td style="padding:13px 0;border-bottom:1px solid var(--line-b);text-align:right;font-family:var(--f-mono);font-size:15px;letter-spacing:.14em;color:#5A544A">NEGLIGIBLE</td></tr>
+            <tr><td class="k" style="color:var(--ink);padding:15px 12px 4px 0">Contribution per event</td>
+              <td style="padding:15px 0 4px;text-align:right"><span class="fill">fill</span></td></tr>
+          </table>
+        </div>
+        <p class="reveal r5" style="margin-top:24px;font-family:var(--f-read);font-style:italic;font-weight:300;font-size:21px;line-height:1.5;color:var(--dim-2)">
+          Fill in your real figures before sending this deck externally. The structure is the point:
+          the only meaningful variable cost per event is a human and some paper.</p>
+      </div>
+
+      <div>
+        <div style="font-family:var(--f-mono);font-size:14px;letter-spacing:.22em;text-transform:uppercase;color:var(--red);margin-bottom:20px" class="reveal r4">The three cost properties that matter</div>
+        <div class="card t-amber reveal r5"><h3>Content cost is amortised, not repeated</h3>
+          <p>A story pack is written once and run indefinitely. Every subsequent event against the same pack carries
+            no content cost at all — the second run of a story is pure margin relative to the first.</p></div>
+        <div class="card t-amber reveal r6" style="margin-top:22px"><h3>No capital expenditure per location</h3>
+          <p>There is no set to build, no room to fit out, no hardware to ship. A new city costs a trained host and a
+            printer, which is why geographic expansion is not a funding-gated activity.</p></div>
+        <div class="card t-amber reveal r7" style="margin-top:22px"><h3>Platform cost is flat, not per-head</h3>
+          <p>Thirty-two devices on a realtime database for three hours is a rounding error. Doubling events does not
+            meaningfully double infrastructure spend.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 34 — CH 18 SCALABILITY
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 18</div>
+  <div class="chrome mono c-tr">Scalability</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">34</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 18 · Scalability</div>
+    <h2 class="reveal r2">Three axes, and the <span class="hot">honest constraints</span> on each</h2>
+  </div>
+
+  <div class="pad" style="top:340px">
+    <div class="g3" style="height:330px">
+      <div class="card t-amber reveal r3">
+        <div class="lbl">Axis 01 — More events</div>
+        <h3>Hosts</h3>
+        <p>Each trained host adds capacity independently. No shared physical resource means events can run in parallel
+          in different cities on the same night.</p>
+        <p style="margin-top:14px"><strong>Constraint:</strong> host supply and consistency.
+          <strong>Answer:</strong> a run-sheet-based training kit and a certification pass — low skill floor is the whole point.</p>
+      </div>
+      <div class="card t-amber reveal r4">
+        <div class="lbl">Axis 02 — More stories</div>
+        <h3>Packs</h3>
+        <p>Repeat customers need new cases, not new software. Each pack extends the life of every existing relationship
+          and every venue partnership.</p>
+        <p style="margin-top:14px"><strong>Constraint:</strong> writing throughput and playtesting.
+          <strong>Answer:</strong> the authoring pipeline in Chapter 10 turns story creation into a repeatable process.</p>
+      </div>
+      <div class="card t-amber reveal r5">
+        <div class="lbl">Axis 03 — More markets</div>
+        <h3>Licensees</h3>
+        <p>Other operators can run the format under licence — the marginal cost of an additional licensee is support,
+          not production.</p>
+        <p style="margin-top:14px"><strong>Constraint:</strong> quality control at a distance.
+          <strong>Answer:</strong> the app enforces the rules, so a licensee cannot run the game wrong even if they want to.</p>
+      </div>
+    </div>
+
+    <div class="reveal r7" style="margin-top:34px;border-top:1px solid var(--line);padding-top:30px">
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:44px;align-items:start">
+        <span class="tag ghost">What breaks first at 10×</span>
+        <div class="g4" style="gap:30px">
+          <div><div style="font-family:var(--f-mono);font-size:14px;letter-spacing:.2em;color:var(--amber);margin-bottom:8px">HOST SUPPLY</div>
+            <p style="font-family:var(--f-read);font-weight:300;font-size:19px;line-height:1.45;color:var(--dim-2)">Recruit and certify ahead of demand, not behind it.</p></div>
+          <div><div style="font-family:var(--f-mono);font-size:14px;letter-spacing:.2em;color:var(--amber);margin-bottom:8px">STORY FATIGUE</div>
+            <p style="font-family:var(--f-read);font-weight:300;font-size:19px;line-height:1.45;color:var(--dim-2)">Repeat bookings need pack #2 and #3 in the pipeline.</p></div>
+          <div><div style="font-family:var(--f-mono);font-size:14px;letter-spacing:.2em;color:var(--amber);margin-bottom:8px">SESSION ISOLATION</div>
+            <p style="font-family:var(--f-read);font-weight:300;font-size:19px;line-height:1.45;color:var(--dim-2)">Concurrent events need separate game rooms — a known engineering item.</p></div>
+          <div><div style="font-family:var(--f-mono);font-size:14px;letter-spacing:.2em;color:var(--amber);margin-bottom:8px">VENUE WIFI</div>
+            <p style="font-family:var(--f-read);font-weight:300;font-size:19px;line-height:1.45;color:var(--dim-2)">Offline tolerance already built; site checks stay part of the run sheet.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 35 — CH 19 ROADMAP
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 19</div>
+  <div class="chrome mono c-tr">Roadmap</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">35</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 19 · Roadmap</div>
+    <h2 class="reveal r2">Shipped, <span class="hot">next</span>, and later</h2>
+  </div>
+
+  <div class="pad" style="top:330px">
+    <div class="g3" style="height:100%;align-content:start">
+      <div class="card t-red reveal r3" style="height:520px">
+        <span class="tag">Shipped</span>
+        <h3 style="margin-top:18px">Live today</h3>
+        <ul class="list" style="margin-top:14px">
+          <li>32-character murder mystery, seven rounds, full clue graph</li>
+          <li>Installable web app with offline tolerance and haptics</li>
+          <li>Realtime sync of round, votes, tallies and file releases</li>
+          <li>Room-wide live chat</li>
+          <li>Concealed host console with a synchronised reveal</li>
+          <li>Voting with live counts and host-controlled visibility</li>
+        </ul>
+      </div>
+      <div class="card t-amber reveal r4" style="height:520px">
+        <span class="tag amber">Next</span>
+        <h3 style="margin-top:18px">Near-term build</h3>
+        <ul class="list" style="margin-top:14px">
+          <li><b>Story pack #2</b> — a second mystery for repeat bookings</li>
+          <li><b>Session isolation</b> — concurrent events in separate game rooms</li>
+          <li><b>Durable player state</b> — unlocked clues survive a refresh or a dead battery</li>
+          <li><b>Host access control</b> — protect the console properly for third-party hosts</li>
+          <li><b>Host training kit</b> — run sheets, timings, failure playbook</li>
+          <li><b>Print pipeline</b> — one-click character and clue card sheets</li>
+          <li><b>Post-event analytics</b> — participation and vote-shift reporting for corporate clients</li>
+        </ul>
+      </div>
+      <div class="card reveal r5" style="height:520px">
+        <span class="tag ghost">Later</span>
+        <h3 style="margin-top:18px">Platform phase</h3>
+        <ul class="list" style="margin-top:14px">
+          <li><b>Licensing platform</b> — self-serve access for operators and venues</li>
+          <li><b>Franchise programme</b> — certified hosts in new cities</li>
+          <li><b>New genres</b> — espionage, horror, fantasy, treasure hunt</li>
+          <li><b>Branded experiences</b> — client IP inside the format</li>
+          <li><b>Authoring tools</b> — build a story pack without an engineer</li>
+          <li><b>Education &amp; onboarding</b> — the same engine, a curriculum instead of a corpse</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 36 — CH 20 CONCLUSION
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="lamp r"></div>
+  <svg class="thread" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+    <path d="M96 940 C 520 880, 760 1010, 1180 800 S 1620 560, 1824 340" fill="none" stroke="#E03127" stroke-width="2.5" opacity=".45"/>
+  </svg>
+  <div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Chapter 20</div>
+  <div class="chrome mono c-tr">Conclusion</div>
+  <div class="chrome mono c-bl">Astral Project · Murder Mystery</div>
+  <div class="chrome mono c-br">36</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Chapter 20 · Conclusion</div>
+    <h2 class="reveal r2">We did not build a game.<br>We built the <span class="hot">machinery a game needs.</span></h2>
+  </div>
+
+  <div class="pad" style="top:420px">
+    <div style="display:grid;grid-template-columns:1fr 560px;gap:56px;height:100%">
+      <div>
+        <p class="reveal r3" style="font-family:var(--f-read);font-weight:300;font-size:29px;line-height:1.5;color:var(--dim)">
+          Murder Mystery proves the platform works: thirty-two strangers, one story, one host, and an ending everyone
+          remembers. <em style="font-style:italic;color:var(--bone)">Everything underneath it — identity delivery, information
+          gating, live synchronisation, host control, the reveal — is genre-agnostic.</em>
+        </p>
+        <div class="g3 reveal r5" style="margin-top:40px;gap:26px">
+          <div class="card t-red"><h3 style="font-size:28px">The product works</h3><p style="font-size:19px">Run end to end at full 32-player scale, with the real mechanics live.</p></div>
+          <div class="card t-red"><h3 style="font-size:28px">The format repeats</h3><p style="font-size:19px">One host, one room, no set, no actors. The same evening again next week.</p></div>
+          <div class="card t-red"><h3 style="font-size:28px">The engine extends</h3><p style="font-size:19px">New worlds are content. That is the difference between an event and a platform.</p></div>
+        </div>
+      </div>
+      <div>
+        <div class="pin drop reveal r6">
+          <div class="ph">The thesis in one line</div>
+          <div class="q">Every gathering wants to be memorable. Almost none of them are built to be. We build the one that is.</div>
+          <div class="a">Astral Project</div>
+        </div>
+        <div class="statrow reveal r8" style="margin-top:44px">
+          <div class="stat"><div class="n">1</div><div class="l">Engine</div></div>
+          <div class="stat"><div class="n">1</div><div class="l">Story shipped</div></div>
+          <div class="stat"><div class="n">6</div><div class="l">Genres mapped</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SLIDE 37 — CLOSING / CONTACT
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div>
+  <svg class="thread" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+    <path d="M0 700 C 460 640, 760 820, 1180 600 S 1620 380, 1920 240" fill="none" stroke="#E03127" stroke-width="2" opacity=".45"/>
+  </svg>
+  <div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Astral&nbsp;Project</div>
+  <div class="chrome mono c-tr">● Case Closed</div>
+  <div class="chrome mono c-bl">Master Handbook · v1.0</div>
+  <div class="chrome mono c-br">37</div>
+
+  <div style="position:absolute;left:96px;top:300px;width:1180px">
+    <span class="tag reveal r1">Thank you</span>
+    <h2 class="reveal r2" style="font-size:170px;line-height:.84;margin-top:34px">Trust<br><span class="hot">no one.</span></h2>
+    <p class="reveal r3" style="margin-top:42px;font-family:var(--f-read);font-style:italic;font-weight:300;font-size:32px;color:var(--dim);max-width:900px">
+      Except, briefly, the thirty-one people you just spent three hours interrogating.</p>
+  </div>
+
+  <div class="reveal r5" style="position:absolute;left:96px;bottom:180px;display:flex;gap:64px;border-top:1px solid var(--line);padding-top:30px">
+    <div><div style="font-family:var(--f-mono);font-size:14px;letter-spacing:.22em;color:var(--dim-2);margin-bottom:10px">CONTACT</div>
+      <div style="font-family:var(--f-disp);font-weight:700;font-size:34px;color:var(--bone)">kushagra@triplespeed.ai</div></div>
+    <div><div style="font-family:var(--f-mono);font-size:14px;letter-spacing:.22em;color:var(--dim-2);margin-bottom:10px">BASED IN</div>
+      <div style="font-family:var(--f-disp);font-weight:700;font-size:34px;color:var(--bone)">Bangalore, India</div></div>
+    <div><div style="font-family:var(--f-mono);font-size:14px;letter-spacing:.22em;color:var(--dim-2);margin-bottom:10px">EXPERIENCE</div>
+      <div style="font-family:var(--f-disp);font-weight:700;font-size:34px;color:var(--bone)">Murder Mystery · v1.0</div></div>
+  </div>
+
+  <div class="pin drop reveal r6" style="position:absolute;right:130px;top:330px;width:440px">
+    <div class="ph">Next steps</div>
+    <div class="q">Book a live run, licence the format, or commission a story pack built around your brand.</div>
+    <div class="a">Astral Project · Murder Mystery</div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<!-- ===========================================================
+     DECK CHROME — lives outside the 1920x1080 stage
+     =========================================================== -->
+<div class="hint" id="hint">← → NAVIGATE · E TO EDIT</div>
+<div class="edit-hotzone"></div>
+<button class="edit-toggle" id="editToggle" title="Edit mode (E)" aria-label="Toggle edit mode">✏️</button>
+<div class="edit-bar" id="editBar">
+  <button id="btnSave">Save to browser</button>
+  <button id="btnDownload">Download HTML</button>
+  <button id="btnReset">Reset</button>
+</div>
+
+<script>
+/* ===========================================================
+   SLIDE PRESENTATION CONTROLLER
+   - Scales the fixed 1920x1080 stage to the viewport
+   - Keyboard / touch / wheel navigation
+   - Progress bar + slide counter
+   =========================================================== */
+class SlidePresentation {
+  constructor(){
+    // Only live slides. Anything parked as .slide-archived is excluded from
+    // navigation, the progress bar, page numbering and PDF export.
+    this.slides  = Array.from(document.querySelectorAll('.slide'));
+    // Page numbers are generated, never hand-written — add or archive a slide
+    // and the numbering stays correct with no manual edits.
+    this.slides.forEach((s, n) => {
+      const el = s.querySelector('.c-br');
+      if (el) el.textContent = String(n + 1).padStart(2, '0');
+    });
+    this.stage   = document.getElementById('deckStage');
+    this.prog    = document.getElementById('prog');
+    this.current = 0;
+    this.setupStageScale();
+    this.setupKeyboardNav();
+    this.setupTouchNav();
+    this.setupWheelNav();
+    this.showSlide(0);
+    setTimeout(()=>document.getElementById('hint').classList.add('gone'), 6000);
+  }
+
+  /* One transform scales the whole stage. Content never reflows. */
+  setupStageScale(){
+    const scale = () => {
+      const f = Math.min(window.innerWidth/1920, window.innerHeight/1080);
+      const x = (window.innerWidth  - 1920*f)/2;
+      const y = (window.innerHeight - 1080*f)/2;
+      this.stage.style.transform = `translate(${x}px, ${y}px) scale(${f})`;
+    };
+    scale();
+    window.addEventListener('resize', scale);
+  }
+
+  setupKeyboardNav(){
+    document.addEventListener('keydown', e => {
+      if (e.target.getAttribute && e.target.getAttribute('contenteditable') === 'true') return;
+      switch(e.key){
+        case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown':
+          e.preventDefault(); this.next(); break;
+        case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+          e.preventDefault(); this.prev(); break;
+        case 'Home': e.preventDefault(); this.showSlide(0); break;
+        case 'End':  e.preventDefault(); this.showSlide(this.slides.length-1); break;
+      }
+    });
+  }
+
+  setupTouchNav(){
+    let x0=null, y0=null;
+    document.addEventListener('touchstart', e => {
+      x0 = e.changedTouches[0].clientX; y0 = e.changedTouches[0].clientY;
+    }, {passive:true});
+    document.addEventListener('touchend', e => {
+      if (x0===null) return;
+      const dx = e.changedTouches[0].clientX - x0;
+      const dy = e.changedTouches[0].clientY - y0;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) dx < 0 ? this.next() : this.prev();
+      x0 = y0 = null;
+    }, {passive:true});
+  }
+
+  setupWheelNav(){
+    let lock = false;
+    document.addEventListener('wheel', e => {
+      if (lock) return;
+      if (Math.abs(e.deltaY) < 24) return;
+      lock = true;
+      e.deltaY > 0 ? this.next() : this.prev();
+      setTimeout(()=>lock=false, 720);
+    }, {passive:true});
+  }
+
+  next(){ this.showSlide(this.current+1); }
+  prev(){ this.showSlide(this.current-1); }
+
+  showSlide(i){
+    this.current = Math.max(0, Math.min(i, this.slides.length-1));
+    this.slides.forEach((s,n) => {
+      s.classList.toggle('active',  n === this.current);
+      s.classList.toggle('visible', n === this.current);
+    });
+    this.prog.style.width = ((this.current+1)/this.slides.length*100) + '%';
+  }
+}
+// NOTE: the editor is constructed first — it may restore saved edits into the
+// stage, and the deck must bind to the resulting nodes, not the replaced ones.
+
+/* ===========================================================
+   INLINE TEXT EDITOR
+   Hover the top-left corner (or press E) to reveal the toggle.
+   Edits persist to localStorage; "Download HTML" exports a copy.
+   =========================================================== */
+class InlineEditor {
+  constructor(){
+    this.isActive = false;
+    this.KEY = 'astral-deck-edits-v2';   // bumped: v1 saves predate the current slide set
+    this.targets = 'h1,h2,h3,p,li,span,div.q,div.a,div.ph,div.lbl,td,th,.tt,.td,.jt,.jd,.yr,.l,.n,.cap,.note';
+    this.restore();
+  }
+  toggleEditMode(){
+    this.isActive = !this.isActive;
+    document.getElementById('editToggle').classList.toggle('active', this.isActive);
+    document.getElementById('editBar').classList.toggle('on', this.isActive);
+    document.querySelectorAll('.slide').forEach(sl => {
+      sl.querySelectorAll(this.targets).forEach(el => {
+        if (el.children.length === 0 || el.classList.contains('q'))
+          el.setAttribute('contenteditable', this.isActive ? 'true' : 'false');
+      });
+    });
+  }
+  save(){
+    const stage = document.getElementById('deckStage');
+    try { localStorage.setItem(this.KEY, stage.innerHTML); flash('Saved to this browser'); }
+    catch(e){ flash('Could not save — storage full'); }
+  }
+  restore(){
+    try {
+      const html = localStorage.getItem(this.KEY);
+      if (html) document.getElementById('deckStage').innerHTML = html;
+    } catch(e){}
+  }
+  reset(){
+    try { localStorage.removeItem(this.KEY); } catch(e){}
+    location.reload();
+  }
+  download(){
+    document.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    const blob = new Blob(['<!DOCTYPE html>\n' + document.documentElement.outerHTML], {type:'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'astral-project-pitch-deck.html';
+    a.click();
+    if (this.isActive) this.toggleEditMode();
+  }
+}
+const editor = new InlineEditor();
+const deck   = new SlidePresentation();
+
+function flash(msg){
+  const h = document.getElementById('hint');
+  h.textContent = msg; h.classList.remove('gone');
+  setTimeout(()=>h.classList.add('gone'), 2200);
+}
+
+/* --- edit affordance: JS hover with a 400ms grace period.
+       (A CSS `~` sibling selector fails here because
+       pointer-events:none breaks the hover chain.) --- */
+const hotzone   = document.querySelector('.edit-hotzone');
+const editToggle= document.getElementById('editToggle');
+let hideTimeout = null;
+hotzone.addEventListener('mouseenter', () => { clearTimeout(hideTimeout); editToggle.classList.add('show'); });
+hotzone.addEventListener('mouseleave', () => {
+  hideTimeout = setTimeout(()=>{ if(!editor.isActive) editToggle.classList.remove('show'); }, 400);
+});
+editToggle.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
+editToggle.addEventListener('mouseleave', () => {
+  hideTimeout = setTimeout(()=>{ if(!editor.isActive) editToggle.classList.remove('show'); }, 400);
+});
+editToggle.addEventListener('click', () => editor.toggleEditMode());
+hotzone.addEventListener('click',   () => { editToggle.classList.add('show'); editor.toggleEditMode(); });
+document.addEventListener('keydown', e => {
+  if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable')) {
+    editToggle.classList.add('show'); editor.toggleEditMode();
+  }
+  if (e.key === 's' && (e.ctrlKey || e.metaKey) && editor.isActive) { e.preventDefault(); editor.save(); }
+});
+document.getElementById('btnSave').addEventListener('click',     () => editor.save());
+document.getElementById('btnDownload').addEventListener('click', () => editor.download());
+document.getElementById('btnReset').addEventListener('click',    () => editor.reset());
+</script>
+</body>
+</html>

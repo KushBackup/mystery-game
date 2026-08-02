@@ -1,5 +1,10 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, getDocs, deleteDoc, writeBatch } from 'firebase/firestore';
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, getDocs, deleteDoc, writeBatch
+} from 'firebase/firestore';
 
 // Firebase project configuration
 const firebaseConfig = {
@@ -15,8 +20,20 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-// Initialize Firestore
-export const db = getFirestore(app);
+// Initialize Firestore with IndexedDB offline persistence.
+//
+// 32 phones on shaky party wifi: the persistent cache lets the app keep
+// rendering the last-known round, files and clues through a dropped connection
+// instead of blanking out, and replays queued writes when the link returns.
+// persistentMultipleTabManager is required because players routinely have the
+// PWA and a browser tab open at once — the single-tab manager throws
+// "Failed to obtain exclusive access to the persistence layer" in that case.
+//
+// Must be initializeFirestore(), not getFirestore(): settings can only be
+// supplied before any other Firestore call touches the instance.
+export const db = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+});
 
 // Game state document reference
 const GAME_STATE_DOC = 'gameState/current';
@@ -35,18 +52,20 @@ export const initializeGameState = async () => {
         revealedToMurderer: false,
         revealedClues: [], // Host-revealed clues
         gameEnded: false, // Track if game has ended
+        forceRefreshAt: 0, // Timestamp of the host's last force-sync broadcast
         lastUpdated: Date.now()
       });
     } else {
       // Ensure new fields exist in existing game state
       const data = docSnap.data();
-      if (!data.unlockedFiles || !('voteResultsVisible' in data) || !('revealedToMurderer' in data) || !data.revealedClues || !('gameEnded' in data)) {
+      if (!data.unlockedFiles || !('voteResultsVisible' in data) || !('revealedToMurderer' in data) || !data.revealedClues || !('gameEnded' in data) || !('forceRefreshAt' in data)) {
         await updateDoc(gameStateRef, {
           unlockedFiles: data.unlockedFiles || ['f_incident'],
           voteResultsVisible: data.voteResultsVisible ?? false,
           revealedToMurderer: data.revealedToMurderer ?? false,
           revealedClues: data.revealedClues || [],
           gameEnded: data.gameEnded ?? false,
+          forceRefreshAt: data.forceRefreshAt ?? 0,
           lastUpdated: Date.now()
         });
       }
@@ -121,6 +140,30 @@ export const endGame = async () => {
     });
   } catch (error) {
     console.error('Error ending game:', error);
+  }
+};
+
+// Force every connected device to reload.
+//
+// The escape hatch for the live event: if a phone is wedged on a stale round,
+// or a service-worker update needs picking up mid-game, the host broadcasts a
+// new timestamp and every client reloads itself (see App.jsx). Writing a fresh
+// Date.now() — rather than a boolean — is what makes it re-triggerable; each
+// press is a strictly larger value, so clients can tell a new broadcast from
+// the one they already acted on.
+//
+// Logins survive because App.jsx mirrors the session to localStorage. Do not
+// remove that without also removing this button — a reload without session
+// persistence dumps all 32 players back at the login screen mid-game.
+export const triggerForceRefresh = async () => {
+  const gameStateRef = doc(db, GAME_STATE_DOC);
+  try {
+    await updateDoc(gameStateRef, {
+      forceRefreshAt: Date.now(),
+      lastUpdated: Date.now()
+    });
+  } catch (error) {
+    console.error('Error triggering force refresh:', error);
   }
 };
 
@@ -278,6 +321,9 @@ export const resetGameState = async () => {
       revealedToMurderer: false,
       revealedClues: [],
       gameEnded: false,
+      // A reset bumps this too: every device reloads onto the clean state
+      // rather than sitting on stale round/clue data from the previous game.
+      forceRefreshAt: Date.now(),
       lastUpdated: Date.now()
     });
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Calculator } from './components/icons/IconComponents';
 import { FeedbackToast } from './components/ui/FeedbackToast';
 import { Header } from './components/layout/Header';
@@ -22,11 +22,31 @@ import { MurdererRevealOverlay } from './components/MurdererRevealOverlay';
 import { ROUNDS, CHARACTERS, CLUE_DB, getAssignedAccusation, CONFESSION_CLUE, isMurderer } from './data/gameData';
 import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue } from './firebase/config';
 
+// Session is persisted so a reload — whether the host's force-sync broadcast, a
+// service-worker update, or a player accidentally swiping the tab away — drops
+// them back where they were instead of at the login screen. Mid-event, making
+// 32 people re-enter their printed codes is not a recoverable situation.
+const SESSION_KEY = 'astral.session';
+
+const readSession = () => {
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    if (!raw) return { currentUser: null, isHost: false };
+    const parsed = JSON.parse(raw);
+    return { currentUser: parsed.currentUser ?? null, isHost: parsed.isHost ?? false };
+  } catch {
+    // Private-mode Safari throws on localStorage access; degrade to a fresh login.
+    return { currentUser: null, isHost: false };
+  }
+};
+
 export default function App() {
   // Global State
   const [splashComplete, setSplashComplete] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [activeTab, setActiveTab] = useState(null); // null = show grid menu
+  const [currentUser, setCurrentUser] = useState(() => readSession().currentUser);
+  // null = show grid menu. A restored host session lands straight on the host
+  // interface, mirroring what handleLogin does at login time.
+  const [activeTab, setActiveTab] = useState(() => (readSession().isHost ? 'host' : null));
   
   // Game State (Synced with Firebase)
   const [currentRound, setCurrentRound] = useState(0);
@@ -47,7 +67,13 @@ export default function App() {
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [hostPanelOpen, setHostPanelOpen] = useState(false);
   const [showVoteResults, setShowVoteResults] = useState(false);
-  const [isHost, setIsHost] = useState(false);
+  const [isHost, setIsHost] = useState(() => readSession().isHost);
+
+  // Last force-refresh timestamp this device has already acted on. A ref, not
+  // state: it must survive re-renders without causing one, and comparing
+  // against it is what stops the very first snapshot from triggering a reload
+  // loop on every page load.
+  const lastForceRefreshRef = useRef(null);
 
   const myCharacter = useMemo(() => 
     CHARACTERS.find(c => c.id === currentUser), 
@@ -85,10 +111,35 @@ export default function App() {
       setRevealedToMurderer(gameState.revealedToMurderer || false);
       setRevealedClues(gameState.revealedClues || []);
       setGameEnded(gameState.gameEnded || false);
+
+      // Host force-sync. The first snapshot only records the current value —
+      // reloading on it would put every device in a boot loop. Only a value
+      // strictly newer than the one we booted with is a genuine broadcast.
+      const forceRefreshAt = gameState.forceRefreshAt || 0;
+      if (lastForceRefreshRef.current === null) {
+        lastForceRefreshRef.current = forceRefreshAt;
+      } else if (forceRefreshAt > lastForceRefreshRef.current) {
+        lastForceRefreshRef.current = forceRefreshAt;
+        // Brief delay so the pending localStorage write lands before teardown.
+        setTimeout(() => window.location.reload(), 150);
+      }
     });
 
     return () => unsubscribe();
   }, []);
+
+  // Mirror the session to localStorage so a reload restores it.
+  useEffect(() => {
+    try {
+      if (currentUser) {
+        window.localStorage.setItem(SESSION_KEY, JSON.stringify({ currentUser, isHost }));
+      } else {
+        window.localStorage.removeItem(SESSION_KEY);
+      }
+    } catch {
+      // Storage unavailable — the app still works, it just won't survive reloads.
+    }
+  }, [currentUser, isHost]);
 
   // Subscribe to real-time vote changes
   useEffect(() => {
@@ -181,21 +232,29 @@ export default function App() {
     return <SplashScreen onComplete={() => setSplashComplete(true)} />;
   }
 
+  // Login gate comes FIRST. The terminal screens below never return, so if they
+  // are checked ahead of this the host can't reach CharacterSelect to enter the
+  // host code once the game is in its end state — the device is stuck.
+  if (!currentUser) {
+    return <CharacterSelect onSelectCharacter={handleLogin} />;
+  }
+
+  // Host identity is derived, not just stored: `isHost` is set at login, but
+  // `currentUser === 'host'` is the durable signal, so a stale or lost flag can
+  // never drop the admin into a player-facing terminal screen.
+  const isHostUser = isHost || currentUser === 'host';
+
   // Public murderer reveal — terminal screen for all non-host players except
   // the murderer themselves (Alam falls through to the OutroSplash branch).
   // Must come before the gameEnded check so it wins over OutroSplash for everyone else.
-  if (revealedToMurderer && currentUser && !isHost && !isMurderer(currentUser)) {
+  if (revealedToMurderer && !isHostUser && !isMurderer(currentUser)) {
     const murdererCharacter = CHARACTERS.find(c => c.role === 'MURDERER');
     return <MurdererRevealOverlay murderer={murdererCharacter} />;
   }
 
   // Show outro splash when game ends (but not for host)
-  if (gameEnded && currentUser && !isHost) {
+  if (gameEnded && !isHostUser) {
     return <OutroSplash playerName={myCharacter?.name || 'Player'} />;
-  }
-
-  if (!currentUser) {
-    return <CharacterSelect onSelectCharacter={handleLogin} />;
   }
 
   // Show Grid Menu when no tab is active
@@ -203,6 +262,7 @@ export default function App() {
     const handleNavigate = (tabId) => {
       if (tabId === 'logout') {
         setCurrentUser(null);
+        setIsHost(false); // otherwise the persisted host flag outlives the logout
       } else {
         setActiveTab(tabId);
       }

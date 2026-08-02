@@ -30,6 +30,7 @@ Always start at this file. Read the others on demand based on what you're workin
 | **[PROJECT_CONTEXT.md](PROJECT_CONTEXT.md)** | Full project & game design overview | Working on game flow, mechanics, scope |
 | **[STORY.md](STORY.md)** | Narrative bible, character backstories, full timeline | Editing characters, clues, story content |
 | **[TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md)** | Architecture, components, state management | Refactoring, adding components, debugging state |
+| **[DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md)** | "Evidence Room" design system — palette, type scale, components, motion, per-screen application | Any visual/theming work on the app or the deck |
 | **[CLUE_CODES.md](CLUE_CODES.md)** | All clue codes (accusation/motive/revelation) | Adding/changing clue codes |
 | **[FIREBASE_SETUP.md](FIREBASE_SETUP.md)** | Firebase configuration & setup steps | First-time setup, env config issues |
 | **[FIREBASE_VISUAL_GUIDE.md](FIREBASE_VISUAL_GUIDE.md)** | Diagrams of Firestore data structure | Debugging real-time sync, schema questions |
@@ -37,6 +38,8 @@ Always start at this file. Read the others on demand based on what you're workin
 | **[CHAT_IMPLEMENTATION_COMPLETE.md](CHAT_IMPLEMENTATION_COMPLETE.md)** | Chat system deep dive | Modifying chat behavior |
 | **[PWA_IMPLEMENTATION_COMPLETE.md](PWA_IMPLEMENTATION_COMPLETE.md)** | PWA / offline / service worker details | Touching PWA, vibration, offline behavior |
 | **[MYSTERY_IMPROVEMENTS_SUMMARY.md](MYSTERY_IMPROVEMENTS_SUMMARY.md)** | Snapshot of recent enhancements | Historical reference only |
+| **[video/README.md](video/README.md)** | The Remotion explainer film — tokens, motion language, timeline, how to re-render | Touching the explainer video |
+| **[video/script.md](video/script.md)** | Voiceover script for the explainer (optional track) | Recording or editing the VO |
 | **[README.md](README.md)** | Vite/React boilerplate | Low-value, skip |
 
 ---
@@ -59,6 +62,11 @@ The files you will most often need to open:
 - [vite.config.js](vite.config.js) — build config + PWA plugin
 - [tailwind.config.js](tailwind.config.js) — custom mystery theme palette
 
+### Sibling sub-projects (not part of the PWA build)
+
+- [pitch-deck/index.html](pitch-deck/index.html) — self-contained 1920×1080 HTML pitch deck (its own CSS/JS, no build step). The `:root` block is the canonical "Evidence Room" design system.
+- [video/](video/) — **separate npm project.** A Remotion explainer film built from the deck. Has its own `package.json`, `node_modules` and React version; run `npm install` inside `video/`, never from the repo root. See [video/README.md](video/README.md).
+
 ---
 
 ## Tech stack
@@ -74,6 +82,16 @@ The files you will most often need to open:
 | Linting | ESLint | ^9.39.1 |
 | Deploy | gh-pages | ^6.3.0 |
 | Tests | **None** — no test framework configured |
+
+### `video/` sub-project (independent dependency tree)
+
+| Area | Tool | Version |
+|---|---|---|
+| Video framework | Remotion (`remotion`, `@remotion/cli`) | 4.0.503 |
+| Also installed | `@remotion/google-fonts`, `@remotion/transitions`, `@remotion/shapes` | 4.0.503 |
+| UI framework | React | 19.2.3 |
+| Language | TypeScript | 5.9.3 |
+| Styling | **Inline styles only** — no Tailwind, no CSS files, no animation library |
 
 ---
 
@@ -92,6 +110,20 @@ npm run lint             # before committing
 npm run build            # verify production build is healthy
 npm run preview          # serve the production build locally
 ```
+
+### The explainer video (run these from `video/`, not the repo root)
+
+```powershell
+cd video
+npm install                                  # first-time setup — separate dependency tree
+npm run lint                                 # eslint + tsc; catches style-spread bugs tsc can see
+npx remotion studio                          # live preview at localhost:3000
+npx remotion still S08Rounds out/check.png --frame=290 --scale=0.5   # fast layout check
+npx remotion render Explainer out/astral-explainer.mp4 --codec=h264 --crf=18
+npx remotion render Explainer-Vertical out/astral-explainer-vertical.mp4 --codec=h264 --crf=18
+```
+
+A full render is ~4 minutes per cut for 3900 frames. Prefer `remotion still` while iterating on layout.
 
 ## Deploy workflow
 
@@ -129,7 +161,7 @@ npm run deploy           # builds + pushes /dist to gh-pages branch (GitHub Page
 |---|---|---|
 | Add/change a clue code | [src/data/gameData.js](src/data/gameData.js) | Update [CLUE_CODES.md](CLUE_CODES.md) |
 | Add/edit a character | [src/data/gameData.js](src/data/gameData.js) — characters array | Stay within 32 slots; update [STORY.md](STORY.md) if backstory changes |
-| Theme/visual tweak | [tailwind.config.js](tailwind.config.js), [src/App.css](src/App.css) | — |
+| Theme/visual tweak | [tailwind.config.js](tailwind.config.js), [src/App.css](src/App.css), `@theme` in [src/index.css](src/index.css) | Follow [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md); Tailwind v4 only sees `tailwind.config.js` via the `@config` line in index.css |
 | New modal | [src/components/modals/](src/components/modals/) + wire from [src/App.jsx](src/App.jsx) | — |
 | New view/tab | [src/components/views/](src/components/views/) + wire in [src/App.jsx](src/App.jsx) and [src/components/GridMenu.jsx](src/components/GridMenu.jsx) | — |
 | Firestore schema change | [src/firebase/config.js](src/firebase/config.js) | Update [FIREBASE_VISUAL_GUIDE.md](FIREBASE_VISUAL_GUIDE.md); coordinate with user before deploying — breaks live games |
