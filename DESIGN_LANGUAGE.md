@@ -298,6 +298,29 @@ Two rules make it work:
 
 The display face is deliberately absent here — it belongs to numerals and screen titles, and this screen has neither. The slide counter is the exception, because a counter is a number, so it is brass.
 
+### 6.11 Stack hub
+
+A screen whose content is several long document stacks, which opens on a **grid of the stacks** and drills into one. Used once so far, on Evidence ([IntelView.jsx](src/components/views/IntelView.jsx)): accusations, motives, evidence, revelations, and the host-released case files.
+
+It is the grid hub (§9) recursed one level, and it borrows that screen's vocabulary deliberately — pinned paper, slight rotation, a label and a mono sub-label — because each tile *is* a stack of printed cards. Bone is the honest surface for it.
+
+| Part | Treatment |
+|---|---|
+| Open tile | `er-bone` / `er-bone--aged`, `er-pin`, `er-rotL` / `er-rotR`, `py-4` |
+| Count | Display face, 30px, tabular, in **`ink`** — *not* brass. Brass on bone is not a sanctioned pair (§2.3); `ink` on `bone` is the system's highest contrast at 15.78:1 |
+| Label | Typewriter, bold, uppercase, 17px (19px ≥640px) |
+| Sub | 11px mono in `signal-deep` — and it is the same string as the stack's screen kicker (below) |
+| Sealed tile | Not paper at all: `ink-raised` + `line` border, carrying a `er-tag--ghost` reading `Opens R0X`, and `disabled` |
+| Wide tile | The one stack that is a different *kind* of thing spans the row, as EXIT does on the main board |
+
+Five rules, each of which was a defect first:
+
+- **Reach for this only when the stacks are genuinely long.** Measurement is what forced it: with everything released the clue stacks are 31 cards / ~23,000px and the archive is 6 documents / ~4,800px, so any flat arrangement buried something 6–28 screens down. Two *short* regions should just be separated by a hairline (§10).
+- **A sealed tile is inert.** A tap that only tells you it was sealed is a dead end. The ghost tag already says when it opens.
+- **Which stack is open belongs to the router, not the view.** On a stack the screen's *title* is the stack's name, and [App.jsx](src/App.jsx) owns the frame for every screen (§4.2). Holding it locally means either three stacked headings — Evidence / Evidence / Motives — or duplicating the whole frame into the view.
+- **A stack's kicker must not repeat the screen's name.** The stacks are framed as screens, so the evidence stack would otherwise read `Evidence Board / Evidence`. Give each stack a descriptor for its kicker (`Hard findings`, `Who saw what`, `Official record`) and let the back control name the parent. Storing that kicker in [screenGuide.js](src/data/screenGuide.js) and reusing it as the tile's sub-label is what stops a tile and the screen it opens describing the same stack differently.
+- **An action that produces content in a stack must open that stack.** A decoded code opens its own stack so the §7.2 unseal moment plays where the player is looking — set in the decode handler, which is an event, not an effect.
+
 ### 6.10 Screen note
 
 A `bone-aged` note pinned under a screen's title, saying in one line what that screen is for. It behaves like a tooltip — anchored to the title by a caret, and **temporary**: it clears itself from Round 02 (`BRIEF_HIDDEN_FROM_ROUND` in [src/data/screenGuide.js](src/data/screenGuide.js)), because by then the room knows the app and a permanent explainer is just furniture.
@@ -439,13 +462,13 @@ Migrate one view at a time; both palettes can coexist while you do.
 | Login | [CharacterSelect.jsx](src/components/CharacterSelect.jsx) | Already close. Retag `CONFIDENTIAL` as a filled `signal` tag; code input becomes a fill-in blank |
 | Briefing | [StoryIntro.jsx](src/components/StoryIntro.jsx) | *Added 2026-08-05.* Ink only, no paper, no lamp. In-fiction voices, typed (§6.10b). Slide rail = the round rail; slide counter is the only brass |
 | Story | [StoryView.jsx](src/components/views/StoryView.jsx) | *Added 2026-08-05.* The same beats as one long bone document — sections split by `line-bone` hairlines, `On record` stamp, no rotation (a 900px page rotated 1.2° reads as broken, not as pinned) |
-| Grid hub | [GridMenu.jsx](src/components/GridMenu.jsx) | Already the strongest screen. Keep pins and rotation; swap tile colours to `bone`/`bone-aged`, VOTE to `signal`, EXIT to `ink-hover` — and EXIT spans the row, so nine tiles don't leave it alone in a half-empty one |
+| Grid hub | [GridMenu.jsx](src/components/GridMenu.jsx) | Already the strongest screen. Keep pins and rotation; swap tile colours to `bone`/`bone-aged`, VOTE to `signal`, EXIT to `ink-hover`. *Updated 2026-08-05:* six destinations in a 3×2 board, then GUIDE and EXIT as full-width strips — both are utilities rather than places in the fiction, and an odd tile count would otherwise leave a hole in the board |
 | Identity | [DashboardView.jsx](src/components/views/DashboardView.jsx) | Full bone card. Secret becomes a **redaction bar** the player taps to reveal |
-| Evidence | [IntelView.jsx](src/components/views/IntelView.jsx) | Clue cards as pinned bone cards; locked clues as redaction bars; category via 3px top border |
+| Evidence | [IntelView.jsx](src/components/views/IntelView.jsx) | Clue cards as pinned bone cards; locked clues as redaction bars; category via 3px top border. *Updated 2026-08-05:* a §6.11 stack hub over five stacks — accusations, motives, evidence, revelations, case files — with your own accusation and the confession pinned on the hub itself |
 | Decoder | [DecoderModal.jsx](src/components/modals/DecoderModal.jsx) | Fill-in blank input; three outcomes in `signal` / `brass` / `dim-2` |
 | Comms | [ChatView.jsx](src/components/views/ChatView.jsx) | **Currently off-palette (orange).** Own messages `signal`, others `ink-raised`, names in mono `signal-lift` |
 | Vote | [VotingView.jsx](src/components/views/VotingView.jsx) | **Currently off-palette (green).** Counts in `brass` display; selected suspect gets a `signal` border |
-| Archives | [FilesView.jsx](src/components/views/FilesView.jsx) | Locked files as ghost tags with round numbers; opened files as bone documents |
+| Case files | [CaseFilesSection.jsx](src/components/views/CaseFilesSection.jsx) | Locked files as ghost tags with round numbers; opened files as bone documents. *Was the standalone "Archives" screen until 2026-08-05; now one of the five Evidence stacks* |
 | Timeline | [TimelineView.jsx](src/components/views/TimelineView.jsx) | Red thread as the spine; times in mono `brass` |
 | Host | [HostPanel.jsx](src/components/HostPanel.jsx) | **Currently off-palette (purple/indigo gradient) — the worst offender.** Rebuild on ink with hairlines; REVEAL MURDERER is the one full `signal` fill in the app |
 

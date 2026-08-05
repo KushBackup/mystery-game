@@ -1,7 +1,8 @@
-import React from 'react';
-import { CLUE_DB } from '../../data/gameData';
+import React, { useState, useEffect } from 'react';
+import { CLUE_DB, CASE_FILES, CLUE_STACKS, CLUE_STACK_BY_KEY } from '../../data/gameData';
+import { EVIDENCE_STACKS } from '../../data/screenGuide';
 import { Numeral } from '../ui/Numeral';
-import { RedactedLines } from '../ui/RedactedLines';
+import { CaseFilesSection } from './CaseFilesSection';
 
 /**
  * The evidence board (DESIGN_LANGUAGE.md §9, "Evidence").
@@ -11,8 +12,21 @@ import { RedactedLines } from '../ui/RedactedLines';
  * the system allows (§5). The clue *type* rides the 3px top border (§6.2) and
  * is spelled out in a mono tag; it never becomes a new hue.
  *
- * Nothing collected yet renders as sealed redaction bars rather than an empty
- * state, because "there is evidence you haven't found" is the truer message.
+ * The screen is a **hub, not a list** (§6.11). It holds five stacks — accusations,
+ * motives, evidence, revelations, and the host-released case files — and a flat
+ * scroll cannot carry them: measured at 390px with everything released, the clues
+ * alone are 31 cards and ~23,000px. So it opens on a grid of the five stacks and
+ * you drill into one, the same tile → screen → close shape the main board uses.
+ *
+ * Which stack is open is **App.jsx state, not local state**, for one reason: on a
+ * stack the screen's *title* is the stack's name, and App owns the screen frame
+ * for every view in the app (§4.2). Keeping it here would have meant either three
+ * stacked headings — Evidence, Evidence, Motives — or duplicating the whole frame
+ * into this file.
+ *
+ * The two cards that are *yours* rather than found — the confession and your own
+ * accusation — stay pinned on the hub instead of living in a stack. They are what
+ * you perform out loud, so they are never behind a tap.
  */
 
 // One hue, two depths: signal on the plot beats, signal-deep on the claims,
@@ -24,6 +38,48 @@ const TYPE_RULE = {
   MOTIVE: 'var(--color-signal-deep)',
 };
 const ruleFor = (type) => TYPE_RULE[type] || 'var(--color-ink)';
+
+/**
+ * Presentation for each stack, keyed to `CLUE_STACKS` in data/gameData.js (which
+ * owns what a stack *contains*) and `EVIDENCE_STACKS` in data/screenGuide.js (which
+ * owns what it is *called*). This map holds only what is neither: surface, tilt, and
+ * the empty state.
+ *
+ * `sealedLines` is that empty state: two ragged marks, never more and never wide.
+ * Three at 80%+ read as a field of red rather than a redacted page, which §2.2
+ * forbids — and a stack with nothing in it has nothing else on screen to balance it.
+ */
+const STACK_STYLE = {
+  accusations: {
+    tone: 'bone',
+    rot: 'er-rotL',
+    sealedLines: [['Witness statement withheld', '66%'], ['Name redacted', '42%']],
+  },
+  motives: {
+    tone: 'aged',
+    rot: 'er-rotR',
+    sealedLines: [['Motive undisclosed', '58%'], ['Financial record sealed', '71%']],
+  },
+  evidence: {
+    tone: 'aged',
+    rot: 'er-rotL',
+    sealedLines: [['Toxicology pending', '62%'], ['Footage withheld', '46%']],
+  },
+  revelations: {
+    tone: 'bone',
+    rot: 'er-rotR',
+    sealedLines: [['Medical record sealed', '68%'], ['Policy undisclosed', '50%']],
+  },
+};
+
+// Module scope, so it survives the hub unmounting — which it does every time the
+// player drills into a stack and backs out again, the most frequent navigation on
+// this screen by a wide margin. The staggered landing plays once per session; every
+// return after that is a single quick lift with no stagger (§7.1, and the same call
+// GridMenu makes for the same reason).
+let hubIntroPlayed = false;
+
+const pad2 = (n) => String(n).padStart(2, '0');
 
 /**
  * `fresh` marks the clue this device decoded most recently, and turns its
@@ -78,6 +134,82 @@ const ClueCard = ({ index, type, title, body, code, note, pinBrass, fresh }) => 
   </article>
 );
 
+/**
+ * A stack tile on the hub.
+ *
+ * Paper, pinned and slightly rotated, like the main board — each tile *is* a stack
+ * of printed cards, so bone is the honest surface. The count is the display face in
+ * `ink`, not brass: brass on bone is not a sanctioned pair (§2.3), while `ink` on
+ * `bone` is the highest-contrast pair in the system at 15.78:1.
+ *
+ * A stack the game has not reached yet is not paper at all — it is ink carrying a
+ * ghost tag with the round it opens (§6.1, "a state that is not yet true, drawn as
+ * an outline rather than a fill"), and it is genuinely inert, because a tap that
+ * only tells you it was sealed is a dead end.
+ */
+const StackTile = ({ label, sub, count, sealedUntil, tone, rot, wide, onClick, motion, delayMs }) => {
+  const sealed = sealedUntil !== null;
+
+  return (
+    <button
+      type="button"
+      onClick={sealed ? undefined : onClick}
+      disabled={sealed}
+      className={`er-touch er-lift ${motion} relative w-full flex flex-col items-center justify-center gap-1.5 px-3 py-4 ${
+        wide ? 'col-span-2' : ''
+      } ${rot} ${
+        sealed
+          ? 'bg-ink-raised border border-line cursor-not-allowed'
+          : tone === 'aged'
+            ? 'er-bone er-bone--aged er-pin'
+            : 'er-bone er-pin'
+      }`}
+      style={delayMs === null ? undefined : { animationDelay: `${delayMs}ms` }}
+    >
+      {sealed ? (
+        <span className="er-tag er-tag--ghost">Opens R{pad2(sealedUntil)}</span>
+      ) : (
+        // Display face, tabular, in ink — see the note above on brass and bone.
+        <Numeral
+          as="span"
+          value={count}
+          pad={2}
+          className="font-display font-bold text-[30px] leading-none text-ink"
+        />
+      )}
+
+      <span
+        className={`font-typewriter font-bold uppercase leading-none text-[17px] sm:text-[19px] ${
+          sealed ? 'text-bone' : 'text-ink'
+        }`}
+      >
+        {label}
+      </span>
+
+      <span className={`er-mono ${sealed ? 'er-mono--dim' : 'text-signal-deep'}`}>{sub}</span>
+    </button>
+  );
+};
+
+/** A sealed page rather than a blank panel — §6.7, two ragged marks so red marks and never fills. */
+const EmptyStack = ({ lines }) => (
+  <div className="er-card">
+    <p className="er-mono er-mono--hot er-mono--wide">Nothing decoded yet</p>
+    <div className="space-y-2.5 mt-4" aria-hidden="true">
+      {lines.map(([line, width]) => (
+        <div key={line} className="er-redact er-redact--sealed block" style={{ width }}>
+          <span className="block font-body text-[15px] leading-[1.55] whitespace-nowrap overflow-hidden">
+            {line}
+          </span>
+        </div>
+      ))}
+    </div>
+    <p className="font-body text-[15px] leading-[1.55] text-dim mt-5">
+      Enter a code from a printed card to unseal one.
+    </p>
+  </div>
+);
+
 export const IntelView = ({
   unlockedClues,
   myAccusation,
@@ -85,24 +217,115 @@ export const IntelView = ({
   currentRound = 0,
   revealedClues = [],
   justUnlockedClue = null,
+  unlockedFiles = [],
+  // null = the hub. Otherwise a CLUE_STACKS key, or 'files'. Owned by App.jsx.
+  stack = null,
+  onOpenStack,
 }) => {
   // Clues the player has decoded themselves, plus anything the host pushed out.
   const allAvailableClueIds = [...new Set([...unlockedClues, ...revealedClues])];
   const unlockedClueItems = CLUE_DB.filter((c) => allAvailableClueIds.includes(c.id));
 
-  // The clue just decoded floats to the top. CLUE_DB order otherwise buries a
-  // new card wherever it happens to sit in the database, which on a board of a
-  // dozen clues means the player lands on Evidence and has to hunt for the thing
-  // they just typed a code in for.
-  const orderedClues = justUnlockedClue
-    ? [
-        ...unlockedClueItems.filter((c) => c.id === justUnlockedClue),
-        ...unlockedClueItems.filter((c) => c.id !== justUnlockedClue),
-      ]
-    : unlockedClueItems;
-
   const reachable = CLUE_DB.filter((c) => c.roundReq <= currentRound && c.type !== 'CONFESSION').length;
   const hasAccusationYet = Boolean(myAccusation) && currentRound >= 1;
+  const releasedFiles = CASE_FILES.filter((f) => unlockedFiles.includes(f.id)).length;
+
+  // The player's own accusation is pinned on the hub, so it must not also appear
+  // inside the Accusations stack — it is in ACCUSATION_CLUES, and the host is able
+  // to reveal those to the whole room.
+  const cluesIn = (def) =>
+    unlockedClueItems.filter(
+      (c) =>
+        def.clues.some((s) => s.id === c.id) &&
+        !(hasAccusationYet && myAccusation && c.id === myAccusation.id)
+    );
+
+  // State, not a ref: this is read during render to pick the animation, and refs
+  // must not be read during render. The initialiser only *reads* the module flag
+  // (so it stays pure, and StrictMode's double-invoke gets the same answer both
+  // times); the effect below is what commits it.
+  const [playIntro] = useState(() => !hubIntroPlayed);
+  useEffect(() => {
+    hubIntroPlayed = true;
+  }, []);
+  const tileMotion = playIntro ? 'er-land' : 'er-enter-quick';
+
+  const back = (
+    <button
+      type="button"
+      onClick={() => onOpenStack(null)}
+      className="er-touch inline-flex items-center gap-2 min-h-[44px] er-mono er-mono--hot er-mono--wide"
+    >
+      <span aria-hidden="true">←</span> All evidence
+    </button>
+  );
+
+  // --- A single stack, drilled into. App.jsx has already put its name in the
+  //     screen title, so nothing here repeats it. ---
+
+  if (stack === 'files') {
+    return (
+      <div className="space-y-5">
+        {back}
+        <CaseFilesSection unlockedFiles={unlockedFiles} />
+      </div>
+    );
+  }
+
+  if (stack) {
+    const def = CLUE_STACK_BY_KEY[stack];
+    const style = STACK_STYLE[stack];
+    const items = cluesIn(def);
+    const inPlay = def.clues.filter((c) => c.roundReq <= currentRound).length;
+
+    // The freshly decoded card floats to the top of its stack — source order
+    // otherwise buries it wherever it happens to sit in the database.
+    const ordered = justUnlockedClue
+      ? [
+          ...items.filter((c) => c.id === justUnlockedClue),
+          ...items.filter((c) => c.id !== justUnlockedClue),
+        ]
+      : items;
+
+    return (
+      <div className="space-y-5">
+        {back}
+
+        <div className="er-stat flex items-end justify-between gap-4">
+          <div>
+            <Numeral as="p" value={items.length} pad={2} className="er-stat__num" />
+            <p className="er-stat__label">Collected</p>
+          </div>
+          <div className="text-right">
+            <Numeral as="p" value={inPlay} pad={2} className="er-stat__num" />
+            <p className="er-stat__label">In play this round</p>
+          </div>
+        </div>
+
+        {ordered.map((clue, idx) => (
+          <ClueCard
+            key={clue.id}
+            index={idx}
+            type={clue.type}
+            title={clue.title}
+            body={clue.type === 'ACCUSATION' ? clue.accusation : clue.content}
+            code={clue.code}
+            fresh={clue.id === justUnlockedClue}
+          />
+        ))}
+
+        {ordered.length === 0 && <EmptyStack lines={style.sealedLines} />}
+      </div>
+    );
+  }
+
+  // --- The hub ---
+
+  const openStack = (key) => {
+    // A 20ms buzz on tile tap is part of the product's texture (§4.3).
+    if (navigator.vibrate) navigator.vibrate(20);
+    onOpenStack(key);
+  };
 
   return (
     <div className="space-y-5">
@@ -118,92 +341,81 @@ export const IntelView = ({
         </div>
       </div>
 
-      {/* Confession — murderer only, Round 6 */}
-      {confession && (
-        <ClueCard
-          index={0}
-          type="Confession"
-          title={confession.title}
-          body={confession.content}
-          note="Only you can see this."
+      {/* The five stacks. Case files spans the row: it is the official record
+          rather than something you decoded, which is a different kind of thing —
+          and it keeps the four clue stacks a clean 2×2. */}
+      <div className="grid grid-cols-2 gap-3">
+        {CLUE_STACKS.map((def, index) => (
+          <StackTile
+            key={def.key}
+            label={EVIDENCE_STACKS[def.key].title}
+            sub={EVIDENCE_STACKS[def.key].kicker}
+            count={cluesIn(def).length}
+            sealedUntil={currentRound < def.opensAt ? def.opensAt : null}
+            tone={STACK_STYLE[def.key].tone}
+            rot={STACK_STYLE[def.key].rot}
+            motion={tileMotion}
+            delayMs={playIntro ? index * 60 : null}
+            onClick={() => openStack(def.key)}
+          />
+        ))}
+
+        <StackTile
+          label={EVIDENCE_STACKS.files.title}
+          sub={EVIDENCE_STACKS.files.kicker}
+          count={releasedFiles}
+          sealedUntil={null}
+          tone="aged"
+          rot=""
+          wide
+          motion={tileMotion}
+          delayMs={playIntro ? CLUE_STACKS.length * 60 : null}
+          onClick={() => openStack('files')}
         />
-      )}
+      </div>
 
-      {/* The player's own accusation card */}
-      {hasAccusationYet && (
-        <ClueCard
-          index={1}
-          type="Your Accusation"
-          title={myAccusation.title}
-          body={myAccusation.accusation}
-          code={`Code ${myAccusation.code}`}
-          note="Share this out loud. It is what your character witnessed."
-          pinBrass
-        />
-      )}
-
-      {/* Accusation not yet in play — sealed, not absent */}
-      {myAccusation && currentRound < 1 && (
-        <div className="er-card">
-          <div className="flex items-center justify-between gap-3">
-            <span className="er-tag er-tag--ghost">Sealed</span>
-            <span className="er-mono er-mono--dim">Opens Round 01</span>
+      {/* The cards that are *yours* rather than found: the confession (murderer,
+          Round 6) and your own accusation (Round 1+). One label over both — each
+          card already names itself in its tag, so repeating the name here would
+          say it twice. Never behind a tap: these are the lines you perform out
+          loud, and at the moment the confession exists it is the most important
+          card in the game. */}
+      {(confession || hasAccusationYet) && (
+        <>
+          <div className="pt-1">
+            <div className="er-rule" />
+            <p className="er-mono er-mono--hot er-mono--wide pt-3">Yours alone</p>
           </div>
-          {/* Two ragged marks rather than one bar over both wrapped lines. */}
-          <div className="relative mt-4 w-full" aria-hidden="true">
-            <span className="block font-body text-[15px] leading-[1.55] opacity-0">
-              Your accusation card is held until the first round opens.
-            </span>
-            <RedactedLines widths={['88%', '54%']} />
-          </div>
-          <p className="sr-only">Your accusation card is held until the first round opens.</p>
-        </div>
+
+          {confession && (
+            <ClueCard
+              index={0}
+              type="Confession"
+              title={confession.title}
+              body={confession.content}
+              note="Only you can see this."
+            />
+          )}
+
+          {hasAccusationYet && (
+            <ClueCard
+              index={1}
+              type="Your Accusation"
+              title={myAccusation.title}
+              body={myAccusation.accusation}
+              code={`Code ${myAccusation.code}`}
+              note="Share this out loud. It is what your character witnessed."
+              pinBrass
+            />
+          )}
+        </>
       )}
 
-      {/* Collected clues */}
-      {orderedClues.map((clue, idx) => (
-        <ClueCard
-          key={clue.id}
-          index={idx + 2}
-          type={clue.type}
-          title={clue.title}
-          body={clue.type === 'ACCUSATION' ? clue.accusation : clue.content}
-          code={clue.code}
-          fresh={clue.id === justUnlockedClue}
-        />
-      ))}
-
-      {/* Empty state — three sealed lines, so the board reads as redacted
-          rather than blank (§6.7). */}
-      {unlockedClueItems.length === 0 && !confession && !hasAccusationYet && (
-        <div className="er-card">
-          <p className="er-mono er-mono--hot er-mono--wide">Nothing decoded yet</p>
-          {/* Ragged widths on single lines, so this reads as a redacted page
-              rather than three slabs of red. Red marks; it doesn't fill. */}
-          <div className="space-y-2.5 mt-4" aria-hidden="true">
-            {[
-              ['Witness statement withheld', '82%'],
-              ['Forensics sealed', '54%'],
-              ['Motive undisclosed', '68%'],
-            ].map(([line, width]) => (
-              <div key={line} className="er-redact er-redact--sealed block" style={{ width }}>
-                <span className="block font-body text-[15px] leading-[1.55] whitespace-nowrap overflow-hidden">
-                  {line}
-                </span>
-              </div>
-            ))}
-          </div>
-          <p className="font-body text-[15px] leading-[1.55] text-dim mt-5">
-            Enter a code from a printed card to unseal it.
-          </p>
-        </div>
-      )}
-
-      {unlockedClueItems.length === 0 && (confession || hasAccusationYet) && (
-        <p className="font-body text-[15px] leading-[1.55] text-dim">
-          Enter codes from printed cards to unseal more evidence.
-        </p>
-      )}
+      {/* There is no "your accusation is sealed" placeholder here any more. It was
+          unreachable: App.jsx returns `myAccusation = null` for any round below 1,
+          so its `myAccusation && currentRound < 1` condition could never be true.
+          The Accusations tile stamped "Opens R01" now carries that message, and it
+          carries it for the whole stack rather than just the player's own card. */}
     </div>
   );
 };

@@ -115,8 +115,8 @@ mystery-game/
 │   │   ├── views/
 │   │   │   ├── DashboardView.jsx         # ID Card view (no "Innocent Bystander" badge, no timeline display)
 │   │   │   ├── DossierView.jsx           # Guest Profiles view (32 characters)
-│   │   │   ├── FilesView.jsx             # Archives/Files view (round-gated, whitespace-pre-line formatting)
-│   │   │   ├── IntelView.jsx             # Evidence Board (type-based color coding, whitespace-pre-line formatting)
+│   │   │   ├── CaseFilesSection.jsx      # Case-file archive — one of the five Evidence stacks (round-gated)
+│   │   │   ├── IntelView.jsx             # Evidence screen: a stack hub over 5 grouped stacks
 │   │   │   ├── ChatView.jsx              # Real-time chat interface
 │   │   │   ├── VotingView.jsx            # Voting interface (10 suspects only)
 │   │   │   ├── StoryView.jsx             # The case briefing as a readable bone document
@@ -124,7 +124,7 @@ mystery-game/
 │   │   │   └── TimelineView.jsx          # Character timeline (removed from GridMenu navigation)
 │   │   │
 │   │   ├── CharacterSelect.jsx           # Login/character selection screen
-│   │   ├── GridMenu.jsx                  # Metro-style tile-based home hub (8 paper tiles + full-width EXIT)
+│   │   ├── GridMenu.jsx                  # Metro-style tile-based home hub (6 tiles + GUIDE and EXIT strips)
 │   │   ├── SplashScreen.jsx              # 1.4s cold open
 │   │   ├── StoryIntro.jsx                # Fullscreen typed briefing (Round 0 takeover + replay)
 │   │   ├── OutroSplash.jsx               # End-of-game screen
@@ -189,14 +189,15 @@ mystery-game/
 
 ### **3. Metro-Style Navigation** ✅ UPDATED
 - **Windows 8/Nokia Lumia Inspired:** Animated tile-based interface
-- **7 Navigation Tiles:** (Timeline tile removed)
-  1. ID Card (2x2 large tile)
-  2. Clues/Evidence Board (shows accusation cards, unlocked clues, confession with color-coded types)
-  3. Real-time Chat
-  4. Voting Interface (10 suspects only, controlled visibility)
-  5. Files/Archives (round-gated file unlocking)
-  6. Guest Profiles (all 32 characters)
-  7. Logout
+- **6 Navigation Tiles + 2 Footer Strips:** (Timeline has no tile; Archives merged into Evidence 2026-08-05)
+  1. Identity
+  2. Story
+  3. Evidence — a hub over five grouped stacks (accusations, motives, evidence, revelations, case files)
+  4. Comms (real-time chat)
+  5. Vote (10 suspects only, controlled visibility)
+  6. Suspects (all 32 characters)
+  - Guide (full-width strip)
+  - Exit (full-width strip)
 - **Smooth Animations:** Slide-up entrance, shimmer effects, scale on hover
 - **Full-Screen Views:** Each tile opens a dedicated full-screen interface
 - **Universal Close Button:** Red circular button (top-right) returns to grid
@@ -224,7 +225,7 @@ mystery-game/
   - Unlock Round 4 button
   - Visual indicators show unlock status
 - **Firebase Sync:** `unlockedFiles` array synced to all players
-- **FilesView Filtering:** Only shows unlocked files, displays locked file counts
+- **CaseFilesSection Filtering:** Only shows unlocked files, displays locked file counts. Rendered as the Case files stack of the Evidence screen
 
 ### **6. Code Validation System** ✅
 - **Two Code Types:**
@@ -708,11 +709,14 @@ redaction bar still resolves to its open state so no content is lost.
 
 **Inspired By:** Windows 8 Metro UI, Nokia Lumia tile interface
 
-**Layout:** a 2-column grid of nine tiles — eight `aspect-[4/3]` paper tiles, then
-EXIT spanning the row (`col-span-2`, `py-3.5`). Nine in a 2-column grid would
-otherwise leave EXIT alone in a half-empty row; as a full-width ink bar it reads as
-a footer control rather than a ninth destination, and the eight paper tiles stay a
-clean 4×2 board.
+**Layout:** a 2-column grid — six `aspect-[4/3]` destination tiles in a clean 3×2
+board, then GUIDE and EXIT each spanning the row (`col-span-2`, `py-3.5`).
+
+Archives was the seventh tile until 2026-08-05; folding it into Evidence left an odd
+tile count, so GUIDE joined EXIT as a strip rather than sitting beside a hole in the
+board. Both earn it — they are utilities rather than places in the fiction: one
+explains the app, the other leaves it. Differentiation stays surface, not hue, so
+GUIDE is still paper and EXIT is still ink.
 
 **Tiles**, in board order — the same order the Guide lists them in:
 
@@ -720,12 +724,11 @@ clean 4×2 board.
 |---|---|---|---|
 | Identity | Confidential | `dashboard` | bone |
 | Story | The Night | `story` | bone-aged |
-| Evidence | Board | `intel` | bone |
+| Evidence | Clues & Files | `intel` | bone |
 | Comms | Encrypted | `chat` | bone-aged |
 | Vote | Open Now / Standby | `votes` | ink + 3px signal top border; **fills** signal only while the ballot is open |
-| Archives | Case Files | `files` | bone-aged |
 | Suspects | Profiles | `dossier` | bone |
-| Guide | Read Me | `help` | bone-aged |
+| Guide | Read Me | `help` | bone-aged, full width |
 | Exit | End Session | `logout` | ink, full width |
 
 Differentiation is **surface, not hue** ([DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §2.2):
@@ -744,31 +747,39 @@ every tile is paper except Vote and Exit, which are interface.
 Each tile opens a dedicated full-screen view with:
 - **Header:** Title + round display
 - **Close Button:** Red circular button (top-right)
-- **Kicker + title:** from `SCREEN_GUIDE` ([src/data/screenGuide.js](src/data/screenGuide.js))
-- **Screen note:** one-line explanation of the screen, rounds 0–1 only (below)
+- **Kicker + title:** from `SCREEN_GUIDE` ([src/data/screenGuide.js](src/data/screenGuide.js)), or from
+  `EVIDENCE_STACKS` in the same file when an Evidence stack is open — a stack is framed
+  exactly like a screen, which is why `evidenceStack` lives in App.jsx rather than in the view
+- **Screen note:** one-line explanation of the screen, rounds 0–1 only (below). An open
+  Evidence stack has no `brief`, so `ScreenBrief` renders nothing there
 - **Content Area:** Scrollable content
-- **Fixed Elements:** Decoder FAB (clues screen only)
+- **Fixed Elements:** Decoder FAB (Evidence screen only — hub and stacks alike)
 
 **View Routing:**
 ```javascript
 // In App.jsx
 {activeTab === 'dashboard' && <DashboardView />}
 {activeTab === 'story'     && <StoryView onReplay={...} />}
-{activeTab === 'intel'     && <IntelView />}
+{activeTab === 'intel'     && <IntelView stack={evidenceStack} onOpenStack={...} />}
 {activeTab === 'chat'      && <ChatView />}   // self-framed
 {activeTab === 'timeline'  && <TimelineView />}   // no tile; view exists
 {activeTab === 'votes'     && <VotingView />}
-{activeTab === 'files'     && <FilesView />}
 {activeTab === 'dossier'   && <DossierView />}
 {activeTab === 'help'      && <HelpView />}
 {activeTab === 'host'      && <HostPanel />}
 ```
 
-Opening a screen resets the document scroll to the top (`useEffect` on `activeTab`).
-The scroll position survives a tab change — it is the same document with a new
-subtree — so a player who had scrolled the board down to reach a tile used to land
-part-way into whatever they opened. Most visible on the Story briefing, at ~2800px
-the tallest surface in the app.
+Opening a screen resets the document scroll to the top (`useEffect` on
+`[activeTab, evidenceStack]`). The scroll position survives a tab change — it is the
+same document with a new subtree — so a player who had scrolled the board down to
+reach a tile used to land part-way into whatever they opened. Most visible on the
+Story briefing, at ~2800px the tallest surface in the app. `evidenceStack` is in the
+deps because drilling into an Evidence stack, or backing out of a long one, is a
+screen change even though the tab has not moved.
+
+Leaving the Evidence screen closes whichever stack was open, via the render-phase
+state-adjustment pattern (`seenTab`) rather than an effect — `react-hooks/set-state-in-effect`
+rejects the effect form.
 
 ### **The Round 0 briefing (StoryIntro.jsx)**
 
@@ -1746,14 +1757,46 @@ const firebaseConfig = {
 - Detective notes
 - Role-specific indicators
 
-### **FilesView.jsx - Archives**
+### **CaseFilesSection.jsx - Case files (the second stack of Evidence)**
+
+Was the standalone `FilesView` / "Archives" screen until 2026-08-05. Rendered by
+`IntelView` when the **Case files** tab is selected — it draws no heading of its own,
+because the tab is the label.
 
 **Features:**
-- Category-organized clue display
+- Released files as pinned bone documents (`REPORT` and `IMAGE` types)
 - CCTV sketches
 - Forensic reports
-- Timeline documents
+- Ghost tags for batches still awaiting host authorisation
 - Empty state handling
+
+**Why the Evidence screen is a hub rather than one list:** measured at 390px with
+everything released, the clue stacks are 31 cards / ~23,000px and the archive is
+6 documents / ~4,800px. Flat, whatever came last started 6–28 screens down.
+See [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §6.11.
+
+### **IntelView.jsx - Evidence (the stack hub)**
+
+Groups clues by **source array**, not by the `type` string — the evidence stack carries
+three type values (`EVIDENCE`, `FORENSICS`, `CCTV`) that are one stack of printed cards
+in the host's hands. The grouping lives in `CLUE_STACKS` /
+`stackKeyForClue` ([src/data/gameData.js](src/data/gameData.js)); the names live in
+`EVIDENCE_STACKS` ([src/data/screenGuide.js](src/data/screenGuide.js)); `STACK_STYLE` in
+the view holds only surface, tilt and empty-state copy.
+
+| Stack | Count | Opens | Types |
+|---|---|---|---|
+| Accusations | 10 | R1 | `ACCUSATION` |
+| Motives | 10 | R2 | `MOTIVE` |
+| Evidence | 7 | R3 | `EVIDENCE` ×4, `FORENSICS` ×2, `CCTV` ×1 |
+| Revelations | 6 | R4 | `REVELATION` |
+| Case files | 6 | R0 | `CASE_FILES` (host-released, not decoded) |
+
+Two cards never go in a stack: the player's **own accusation** and, for the murderer at
+Round 6, the **confession**. Both are pinned on the hub under one "Yours alone" label —
+they are the lines a player performs out loud, so they are never behind a tap. The own
+accusation is also excluded from the Accusations stack, since it is in `ACCUSATION_CLUES`
+and the host can reveal those to the whole room.
 
 ### **DossierView.jsx - Guest Profiles**
 
@@ -2016,9 +2059,10 @@ Three buttons for batch file unlocking:
 - Inspect `myAccusation` with React DevTools
 
 **Files not appearing:**
+- Has the player tapped the wide **Case files** tile on Evidence? (Archives is no longer its own screen)
 - Check Host Panel - are files unlocked?
 - Verify `unlockedFiles` array in Firebase gameState/current
-- Check FilesView receives `unlockedFiles` prop
+- Check App.jsx passes `unlockedFiles` to IntelView, which passes it to CaseFilesSection
 - Match file IDs: f_incident, f_toxreport, f_medical, etc.
 
 **Vote results not visible:**

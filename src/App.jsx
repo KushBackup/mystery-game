@@ -5,7 +5,6 @@ import { Header } from './components/layout/Header';
 import GridMenu from './components/GridMenu';
 import { DashboardView } from './components/views/DashboardView';
 import { IntelView } from './components/views/IntelView';
-import { FilesView } from './components/views/FilesView';
 import { DossierView } from './components/views/DossierView';
 import { ChatView } from './components/views/ChatView';
 import { VotingView } from './components/views/VotingView';
@@ -22,8 +21,8 @@ import { SplashScreen } from './components/SplashScreen';
 import { StoryIntro } from './components/StoryIntro';
 import { OutroSplash } from './components/OutroSplash';
 import { MurdererRevealOverlay } from './components/MurdererRevealOverlay';
-import { ROUNDS, CHARACTERS, CLUE_DB, getAssignedAccusation, CONFESSION_CLUE, isMurderer } from './data/gameData';
-import { SCREEN_GUIDE } from './data/screenGuide';
+import { ROUNDS, CHARACTERS, CLUE_DB, stackKeyForClue, getAssignedAccusation, CONFESSION_CLUE, isMurderer } from './data/gameData';
+import { SCREEN_GUIDE, EVIDENCE_STACKS } from './data/screenGuide';
 import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue } from './firebase/config';
 
 // Session is persisted so a reload — whether the host's force-sync broadcast, a
@@ -103,6 +102,10 @@ export default function App() {
   // the list, so without knowing which one is new there is no moment to play.
   const [justUnlockedClue, setJustUnlockedClue] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  // Which stack the Evidence screen has open — null is its hub. It lives here
+  // rather than inside IntelView because on a stack the screen *title* is the
+  // stack's name, and this component owns the screen frame for every view (§4.2).
+  const [evidenceStack, setEvidenceStack] = useState(null);
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [hostPanelOpen, setHostPanelOpen] = useState(false);
   const [showVoteResults, setShowVoteResults] = useState(false);
@@ -212,9 +215,12 @@ export default function App() {
   // tab change — it is the same document with a new subtree — so a player who had
   // scrolled the board down to reach a tile landed part-way into whatever they
   // opened. Most visible on the Story briefing, which is the tallest surface here.
+  //
+  // `evidenceStack` is in the deps for the same reason: drilling into a stack, or
+  // backing out of a long one, is a screen change even though the tab has not moved.
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [activeTab]);
+  }, [activeTab, evidenceStack]);
 
   // Subscribe to real-time vote changes
   useEffect(() => {
@@ -272,6 +278,10 @@ export default function App() {
             setJustUnlockedClue(foundClue.id);
             setModalOpen(false);
             setActiveTab('intel');
+            // Open the stack the clue belongs to, so the §7.2 unseal moment plays
+            // where the player is looking instead of on a hub one tap away. The
+            // confession belongs to no stack, and stays pinned on the hub.
+            setEvidenceStack(stackKeyForClue(foundClue.id));
           })
           .catch((error) => {
             console.error('Error adding clue:', error);
@@ -316,6 +326,16 @@ export default function App() {
   // during render is React's documented pattern for exactly this.
   if (briefingState === 'pending' && currentUser && !isHostUser && stateSettled) {
     setBriefingState(currentRound === 0 ? 'open' : 'done');
+  }
+
+  // Leaving the Evidence screen closes whichever stack was open, so reopening it
+  // lands on the hub rather than wherever the player happened to be three screens
+  // ago. Adjusted during render for the same reason as the briefing above — an
+  // effect here is what `react-hooks/set-state-in-effect` rejects.
+  const [seenTab, setSeenTab] = useState(activeTab);
+  if (activeTab !== seenTab) {
+    setSeenTab(activeTab);
+    if (activeTab !== 'intel' && evidenceStack !== null) setEvidenceStack(null);
   }
 
   // Show splash screen on first load
@@ -415,7 +435,13 @@ export default function App() {
     );
   }
 
-  const screen = SCREEN_GUIDE[activeTab] || { kicker: 'File', title: activeTab };
+  // An open Evidence stack frames itself like any other screen — its own kicker and
+  // title from EVIDENCE_STACKS. It carries no `brief`, because the screen note
+  // describes the hub, and ScreenBrief renders nothing without one.
+  const screen =
+    (activeTab === 'intel' && EVIDENCE_STACKS[evidenceStack]) ||
+    SCREEN_GUIDE[activeTab] || { kicker: 'File', title: activeTab };
+
   const isSelfFramed = SELF_FRAMED_VIEWS.has(activeTab);
 
   // Ink is the world; only diegetic documents get a bone surface (§5).
@@ -491,6 +517,9 @@ export default function App() {
             currentRound={currentRound}
             revealedClues={revealedClues}
             justUnlockedClue={justUnlockedClue}
+            unlockedFiles={unlockedFiles}
+            stack={evidenceStack}
+            onOpenStack={setEvidenceStack}
           />
         )}
 
@@ -505,10 +534,6 @@ export default function App() {
 
         {activeTab === 'timeline' && (
           <TimelineView myCharacter={myCharacter} />
-        )}
-
-        {activeTab === 'files' && (
-          <FilesView unlockedFiles={unlockedFiles} currentRound={currentRound} />
         )}
 
         {activeTab === 'dossier' && (

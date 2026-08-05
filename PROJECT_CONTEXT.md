@@ -195,8 +195,8 @@ mystery-game/
 │   │   ├── views/
 │   │   │   ├── DashboardView.jsx         # ID Card tab
 │   │   │   ├── DossierView.jsx           # Guest Profiles tab
-│   │   │   ├── FilesView.jsx             # Archives tab
-│   │   │   ├── IntelView.jsx             # Evidence Board tab
+│   │   │   ├── CaseFilesSection.jsx      # Case files — one of the five Evidence stacks
+│   │   │   ├── IntelView.jsx             # Evidence tab (hub over 5 grouped stacks)
 │   │   │   ├── ChatView.jsx              # Real-time chat tab
 │   │   │   ├── VotingView.jsx            # Dedicated voting interface
 │   │   │   └── TimelineView.jsx          # Animated timeline view

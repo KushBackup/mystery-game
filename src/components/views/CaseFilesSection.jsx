@@ -4,29 +4,33 @@ import { CASE_FILES } from '../../data/gameData';
 import { Numeral } from '../ui/Numeral';
 
 /**
- * The archives (DESIGN_LANGUAGE.md §9, "Archives").
+ * The case-file archive — the lower region of the Evidence screen
+ * (DESIGN_LANGUAGE.md §9, "Evidence").
+ *
+ * This was its own screen and its own tile ("Archives") until the two were
+ * merged. They were the same act — reading a document you have been handed — and
+ * splitting them meant the incident report lived on one tile while the clue the
+ * player just decoded lived on another.
  *
  * Files the host has released are bone documents. Files still sealed are ghost
  * tags carrying their round number — a state that is not yet true, drawn as an
  * outline rather than a fill (§6.1).
+ *
+ * It carries no heading of its own: the Case files tab above it is the label, and
+ * repeating it here would be a second name for the same stack.
  */
-export const FilesView = ({ unlockedFiles = [] }) => {
+export const CaseFilesSection = ({ unlockedFiles = [] }) => {
   const availableFiles = CASE_FILES.filter((file) => unlockedFiles.includes(file.id));
 
-  const lockedRounds = [
-    { round: 0, label: 'Incident Report' },
-    { round: 3, label: 'Evidence Files' },
-    { round: 4, label: 'Revelation Files' },
-  ]
-    .map((info) => ({
-      ...info,
-      count: CASE_FILES.filter((f) => f.roundReq === info.round).length,
-      pending: CASE_FILES.filter((f) => f.roundReq === info.round && !unlockedFiles.includes(f.id)).length,
+  const lockedRounds = [0, 3, 4]
+    .map((round) => ({
+      round,
+      pending: CASE_FILES.filter((f) => f.roundReq === round && !unlockedFiles.includes(f.id)).length,
     }))
     .filter((info) => info.pending > 0);
 
   return (
-    <div className="space-y-5">
+    <section className="space-y-5">
       {/* Stat */}
       <div className="er-stat flex items-end justify-between gap-4">
         <div>
@@ -123,6 +127,6 @@ export const FilesView = ({ unlockedFiles = [] }) => {
           )}
         </article>
       ))}
-    </div>
+    </section>
   );
 };

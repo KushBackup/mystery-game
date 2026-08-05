@@ -22,6 +22,26 @@
 // notes clear themselves — rounds 00 and 01 only.
 export const BRIEF_HIDDEN_FROM_ROUND = 2;
 
+/**
+ * The Evidence screen's five stacks.
+ *
+ * Same two fields as a screen, because that is what a stack becomes once you drill
+ * into it — App.jsx frames it exactly like one. The `kicker` also serves as the
+ * stack's sub-label on the Evidence hub, so a tile and the screen it opens can
+ * never describe the same stack differently.
+ *
+ * None of them repeats the word "Evidence" in the kicker, which matters for the
+ * evidence stack in particular: it shares the screen's name, and "Evidence Board /
+ * Evidence" is the one frame that would read as a mistake.
+ */
+export const EVIDENCE_STACKS = {
+  accusations: { kicker: 'Who saw what',    title: 'Accusations' },
+  motives:     { kicker: 'Reasons to act',  title: 'Motives' },
+  evidence:    { kicker: 'Hard findings',   title: 'Evidence' },
+  revelations: { kicker: 'The turns',       title: 'Revelations' },
+  files:       { kicker: 'Official record', title: 'Case files' },
+};
+
 export const SCREEN_GUIDE = {
   // The grid hub has no kicker/title here — GridMenu draws the event's own
   // masthead rather than a screen frame. It carries a brief so a player landing
@@ -57,8 +77,9 @@ export const SCREEN_GUIDE = {
   intel: {
     kicker: 'Evidence Board',
     title: 'Evidence',
-    brief: 'Clue codes are printed on cards around the venue. Punch one into the decoder and the evidence pins itself here.',
-    detail: "Everything you've decoded. From Round 1 your own accusation card appears here — what your character witnessed. Use the CODE button to enter codes from printed cards.",
+    brief: 'Five stacks of paper. Tap one to read it, or punch a code from a printed card into the decoder.',
+    detail:
+      "Your case, sorted into stacks: accusations, motives, evidence, revelations, and the official case files. Tap a stack to read it. A stack greyed out with a round number on it has not opened yet. Use the CODE button to enter codes from printed cards — the clue lands in its own stack. Your own accusation card, and the confession if you ever get one, stay pinned on the front page.",
   },
 
   chat: {
@@ -75,12 +96,9 @@ export const SCREEN_GUIDE = {
     detail: 'Your own movements on the night of the incident, and the public account of the incident itself. Learn it — someone will question it.',
   },
 
-  files: {
-    kicker: 'Case Files',
-    title: 'Archives',
-    brief: 'Official case files. The host releases more of them as the rounds go on.',
-    detail: 'Official case files released by the host at set rounds: forensic reports, witness statements, exhibits. Read them carefully.',
-  },
+  // No `files` entry: Archives was merged into Evidence on 2026-08-05, and the
+  // case files are now the lower region of that screen. See
+  // components/views/CaseFilesSection.jsx.
 
   dossier: {
     kicker: 'Profiles',

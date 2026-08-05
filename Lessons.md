@@ -148,4 +148,54 @@ When the same lesson recurs, **edit the existing entry** rather than adding a du
 
 ---
 
+### 2026-08-05 — "Merge two screens" is a layout problem, and only measurement tells you how bad
+
+**What happened:** Asked to merge Archives into Evidence, I did the obvious thing — appended the case-file region below the clue board, separated by a hairline and a mono label. It looked right in the browser at Round 0, where the board is empty. Then I drove the host panel to Round 4 with every clue revealed and every file released and measured it: the case files began at **24,054px — 28.5 screens down**. Per-card heights explained it (31 clue cards, 23,392px total; the six documents another 4,800px). Neither region can sit under the other.
+
+**Why it was wrong:** I verified against the state I happened to be in. Round 0 is the *emptiest* state the app ever has, and it is the default a blocked-Firestore harness boots into — so the one screen I was changing was the one screen I could not see the problem on. A hairline divider is the right answer for two short regions and the wrong answer for two long ones, and nothing about the JSX distinguishes those cases.
+
+**What to do instead:** Before merging or stacking two lists, measure the **fully populated** height of each, not the current one. `document.querySelectorAll('article')` + `getBoundingClientRect().height` per card, and the absolute offset of the second region, is a 10-line probe. Here it forced a better design — two paper tabs ([DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §6.11) — plus two things the tabs then made necessary: scroll to top on switch, and force the board back when a code is decoded from the archive. Also worth knowing: `Numeral`/host-panel handlers read a **stale prop**, so clicking "release all three file batches" in one tick makes only the last win — drive host controls one at a time with a wait between, or the populated state you *think* you built is wrong (my first run reported 4 files and 4 clues instead of 6 and 31).
+
+---
+
+### 2026-08-05 — To exercise an offline-blocked code path, stub the sync layer and rebuild — don't reach for the live DB
+
+**What happened:** I needed to prove that entering a clue code while the Case files tab is open snaps back to the clue board. That path is unreachable with Firestore blocked: `addUnlockedClue`'s promise never resolves offline, `unlockedClues` only ever arrives from `subscribeToPlayerData`, and `currentRound` stays 0 so every code is refused as locked. The tempting shortcut was to unblock the network — against a live database that [memory.md](memory.md) records as sitting in its terminal state.
+
+**Why the shortcut was wrong:** Reads are safe; the decoder *writes*. One code entry would have added a clue to a real player document in a live game.
+
+**What to do instead:** Shadow the three sync entry points (`subscribeToGameState`, `subscribeToPlayerData`, `addUnlockedClue`) with local in-memory versions in [src/firebase/config.js](src/firebase/config.js), build, verify, then `git checkout --` the file and rebuild. Rename the real implementations to `_realX` rather than deleting them so the diff is trivially reversible, and keep a `_unusedRealRefs` export so lint stays quiet. Emitting a synthetic `{ currentRound: 3, unlockedFiles: [...] }` also hands you the populated state for free, with the network still blocked. Two harness details that cost time: `innerText` **applies `text-transform`**, so a case-sensitive `includes('The Murder Mystery Experience')` never matches an uppercased `.er-title` — always match case-insensitively; and poll for the control rather than sleeping, because a cold Chrome profile boots this app ~2s slower.
+
+---
+
+### 2026-08-05 — When a view needs its own sub-navigation, the state belongs to the router, not the view
+
+**What happened:** Turning Evidence into a grid of five stacks, I put the "which stack is open" state inside [IntelView.jsx](src/components/views/IntelView.jsx) and rendered the stack's name as an `<h2>` under the content. Driving it showed the frame reading **`EVIDENCE BOARD` / `EVIDENCE` / `MOTIVES`** — three headings, two of them saying the same word. [App.jsx](src/App.jsx) draws the kicker and title for every screen from `SCREEN_GUIDE`, so a view that adds its own heading is always adding a *third* one.
+
+**Why it was wrong:** I treated the drill-down as content when it is navigation. Once you can be "inside" part of a screen, that location has to reach whatever owns the screen frame, or the frame describes the wrong place. Lifting `evidenceStack` into App.jsx fixed the heading, and three other things fell out for free: the existing scroll-to-top effect just needed `evidenceStack` in its deps, the decode handler could open the right stack directly (an event, not a render-phase adjustment), and leaving the screen resets it.
+
+**What to do instead:** If a sub-view changes what the screen *is*, put its state next to the routing and give it kicker/title entries alongside the real screens ([screenGuide.js](src/data/screenGuide.js) `EVIDENCE_STACKS`). One trap follows immediately: **a sub-view's kicker must not repeat the parent screen's name.** "Evidence" is both the screen and one of its stacks, so the kicker had to become the stack's descriptor (`Hard findings`) rather than the screen's (`Evidence Board`). Reusing that same string as the hub tile's sub-label is a bonus — the tile and the screen it opens then cannot drift apart.
+
+---
+
+### 2026-08-05 — Splitting one list into four multiplies its empty state
+
+**What happened:** The Evidence empty state — "Nothing decoded yet" over three ragged redaction bars — was signed off when there was one of it. Grouping clues into four stacks meant four copies, each on a screen with nothing else on it, and at 66–84% width they read as a panel of red rather than a redacted page. That is what [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §2.2 forbids, and it is the same defect as the 2026-08-02 entry above, arrived at from a new direction: not by making a bar wider, but by removing everything that used to balance it.
+
+**Why it was wrong:** I carried the component across unchanged because it was already correct. Correct at one instance on a full screen is not correct at four instances on empty ones — the accent's share of the page is what §2.2 actually constrains, and duplication changes that share without touching a line of the component.
+
+**What to do instead:** When a shared visual moves from one context to several, re-check the constraints that are about *proportion* rather than about the component: red coverage, motion frequency, how often an entrance replays. Two ragged marks at ≤71% was enough here. The motion one bit in the same change — a hub the player backs out to constantly replays its staggered landing on every return, so it needs GridMenu's module-scope once-per-session flag, not a fresh `er-land` each mount.
+
+---
+
+### 2026-08-05 — A rewrite is the moment dead branches become visible
+
+**What happened:** Rewriting IntelView I carried over a "your accusation is sealed, opens Round 01" placeholder gated on `myAccusation && currentRound < 1`. Probing the Round 0 hub, it never appeared. It cannot: App.jsx computes `myAccusation` as `if (!currentUser || currentRound < 1) return null`, so the two halves of that condition are mutually exclusive. It had never rendered, in any round, since it was written.
+
+**Why it was wrong:** I moved code without evaluating its guard against the value the parent actually passes. A condition that reads plausibly inside one file can be impossible once you look one level up — and a rewrite is exactly when it is cheap to check, because you are reading every line anyway.
+
+**What to do instead:** When a branch depends on a prop, resolve the prop's domain at the call site before keeping the branch. Here the honest fix was deletion: the new `Opens R01` stamp on the Accusations tile says the same thing, for the whole stack rather than one card. Probing an empty state by asserting on `document.body.innerText` at each round is what surfaced it — and note that a probe can lie in the other direction too: I briefly "found" a missing screen note that was rendering perfectly well, because my summary script read a field I had stripped out of the JSON I piped to it. Check the artifact on disk before believing an absence.
+
+---
+
 <!-- Add new lessons above this line, newest first or oldest first — keep one consistent order. Current order: oldest first. -->

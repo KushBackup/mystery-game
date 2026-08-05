@@ -912,6 +912,33 @@ export const CLUE_DB = [
 ];
 
 // ============================================
+// CLUE STACKS — how the Evidence screen groups
+// ============================================
+
+// Grouped by source array rather than by the `type` string, because the evidence
+// stack carries three type values (EVIDENCE, FORENSICS, CCTV) that are one stack
+// of printed cards in the host's hands. `opensAt` is the round the stack starts
+// existing, which is also the round the host hands its cards out.
+//
+// The confession is deliberately absent: it is one card, it belongs to one player,
+// and it is pinned on the Evidence screen rather than filed in a stack.
+// Names deliberately absent: the stacks' kickers and titles are screen copy, so
+// they live in data/screenGuide.js (EVIDENCE_STACKS) with every other screen title.
+export const CLUE_STACKS = [
+  { key: 'accusations', opensAt: 1, clues: ACCUSATION_CLUES },
+  { key: 'motives',     opensAt: 2, clues: MOTIVE_CLUES },
+  { key: 'evidence',    opensAt: 3, clues: EVIDENCE_CLUES },
+  { key: 'revelations', opensAt: 4, clues: REVELATION_CLUES },
+];
+
+export const CLUE_STACK_BY_KEY = Object.fromEntries(CLUE_STACKS.map(s => [s.key, s]));
+
+// Which stack a clue came from — used to open that stack on a successful decode.
+// Returns null for the confession, which lives in no stack.
+export const stackKeyForClue = (clueId) =>
+  CLUE_STACKS.find(s => s.clues.some(c => c.id === clueId))?.key ?? null;
+
+// ============================================
 // HELPER FUNCTIONS
 // ============================================
 
@@ -1012,18 +1039,18 @@ Ground rules. Your phone is your evidence kit — log in with the code on your c
     setup: 'The Incident Report is unlocked by default. Nothing to distribute yet — players are getting their bearings.',
     announce: `"Round 0. The Incident. At 8:45 PM tonight, Nikhil — our Head of Marketing — collapsed on the balcony. He was pronounced dead at 9:02. All 32 of us are detained on-site for questioning by Inspector Reema Mathur.
 
-Open the FILES tab. Read the Incident Report. Then open GUESTS — see who else is in this room with you tonight. Don't accuse anyone yet. Get the lay of the land. Mingle in character. We move to Round 1 in about 10 minutes."`,
-    during: 'Walk the room. Make sure people have actually opened the Incident Report — first-time players sometimes miss the FILES tab. Encourage in-character introductions.',
+Open EVIDENCE and tap the CASE FILES stack. Read the Incident Report. Then open SUSPECTS — see who else is in this room with you tonight. Don't accuse anyone yet. Get the lay of the land. Mingle in character. We move to Round 1 in about 10 minutes."`,
+    during: 'Walk the room. Make sure people have actually opened the Incident Report — it is the wide CASE FILES tile at the bottom of the EVIDENCE grid. Encourage in-character introductions.',
     end: 'When the room feels warmed up, press "+" to advance to Round 1.'
   },
   {
     id: 1,
     title: 'Round 1 · Accusations',
     duration: '~15 min',
-    setup: "No physical cards in this round — each player's accusation card is automatically revealed in their INTEL tab the moment Round 1 starts. 32 players, 10 accusations: every suspect is accused by 3–4 people.",
-    announce: `"Round 1. Accusations. Each of you has been handed an accusation by another guest tonight — someone swears they saw a specific person do something suspicious. Open INTEL. Read your accusation.
+    setup: "No physical cards in this round — each player's accusation card is automatically revealed on their EVIDENCE screen the moment Round 1 starts. 32 players, 10 accusations: every suspect is accused by 3–4 people.",
+    announce: `"Round 1. Accusations. Each of you has been handed an accusation by another guest tonight — someone swears they saw a specific person do something suspicious. Open EVIDENCE. Read your accusation.
 
-What you do with it is your choice. Shout it across the room. Whisper it to one person. Use it as leverage. Pretend you never got one. Lie about who's accused. The CHAT tab is your investigation room — start working it. We move to Round 2 in 15 minutes."`,
+What you do with it is your choice. Shout it across the room. Whisper it to one person. Use it as leverage. Pretend you never got one. Lie about who's accused. COMMS is your investigation room — start working it. We move to Round 2 in 15 minutes."`,
     during: "Watch the chat. If it's quiet, single-out a player and ask 'who did you get?' to break the ice.",
     end: 'Press "+" to advance to Round 2.'
   },
@@ -1032,10 +1059,10 @@ What you do with it is your choice. Shout it across the room. Whisper it to one 
     title: 'Round 2 · Motives',
     duration: '~15 min',
     setup: 'Hand out the 10 printed MOTIVE cards now. Each card has a unique code. Suggested distribution: hand each suspect their own motive card so they can decide whether to spin or hide it; sprinkle the rest among witnesses for cross-pollination.',
-    announce: `"Round 2. Motives. Some of you just received a printed card. Open the decoder — the floating red button on the CLUES screen — and type the CODE, not the title. The motive will appear in your INTEL tab.
+    announce: `"Round 2. Motives. Some of you just received a printed card. Open the decoder — the floating red button on the EVIDENCE screen — and type the CODE, not the title. The motive will pin itself to your evidence board.
 
 These ten motives are the reasons each of our nine suspects might have wanted Nikhil dead. If you got someone's motive card, you decide whether to share it, twist it, or sit on it. If you didn't get one, your job is to pry. We move to Round 3 in 15 minutes."`,
-    during: "If anyone can't find the decoder: it's the floating red button on the CLUES screen.",
+    during: "If anyone can't find the decoder: it's the floating red button on the EVIDENCE screen.",
     end: 'Press "+" to advance to Round 3. Forensics next.'
   },
   {
@@ -1045,7 +1072,7 @@ These ten motives are the reasons each of our nine suspects might have wanted Ni
     setup: `1) In this panel, press "🔬 Round 3: Evidence" to unlock the Toxicology Report and Funding Round Dossier.
 2) Hand out the 7 printed EVIDENCE cards.
 3) Press "🗳️ OPEN VOTING" — first vote is now live.`,
-    announce: `"Round 3. Evidence. Forensics is in. Open FILES — Toxicology and the Funding Dossier are now unlocked. Cause of death: acute sodium azide poisoning. Delivered through Nikhil's personal vape. Some of you also just received Evidence codes — enter them in the decoder.
+    announce: `"Round 3. Evidence. Forensics is in. Open EVIDENCE and tap CASE FILES — Toxicology and the Funding Dossier are now unlocked. Cause of death: acute sodium azide poisoning. Delivered through Nikhil's personal vape. Some of you also just received Evidence codes — enter them in the decoder.
 
 Voting is now OPEN. Cast your suspicion. You can change your vote at any point before voting closes."`,
     during: 'This is when the room starts theorizing in earnest. Stay quiet, let them work. Glance at the vote tally if you have it visible.',
@@ -1057,7 +1084,7 @@ Voting is now OPEN. Cast your suspicion. You can change your vote at any point b
     duration: '~15–20 min',
     setup: `1) Press "💀 Round 4: Revelations" to unlock Medical Records, Insurance Policy Summary, and SEBI Inquiry Extract.
 2) Hand out the first 4 REVELATION cards (the ones marked Round 4).`,
-    announce: `"Round 4. Revelations. Three new files are open: Nikhil's medical records, his insurance policies, and an extract from a SEBI inquiry. New revelation codes are in some of your hands.
+    announce: `"Round 4. Revelations. Three new case files are open — EVIDENCE, then CASE FILES: Nikhil's medical records, his insurance policies, and an extract from a SEBI inquiry. New revelation codes are in some of your hands.
 
 The story you thought you knew is changing. Nikhil was dying. Nikhil was about to be indicted for fraud. Talk amongst yourselves. We move to Round 5 in 15 minutes."`,
     during: 'Players will start connecting cancer + fraud + insurance. Watch the chat — let the dominoes fall.',
@@ -1069,7 +1096,7 @@ The story you thought you knew is changing. Nikhil was dying. Nikhil was about t
     duration: '~10 min',
     setup: `1) Hand out the final 2 REVELATION cards (the ones marked Round 5) — the HR access trail and Nikhil's unsent voice memo.
 2) Optionally press "📊 SHOW VOTE RESULTS" so the room sees the standings before final lock-in.`,
-    announce: '"Round 5. The last bombshells. Two final cards have been handed out. Out-of-hours HR access logs from January. An unsent voice memo from Nikhil. Take 10 minutes — talk it through in CHAT. When voting closes, you cannot change your vote."',
+    announce: '"Round 5. The last bombshells. Two final cards have been handed out. Out-of-hours HR access logs from January. An unsent voice memo from Nikhil. Take 10 minutes — talk it through in COMMS. When voting closes, you cannot change your vote."',
     during: 'Build dramatic tension. About a minute before time, call out "voting closes in 60 seconds."',
     end: 'Press "🔒 CLOSE VOTING". Then press "+" to advance to Round 6.'
   },

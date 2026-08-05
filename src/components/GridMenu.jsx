@@ -29,18 +29,12 @@ const ChatIcon = ({ className }) => (
 );
 
 // An open case file with a bookmark — the story as a bound document rather than
-// a loose clipping, which is what separates it at a glance from Archives.
+// a loose clipping, which is what separates it at a glance from the Guide.
 const BookIcon = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={ICON_STROKE}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M4 5.5A1.5 1.5 0 015.5 4H10a2 2 0 012 2v13a2 2 0 00-2-2H4V5.5z" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M20 5.5A1.5 1.5 0 0018.5 4H14a2 2 0 00-2 2v13a2 2 0 012-2h6V5.5z" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M16 4v5l1.5-1L19 9V4" />
-  </svg>
-);
-
-const FolderIcon = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={ICON_STROKE}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
   </svg>
 );
 
@@ -100,19 +94,23 @@ export default function GridMenu({ onNavigate, currentRound = 0, isVotingOpen = 
 
   const tileMotion = playIntro ? 'er-land' : 'er-enter-quick';
 
-  // Nine tiles, so EXIT spans the row rather than sitting alone in a half-empty
-  // one. That reads as a footer control instead of a ninth destination, which is
-  // what it is — and it keeps the eight paper tiles a clean 4×2 board. The
-  // differentiation is surface, not hue (§2.2): ink, not paper.
+  // Six destinations in a clean 3×2 board, then two full-width strips.
+  //
+  // Archives used to be the seventh tile; it is now the lower region of Evidence,
+  // since both screens were the same act — reading a document you were handed.
+  // That left an odd number of tiles, so GUIDE joins EXIT as a strip rather than
+  // sitting beside a hole in the board. It earns that: both are utilities, not
+  // places in the fiction — one explains the app, the other leaves it. The
+  // differentiation stays surface, not hue (§2.2) — GUIDE is still paper, EXIT
+  // is ink.
   const menuItems = [
     { id: 'dashboard', label: 'Identity',  sub: 'Confidential', icon: FingerprintIcon, tone: 'bone',  rot: 'er-rotL' },
     { id: 'story',     label: 'Story',     sub: 'The Night',    icon: BookIcon,        tone: 'aged',  rot: 'er-rotR' },
-    { id: 'intel',     label: 'Evidence',  sub: 'Board',        icon: ClipboardIcon,   tone: 'bone',  rot: 'er-rotR' },
+    { id: 'intel',     label: 'Evidence',  sub: 'Clues & Files', icon: ClipboardIcon,  tone: 'bone',  rot: 'er-rotR' },
     { id: 'chat',      label: 'Comms',     sub: 'Encrypted',    icon: ChatIcon,        tone: 'aged',  rot: 'er-rotL' },
     { id: 'votes',     label: 'Vote',      sub: isVotingOpen ? 'Open Now' : 'Standby', icon: ChartIcon, tone: 'vote', rot: 'er-rotL' },
-    { id: 'files',     label: 'Archives',  sub: 'Case Files',   icon: FolderIcon,      tone: 'aged',  rot: 'er-rotR' },
     { id: 'dossier',   label: 'Suspects',  sub: 'Profiles',     icon: UsersIcon,       tone: 'bone',  rot: 'er-rotR' },
-    { id: 'help',      label: 'Guide',     sub: 'Read Me',      icon: HelpIcon,        tone: 'aged',  rot: 'er-rotL' },
+    { id: 'help',      label: 'Guide',     sub: 'Read Me',      icon: HelpIcon,        tone: 'aged',  rot: '', wide: true },
     { id: 'logout',    label: 'Exit',      sub: 'End Session',  icon: LogoutIcon,      tone: 'ink',   rot: '', wide: true },
   ];
 

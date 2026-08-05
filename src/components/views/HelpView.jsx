@@ -14,8 +14,9 @@ import { SCREEN_GUIDE } from '../../data/screenGuide';
 // Same copy the pinned screen notes use, so the Guide and the screens can never
 // describe the app differently — see data/screenGuide.js. Listed in board order,
 // and only the screens the grid actually reaches (which is why Timeline, whose
-// view exists but has no tile, isn't here).
-const SCREENS = ['dashboard', 'story', 'intel', 'chat', 'votes', 'files', 'dossier'].map(
+// view exists but has no tile, isn't here — and why Archives isn't, now that the
+// case files live inside Evidence).
+const SCREENS = ['dashboard', 'story', 'intel', 'chat', 'votes', 'dossier'].map(
   (id) => [SCREEN_GUIDE[id].title, SCREEN_GUIDE[id].detail]
 );
 
