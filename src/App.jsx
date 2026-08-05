@@ -11,15 +11,19 @@ import { ChatView } from './components/views/ChatView';
 import { VotingView } from './components/views/VotingView';
 import { TimelineView } from './components/views/TimelineView';
 import { HelpView } from './components/views/HelpView';
+import { StoryView } from './components/views/StoryView';
 import { GuestProfileModal } from './components/modals/GuestProfileModal';
 import { DecoderModal } from './components/modals/DecoderModal';
 import { VoteResultsModal } from './components/modals/VoteResultsModal';
+import { ScreenBrief } from './components/ui/ScreenBrief';
 import { CharacterSelect } from './components/CharacterSelect';
 import { HostPanel } from './components/HostPanel';
 import { SplashScreen } from './components/SplashScreen';
+import { StoryIntro } from './components/StoryIntro';
 import { OutroSplash } from './components/OutroSplash';
 import { MurdererRevealOverlay } from './components/MurdererRevealOverlay';
 import { ROUNDS, CHARACTERS, CLUE_DB, getAssignedAccusation, CONFESSION_CLUE, isMurderer } from './data/gameData';
+import { SCREEN_GUIDE } from './data/screenGuide';
 import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue } from './firebase/config';
 
 // Session is persisted so a reload — whether the host's force-sync broadcast, a
@@ -27,6 +31,36 @@ import { initializeGameState, subscribeToGameState, initializeVotes, subscribeTo
 // them back where they were instead of at the login screen. Mid-event, making
 // 32 people re-enter their printed codes is not a recoverable situation.
 const SESSION_KEY = 'astral.session';
+
+// Every screen wears the same three-part frame (DESIGN_LANGUAGE.md §4.2):
+// chrome → hairline → kicker + title → content → hairline → footer. The kicker
+// is 11px mono in signal-lift, the title is 32px display in bone. Kickers,
+// titles and the screen notes that sit under them all come from SCREEN_GUIDE.
+
+// ChatView owns the full viewport below the chrome rail so its composer can
+// stay pinned above the keyboard. Everything else flows in the normal document.
+const SELF_FRAMED_VIEWS = new Set(['chat']);
+
+// How long to wait for the first Firestore snapshot before giving up and
+// rendering from the local defaults. Every screen below the login gate is chosen
+// from game state, so booting from `currentRound = 0` shows the Round 0 briefing
+// to a player who reloaded during Round 4. The timeout is the backstop: on a dead
+// network a player must still reach the app, late and wrong, rather than sit on a
+// holding screen forever.
+const STATE_SETTLE_MS = 1500;
+
+// A single beat while that first snapshot lands. Same masthead as the splash, so
+// a reload reads as the app still booting rather than as a blank screen.
+const CaseHold = () => (
+  <div className="min-h-screen bg-ink relative er-grain flex items-center justify-center px-6">
+    <div className="er-vignette" aria-hidden="true" />
+    <div className="relative z-10 text-center er-enter">
+      <p className="er-mono er-mono--hot er-mono--wide">Case 8821-B</p>
+      <div className="er-rule my-4" />
+      <p className="er-mono er-mono--dim">Syncing case file</p>
+    </div>
+  </div>
+);
 
 const readSession = () => {
   try {
@@ -63,11 +97,36 @@ export default function App() {
   // Local UI State
   const [inputCode, setInputCode] = useState("");
   const [feedback, setFeedback] = useState(null);
+  // The clue this device decoded most recently. IntelView uses it to unseal that
+  // one card with a redaction wipe (§6.7) instead of having it simply appear —
+  // the player almost always arrives on the board *after* the clue is already in
+  // the list, so without knowing which one is new there is no moment to play.
+  const [justUnlockedClue, setJustUnlockedClue] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [hostPanelOpen, setHostPanelOpen] = useState(false);
   const [showVoteResults, setShowVoteResults] = useState(false);
   const [isHost, setIsHost] = useState(() => readSession().isHost);
+
+  // True once the real game state is known — the first Firestore snapshot, or the
+  // STATE_SETTLE_MS backstop, whichever comes first.
+  const [stateSettled, setStateSettled] = useState(false);
+
+  // The Round 0 briefing (components/StoryIntro.jsx).
+  //   'pending' → the round isn't known yet, so it isn't decided
+  //   'open'    → the briefing owns the screen
+  //   'done'    → dismissed, or the game had already moved past Round 0
+  //
+  // Deliberately NOT persisted. The briefing plays on every login and every
+  // reload for as long as the game is still in Round 0, which is what a room of
+  // 32 people arriving at different times needs; once the host advances, it never
+  // interrupts anyone again. A logout resets it to 'pending' so the next player on
+  // a shared device gets it too.
+  const [briefingState, setBriefingState] = useState('pending');
+
+  // Re-opened from the Story screen. Separate from the state above so replaying it
+  // in Round 5 can't be confused with the Round 0 takeover.
+  const [briefingReplay, setBriefingReplay] = useState(false);
 
   // Last force-refresh timestamp this device has already acted on. A ref, not
   // state: it must survive re-renders without causing one, and comparing
@@ -104,6 +163,7 @@ export default function App() {
   // Subscribe to real-time game state changes
   useEffect(() => {
     const unsubscribe = subscribeToGameState((gameState) => {
+      setStateSettled(true);
       setCurrentRound(gameState.currentRound || 0);
       setIsVotingOpen(gameState.isVotingOpen || false);
       setUnlockedFiles(gameState.unlockedFiles || ['f_incident']);
@@ -128,6 +188,13 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  // Backstop for the snapshot above. Set in a timer callback, never in the effect
+  // body — the effect form is what `react-hooks/set-state-in-effect` rejects.
+  useEffect(() => {
+    const timer = setTimeout(() => setStateSettled(true), STATE_SETTLE_MS);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Mirror the session to localStorage so a reload restores it.
   useEffect(() => {
     try {
@@ -140,6 +207,14 @@ export default function App() {
       // Storage unavailable — the app still works, it just won't survive reloads.
     }
   }, [currentUser, isHost]);
+
+  // Opening a screen starts it at the top. The document scroll position survives a
+  // tab change — it is the same document with a new subtree — so a player who had
+  // scrolled the board down to reach a tile landed part-way into whatever they
+  // opened. Most visible on the Story briefing, which is the tallest surface here.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [activeTab]);
 
   // Subscribe to real-time vote changes
   useEffect(() => {
@@ -194,6 +269,7 @@ export default function App() {
         addUnlockedClue(currentUser, foundClue.id)
           .then(() => {
             setFeedback({ type: 'success', msg: `EVIDENCE ADDED: ${foundClue.title}` });
+            setJustUnlockedClue(foundClue.id);
             setModalOpen(false);
             setActiveTab('intel');
           })
@@ -227,6 +303,21 @@ export default function App() {
 
   // --- RENDER ---
 
+  // Host identity is derived, not just stored: `isHost` is set at login, but
+  // `currentUser === 'host'` is the durable signal, so a stale or lost flag can
+  // never drop the admin into a player-facing terminal screen. Computed up here
+  // because the briefing decision below needs it before any early return.
+  const isHostUser = isHost || currentUser === 'host';
+
+  // Decide the briefing in the same render the round becomes known, rather than in
+  // an effect: an effect would paint the board for a frame first (spending the grid
+  // hub's once-per-session landing animation on a screen nobody sees), and setting
+  // state in one is what `react-hooks/set-state-in-effect` rejects. Adjusting state
+  // during render is React's documented pattern for exactly this.
+  if (briefingState === 'pending' && currentUser && !isHostUser && stateSettled) {
+    setBriefingState(currentRound === 0 ? 'open' : 'done');
+  }
+
   // Show splash screen on first load
   if (!splashComplete) {
     return <SplashScreen onComplete={() => setSplashComplete(true)} />;
@@ -239,10 +330,15 @@ export default function App() {
     return <CharacterSelect onSelectCharacter={handleLogin} />;
   }
 
-  // Host identity is derived, not just stored: `isHost` is set at login, but
-  // `currentUser === 'host'` is the durable signal, so a stale or lost flag can
-  // never drop the admin into a player-facing terminal screen.
-  const isHostUser = isHost || currentUser === 'host';
+  // Every screen from here down is chosen from game state, so a player must not
+  // reach any of them until that state is known — otherwise a reload mid-game
+  // shows the wrong one (the Round 0 briefing, or the board a beat before the
+  // murderer reveal replaces it) for as long as the snapshot takes to arrive.
+  // The host is exempt: the console is safe from the first frame and the run sheet
+  // is the thing they are most likely to be reloading to get back to.
+  if (!isHostUser && !stateSettled) {
+    return <CaseHold />;
+  }
 
   // Public murderer reveal — terminal screen for all non-host players except
   // the murderer themselves (Alam falls through to the OutroSplash branch).
@@ -257,20 +353,52 @@ export default function App() {
     return <OutroSplash playerName={myCharacter?.name || 'Player'} />;
   }
 
+  // The briefing. Below the terminal screens, so no game state can route a device
+  // around them, and above the board, because at Round 0 the story is the first
+  // thing a player should be given — before they have any idea what the tiles are
+  // for. Both exits land back here with the state flipped, never dead-ended.
+  if (briefingReplay) {
+    return (
+      <StoryIntro
+        onExit={() => setBriefingReplay(false)}
+        exitLabel="Close"
+        finalLabel="Close"
+      />
+    );
+  }
+
+  if (briefingState === 'open') {
+    return (
+      <StoryIntro
+        onExit={() => setBriefingState('done')}
+        exitLabel="Skip"
+        finalLabel="Begin"
+      />
+    );
+  }
+
   // Show Grid Menu when no tab is active
   if (!activeTab) {
     const handleNavigate = (tabId) => {
       if (tabId === 'logout') {
         setCurrentUser(null);
         setIsHost(false); // otherwise the persisted host flag outlives the logout
+        // Undecide the briefing: the next player to log in on this device is a
+        // different person, and if the game is still in Round 0 they need it.
+        setBriefingState('pending');
       } else {
         setActiveTab(tabId);
       }
     };
 
     return (
-      <div className="min-h-screen bg-mystery-dark">
-        <GridMenu onNavigate={handleNavigate} voteCounts={voteCounts} />
+      <div className="min-h-screen bg-ink">
+        <GridMenu
+          onNavigate={handleNavigate}
+          currentRound={currentRound}
+          isVotingOpen={isVotingOpen}
+          note={SCREEN_GUIDE.hub}
+        />
 
         {/* Decoder Modal */}
         <DecoderModal
@@ -287,40 +415,44 @@ export default function App() {
     );
   }
 
-  // Full Screen View with Close Button
-  return (
-    <div className="min-h-screen bg-mystery-paper text-mystery-ink relative overflow-hidden view-container">
-       {/* Background Texture */}
-       <div 
-        className="absolute inset-0 opacity-10 pointer-events-none z-0"
-        style={{
-          backgroundImage: "url('https://www.transparenttextures.com/patterns/aged-paper.png')"
-        }}
-      />
-      
-      {/* Decorative top bar (Tape) */}
-      <div className="fixed top-0 left-0 w-full h-1 bg-mystery-blood/50 z-50"></div>
-      
-      {/* Close Button - Red Stamp Style */}
-      <button
-        onClick={() => setActiveTab(null)}
-        className="fixed top-3 right-3 z-50 w-12 h-12 bg-mystery-blood text-white rounded-full flex items-center justify-center hover:bg-red-700 transition-all active:scale-95 shadow-lg border-2 border-white/20"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-6 h-6">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
+  const screen = SCREEN_GUIDE[activeTab] || { kicker: 'File', title: activeTab };
+  const isSelfFramed = SELF_FRAMED_VIEWS.has(activeTab);
 
-      {/* Header */}
-      <Header 
+  // Ink is the world; only diegetic documents get a bone surface (§5).
+  //
+  // `overflow-x-clip` on the root: the atmospheric lamp is a 640px radial wash
+  // anchored at left:-220px, so on a 390px phone it pushed the document 30px
+  // wider than the viewport and every screen could be dragged sideways into
+  // dead space. GridMenu and CharacterSelect already clipped it; this root never
+  // did. `clip` rather than `hidden` because `hidden` would make this a scroll
+  // container and take the sticky chrome rail with it.
+  return (
+    <div className="min-h-screen bg-ink text-bone relative view-container er-grain overflow-x-clip">
+      <div className="er-lamp" aria-hidden="true" />
+
+      {/* Chrome rail */}
+      <Header
         currentRound={currentRound}
         currentRoundData={currentRoundData}
+        isVotingOpen={isVotingOpen}
+        onClose={() => setActiveTab(null)}
       />
 
       {/* Main Content */}
-      <main className="relative z-10 p-3 sm:p-4 max-w-2xl mx-auto space-y-6 sm:space-y-8 pb-24">
+      <main className={`relative z-10 px-4 pt-6 pb-28 mx-auto ${activeTab === 'host' ? 'max-w-4xl' : 'max-w-2xl'}`}>
         {/* Feedback Toast */}
         <FeedbackToast feedback={feedback} />
+
+        {/* Kicker + screen title, then the screen note (§6.10) — which explains
+            what the screen is for and clears itself at Round 02. Self-framed
+            views draw both themselves. */}
+        {!isSelfFramed && (
+          <div className="mb-6 er-enter">
+            <p className="er-mono er-mono--hot er-mono--wide">{screen.kicker}</p>
+            <h1 className="er-title mt-2">{screen.title}</h1>
+            <ScreenBrief note={screen} currentRound={currentRound} className="mt-5" />
+          </div>
+        )}
 
         {/* View Routing */}
         {activeTab === 'host' && (
@@ -347,18 +479,28 @@ export default function App() {
           <DashboardView myCharacter={myCharacter} currentRound={currentRound} />
         )}
 
+        {activeTab === 'story' && (
+          <StoryView onReplay={() => setBriefingReplay(true)} />
+        )}
+
         {activeTab === 'intel' && (
-          <IntelView 
-            unlockedClues={unlockedClues} 
+          <IntelView
+            unlockedClues={unlockedClues}
             myAccusation={myAccusation}
             confession={shouldShowConfession ? CONFESSION_CLUE : null}
             currentRound={currentRound}
             revealedClues={revealedClues}
+            justUnlockedClue={justUnlockedClue}
           />
         )}
 
         {activeTab === 'chat' && (
-          <ChatView myCharacter={myCharacter} voteCounts={voteCounts} currentRound={currentRound} />
+          <ChatView
+            myCharacter={myCharacter}
+            voteCounts={voteCounts}
+            currentRound={currentRound}
+            note={screen}
+          />
         )}
 
         {activeTab === 'timeline' && (
@@ -392,14 +534,31 @@ export default function App() {
           <HelpView />
         )}
 
-        {/* Decoder FAB - Only show on Intel/Clues screen */}
+        {/* Footer rail — closes the frame (§4.2). */}
+        {!isSelfFramed && (
+          <div className="mt-10">
+            <div className="er-rule" />
+            <div className="flex items-center justify-between pt-3">
+              <span className="er-mono">Case 8821-B</span>
+              <span className="er-mono er-mono--dim">
+                {myCharacter?.name ? `Agent · ${myCharacter.name}` : 'Astral Project'}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Decoder — square, because the decoder is chrome, not paper. It lands
+            in a beat after the screen so it reads as arriving *for* this screen
+            rather than as part of the frame. */}
         {activeTab === 'intel' && (
           <button
             onClick={() => setModalOpen(true)}
-            className="fixed bottom-6 right-6 w-16 h-16 bg-mystery-ink text-mystery-paper border-2 border-mystery-paper rounded-full shadow-2xl flex items-center justify-center hover:scale-105 transition-all z-40 active:scale-95"
+            aria-label="Enter a clue code"
+            className="er-touch er-land fixed bottom-6 right-4 z-40 flex flex-col items-center justify-center gap-1 w-16 h-16 bg-ink-raised border border-signal text-signal-lift shadow-[0_12px_28px_rgba(0,0,0,0.6)]"
+            style={{ animationDelay: '260ms' }}
           >
-            <Calculator size={32} className="opacity-80" />
-            <div className="absolute inset-0 rounded-full border border-white/10"></div>
+            <Calculator size={22} strokeWidth={1.75} />
+            <span className="er-mono er-mono--hot text-[9px]">Code</span>
           </button>
         )}
       </main>
@@ -421,24 +580,6 @@ export default function App() {
         onSubmit={handleCodeSubmit}
         onClose={() => setModalOpen(false)}
       />
-
-      {/* View Transition Animation */}
-      <style>{`
-        .view-container {
-          animation: slideInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        
-        @keyframes slideInUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      `}</style>
     </div>
   );
 }

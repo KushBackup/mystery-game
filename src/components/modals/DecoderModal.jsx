@@ -1,48 +1,76 @@
 import React from 'react';
-import { X, ChevronRight } from '../icons/IconComponents';
+import { X } from '../icons/IconComponents';
 
-export const DecoderModal = ({ 
-  isOpen, 
-  inputCode, 
-  onInputChange, 
-  onSubmit, 
-  onClose 
-}) => {
+/**
+ * The decoder (DESIGN_LANGUAGE.md §9). The code field is a fill-in blank
+ * (§6.9) — a value the system knows is deliberately missing, marked with a
+ * signal tint and a dashed signal underline rather than a normal input chrome.
+ */
+export const DecoderModal = ({ isOpen, inputCode, onInputChange, onSubmit, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/90 backdrop-blur-md animate-fade-in p-0 sm:p-4">
-      <div className="bg-mystery-charcoal w-full max-w-md p-8 border-2 border-mystery-blood shadow-2xl relative sm:rounded-none mt-0">
-        <button 
+    <div
+      // The backdrop fades in under the card rather than appearing with it, so
+      // the screen behind recedes instead of being cut away.
+      className="er-fade fixed inset-0 z-50 flex items-start sm:items-center justify-center bg-ink/95 px-4 pt-16 sm:pt-4 pb-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Enter a clue code"
+      onClick={(e) => {
+        // Tapping outside dismisses. The decoder is opened far more often than
+        // it is submitted — a player checks it, sees they have no card to hand,
+        // and backs out — so the escape has to be as cheap as the entry.
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="er-card er-card--signal er-land w-full max-w-md p-5 sm:p-6 shadow-[0_24px_60px_rgba(0,0,0,0.7)]">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="er-mono er-mono--hot er-mono--wide">Decoder</p>
+            <h2 className="er-title text-[28px] mt-2">Enter Code</h2>
+          </div>
+          <button
             onClick={onClose}
-            className="absolute top-4 right-4 bg-mystery-blood text-white p-3 hover:bg-red-700 transition-all shadow-lg border-2 border-white/20 hover:scale-110"
-        >
-            <X size={24} />
-        </button>
-        <div className="flex flex-col items-center mb-8 mt-2">
-            <div className="text-6xl mb-4 animate-pulse">🔓</div>
-            <h3 className="text-4xl font-typewriter font-bold text-mystery-paper uppercase tracking-widest">Enter Code</h3>
-            <p className="text-mystery-aged font-body mt-3 text-center text-base">Found a clue? Unlock it here.</p>
+            aria-label="Close decoder"
+            className="er-touch flex items-center justify-center w-11 h-11 border border-line text-bone hover:border-signal hover:text-signal-lift shrink-0"
+          >
+            <X size={20} />
+          </button>
         </div>
-        <form onSubmit={onSubmit} className="space-y-5 pb-6 sm:pb-0">
-            <input 
-                type="text" 
-                value={inputCode}
-                onChange={onInputChange}
-                placeholder="SECRET CODE..."
-                className="w-full bg-mystery-paper border-2 border-mystery-ink text-mystery-ink text-center text-3xl font-typewriter font-bold py-4 focus:outline-none focus:ring-2 focus:ring-mystery-blood uppercase tracking-widest placeholder:text-mystery-aged/50 shadow-lg"
-                autoFocus
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="characters"
-            />
-            <button 
-                type="submit"
-                className="w-full bg-mystery-blood hover:bg-red-700 text-white text-2xl font-typewriter font-bold py-4 border-2 border-white/20 shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 uppercase"
-            >
-                🔓 UNLOCK <ChevronRight size={28} />
-            </button>
+
+        <div className="er-rule my-5" />
+
+        <form onSubmit={onSubmit}>
+          <label className="er-mono er-mono--dim block mb-3" htmlFor="clue-code">
+            Code from a printed card
+          </label>
+
+          <input
+            id="clue-code"
+            type="text"
+            value={inputCode}
+            onChange={onInputChange}
+            placeholder="——————"
+            className="er-blank w-full text-center text-[28px] font-medium py-3 px-2"
+            autoFocus
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="characters"
+          />
+
+          <button
+            type="submit"
+            disabled={!inputCode.trim()}
+            className="er-touch er-touch--hot w-full mt-6 bg-signal text-white py-4 px-6 font-mono text-[12px] font-medium uppercase tracking-[0.24em] border border-signal disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Unseal
+          </button>
         </form>
+
+        <p className="font-body text-[15px] leading-[1.55] text-dim mt-5">
+          Codes that belong to a later round will not open yet.
+        </p>
       </div>
     </div>
   );

@@ -86,4 +86,66 @@ When the same lesson recurs, **edit the existing entry** rather than adding a du
 
 ---
 
+### 2026-08-02 — Unlayered CSS silently outranks every Tailwind utility
+
+**What happened:** Applying the Evidence Room system, I built the `.er-*` component vocabulary in [src/App.css](src/App.css) and imported it from [src/main.jsx](src/main.jsx) after `index.css`, reasoning that "later import wins". It does — far too well. Unlayered CSS beats *every* rule inside a cascade layer regardless of specificity, and all Tailwind v4 utilities live in `@layer utilities`. So `.er-title { font-size: 32px }` silently overrode `text-[28px]` at six call sites, and `er-card p-0` on the host run sheet kept its 16px padding. Nothing errored; the build was clean; the pages just quietly ignored half my sizing.
+
+**Why it was wrong:** I reasoned about source order and forgot that cascade layers sit *above* specificity and source order in the cascade. Two related traps in the same file: `.er-bone > * { position: relative }` would have killed every absolutely-positioned child (coffee stains, badges, tape), and `.er-rotL { transform: rotate(...) }` was being wiped out by `.er-touch:active { transform: scale(.98) }` on every tap, since `transform` is one property, not a list.
+
+**What to do instead:** Import a component-class file into the layer it belongs to — `@import "./App.css" layer(components);` from `index.css`, never a bare JS import — and verify by reading the built CSS, not by assuming: `grep '@layer' dist/assets/*.css` shows the declared order, and the block a class lands in tells you who wins. For composable transforms use the independent `rotate`/`scale`/`translate` properties. For a background layer inside a card use `isolation: isolate` on the parent plus `z-index: -1` on the pseudo-element, rather than forcing `position: relative` onto all children.
+
+---
+
+### 2026-08-02 — Verify a UI restyle by driving the real app, not by reading the diff
+
+**What happened:** After restyling all 20 components, lint and build were clean and every token compiled into the CSS. Two defects were still invisible from the source: the Evidence empty state rendered its three "sealed" placeholders as full-width wrapped blocks, producing three solid slabs of red — the exact thing [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §2.2 forbids — and the coffee-stain doodle sat across the character's name on the Identity card.
+
+**Why it was wrong:** Both are emergent layout facts. The redaction component was correct, the strings were just long enough to wrap; nothing in the JSX looks wrong. A green build proves the CSS exists, not that it looks right.
+
+**Recurrence — 2026-08-03, building the per-screen onboarding notes.** Same class of defect, caught the same way: the note's mono label `WHAT THIS SCREEN IS` wrapped to two lines at 390px, costing a line of height on all nine surfaces. Nothing in the JSX hints at it — 11px mono at `0.24em` tracking is just wider than it looks (budget ~9px per character for any label sharing a row). Driving the app also cheaply proved the *absence* case: temporarily setting `BRIEF_HIDDEN_FROM_ROUND` to 0 and re-running the capture confirmed all nine surfaces returned to their exact prior layout, which reading the gate could not.
+
+**What to do instead:** Drive the actual app and look at it. Chrome is already on this machine; `--headless=new --remote-debugging-port` plus a ~120-line Node script (Node 24 has a global `WebSocket`, so CDP needs no dependencies) can set `Emulation.setDeviceMetricsOverride` to 390×844, seed `localStorage['astral.session']` to skip the login gate, click through every screen and capture each one. Two things that matter when doing this against this project: **block `*firestore.googleapis.com*` via `Network.setBlockedURLs`** so a screenshot run can never write to the live game, and **call `Storage.clearDataForOrigin` first** — Firestore's IndexedDB cache persists between runs and will replay real game state (it did: the app booted straight into the murderer-reveal overlay). Also note `--window-size` on plain headless Chrome does not give you a matching layout viewport; use device metrics override instead of trusting a `--screenshot` at phone dimensions.
+
+---
+
+### 2026-08-04 — A decorative overflow is invisible in a screenshot and obvious on a phone
+
+**What happened:** Polishing every screen, I captured all fourteen at 390×844 and they looked correct. They were not. Measuring `documentElement.scrollWidth - clientWidth` showed **30px of horizontal overflow on every in-view screen** — the app's atmospheric lamp (`.er-lamp`) is a 640px radial wash anchored at `left: -220px`, so it extended to 420px in a 390px viewport. `GridMenu` and `CharacterSelect` happened to clip it; `App.jsx`'s root never did. On a phone that means every screen can be dragged sideways into 30px of dead space.
+
+**Why it was wrong:** A screenshot is taken at the viewport width, so overflow is exactly the thing it cannot show — the offending pixels are outside the frame. And the element is a `pointer-events: none` gradient at 8–10% opacity, so even scrolled into view there is almost nothing to see. Only the number reveals it. I would have shipped it.
+
+**What to do instead:** Assert on the measurement, not the image: `scrollWidth - clientWidth === 0` on every screen, as a line in the capture run. To locate the culprit, walk every element and report any whose `getBoundingClientRect()` breaches the viewport — one probe named it in a single pass, which beats bisecting CSS. Fix with **`overflow-x: clip`, not `hidden`**: `hidden` makes the element a scroll container and takes `position: sticky` descendants with it, which would have broken the chrome rail. Same trap applies to any full-bleed decorative layer.
+
+---
+
+### 2026-08-04 — Verify an animation with `getComputedStyle`, not with a still or a pixel count
+
+**What happened:** I needed to prove a staggered redaction wipe actually ran — started covered, staggered across four bars, and finished fully open, including under `prefers-reduced-motion`. The established technique here was to render at scale 1 and sample pixels (2026-08-01), which meant decoding PNGs.
+
+**Why the better tool existed all along:** `getComputedStyle` returns the *resolved animated value* mid-animation. Reading `transform` on an animating element gives `matrix(a, …)` whose `a` **is** the current `scaleX` — an exact, unitless reading of a wipe's progress, with no image decoding and no thresholding. Sampling it at t = 0/120/260/420/700/1200ms produced `[1,1,1,1] → [0.23,0.74,1,1] → [0.03,0.10,0.31,0.97] → … → [0,0,0,0]`, which proves coverage, stagger, and completion in one trace. It reads pseudo-elements too — `getComputedStyle(el, '::after')` — which is the only way to check the round rail's fill, since that lives entirely in `::after`.
+
+**What to do instead:** For anything that *moves*, sample computed styles over time; save pixel sampling for things that are a *colour* (which is what the 2026-08-01 lesson was actually about). Two more things this made cheap: driving the host panel's `+` button advances the round through **local optimistic state**, so round-advance motion is testable with Firestore still blocked; and clicking it six times in 70ms proved the count-up resumes from the value on screen rather than the stale previous target — it went `00→01→02→03→04→05→06` with no backwards step and no overshoot, which is the bug a `from`-ref that isn't updated per frame would have produced.
+
+---
+
+### 2026-08-05 — A swipe handler can be silently outranked by the browser's back gesture
+
+**What happened:** Building the swipe-navigated Round 0 briefing, forward swipes worked and backward swipes appeared to *crash the app* — the screen went to bare ink and every subsequent probe returned nothing. I started looking for an exception in my touch handler. There was none: `document.getElementById('root')` was **null**, and no error had been logged. A rightward swipe starting near the left edge is Chrome's history-back gesture, so the whole document had been replaced. My handler never ran.
+
+**Why it was wrong:** I assumed a gesture that reaches a DOM element is mine to interpret. It isn't — the browser's own navigation gestures are resolved before any handler, and the failure looks exactly like a React crash from the outside. `body { overscroll-behavior: contain }` was *not* enough, because the briefing is a fixed, non-scrolling layer, so there is no scroll container to contain.
+
+**What to do instead:** Any screen that reads horizontal gestures sets `touch-action: none` on the surface itself. Verify the way this was diagnosed, too — `#root` presence and `document.body.innerText` in the probe are what separated "the app crashed" from "the app is gone", and only the second one points at the browser. A related trap in the same harness: a **cold** Chrome profile boots this app ~2s slower than a warm one, so a fixed `sleep` before a click silently clicks nothing. Poll for the control instead of sleeping.
+
+---
+
+### 2026-08-05 — Typed text reflows the page underneath it
+
+**What happened:** The briefing's slides type character by character. Rendering just the revealed slice means every word that wraps adds a line box, so the block grows line by line and pushes everything below it down — mid-sentence, while the player is reading. Nothing about the code looks wrong, and a still frame cannot show it.
+
+**Why it was wrong:** I was thinking about the text as a string, not as a box. The fix is the same one [`RedactedLines`](src/components/ui/RedactedLines.jsx) already uses for a different reason: render the **full** string in flow but `visibility: hidden` so it reserves the final height, then lay the revealed slice over it absolutely. The real copy sets the box; the animated layer rides on top.
+
+**What to do instead:** For anything that reveals text progressively, reserve the finished height first. And prove it by measuring, not looking: `getBoundingClientRect().top` of the *last* line at 20% typed and at 100% must be the same number (it was 450px both times). Sample after the container's entrance animation has finished, or the 1px of remaining `translateY` reads as a false positive — which it did on the first run.
+
+---
+
 <!-- Add new lessons above this line, newest first or oldest first — keep one consistent order. Current order: oldest first. -->

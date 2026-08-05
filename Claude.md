@@ -14,7 +14,7 @@ The folder lives at `d:\Unity Projects\mystery-game` for historical reasons, but
 
 ## TL;DR
 
-**Astral Project's Murder Mystery Experience** — a 32-player real-time web murder mystery party game. Players log in as one of 32 characters, decode clue codes across 7 rounds, chat in real time, vote on suspects, and ultimately uncover that the "victim" Rohan Sharma staged his own death with his wife Esha for ₹5 crore in life insurance. Built as an installable PWA with offline support, deployed to GitHub Pages at base path `/mystery-game/`.
+**Astral Project's Murder Mystery Experience** — a 32-player real-time web murder mystery party game. Players log in as one of 32 characters, decode clue codes across 7 rounds, chat in real time, vote on suspects, and ultimately uncover that the "victim" — Nikhil, TripleSpeed's Head of Marketing — staged his own death with Alam, the company's Head of HR, to collect on life insurance and collapse a SEBI fraud case against him. *(The Rohan/Esha version named here previously was an older draft of the story; the shipped narrative is Nikhil/Alam — see [STORY.md](STORY.md) and [memory.md](memory.md). [MYSTERY_IMPROVEMENTS_SUMMARY.md](MYSTERY_IMPROVEMENTS_SUMMARY.md) still describes that old draft and is historical only.)* Built as an installable PWA with offline support, deployed to GitHub Pages at base path `/mystery-game/`.
 
 ---
 
@@ -50,6 +50,9 @@ The files you will most often need to open:
 
 - [src/App.jsx](src/App.jsx) — main state machine, routing, Firebase wiring
 - [src/data/gameData.js](src/data/gameData.js) — 32 characters, ~30 clues, round definitions (the largest data file, ~2000 LOC)
+- [src/data/screenGuide.js](src/data/screenGuide.js) — per-screen kicker/title/brief/detail copy; feeds the screen frames, the onboarding notes and the Guide
+- [src/data/storyIntro.js](src/data/storyIntro.js) — the Round 0 case briefing: eight slides + the typing speed. **Spoiler-gated to Round 0 knowledge** — read the header before editing. Feeds both the fullscreen briefing and the Story screen
+- [src/components/StoryIntro.jsx](src/components/StoryIntro.jsx) — the fullscreen typed briefing (Round 0 takeover, and the replay from the Story screen)
 - [src/firebase/config.js](src/firebase/config.js) — Firestore real-time sync (votes, chat, game state)
 - [src/components/HostPanel.jsx](src/components/HostPanel.jsx) — admin controls (round advance, voting toggle, file unlocks)
 - [src/components/CharacterSelect.jsx](src/components/CharacterSelect.jsx) — login screen
@@ -58,6 +61,9 @@ The files you will most often need to open:
 - [src/components/modals/DecoderModal.jsx](src/components/modals/DecoderModal.jsx) — clue code entry
 - [src/components/modals/](src/components/modals/) — Decoder, GuestProfile, VoteResults
 - [src/components/icons/](src/components/icons/) — all SVG icons (no PNG/SVG asset files used)
+- [src/components/ui/](src/components/ui/) — the shared motion/vocabulary pieces: `Numeral` (counting brass figure), `RoundRail`, `RedactedLines`, `ScreenBrief`, `FeedbackToast`, `Doodles`
+- [src/hooks/](src/hooks/) — `useCountUp` (ticks a numeral on change, never on mount) and `useTypewriter` (character-at-a-time reveal on one rAF loop)
+- [src/lib/typeSound.js](src/lib/typeSound.js) — synthesized typewriter clicks + margin bell (Web Audio; **no audio files in this repo**), mute state in `localStorage['astral.sfx']`
 - [package.json](package.json) — dependencies & npm scripts
 - [vite.config.js](vite.config.js) — build config + PWA plugin
 - [tailwind.config.js](tailwind.config.js) — custom mystery theme palette
@@ -148,7 +154,9 @@ npm run deploy           # builds + pushes /dist to gh-pages branch (GitHub Page
 ## Code conventions
 
 - Functional React components + hooks only — no class components.
-- Tailwind utility classes; custom palette names: `mystery-paper`, `mystery-ink`, `mystery-blood`, `mystery-aged` (defined in [tailwind.config.js](tailwind.config.js)).
+- **The app runs on the "Evidence Room" design system** — see [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md). Palette names are `ink`, `ink-raised`, `ink-hover`, `bone`, `bone-aged`, `signal`, `signal-deep`, `signal-lift`, `brass`, `dim`, `dim-2`, `body-bone`, `line`, defined in the `@theme` block of [src/index.css](src/index.css). The old `mystery-*` palette is **deleted**.
+- **Never introduce a hue outside that list.** No `green-500`, no `blue-600`, no gradients. Differentiate by changing the *surface* (ink → bone) or the *label*, not the colour. Brass is for numerals only; red never fills a large area except the murderer reveal.
+- Reusable pieces are the `.er-*` classes in [src/App.css](src/App.css) (`er-card`, `er-bone`, `er-tag`, `er-mono`, `er-num`, `er-redact`, `er-stat`, `er-list`, `er-touch`, …). Prefer composing those over hand-rolling a new card.
 - All icons are inline SVG components in [src/components/icons/](src/components/icons/) — there are no PNG/raster assets in the repo.
 - No animation libraries (no Framer Motion, no GSAP). Custom CSS animations live in [src/App.css](src/App.css).
 - Game data is **hardcoded** in [src/data/gameData.js](src/data/gameData.js) — no CMS, no remote content fetch.
@@ -161,9 +169,12 @@ npm run deploy           # builds + pushes /dist to gh-pages branch (GitHub Page
 |---|---|---|
 | Add/change a clue code | [src/data/gameData.js](src/data/gameData.js) | Update [CLUE_CODES.md](CLUE_CODES.md) |
 | Add/edit a character | [src/data/gameData.js](src/data/gameData.js) — characters array | Stay within 32 slots; update [STORY.md](STORY.md) if backstory changes |
-| Theme/visual tweak | [tailwind.config.js](tailwind.config.js), [src/App.css](src/App.css), `@theme` in [src/index.css](src/index.css) | Follow [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md); Tailwind v4 only sees `tailwind.config.js` via the `@config` line in index.css |
+| Theme/visual tweak | `@theme` in [src/index.css](src/index.css) for tokens; [src/App.css](src/App.css) for `.er-*` components | Follow [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md). Colours go in `@theme`, **never** in `tailwind.config.js` (config colours don't emit CSS custom properties). `App.css` is imported by `index.css` as `layer(components)` — importing it from `main.jsx` instead would make every `.er-*` rule un-overridable by Tailwind utilities |
+| Motion / microinteraction | [src/App.css](src/App.css) §1 primitives; `.er-*` motion classes | Read [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) **§7.1 (motion restraint)** before adding, not just §7 — the hard part is knowing where *not* to animate. Name the transitioned properties; never a blanket one. Then verify by measuring `getComputedStyle` over time, not by looking at a screenshot |
 | New modal | [src/components/modals/](src/components/modals/) + wire from [src/App.jsx](src/App.jsx) | — |
-| New view/tab | [src/components/views/](src/components/views/) + wire in [src/App.jsx](src/App.jsx) and [src/components/GridMenu.jsx](src/components/GridMenu.jsx) | — |
+| New view/tab | [src/components/views/](src/components/views/) + wire in [src/App.jsx](src/App.jsx) and [src/components/GridMenu.jsx](src/components/GridMenu.jsx) | Add a `SCREEN_GUIDE` entry in [src/data/screenGuide.js](src/data/screenGuide.js) — that's where the kicker, title, onboarding note and Guide entry all come from |
+| Screen title / kicker / "what this screen is" copy | [src/data/screenGuide.js](src/data/screenGuide.js) only | Don't hardcode it in the view — the Guide reads the same entries, which is what stops the two drifting apart |
+| Story briefing copy or pacing | [src/data/storyIntro.js](src/data/storyIntro.js) only | It feeds both the fullscreen briefing and the Story screen. **Check any new line against the spoiler list in that file's header** — the toxin is Round 3, the cancer/SEBI/insurance are Round 4, the staging is Round 5+ |
 | Firestore schema change | [src/firebase/config.js](src/firebase/config.js) | Update [FIREBASE_VISUAL_GUIDE.md](FIREBASE_VISUAL_GUIDE.md); coordinate with user before deploying — breaks live games |
 | Host control | [src/components/HostPanel.jsx](src/components/HostPanel.jsx) | — |
 | PWA / service worker | [vite.config.js](vite.config.js) | Update [PWA_IMPLEMENTATION_COMPLETE.md](PWA_IMPLEMENTATION_COMPLETE.md) |
@@ -180,6 +191,8 @@ npm run deploy           # builds + pushes /dist to gh-pages branch (GitHub Page
 - ❌ Don't assume Unity tooling, Unity project structure, or C# scripts.
 - ❌ Don't add a test framework or CI config without asking — this project has chosen not to use one.
 - ❌ Don't introduce animation/UI libraries — the project deliberately uses plain CSS + Tailwind.
+- ❌ Don't add a colour outside the [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §2.1 table, and don't put `brass` on anything that isn't a numeral.
+- ❌ Don't import [src/App.css](src/App.css) from [src/main.jsx](src/main.jsx) — it must stay a `layer(components)` import inside [src/index.css](src/index.css).
 
 ---
 

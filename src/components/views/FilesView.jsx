@@ -1,88 +1,128 @@
 import React from 'react';
-import { Paperclip, Lock } from '../icons/IconComponents';
 import { DoodleCoffeeStain, DoodleCCTV } from '../ui/Doodles';
 import { CASE_FILES } from '../../data/gameData';
+import { Numeral } from '../ui/Numeral';
 
-export const FilesView = ({ unlockedFiles = [], currentRound = 0 }) => {
-  // Filter files that are unlocked
-  const availableFiles = CASE_FILES.filter(file => unlockedFiles.includes(file.id));
-  
-  // Get locked file info for display
-  const lockedFilesInfo = [
-    { round: 0, label: 'Incident Report', count: CASE_FILES.filter(f => f.roundReq === 0).length },
-    { round: 3, label: 'Evidence Files', count: CASE_FILES.filter(f => f.roundReq === 3).length },
-    { round: 4, label: 'Revelation Files', count: CASE_FILES.filter(f => f.roundReq === 4).length },
-  ].filter(info => {
-    const filesForRound = CASE_FILES.filter(f => f.roundReq === info.round);
-    return !filesForRound.every(f => unlockedFiles.includes(f.id));
-  });
+/**
+ * The archives (DESIGN_LANGUAGE.md §9, "Archives").
+ *
+ * Files the host has released are bone documents. Files still sealed are ghost
+ * tags carrying their round number — a state that is not yet true, drawn as an
+ * outline rather than a fill (§6.1).
+ */
+export const FilesView = ({ unlockedFiles = [] }) => {
+  const availableFiles = CASE_FILES.filter((file) => unlockedFiles.includes(file.id));
+
+  const lockedRounds = [
+    { round: 0, label: 'Incident Report' },
+    { round: 3, label: 'Evidence Files' },
+    { round: 4, label: 'Revelation Files' },
+  ]
+    .map((info) => ({
+      ...info,
+      count: CASE_FILES.filter((f) => f.roundReq === info.round).length,
+      pending: CASE_FILES.filter((f) => f.roundReq === info.round && !unlockedFiles.includes(f.id)).length,
+    }))
+    .filter((info) => info.pending > 0);
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-fade-in">
-      <h2 className="text-2xl sm:text-3xl font-typewriter font-bold text-mystery-paper text-center uppercase tracking-widest">Archives</h2>
-      
-      {/* Locked Files Indicator */}
-      {lockedFilesInfo.length > 0 && (
-        <div className="bg-mystery-charcoal border-2 border-dashed border-mystery-aged/30 p-4">
-          <div className="flex items-center gap-2 text-mystery-aged mb-2">
-            <Lock size={16} />
-            <span className="font-typewriter font-bold text-sm uppercase">Awaiting Authorization</span>
-          </div>
-          <div className="space-y-1">
-            {lockedFilesInfo.map(info => (
-              <p key={info.round} className="text-xs text-mystery-aged/70 font-body">
-                🔒 {info.label} ({info.count} {info.count === 1 ? 'file' : 'files'}) - Round {info.round}+
-              </p>
+    <div className="space-y-5">
+      {/* Stat */}
+      <div className="er-stat flex items-end justify-between gap-4">
+        <div>
+          {/* Ticks when the host releases a batch mid-screen. */}
+          <Numeral as="p" value={availableFiles.length} pad={2} className="er-stat__num" />
+          <p className="er-stat__label">Released</p>
+        </div>
+        <div className="text-right">
+          <p className="er-stat__num">{String(CASE_FILES.length).padStart(2, '0')}</p>
+          <p className="er-stat__label">On file</p>
+        </div>
+      </div>
+
+      {/* Awaiting authorisation */}
+      {lockedRounds.length > 0 && (
+        <div className="er-card">
+          <p className="er-mono er-mono--wide er-mono--bone">Awaiting authorisation</p>
+          <div className="flex flex-wrap gap-2 mt-4">
+            {lockedRounds.map((info) => (
+              <span key={info.round} className="er-tag er-tag--ghost">
+                Round {String(info.round).padStart(2, '0')} · {info.pending}{' '}
+                {info.pending === 1 ? 'file' : 'files'}
+              </span>
             ))}
           </div>
+          <p className="font-body text-[15px] leading-[1.55] text-dim mt-4">
+            The host releases these as the investigation moves.
+          </p>
         </div>
       )}
 
-      {/* No Files Message */}
+      {/* Nothing released yet */}
       {availableFiles.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">📁</div>
-          <p className="text-mystery-aged font-typewriter font-bold">No files available yet</p>
-          <p className="text-mystery-aged/70 text-sm mt-2 font-body">The host will unlock evidence as the investigation progresses</p>
+        <div className="er-card">
+          <p className="er-mono er-mono--wide er-mono--bone">Archive empty</p>
+          <p className="font-body text-[15px] leading-[1.55] text-dim mt-3">
+            No case files have been released to the room yet.
+          </p>
         </div>
       )}
 
-      {/* Available Files */}
-      {availableFiles.map((file, idx) => {
-        const rotate = idx % 2 === 0 ? 'rotate-[1deg]' : 'rotate-[-1deg]';
-        return (
-          <div key={file.id} className={`bg-mystery-paper border-2 border-mystery-ink shadow-2xl p-4 relative ${rotate}`}>
-            <div className="absolute -top-4 right-8 text-mystery-ink/40 transform -rotate-45">
-              <Paperclip size={32} className="sm:w-10 sm:h-10" />
-            </div>
-            {/* Round Badge */}
-            <div className="absolute top-2 left-2 bg-mystery-blood text-white text-[10px] font-typewriter font-bold px-2 py-0.5">
-              R{file.roundReq}
-            </div>
-            {file.type === 'REPORT' && (
-              <div className="relative overflow-hidden pt-4">
-                <DoodleCoffeeStain />
-                <div className="border-b-2 border-mystery-ink pb-2 mb-4 flex flex-col sm:flex-row sm:justify-between sm:items-end gap-1">
-                  <h3 className="text-xl sm:text-2xl font-typewriter font-bold uppercase text-mystery-ink leading-none">{file.title}</h3>
-                  <span className="font-typewriter text-[10px] sm:text-xs bg-mystery-aged/30 px-2 py-1 w-fit">{file.date}</span>
-                </div>
-                <p className="font-body text-base sm:text-lg leading-relaxed text-mystery-ink whitespace-pre-line">{file.content}</p>
-              </div>
-            )}
-            {file.type === 'IMAGE' && (
-              <div className="flex flex-col items-center pt-4">
-                <div className="bg-stone-900 p-2 pb-8 shadow-sm transform rotate-1 w-full max-w-[200px] sm:max-w-[250px] relative">
-                  <div className="bg-white aspect-square w-full flex items-center justify-center overflow-hidden border border-stone-200">
-                    <DoodleCCTV type={file.sketchType} />
-                  </div>
-                  <p className="text-white font-handwriting text-center mt-2 text-xs sm:text-sm">{file.title}</p>
-                </div>
-                <p className="mt-4 text-center font-handwriting text-xl text-mystery-ink italic bg-mystery-aged/30 px-4 py-2 transform -rotate-1 shadow-sm border border-mystery-ink/20">"{file.caption}"</p>
-              </div>
-            )}
+      {/* Released files — paper */}
+      {availableFiles.map((file, idx) => (
+        <article
+          key={file.id}
+          className={`er-bone er-pin ${idx % 2 === 0 ? 'er-rotR' : 'er-rotL'} er-land p-5 sm:p-6`}
+          style={{ animationDelay: `${Math.min(idx, 6) * 70}ms` }}
+        >
+          <div className="flex items-start justify-between gap-3">
+            <p className="er-bone-label">
+              {file.type === 'IMAGE' ? 'Photographic Exhibit' : 'Case Document'}
+            </p>
+            <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-body-bone/70">
+              R{String(file.roundReq).padStart(2, '0')}
+            </span>
           </div>
-        );
-      })}
+          <div className="er-bone-rule mt-2 mb-5" />
+
+          {file.type === 'REPORT' && (
+            <div className="relative">
+              <DoodleCoffeeStain />
+              <h3 className="font-typewriter font-bold uppercase text-ink text-[20px] sm:text-[24px] leading-[1.1]">
+                {file.title}
+              </h3>
+              {file.date && (
+                <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-body-bone/70 mt-2">
+                  {file.date}
+                </p>
+              )}
+              <p className="er-bone-body mt-4 whitespace-pre-line">{file.content}</p>
+            </div>
+          )}
+
+          {file.type === 'IMAGE' && (
+            <div>
+              <h3 className="font-typewriter font-bold uppercase text-ink text-[20px] sm:text-[24px] leading-[1.1] mb-4">
+                {file.title}
+              </h3>
+
+              {/* The print itself: an ink object sitting on the paper. */}
+              <div className="bg-ink p-2 max-w-[260px] mx-auto">
+                <div className="bg-bone-aged aspect-square w-full flex items-center justify-center overflow-hidden">
+                  <DoodleCCTV type={file.sketchType} />
+                </div>
+                <p className="er-mono er-mono--dim text-center mt-2 mb-1">{file.title}</p>
+              </div>
+
+              {file.caption && (
+                <p className="font-handwriting text-[21px] leading-[1.35] text-ink mt-5 -rotate-1 origin-left">
+                  “{file.caption}”
+                </p>
+              )}
+            </div>
+          )}
+        </article>
+      ))}
     </div>
   );
 };

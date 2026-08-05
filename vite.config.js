@@ -13,8 +13,11 @@ export default defineConfig({
         name: 'Astral Project The Murder Mystery Experience',
         short_name: 'The Murder Mystery Experience',
         description: 'An interactive murder mystery party game where you investigate clues and vote for the killer',
-        theme_color: '#dc2626',
-        background_color: '#1c1917',
+        // Evidence Room ink (DESIGN_LANGUAGE.md §2.1) — the splash and the
+        // installed app's chrome open on the same near-black the app itself
+        // uses, so there is no colour jump on launch.
+        theme_color: '#0C0D0F',
+        background_color: '#0C0D0F',
         display: 'standalone',
         orientation: 'portrait-primary',
         icons: [

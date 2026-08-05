@@ -1,31 +1,70 @@
 import React from 'react';
-import { Ghost } from '../icons/IconComponents';
+import { X } from '../icons/IconComponents';
+import { Numeral } from '../ui/Numeral';
+import { RoundRail } from '../ui/RoundRail';
+import { ROUNDS } from '../../data/gameData';
 
-export const Header = ({ currentRound, currentRoundData, onSecretTap }) => {
+/**
+ * The chrome rail (DESIGN_LANGUAGE.md §4.2). Mono label left, state right,
+ * hairline underneath — the hairline is what makes chrome read as chrome
+ * instead of as floating text, so it is not optional.
+ *
+ * This is the most-seen surface in the app: it is sticky on every screen, so
+ * it is also where the round advance is worth spending motion on (§7). Three
+ * things move, in sequence, and only when the round actually changes:
+ *
+ *   1. the brass numeral ticks to the new round (Numeral)
+ *   2. the round's title crossfades in under the masthead (`er-swap` on a key)
+ *   3. the rail fills the new segment, 120ms behind the numeral (RoundRail)
+ *
+ * Height is `--chrome-h` (index.css); ChatView pins itself to the same value.
+ */
+export const Header = ({ currentRound, currentRoundData, isVotingOpen, onClose }) => {
+  const roundTitle = currentRoundData?.title || 'Standby';
+
   return (
-    <header className="sticky top-0 z-30 bg-mystery-dark border-b border-mystery-ink/20 p-4 shadow-noir">
-      <div 
-        className="absolute inset-0 opacity-10"
-        style={{
-          backgroundImage: "url('https://www.transparenttextures.com/patterns/dark-matter.png')"
-        }}
-      />
-      <div className="relative z-10 flex justify-center items-center max-w-2xl mx-auto">
-        <div className="flex items-center gap-4 cursor-pointer group" onClick={onSecretTap}>
-          <div className="w-12 h-12 bg-mystery-paper border-2 border-mystery-ink rounded-sm flex items-center justify-center shadow-lg transform -rotate-2 group-hover:rotate-0 transition-transform duration-300">
-            <span className="font-typewriter text-3xl font-bold text-mystery-ink">
-              {currentRound}
+    <header className="sticky top-0 z-40 bg-ink border-b border-line">
+      <div className="max-w-2xl mx-auto px-4">
+        <div className="h-16 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <span className="er-mono er-mono--wide er-mono--bone block">Astral Project</span>
+            {/* Keyed on the title so an advance remounts it and it animates in.
+                Without the key React reuses the node and the text just swaps. */}
+            <span key={roundTitle} className="er-mono er-mono--dim er-swap block mt-1.5 truncate">
+              {roundTitle}
             </span>
           </div>
-          <div className="flex flex-col">
-            <h2 className="text-xl font-typewriter font-bold text-mystery-paper tracking-widest uppercase">
-              PHASE {currentRound}
-            </h2>
-            <span className="text-sm font-handwriting text-mystery-aged tracking-wide border-t border-mystery-blood/50 pt-1 -rotate-1 origin-left">
-              {currentRoundData.title}
-            </span>
+
+          <div className="flex items-center gap-4 shrink-0">
+            {isVotingOpen && (
+              <span className="er-mono er-mono--hot er-swap hidden sm:inline">Voting Open</span>
+            )}
+
+            {/* Round is a number, so it is brass, and it is the display face
+                (§3.1). It ticks rather than jumps (§7). */}
+            <div className="text-right">
+              <div className="er-mono">Round</div>
+              <Numeral
+                as="div"
+                value={currentRound}
+                pad={2}
+                className="er-num text-2xl mt-0.5"
+              />
+            </div>
+
+            {onClose && (
+              <button
+                onClick={onClose}
+                aria-label="Close and return to the board"
+                className="er-touch flex items-center justify-center w-11 h-11 border border-line text-bone hover:border-signal hover:text-signal-lift"
+              >
+                <X size={20} />
+              </button>
+            )}
           </div>
         </div>
+
+        <RoundRail currentRound={currentRound} total={ROUNDS.length} className="pb-2.5" />
       </div>
     </header>
   );

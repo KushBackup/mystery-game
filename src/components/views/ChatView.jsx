@@ -2,8 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { Send } from '../icons/ChatIcons';
+import { ScreenBrief } from '../ui/ScreenBrief';
 
-export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
+/**
+ * Comms (DESIGN_LANGUAGE.md §9, "Comms").
+ *
+ * This screen used to be orange — a third accent the system doesn't have. Now
+ * the player's own messages are the one signal element (a bubble is a tag-sized
+ * area, not a field of red), everyone else's are ink-raised with a hairline,
+ * and names are mono in signal-lift, which is the AA-safe red for small text
+ * on ink (§2.4).
+ *
+ * Self-framed: it owns the viewport below the chrome rail (`--chrome-h`, defined
+ * in index.css) so the composer can stay pinned above the keyboard.
+ */
+export const ChatView = ({ myCharacter, note, currentRound = 0 }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -19,23 +32,24 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
 
-  // Check if any voting has occurred (after first round)
-  const hasVotingOccurred = Object.keys(voteCounts || {}).length > 0;
+  // Ids present when the channel first loaded. Anything not in here arrived
+  // while the player was watching, and only those animate in — otherwise
+  // opening Comms plays a hundred entrance animations at once for a backlog the
+  // player has already read.
+  const seenIdsRef = useRef(null);
+  const didFirstScrollRef = useRef(false);
 
-  // Vibration function - works on mobile devices
   const vibrate = (pattern = [200]) => {
-    if ('vibrate' in navigator) {
-      navigator.vibrate(pattern);
-    }
-  };
-
-  // Auto-scroll to bottom when new messages arrive
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if ('vibrate' in navigator) navigator.vibrate(pattern);
   };
 
   useEffect(() => {
-    scrollToBottom();
+    // The first scroll jumps; every one after it glides. Smooth-scrolling the
+    // whole backlog on open means several seconds of the channel flying past
+    // before the player can read the newest message.
+    const behavior = didFirstScrollRef.current ? 'smooth' : 'auto';
+    didFirstScrollRef.current = true;
+    messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
   }, [messages]);
 
   // Subscribe to messages in real-time
@@ -43,26 +57,39 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
     const q = query(
       collection(db, 'messages'),
       orderBy('createdAt', 'asc'),
-      limit(100) // Last 100 messages
+      limit(100)
     );
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const messageData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
+        const incoming = snapshot.docs.map((docSnap) => ({
+          id: docSnap.id,
+          ...docSnap.data(),
         }));
-        
-        // Vibrate on new message from others (not initial load)
-        if (lastMessageCount > 0 && messageData.length > lastMessageCount) {
-          const newestMessage = messageData[messageData.length - 1];
-          // Only vibrate if message is from someone else
+
+        // Buzz on a new message from someone else (not on initial load).
+        if (lastMessageCount > 0 && incoming.length > lastMessageCount) {
+          const newestMessage = incoming[incoming.length - 1];
           if (newestMessage.characterId !== myCharacter.id) {
-            vibrate([100, 50, 100]); // Double buzz pattern
+            vibrate([100, 50, 100]);
           }
         }
-        
+
+        // Seed on the first snapshot so the backlog counts as already seen.
+        if (seenIdsRef.current === null) {
+          seenIdsRef.current = new Set(incoming.map((m) => m.id));
+        }
+
+        // Freshness is decided here, not in render: refs must not be read during
+        // render, and this is also the only place that knows what "new" means.
+        // The flag is sticky rather than cleared on the next snapshot — pulling
+        // the class off a bubble mid-animation would cut the entrance short.
+        const seen = seenIdsRef.current;
+        const messageData = incoming.map((m) =>
+          seen.has(m.id) ? m : { ...m, isFresh: true }
+        );
+
         setMessages(messageData);
         setLastMessageCount(messageData.length);
         setLoading(false);
@@ -78,13 +105,12 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    
+
     if (!newMessage.trim() || sending) return;
 
     setSending(true);
     try {
       if (editingMessage) {
-        // Update existing message
         const messageRef = doc(db, 'messages', editingMessage.id);
         await updateDoc(messageRef, {
           message: newMessage.trim(),
@@ -93,7 +119,6 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
         });
         setEditingMessage(null);
       } else {
-        // Send new message
         await addDoc(collection(db, 'messages'), {
           characterId: myCharacter.id,
           characterName: myCharacter.name,
@@ -144,9 +169,7 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
     setSwipeState({});
   };
 
-  const cancelReply = () => {
-    setReplyTo(null);
-  };
+  const cancelReply = () => setReplyTo(null);
 
   const cancelEdit = () => {
     setEditingMessage(null);
@@ -154,27 +177,25 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
   };
 
   // Touch handlers for swipe-to-reply
-  const handleTouchStart = (e, msg) => {
+  const handleTouchStart = (e) => {
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
   };
 
   const handleTouchMove = (e, msg) => {
     if (!touchStartX.current) return;
-    
+
     const currentX = e.touches[0].clientX;
     const currentY = e.touches[0].clientY;
     const diffX = currentX - touchStartX.current;
     const diffY = currentY - touchStartY.current;
-    
-    // Only trigger swipe if horizontal movement is more than vertical
+
     if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 20) {
       const isMe = msg.characterId === myCharacter.id;
       const swipeDirection = diffX > 0 ? 'right' : 'left';
-      
-      // For my messages: swipe left to reply
-      // For others' messages: swipe right to reply
-      if ((isMe && swipeDirection === 'left' && diffX < -30) || 
+
+      // Mine: swipe left to reply. Theirs: swipe right to reply.
+      if ((isMe && swipeDirection === 'left' && diffX < -30) ||
           (!isMe && swipeDirection === 'right' && diffX > 30)) {
         setSwipeState({ [msg.id]: Math.min(Math.abs(diffX), 80) });
       } else {
@@ -185,26 +206,26 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
 
   const handleTouchEnd = (e, msg) => {
     const swipeDistance = swipeState[msg.id] || 0;
-    
+
     if (swipeDistance > 60) {
       handleReply(msg);
       vibrate([50]);
     }
-    
+
     setSwipeState({});
     touchStartX.current = 0;
     touchStartY.current = 0;
   };
 
-  // Long press handlers for edit/delete
+  // Long press for edit/delete on your own messages
   const handleTouchStartLongPress = (e, msg) => {
     if (msg.characterId !== myCharacter.id) return;
-    
+
     const timer = setTimeout(() => {
       setContextMenu({ messageId: msg.id, message: msg });
       vibrate([100, 50, 100]);
     }, 500);
-    
+
     setLongPressTimer(timer);
   };
 
@@ -218,61 +239,68 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
   const formatTime = (timestamp) => {
     if (!timestamp) return '';
     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-    return date.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    });
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-96 animate-fade-in">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-stone-500 font-bold">Loading chat...</p>
+      <div
+        className="fixed inset-x-0 bottom-0 flex items-center justify-center bg-ink"
+        style={{ top: 'var(--chrome-h)' }}
+      >
+        <div className="text-center er-enter">
+          <div className="w-8 h-8 border-2 border-signal border-t-transparent mx-auto mb-4 animate-spin" />
+          <p className="er-mono er-mono--dim">Opening channel…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-x-0 top-[4.5rem] bottom-0 flex flex-col animate-fade-in overflow-hidden">
-      {/* Fixed Header - Won't scroll */}
-      <div className="bg-orange-500 p-3 border-b-4 border-stone-900 shadow-sm flex-shrink-0 relative z-10">
-        <h2 className="text-xl sm:text-2xl font-black text-white text-center uppercase tracking-wide">
-          🔍 Investigator Chat
-        </h2>
-        <p className="text-xs text-orange-100 text-center mt-1 font-bold">
-          Discuss clues and theories with fellow suspects
-        </p>
+    <div
+      className="fixed inset-x-0 bottom-0 flex flex-col bg-ink overflow-hidden"
+      style={{ top: 'var(--chrome-h)' }}
+    >
+      {/* Kicker + title, in the same frame every other screen uses */}
+      <div className="shrink-0 px-4 pt-5 pb-4 border-b border-line">
+        <p className="er-mono er-mono--hot er-mono--wide">Encrypted</p>
+        <div className="flex items-baseline justify-between gap-3 mt-2">
+          <h1 className="er-title text-[28px]">Comms</h1>
+          <span className="er-mono er-mono--dim truncate">{myCharacter.name}</span>
+        </div>
+
+        <ScreenBrief note={note} currentRound={currentRound} className="mt-4" />
       </div>
 
-      {/* Messages Container - Scrollable area only */}
-      <div 
+      {/* Messages */}
+      <div
         ref={chatContainerRef}
-        className="flex-1 overflow-y-auto px-3 sm:px-4 py-4 space-y-3 custom-scrollbar"
-        style={{ 
+        className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 space-y-3"
+        style={{
           overscrollBehavior: 'contain',
           touchAction: 'pan-y',
-          WebkitOverflowScrolling: 'touch'
+          WebkitOverflowScrolling: 'touch',
         }}
         onClick={() => setContextMenu(null)}
       >
         {messages.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-stone-400 italic">No messages yet. Start the conversation!</p>
-          </div>
+          <p className="font-body text-[15px] leading-[1.55] text-dim text-center py-12">
+            Nothing on the channel yet. Say something.
+          </p>
         ) : (
           messages.map((msg) => {
             const isMe = msg.characterId === myCharacter.id;
             const swipeOffset = swipeState[msg.id] || 0;
-            
+            // Flagged by the snapshot handler. Keyframes only run once per mount,
+            // so a sticky flag replays nothing on later re-renders.
+            const isNew = Boolean(msg.isFresh);
+
             return (
               <div
                 key={msg.id}
                 className={`flex ${isMe ? 'justify-end' : 'justify-start'} relative`}
                 onTouchStart={(e) => {
-                  handleTouchStart(e, msg);
+                  handleTouchStart(e);
                   handleTouchStartLongPress(e, msg);
                 }}
                 onTouchMove={(e) => handleTouchMove(e, msg)}
@@ -281,84 +309,87 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
                   handleTouchEndLongPress();
                 }}
                 style={{
-                  transform: isMe 
-                    ? `translateX(-${swipeOffset}px)` 
-                    : `translateX(${swipeOffset}px)`,
-                  transition: swipeOffset === 0 ? 'transform 0.2s ease-out' : 'none'
+                  transform: isMe ? `translateX(-${swipeOffset}px)` : `translateX(${swipeOffset}px)`,
+                  transition: swipeOffset === 0 ? 'transform 0.2s ease-out' : 'none',
                 }}
               >
-                {/* Reply indicator */}
-                {swipeOffset > 30 && (
-                  <div className={`absolute top-1/2 -translate-y-1/2 ${isMe ? 'right-full mr-2' : 'left-full ml-2'}`}>
-                    <div className="text-orange-500 text-2xl animate-pulse">
-                      ↩️
-                    </div>
-                  </div>
-                )}
-                
+                {/* Swipe-to-reply marker. Kept mounted and scaled/faded rather
+                    than switched in and out, so it grows under the thumb as the
+                    swipe passes the threshold instead of blinking into place. */}
+                <span
+                  aria-hidden="true"
+                  className={`er-mono er-mono--hot absolute top-1/2 -translate-y-1/2 origin-center transition-[opacity,scale] duration-200 ease-out ${
+                    isMe ? 'right-full mr-2' : 'left-full ml-2'
+                  } ${swipeOffset > 30 ? 'opacity-100 scale-100' : 'opacity-0 scale-50'}`}
+                >
+                  Reply
+                </span>
+
                 <div
-                  className={`max-w-[75%] sm:max-w-[65%] ${
+                  className={`max-w-[78%] sm:max-w-[65%] px-3 py-2.5 border ${
+                    isNew ? (isMe ? 'er-enter-right' : 'er-enter-left') : ''
+                  } ${
                     isMe
-                      ? 'bg-orange-500 text-white border-2 border-orange-700'
-                      : 'bg-white text-stone-900 border-2 border-stone-900'
-                  } p-3 rounded-lg shadow-sketch relative`}
-                  style={{ transform: isMe ? 'rotate(0.5deg)' : 'rotate(-0.5deg)' }}
+                      ? 'bg-signal border-signal text-white'
+                      : 'bg-ink-raised border-line text-bone'
+                  }`}
                 >
                   {!isMe && (
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className="w-6 h-6 bg-stone-800 text-white rounded-full flex items-center justify-center text-xs font-black">
-                        {msg.characterName?.charAt(0) || '?'}
-                      </div>
-                      <span className="text-xs font-black text-stone-700 uppercase">
-                        {msg.characterName || 'Unknown'}
-                      </span>
-                    </div>
+                    <p className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-signal-lift mb-1.5">
+                      {msg.characterName || 'Unknown'}
+                    </p>
                   )}
-                  
+
                   {/* Reply preview */}
                   {msg.replyTo && (
-                    <div className={`mb-2 p-2 rounded border-l-4 ${
-                      isMe 
-                        ? 'bg-orange-600 border-orange-300' 
-                        : 'bg-stone-100 border-stone-400'
-                    }`}>
-                      <div className="text-xs font-bold opacity-75 mb-1">
-                        ↩️ {msg.replyTo.characterName}
-                      </div>
-                      <div className="text-xs opacity-80 italic truncate">
+                    <div
+                      className={`mb-2 pl-2.5 py-1 border-l-2 ${
+                        isMe ? 'border-white/50' : 'border-signal'
+                      }`}
+                    >
+                      <p
+                        className={`font-mono text-[10px] uppercase tracking-[0.18em] ${
+                          isMe ? 'text-white/75' : 'text-dim'
+                        }`}
+                      >
+                        {msg.replyTo.characterName}
+                      </p>
+                      <p
+                        className={`font-body text-[13px] leading-[1.4] truncate ${
+                          isMe ? 'text-white/85' : 'text-dim'
+                        }`}
+                      >
                         {msg.replyTo.message}
-                      </div>
+                      </p>
                     </div>
                   )}
-                  
-                  <p className="text-sm sm:text-base font-bold leading-snug break-words">
-                    {msg.message}
-                  </p>
-                  
-                  <span
-                    className={`text-[10px] mt-1 flex items-center gap-1 ${
-                      isMe ? 'text-orange-100' : 'text-stone-400'
+
+                  <p className="font-body text-[15px] leading-[1.5] break-words">{msg.message}</p>
+
+                  <p
+                    className={`font-mono text-[10px] uppercase tracking-[0.18em] mt-1.5 ${
+                      isMe ? 'text-white/65' : 'text-dim-2'
                     }`}
                   >
                     {formatTime(msg.timestamp || msg.createdAt)}
-                    {msg.edited && <span className="italic">(edited)</span>}
-                  </span>
+                    {msg.edited && ' · edited'}
+                  </p>
                 </div>
 
-                {/* Context Menu */}
+                {/* Long-press menu */}
                 {contextMenu?.messageId === msg.id && (
-                  <div className="absolute bottom-full mb-2 right-0 bg-white border-2 border-stone-900 shadow-lg rounded-lg overflow-hidden z-20 animate-fade-in">
+                  <div className="absolute bottom-full mb-2 right-0 z-20 bg-ink-raised border border-line er-enter">
                     <button
                       onClick={() => handleEditMessage(msg)}
-                      className="block w-full px-4 py-2 text-left text-sm font-bold text-stone-900 hover:bg-orange-500 hover:text-white transition-colors"
+                      className="er-touch block w-full px-5 py-3 text-left font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-bone"
                     >
-                      ✏️ Edit
+                      Edit
                     </button>
                     <button
                       onClick={() => handleDeleteMessage(msg.id)}
-                      className="block w-full px-4 py-2 text-left text-sm font-bold text-red-600 hover:bg-red-600 hover:text-white transition-colors border-t border-stone-200"
+                      className="er-touch block w-full px-5 py-3 text-left font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-signal-lift border-t border-line-faint"
                     >
-                      🗑️ Delete
+                      Delete
                     </button>
                   </div>
                 )}
@@ -369,68 +400,51 @@ export const ChatView = ({ myCharacter, voteCounts, currentRound }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Reply/Edit Bar */}
+      {/* Reply / edit bar */}
       {(replyTo || editingMessage) && (
-        <div className="bg-orange-100 border-t-2 border-stone-300 px-3 py-2 flex items-center justify-between">
-          <div className="flex-1 min-w-0">
-            <div className="text-xs font-bold text-orange-700">
-              {editingMessage ? '✏️ Editing message' : `↩️ Replying to ${replyTo.characterName}`}
-            </div>
-            <div className="text-xs text-stone-600 truncate">
+        <div className="er-swap shrink-0 flex items-center justify-between gap-3 px-4 py-2.5 bg-ink-raised border-t border-line">
+          <div className="min-w-0">
+            <p className="er-mono er-mono--hot">
+              {editingMessage ? 'Editing' : `Replying to ${replyTo.characterName}`}
+            </p>
+            <p className="font-body text-[13px] leading-[1.4] text-dim truncate mt-1">
               {editingMessage ? editingMessage.message : replyTo.message}
-            </div>
+            </p>
           </div>
           <button
             onClick={editingMessage ? cancelEdit : cancelReply}
-            className="ml-2 text-stone-600 hover:text-stone-900 font-bold text-xl"
+            aria-label="Cancel"
+            className="er-touch shrink-0 px-3 er-mono er-mono--dim"
           >
-            ✕
+            Cancel
           </button>
         </div>
       )}
 
-      {/* Input Form - Fixed at bottom */}
-      <div className="border-t-4 border-stone-900 bg-stone-800 p-3 shadow-lg flex-shrink-0">
+      {/* Composer */}
+      <div className="shrink-0 border-t border-line bg-ink-raised px-4 py-3 pb-safe">
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={editingMessage ? "Edit your message..." : "Type your message..."}
+            placeholder={editingMessage ? 'Edit your message…' : 'Type a message…'}
             disabled={sending}
-            className="flex-1 bg-white border-2 border-stone-900 px-3 py-2 sm:py-3 text-sm sm:text-base font-bold text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            aria-label="Message"
+            className="flex-1 min-w-0 bg-ink border border-line px-3 py-3 font-body text-[15px] text-bone placeholder:text-dim-2 focus:border-signal disabled:opacity-50 transition-colors duration-150"
             maxLength={500}
           />
           <button
             type="submit"
             disabled={!newMessage.trim() || sending}
-            className="bg-orange-500 hover:bg-orange-600 text-white px-4 sm:px-6 py-2 sm:py-3 border-2 border-orange-700 font-black uppercase text-sm disabled:opacity-50 disabled:cursor-not-allowed active:translate-y-1 transition-transform flex items-center gap-2"
+            aria-label={editingMessage ? 'Save message' : 'Send message'}
+            className="er-touch er-touch--hot shrink-0 flex items-center gap-2 px-4 bg-signal border border-signal text-white font-mono text-[11px] font-medium uppercase tracking-[0.24em] transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <Send size={18} />
+            <Send size={16} className={sending ? 'opacity-60' : ''} />
             <span className="hidden sm:inline">{editingMessage ? 'Save' : 'Send'}</span>
           </button>
         </form>
-        <p className="text-xs text-stone-400 mt-2 text-center">
-          Chatting as <span className="text-orange-400 font-bold">{myCharacter.name}</span>
-        </p>
       </div>
-
-      <style>{`
-        @keyframes pulse-slow {
-          0%, 100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.9;
-            transform: scale(1.05);
-          }
-        }
-        
-        .animate-pulse-slow {
-          animation: pulse-slow 2s ease-in-out infinite;
-        }
-      `}</style>
     </div>
   );
 };

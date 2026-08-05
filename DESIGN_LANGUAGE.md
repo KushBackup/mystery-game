@@ -1,8 +1,10 @@
 # Design Language — "Evidence Room"
 
-> The visual system built for [pitch-deck/index.html](pitch-deck/index.html), written up so it can be applied to the player app.
+> The visual system built for [pitch-deck/index.html](pitch-deck/index.html), and — as of 2026-08-02 — the system the player app is built on.
 >
-> **Read this with [Claude.md](Claude.md).** It is a design spec, not a migration plan — it tells you what the system *is* and how each rule maps onto the React app. Nothing here has been applied to `src/` yet.
+> **Read this with [Claude.md](Claude.md).** It tells you what the system *is* and how each rule maps onto the React app.
+>
+> **Status: applied.** The whole of `src/` now runs on this system. The `mystery-*` palette is gone, and so are the green/blue/purple/orange/halloween hues that had accumulated in Chat, Voting, Timeline, Help and the Host panel. Tokens live in the `@theme` block of [src/index.css](src/index.css); the §6 component vocabulary is implemented as `.er-*` classes in [src/App.css](src/App.css). See [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md) → *Styling architecture* for the load-order rules.
 
 ---
 
@@ -169,8 +171,16 @@ The hairline under the chrome is **not optional** — it is what makes chrome re
 ### 4.3 Touch
 
 - Minimum target **44×44px**. The deck has no such constraint; the app does.
-- Tap feedback is a **scale to 0.98 plus a background shift to `ink-hover`**, not a colour flash.
+- Tap feedback is a **scale to 0.96 plus a background shift to `ink-hover`**, not a colour flash.
 - Keep the existing haptics. A 20ms buzz on tile tap is part of the product's texture.
+
+> **Why 0.96 and not 0.98** *(revised 2026-08-04)*. 0.98 on a 44px control — the floor
+> for everything here — moves the edge by less than a pixel, which is below the
+> threshold where a press registers as tactile at all. 0.96 is the smallest value that
+> reads; below 0.95 it starts to look exaggerated. Wide blocks and controls sitting
+> *inside* paper use `.er-press` instead (0.98, no surface shift), because the same
+> ratio travels much further at the edges of a full-width bar, and because shifting to
+> `ink-hover` inside a bone document punches a hole in the page.
 
 ---
 
@@ -238,11 +248,26 @@ Bullets are `—` in `signal`, mono, in a 30px hanging indent (**20px** mobile).
 
 Brass numeral over a mono `dim-2` label, with a hairline **above**. Used for vote counts, rounds, timers.
 
+Numerals **tick to a new value** rather than jumping ([`Numeral`](src/components/ui/Numeral.jsx)), and are always tabular. Two constraints on that, both load-bearing:
+
+- **It only animates on a *change*, never on mount.** Every stat in the app sits on a screen the player opens and closes constantly; a numeral that re-counts itself on each visit spends attention on a value they have already read. Motion here means "this just moved".
+- **The whole tick fits in 380ms**, inside §7's 400ms legibility budget.
+
+### 6.6b Round rail
+
+The round indicator, as a rail beside the numeral: one segment per round, 2px tall, across the chrome gutter. Past rounds fill `bone-aged`, the live round fills `signal` — the §6.2 state channel, so it adds a shape without adding an idiom or a hue.
+
+Built on `transition`, not a keyframe, and that is the point: transitions don't run on first paint, so opening a screen shows the rail already filled and **only a genuine round advance animates it**.
+
 ### 6.7 Redaction bar
 
 Solid `signal` block covering text, wiping open via `scaleX` from a left transform-origin over ~0.9s.
 
-**This is the app's single biggest untapped opportunity.** Every locked clue, every unrevealed secret, every host-gated file should be a redaction bar that *wipes away* on unlock, rather than content that simply appears. It is on-theme, it is cheap, and it turns a state change into a moment.
+Every locked clue, every unrevealed secret, every host-gated file should be a redaction bar that *wipes away* on unlock, rather than content that simply appears. It is on-theme, it is cheap, and it turns a state change into a moment.
+
+**One bar covers one line. A paragraph needs a different form.** ⚠️ Stretched over three or four full-width lines of copy the bar stops reading as a redaction and becomes a field of red, which §2.2 forbids — and that is exactly how the Identity card's four-line confidential note rendered. Multi-line copy gets **ragged marks** instead: four bars at uneven widths (never 100%), laid over the copy as an absolute overlay so the text underneath still sets the height and nothing shifts when they clear. On unseal they wipe in sequence, 90ms apart, and the note rises in behind them. Implemented as `.er-redact-lines` / [`RedactedLines`](src/components/ui/RedactedLines.jsx).
+
+The rule generalises: **the accent may move as a mark or a rule; it may not move as a fill.**
 
 ### 6.8 Red thread
 
@@ -251,6 +276,44 @@ SVG bezier in `signal`, animated by `strokeDashoffset`. The connective motif —
 ### 6.9 Fill-in blank
 
 `rgba(224,49,39,.12)` background with a 2px dashed `signal` underline. Marks something *deliberately unknown*. In the app this is the natural rendering for an un-entered clue code.
+
+### 6.10b Typed line
+
+Text that arrives a character at a time, for the Round 0 briefing ([StoryIntro.jsx](src/components/StoryIntro.jsx)) and nothing else so far.
+
+It is the one surface in the app that is **neither chrome nor paper**: ink, vignette and grain, with no bone anywhere. That is deliberate — it is the room going dark before the game starts, so it also drops the brass lamp every other screen wears, which is what makes it read as *black* rather than as *lit*.
+
+| Part | Treatment |
+|---|---|
+| Kicker | 11px mono in `signal-lift`. Never typed — it labels the slide rather than performing |
+| Heading | Special Elite, 27px (34px ≥640px), uppercase, `bone` |
+| Body | Courier Prime, 16px/1.68 (18px ≥640px), `dim` |
+| Caret | 0.55em × 1em `signal` block, blinking on `steps(1, end)` |
+| Progress | The §6.6b round rail, one segment per slide |
+
+Two rules make it work:
+
+- **The line must not reflow as it types.** Render the full string in flow but `visibility: hidden` to reserve the height, and lay the revealed slice over it absolutely (`.er-type__ghost` / `.er-type__ink`). Otherwise every word that wraps adds a line box mid-sentence and shoves the rest of the slide down while the player is reading it. Same trick as §6.7's ragged marks: the real copy sets the box, the animated layer rides on top.
+- **The caret exists only while typing.** Its absence is what says the page is finished, which is how an infinite blink stays inside §7.1's ban on motion that repeats forever. When the slide completes, the caret is replaced by a static "swipe or tap" cue.
+
+The display face is deliberately absent here — it belongs to numerals and screen titles, and this screen has neither. The slide counter is the exception, because a counter is a number, so it is brass.
+
+### 6.10 Screen note
+
+A `bone-aged` note pinned under a screen's title, saying in one line what that screen is for. It behaves like a tooltip — anchored to the title by a caret, and **temporary**: it clears itself from Round 02 (`BRIEF_HIDDEN_FROM_ROUND` in [src/data/screenGuide.js](src/data/screenGuide.js)), because by then the room knows the app and a permanent explainer is just furniture.
+
+It is deliberately **paper, not a chrome callout**. Aged bone on ink is the highest-contrast thing on the screen, so it reads as highlighted with no accent at all — which leaves the screen's one `signal` focal point (§10) on the decoder, the ballot or the reveal instead of spending it on onboarding.
+
+| Part | Treatment |
+|---|---|
+| Surface | `.er-bone .er-bone--aged`, `er-rotL`, `er-land` — it's paper, so it rotates and casts the one shadow |
+| Caret | 11px square rotated 45° on the top edge, same fill as the note. Square-cut like every other corner (§5) |
+| Label | 11px mono in `signal-deep` left, `Clears at Round 02` stamp right — **both must fit one line at 390px** |
+| Body | Handwriting face, 20px (23px ≥640px), `ink`. It is a margin note (§3.1), which is also why briefs are written to 1–2 short sentences |
+
+Round numbers here stay in the stamp colour, **not brass** — brass on bone fails contrast (§2.3).
+
+Copy lives in [src/data/screenGuide.js](src/data/screenGuide.js), which is also where the Guide reads its screen descriptions from, so the two can't drift apart.
 
 ---
 
@@ -261,18 +324,34 @@ The project uses plain CSS — no Framer Motion, no GSAP ([Claude.md](Claude.md)
 - **Entrance easing:** `cubic-bezier(.16, 1, .3, 1)` at `.6s`–`.85s`. Sharp start, long settle.
 - **Landing easing:** `cubic-bezier(.34, 1.4, .5, 1)` — the overshoot for pins, cards and tiles. The app's `slideInUp` already uses `(0.34, 1.56, 0.64, 1)`; that's the right family.
 - **Stagger:** 40–80ms between siblings. Never reveal a group at once.
-- **Never fade on opacity alone.** Always pair with a 12–24px translate or a `0.96→1` scale.
-- **Settle before it's read.** Anything a player must read must be static within 400ms.
+- **Never fade on opacity alone.** Always pair with a 12–24px translate or a `0.96→1` scale. The one exception is a modal scrim (`.er-fade`) — it has no content to move, and translating it would show the screen edge underneath.
+- **Settle before it's read.** Anything a player must read must be static within 400ms. The Round 0 briefing (§6.10b) is the one sanctioned exception — a typed line *is* the screen — and it pays for it the way the murderer reveal pays for owning the screen in red: a tap fills the slide instantly, Skip leaves entirely, and reduced motion delivers every slide already complete.
 - **Honour `prefers-reduced-motion`** — the deck reduces every duration to `0.01ms`/`0.2s`. Match that.
+- **Name the properties you transition.** Never a blanket property transition: it will eventually pick up a layout property and animate a reflow. Specify `translate`, `scale`, `opacity`.
+- **Prefer what the compositor can take.** A tally bar grows by `scaleX`, not `width` — with a row per suspect, animating a layout property is the one place in this app that can genuinely drop frames.
 
-Signature moments worth building:
+### 7.1 Motion restraint — the counterweight ⚠️
+
+Every rule above says *add motion*. This one says where not to, and it matters more, because the cost of an animation is paid on every trigger while the benefit is paid once.
+
+**No staged entrance on a high-frequency interaction.** The clearest case in this app: returning to the grid hub. It happens after every single screen, and the full board landing is eight tiles × 60ms plus a 700ms overshoot — about 1.2s of motion, repeated dozens of times a game. The sequence now plays **once per session**, on the first visit; every return after that is a single 260ms lift with no stagger (`.er-enter-quick`). Same reasoning drives the numerals not animating on mount (§6.6) and the rail not animating on first paint (§6.6b).
+
+**Motion is never the only feedback channel.** Every animated state change also carries a static cue — a label, a border, a tag. The freshly unsealed clue animates *and* wears a "Just unsealed" tag; a committed vote stamps *and* takes the signal border and the "Your vote" label.
+
+**A confirmation is one shot; only a genuine sustained alarm repeats.** The vote screen used to hold `.er-alarm` — an infinite 2.4s pulse — for two seconds after a vote landed. An endless pulse reads as *something is wrong with this card*, not *recorded*. Confirmations are `.er-stamp`: 420ms, once, done. `.er-alarm` is reserved and currently unused, which is the correct number of uses.
+
+### 7.2 Signature moments
+
+*All four are implemented.*
 
 | Moment | Motion |
 |---|---|
-| Clue unlocked | Redaction bar wipes left→right, card lands with overshoot |
-| Round advance | Chrome label crossfades, rail fills to the new round |
-| Vote cast | Bar grows, brass numeral counts up |
+| Clue unlocked | Card lands with overshoot, the 3px state rule sweeps across its top edge and dissolves, the statement rises in behind it. The card also floats to the top of the board, because a new clue buried in DB order is a clue the player has to hunt for |
+| Round advance | Round title crossfades, brass numeral ticks, rail fills the new segment 120ms behind it |
+| Vote cast | Bar grows by `scaleX`, brass numeral counts up, the card takes a single stamp |
 | Murderer reveal | Full-bleed `signal` — the one time red owns the screen |
+
+**Verify motion by measuring it, not by looking at a still.** `getComputedStyle` returns the *animated* value mid-animation, so the `scaleX` component of a matrix is an exact reading of a wipe's progress — which is how the staggered redaction was confirmed to start covered, stagger, and finish fully open, including under `prefers-reduced-motion`.
 
 ---
 
@@ -318,6 +397,21 @@ Add the font in the same `@import` as the others:
 
 That yields `bg-ink`, `text-bone`, `border-signal`, `text-brass`, `font-display`, and `var(--color-signal)` in plain CSS.
 
+**What shipped also includes**, beyond the snippet above:
+
+- `--color-line`, `--color-line-faint`, `--color-line-bone` as real tokens, so hairlines are `border-line` rather than a hand-written `rgba()` at each call site.
+- `--font-mono` overridden to IBM Plex Mono, which makes the stock `font-mono` utility correct by default.
+- `--ease-enter` / `--ease-land` for the two §7 curves.
+- The §6 component vocabulary as `.er-*` classes in [src/App.css](src/App.css).
+
+⚠️ **The one non-obvious trap.** `App.css` must be pulled in from `index.css` as:
+
+```css
+@import "./App.css" layer(components);
+```
+
+**not** with `import './App.css'` in `main.jsx`. Unlayered CSS beats every layered rule regardless of specificity, so a plain JS import makes `.er-card`'s padding and `.er-title`'s font-size unoverridable — `er-title text-[28px]` silently renders at 32px, and `er-card p-0` silently keeps its 16px. Inside `@layer components` the utilities win, which is what every call site assumes.
+
 ### Migrating the existing palette
 
 The current `mystery-*` colours are close but muddier. Map, don't keep both:
@@ -338,10 +432,14 @@ Migrate one view at a time; both palettes can coexist while you do.
 
 ## 9. Screen-by-screen application
 
+*All rows below are implemented. The "What changes" column is kept as the record of what each screen was and what it became.*
+
 | Screen | File | What changes |
 |---|---|---|
 | Login | [CharacterSelect.jsx](src/components/CharacterSelect.jsx) | Already close. Retag `CONFIDENTIAL` as a filled `signal` tag; code input becomes a fill-in blank |
-| Grid hub | [GridMenu.jsx](src/components/GridMenu.jsx) | Already the strongest screen. Keep pins and rotation; swap tile colours to `bone`/`bone-aged`, VOTE to `signal`, EXIT to `ink-hover` |
+| Briefing | [StoryIntro.jsx](src/components/StoryIntro.jsx) | *Added 2026-08-05.* Ink only, no paper, no lamp. In-fiction voices, typed (§6.10b). Slide rail = the round rail; slide counter is the only brass |
+| Story | [StoryView.jsx](src/components/views/StoryView.jsx) | *Added 2026-08-05.* The same beats as one long bone document — sections split by `line-bone` hairlines, `On record` stamp, no rotation (a 900px page rotated 1.2° reads as broken, not as pinned) |
+| Grid hub | [GridMenu.jsx](src/components/GridMenu.jsx) | Already the strongest screen. Keep pins and rotation; swap tile colours to `bone`/`bone-aged`, VOTE to `signal`, EXIT to `ink-hover` — and EXIT spans the row, so nine tiles don't leave it alone in a half-empty one |
 | Identity | [DashboardView.jsx](src/components/views/DashboardView.jsx) | Full bone card. Secret becomes a **redaction bar** the player taps to reveal |
 | Evidence | [IntelView.jsx](src/components/views/IntelView.jsx) | Clue cards as pinned bone cards; locked clues as redaction bars; category via 3px top border |
 | Decoder | [DecoderModal.jsx](src/components/modals/DecoderModal.jsx) | Fill-in blank input; three outcomes in `signal` / `brass` / `dim-2` |
@@ -351,16 +449,24 @@ Migrate one view at a time; both palettes can coexist while you do.
 | Timeline | [TimelineView.jsx](src/components/views/TimelineView.jsx) | Red thread as the spine; times in mono `brass` |
 | Host | [HostPanel.jsx](src/components/HostPanel.jsx) | **Currently off-palette (purple/indigo gradient) — the worst offender.** Rebuild on ink with hairlines; REVEAL MURDERER is the one full `signal` fill in the app |
 
-### Known inconsistencies
+### Known inconsistencies — ✅ all resolved 2026-08-02
 
-Visible in the screenshots captured for the deck. Worth fixing regardless of whether you adopt this system:
+Visible in the screenshots captured for the deck. Every one of these is now fixed:
 
-1. **Host panel is purple/indigo** — not in any palette, present or proposed.
-2. **Voting uses green** for "VOTING OPEN" — introduces a second accent hue.
-3. **Chat bubbles are orange** — a third accent.
-4. **`mystery-sepia` is used as a surface fill** (GUIDE tile) where the new system would use a paper tone.
+1. ~~**Host panel is purple/indigo**~~ — rebuilt on ink with hairlines; REVEAL MURDERER is the app's only full `signal` fill.
+2. ~~**Voting uses green** for "VOTING OPEN"~~ — open/closed is now a mono label plus the 3px state channel; counts are brass numerals.
+3. ~~**Chat bubbles are orange**~~ — own messages are `signal`, everyone else's are `ink-raised` with a hairline, names are mono `signal-lift`.
+4. ~~**`mystery-sepia` used as a surface fill** (GUIDE tile)~~ — the whole `mystery-*` palette is deleted; tiles are `bone`/`bone-aged`, EXIT is `ink-hover`.
 
-Each of these adds a hue the system doesn't have. Collapsing them into `signal` + surface changes is most of the visual win.
+Also removed in the same pass: the Timeline's indigo→purple→pink gradients, the Help screen's five content-block hues and `halloween-*` classes, the Dossier's 16-colour avatar rainbow, and the Vote screen's amber selection state. Verified by grep — no Tailwind palette class (`green-`, `blue-`, `purple-`, `orange-`, `amber-`, `stone-`, …) remains in `src/`, and the built CSS contains none of the old hex values.
+
+### Things the implementation added that this spec didn't call out
+
+- **`signal-lift` is load-bearing.** Almost every red label in the app is under 18px, so `.er-mono--hot` uses `signal-lift`, not `signal`. Reach for `signal` only on fills, rules, borders and display type.
+- **`dim-2` is the default mono colour**, per §3.2 — but §2.4 forbids it for anything a player must act on. In practice that means professions, instructions, states and counts all take `.er-mono--dim`; only genuinely decorative chrome (case IDs, footer stamps, timestamps) is left at `dim-2`.
+- **Rotation uses the CSS `rotate` property, not `transform`.** `.er-touch:active` sets `transform: scale(.98)`, which would otherwise wipe the paper's rotation out on every tap.
+- **The redaction bar needs single-line, ragged-width content.** Wrapped over two or three full-width lines it stops reading as a redaction and becomes a slab of red, which §2.2 forbids.
+- **Mono labels are expensive at phone width.** `0.18–0.24em` tracking on 11px means a 19-character label ("WHAT THIS SCREEN IS") wraps to two lines once anything shares its row. Budget roughly 9px per character and keep any label that sits opposite another to ~12 characters.
 
 ---
 
@@ -393,12 +499,18 @@ Before shipping a screen:
 - [ ] Exactly one `signal` focal point
 - [ ] Brass appears only on numerals
 - [ ] Body text ≥15px; red text under 18px uses `signal-lift`
-- [ ] Every touch target ≥44×44
+- [ ] Every touch target ≥44×44, and every one of them has press feedback
 - [ ] Regions separated by hairlines, not shadows
 - [ ] Bone surfaces are diegetic documents only
 - [ ] No hue outside the §2.1 table
+- [ ] No redaction bar spanning more than one line (§6.7)
 - [ ] Content readable within 400ms of entry
+- [ ] No staged entrance on anything the player triggers repeatedly (§7.1)
+- [ ] Every animated state change also has a static cue (§7.1)
+- [ ] Every transition names its properties — never a blanket one (§7)
 - [ ] Works under `prefers-reduced-motion`
+- [ ] **The page does not scroll sideways.** Measure it: `scrollWidth - clientWidth` at 390px must be 0. The atmospheric lamp is 640px wide at `left: -220px`, so any root that renders it needs `overflow-x: clip`
+- [ ] **A horizontal swipe cannot leave the app.** Any screen that reads horizontal gestures needs `touch-action: none` — near the left edge Chrome's history-back gesture wins over your handler and replaces the document
 - [ ] Legible at low brightness in a dim room
 
 ---

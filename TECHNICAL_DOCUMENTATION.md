@@ -106,7 +106,11 @@ mystery-game/
 │   │   │
 │   │   ├── ui/
 │   │   │   ├── Doodles.jsx               # Decorative SVG elements
-│   │   │   └── FeedbackToast.jsx         # Toast notification system
+│   │   │   ├── FeedbackToast.jsx         # Toast notification system
+│   │   │   ├── Numeral.jsx               # Brass numeral that ticks to a new value
+│   │   │   ├── RedactedLines.jsx         # Ragged redaction marks over a paragraph
+│   │   │   ├── RoundRail.jsx             # Segment rail (rounds; also the briefing's slide rail)
+│   │   │   └── ScreenBrief.jsx           # "What this screen is" note, auto-clears at Round 2
 │   │   │
 │   │   ├── views/
 │   │   │   ├── DashboardView.jsx         # ID Card view (no "Innocent Bystander" badge, no timeline display)
@@ -115,29 +119,49 @@ mystery-game/
 │   │   │   ├── IntelView.jsx             # Evidence Board (type-based color coding, whitespace-pre-line formatting)
 │   │   │   ├── ChatView.jsx              # Real-time chat interface
 │   │   │   ├── VotingView.jsx            # Voting interface (10 suspects only)
+│   │   │   ├── StoryView.jsx             # The case briefing as a readable bone document
+│   │   │   ├── HelpView.jsx              # The Guide (screen list reads from screenGuide.js)
 │   │   │   └── TimelineView.jsx          # Character timeline (removed from GridMenu navigation)
 │   │   │
 │   │   ├── CharacterSelect.jsx           # Login/character selection screen
-│   │   ├── GridMenu.jsx                  # Metro-style tile-based home hub (ID, CLUES, CHAT, VOTES, FILES, GUESTS, LOGOUT)
+│   │   ├── GridMenu.jsx                  # Metro-style tile-based home hub (8 paper tiles + full-width EXIT)
+│   │   ├── SplashScreen.jsx              # 1.4s cold open
+│   │   ├── StoryIntro.jsx                # Fullscreen typed briefing (Round 0 takeover + replay)
+│   │   ├── OutroSplash.jsx               # End-of-game screen
+│   │   ├── MurdererRevealOverlay.jsx     # The one full-bleed signal screen
 │   │   └── HostPanel.jsx                 # Admin control panel (expanded controls)
 │   │
 │   ├── data/
-│   │   └── gameData.js                   # Game content (32 chars, accusations, motives, files)
+│   │   ├── gameData.js                   # Game content (32 chars, accusations, motives, files)
+│   │   ├── screenGuide.js                # Per-screen kicker/title/brief/detail copy (one source
+│   │   │                                 #   for App.jsx frames, screen notes and the Guide)
+│   │   └── storyIntro.js                 # Round 0 briefing slides + typing speed (one source for
+│   │                                     #   StoryIntro.jsx and StoryView.jsx). SPOILER-GATED.
+│   │
+│   ├── hooks/
+│   │   ├── useCountUp.js                 # Ticks a numeral on change, never on mount
+│   │   └── useTypewriter.js              # Character-at-a-time reveal on one rAF loop
+│   │
+│   ├── lib/
+│   │   └── typeSound.js                  # Synthesized typewriter clicks + margin bell (Web Audio)
 │   │
 │   ├── firebase/
 │   │   └── config.js                     # Firebase initialization & host functions
 │   │
 │   ├── App.jsx                           # Main application controller
-│   ├── App.css                           # Custom styles & animations
-│   ├── index.css                         # Tailwind imports & global styles
-│   └── main.jsx                          # React entry point
+│   ├── App.css                           # Evidence Room component vocabulary + motion
+│   │                                     #   (imported by index.css INTO @layer components,
+│   │                                     #    never from main.jsx — see "Styling architecture")
+│   ├── index.css                         # Tailwind entry, @theme design tokens, base styles
+│   └── main.jsx                          # React entry point (imports index.css only)
 │
 ├── STORY.md                              # Complete narrative bible (32 characters)
 ├── dev-dist/                             # Development service worker files
 ├── index.html                            # HTML entry point
 ├── package.json                          # Dependencies & scripts
 ├── vite.config.js                        # Vite configuration (PWA, build)
-├── tailwind.config.js                    # Tailwind CSS configuration
+├── DESIGN_LANGUAGE.md                    # "Evidence Room" design system (authoritative)
+├── tailwind.config.js                    # Keyframe registry ONLY — no colours, no fonts
 ├── postcss.config.js                     # PostCSS configuration
 └── eslint.config.js                      # ESLint configuration
 ```
@@ -307,7 +331,44 @@ modalOpen: boolean                      // Decoder modal visibility
 selectedGuest: Character | null         // Profile modal selected character
 hostPanelOpen: boolean                  // Admin panel visibility
 secretTapCount: number                  // Counter for host panel unlock (3 taps)
+
+// Boot / briefing gate
+stateSettled: boolean                   // First Firestore snapshot has landed (or 1.5s backstop)
+briefingState: 'pending'|'open'|'done'  // The Round 0 story takeover
+briefingReplay: boolean                 // Briefing re-opened from the Story screen
 ```
+
+### **Boot gate (`stateSettled`) and the Round 0 briefing**
+
+Every screen below the login gate is chosen from game state, but `currentRound`
+defaults to `0` until Firestore answers. Without a gate, a player reloading during
+Round 4 gets the Round 0 briefing for as long as the snapshot takes — and the grid
+hub's once-per-session landing animation is spent on a frame nobody sees.
+
+So `App.jsx` renders a one-beat `CaseHold` screen (same masthead as the splash)
+until either the first snapshot arrives or `STATE_SETTLE_MS` (1500) elapses. The
+timeout is the backstop: on a dead network a player must still reach the app, late
+and wrong, rather than sit on a holding screen forever. **The host is exempt** —
+the console is safe from the first frame.
+
+`briefingState` is then decided **during render**, not in an effect:
+
+```javascript
+if (briefingState === 'pending' && currentUser && !isHostUser && stateSettled) {
+  setBriefingState(currentRound === 0 ? 'open' : 'done');
+}
+```
+
+That is React's "adjust state when a prop changes" pattern. The effect form would
+paint the board for a frame first, and `react-hooks/set-state-in-effect` rejects it.
+
+The briefing is deliberately **not persisted**: it plays on every login and every
+reload for as long as the game is still in Round 0 (32 people arrive at different
+times), and never interrupts anyone once the host advances. Logging out resets it
+to `'pending'` so the next player on a shared device also gets it. Render order is
+splash → login gate → `CaseHold` → terminal screens (reveal / game over) →
+briefing → board, so no game state can route a device around a terminal screen and
+no screen is ever a dead end.
 
 ### **Session Persistence**
 
@@ -457,53 +518,153 @@ useEffect(() => {
 - **Smooth Animations:** Metro-style transitions and effects
 - **Theme Consistency:** Detective noir aesthetic throughout
 
+### **Styling architecture**
+
+Three files, three jobs. Getting the boundaries wrong silently breaks styling, so
+they are worth stating precisely.
+
+| File | Owns | Never contains |
+|---|---|---|
+| `src/index.css` | `@import "tailwindcss"`, the `@theme` token block, `--chrome-h`, base/body styles, atmosphere helpers (`.er-grain`, `.er-lamp`, `.er-vignette`) | Component classes |
+| `src/App.css` | The `.er-*` component vocabulary and motion primitives | Colour literals — everything reads a token |
+| `tailwind.config.js` | The keyframe/animation registry (`@theme` can't express keyframes) | Colours, fonts — those moved to `@theme` |
+
+Two load-order rules that are easy to get wrong:
+
+1. **`tailwind.config.js` is only seen because of the `@config "../tailwind.config.js"`
+   line in `index.css`.** Tailwind v4 does not auto-discover it. Delete that line and
+   every `animate-*` utility silently resolves to nothing.
+2. **`App.css` is imported by `index.css` as `@import "./App.css" layer(components);`,
+   not by `main.jsx`.** Unlayered CSS outranks *every* layered rule regardless of
+   specificity, so importing it from `main.jsx` would make `.er-card`'s padding and
+   `.er-title`'s font-size impossible to override with a Tailwind utility — `er-title
+   text-[28px]` would silently render at 32px. Inside `@layer components` the
+   utilities win, which is what call sites assume.
+
+One thing worth knowing about transforms, because it decides how classes compose:
+**Tailwind v4 emits `translate`, `scale` and `rotate` as the independent CSS
+properties**, not as a composed `transform`. So `-translate-y-2` and `scale-100` stack
+instead of overwriting each other, `transition-[translate,scale]` targets exactly what
+moves, and `.er-rotL`'s `rotate` survives `.er-touch:active`'s `transform: scale()`.
+Verify with `grep -oE '\.scale-100\{[^}]*\}' dist/assets/*.css` rather than assuming —
+the behaviour changed in v4, and a `transition-[transform]` written against v3 habits
+silently animates nothing.
+
 ### **Color Palette**
 
-```javascript
-// Tailwind CSS Color System
-Background: stone-100, stone-200, stone-300  // Beige/tan tones
-Accents: red-500, red-600                    // Primary action color
-Secondary: amber-400, blue-500, emerald-500  // Tile colors
-Text: stone-800, stone-900                   // Dark text
-Borders: stone-900                           // Hand-drawn style
-Success: green-500
-Error: red-600
-Info: blue-500
-Warning: amber-500
+Authoritative spec: **[DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §2**. Defined once as
+CSS custom properties in the `@theme` block of `src/index.css`, which makes them
+available both as Tailwind utilities (`bg-ink`, `text-brass`) and as
+`var(--color-signal)` inside `App.css`.
+
 ```
+Surfaces   ink #0C0D0F · ink-raised #141518 · ink-hover #1C1E22
+           bone #EDE7DA · bone-aged #D8D0BF
+Accent     signal #E03127 (fills/rules/borders/≥18px text)
+           signal-deep #8E1811 (on bone) · signal-lift #F2564C (small text on ink)
+Data       brass #D8A33C — numerals ONLY, never a heading or a label
+Text       dim #98948D · dim-2 #6B6964 (decorative only) · body-bone #4A453C
+Hairlines  line / line-faint (on ink) · line-bone (on bone)
+```
+
+Three rules the code enforces: red never fills a large area (the murderer reveal is
+the single exception), brass only ever sits on a numeral, and a bone surface always
+means "this is a document". There is no green/blue/purple/orange anywhere — states
+change the *surface* or the *label*, never the hue.
 
 ### **Typography**
 
-```css
-/* Primary Font Stack */
-font-family: "Permanent Marker", "Caveat Brush", "Comic Sans MS", cursive;
+Five families, strict roles. UI chrome speaks in the deck's editorial voice; in-fiction
+content keeps the typewriter voice that makes the phone feel like a prop.
 
-/* Sizes */
-Text SM: 0.875rem (14px)
-Text Base: 1rem (16px)
-Text LG: 1.125rem (18px)
-Text XL: 1.25rem (20px)
-Text 2XL: 1.5rem (24px)
-Text 3XL: 1.875rem (30px)
-Text 4XL: 2.25rem (36px)
-```
+| Token | Family | Used for |
+|---|---|---|
+| `font-display` | Big Shoulders Display | Numerals and screen titles, nothing else |
+| `font-mono` | IBM Plex Mono | Every label, tag, kicker, chrome element |
+| `font-typewriter` | Special Elite | In-fiction headings (names, clue titles) |
+| `font-body` | Courier Prime | In-fiction body copy |
+| `font-handwriting` | Caveat | Margin notes and annotations |
+
+Mono labels are tracked `0.18em`–`0.24em` and uppercase; display type goes the other
+way at `-0.01em`. Body copy never drops below 15px, and red text under 18px must use
+`signal-lift` (5.75:1) rather than `signal` (4.29:1, large-text only).
+
+### **Component vocabulary (`App.css`)**
+
+| Class | What it is |
+|---|---|
+| `.er-mono` / `--dim` / `--bone` / `--hot` / `--wide` | Mono label, with its colour variants |
+| `.er-num`, `.er-title` | Brass tabular numeral; 32px display screen title (`text-wrap: balance`) |
+| `.er-tag` / `--ghost` / `--brass` / `--mute` / `--onbone` | The atomic accent chip |
+| `.er-card` / `--signal` / `--brass` / `--aged` | Card on ink; the 3px top border is the state channel |
+| `.er-bone`, `.er-bone-label`, `.er-bone-rule`, `.er-bone-body` | The paper document and its header pattern |
+| `.er-pin`, `.er-rotL` / `.er-rotR` | Pushpin and paper rotation (uses the `rotate` property so tap-scale composes) |
+| `.er-redact` / `--sealed` / `--open` / `--late` | Redaction bar over **one line**, wiping open left→right |
+| `.er-redact-lines` / `--open` | Redaction over a **paragraph** — ragged marks that wipe in sequence (see below) |
+| `.er-unseal` | The 3px rule that sweeps across a freshly decoded clue |
+| `.er-blank` / `--onbone` | Fill-in blank — a deliberately unknown value |
+| `.er-list`, `.er-stat`, `.er-thread`, `.er-rule` | Em-dash list, brass stat, red thread, hairline |
+| `.er-rail`, `.er-rail__seg` / `--past` / `--now` | The round rail: one segment per round, past in bone-aged, live in signal |
+| `.er-bar`, `.er-bar__fill` | Tally bar; grows by `scaleX(var(--fill))`, never by `width` |
+| `.er-touch` / `--hot` | 44×44 minimum target, scale-to-0.96 tap feedback |
+| `.er-press` | Press feedback with no surface shift — for wide blocks and controls inside paper |
+| `.er-lift` | Cursor lift, `@media (hover: hover)` only, via the independent `translate` property |
+| `.er-enter`, `.er-land`, `.er-stagger` | Entrance motion; all fades are paired with a transform |
+| `.er-enter-quick` | A 260ms un-staggered entrance, for surfaces the player returns to constantly |
+| `.er-enter-left` / `-right`, `.er-swap`, `.er-fade`, `.er-leave` | Directional arrivals, chrome value swap, modal scrim, exit |
+| `.er-stamp` | One-shot "recorded" stamp. **Not** `.er-alarm`, which is a reserved infinite pulse |
+
+**A redaction bar cannot span a paragraph.** `.er-redact` is for a single ragged
+line. Stretched over three or four full-width lines of copy it stops reading as a
+redaction and becomes a field of red, which [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md)
+§2.2 forbids — the Identity card's four-line confidential note rendered exactly that
+way. Multi-line copy uses
+[`RedactedLines`](src/components/ui/RedactedLines.jsx) instead: an absolutely
+positioned overlay of ragged marks that wipe away in sequence, with the real copy
+underneath still setting the height so nothing shifts when they clear.
+
+### **Motion components and hooks**
+
+| Module | Job |
+|---|---|
+| [`hooks/useCountUp.js`](src/hooks/useCountUp.js) | Ticks a numeral to a new value in 380ms. Deliberately does **not** animate on mount — motion marks a *change*, and every stat sits on a screen the player reopens constantly. Reduced motion short-circuits to the target. |
+| [`ui/Numeral.jsx`](src/components/ui/Numeral.jsx) | `useCountUp` plus a guaranteed `tabular-nums`. The one component whose digits change on screen, so proportional digits would shove neighbouring labels sideways. |
+| [`ui/RoundRail.jsx`](src/components/ui/RoundRail.jsx) | The seven-segment round rail in the chrome. Built on `transition`, not a keyframe: transitions don't run on first paint, so opening a screen shows the rail already filled and only a real round advance animates it. |
+| [`ui/RedactedLines.jsx`](src/components/ui/RedactedLines.jsx) | Redaction over a paragraph (above). |
+| [`hooks/useTypewriter.js`](src/hooks/useTypewriter.js) | Reveals a string a character at a time on one rAF loop against a precomputed schedule, so a dropped frame catches up instead of drifting. Punctuation adds a hold (comma 120ms, full stop 240ms, line break 280ms) — that, not the base rate, is what stops it sounding mechanical. Reports **one character per frame** to its `onChar` callback even when it advances two, because three clicks in the same millisecond is a glitch. Reduced motion returns the finished string. |
+| [`lib/typeSound.js`](src/lib/typeSound.js) | The typing sounds, synthesized — a bandpassed noise burst per key (±450Hz of drift so a line isn't a machine gun), a lower thunk per line break, two sine partials for the margin bell. No audio file: this repo has no binary assets and the PWA is offline-first, so a sample would be the first thing that can fail to arrive at a live event. Mute state is `localStorage['astral.sfx']`, separate from the session key so a logout can't undo it. |
+
+**Typed text must not reflow the page.** `.er-type` renders the line twice: the full
+string in flow but `visibility: hidden` to reserve the height, and the revealed slice
+absolutely positioned over it. Without that, every word that wraps adds a line box
+mid-sentence and shoves the rest of the slide down while the player is reading it.
+Measured: the last line's box sits at the same y (450px) at 20% typed and at 100%.
+Same reasoning as `RedactedLines` — the real copy sets the box, the animated layer
+rides on top.
+
+`--chrome-h` (in `index.css`) is the chrome rail's total height — 64px of content +
+the 2px rail + 10px + the 1px hairline. `ChatView` is the one fixed-position view and
+pins itself to that variable; as two literals the pair drifted the moment the header
+gained a row.
 
 ### **Visual Effects**
 
 ```css
-/* Hand-drawn borders */
-border: 2px solid stone-900
-box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1)
+/* Depth is hairlines, never elevation */
+border: 1px solid var(--color-line);
 
-/* Rotated elements (playful aesthetic) */
-transform: rotate(-1deg) or rotate(-2deg)
+/* Paper is the ONE thing that casts a shadow, because paper sits on the board */
+box-shadow: 0 20px 44px rgba(0, 0, 0, 0.55);
 
-/* Dashed borders for documents */
-border-style: dashed
+/* Rotation belongs to paper only; chrome never rotates */
+rotate: -1.2deg;
 
-/* Sketchy shadows */
-filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.3))
+/* Corners are square everywhere except the pushpin and avatar discs */
+border-radius: 0;
 ```
+
+`prefers-reduced-motion: reduce` collapses every duration to `0.01ms`/`0.2s`, and the
+redaction bar still resolves to its open state so no content is lost.
 
 ### **Animation Library**
 
@@ -547,66 +708,89 @@ filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.3))
 
 **Inspired By:** Windows 8 Metro UI, Nokia Lumia tile interface
 
-**Layout:**
-- 2-column responsive grid
-- Variable tile sizes (1x1, 2x2)
-- Auto-row height
-- Centered layout with max-width constraint
+**Layout:** a 2-column grid of nine tiles — eight `aspect-[4/3]` paper tiles, then
+EXIT spanning the row (`col-span-2`, `py-3.5`). Nine in a 2-column grid would
+otherwise leave EXIT alone in a half-empty row; as a full-width ink bar it reads as
+a footer control rather than a ninth destination, and the eight paper tiles stay a
+clean 4×2 board.
 
-**Tile Configuration:**
+**Tiles**, in board order — the same order the Guide lists them in:
 
-```javascript
-const menuItems = [
-  {
-    label: "ID",
-    icon: <FingerprintIcon />,
-    view: "dashboard",
-    color: "bg-red-500",      // Large 2x2 tile
-    span: "col-span-2 row-span-2"
-  },
-  {
-    label: "CLUES",
-    icon: <ClipboardIcon />,
-    view: "intel",
-    color: "bg-amber-400",
-    span: "col-span-1 row-span-1"
-  },
-  {
-    label: "CHAT",
-    icon: <ChatIcon />,
-    view: "chat",
-    color: "bg-blue-500",
-    span: "col-span-1 row-span-1"
-  },
-  // ... additional tiles
-];
-```
+| Tile | Sub | Tab | Surface |
+|---|---|---|---|
+| Identity | Confidential | `dashboard` | bone |
+| Story | The Night | `story` | bone-aged |
+| Evidence | Board | `intel` | bone |
+| Comms | Encrypted | `chat` | bone-aged |
+| Vote | Open Now / Standby | `votes` | ink + 3px signal top border; **fills** signal only while the ballot is open |
+| Archives | Case Files | `files` | bone-aged |
+| Suspects | Profiles | `dossier` | bone |
+| Guide | Read Me | `help` | bone-aged |
+| Exit | End Session | `logout` | ink, full width |
+
+Differentiation is **surface, not hue** ([DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §2.2):
+every tile is paper except Vote and Exit, which are interface.
 
 **Animations:**
-- **Entrance:** Staggered slide-up (200ms delay per tile)
-- **Hover:** Scale + shimmer effect
-- **Tap:** Scale down + haptic feedback
-- **Transition:** Smooth cubic-bezier easing
+- **Entrance:** staggered landing, 60ms apart — **once per session only.** Returning
+  to the board is the app's most frequent navigation, and the full sequence is ~1.2s
+  of motion; every return after the first is a single 260ms `.er-enter-quick` with no
+  stagger. The flag lives at module scope so it survives the unmount.
+- **Hover:** 3px lift on `translate` (gated on `hover: hover`)
+- **Tap:** `scale(0.96)` + 20ms haptic buzz
 
 ### **Full-Screen Views**
 
 Each tile opens a dedicated full-screen view with:
 - **Header:** Title + round display
 - **Close Button:** Red circular button (top-right)
+- **Kicker + title:** from `SCREEN_GUIDE` ([src/data/screenGuide.js](src/data/screenGuide.js))
+- **Screen note:** one-line explanation of the screen, rounds 0–1 only (below)
 - **Content Area:** Scrollable content
 - **Fixed Elements:** Decoder FAB (clues screen only)
 
 **View Routing:**
 ```javascript
 // In App.jsx
-{activeView === 'dashboard' && <DashboardView />}
-{activeView === 'intel' && <IntelView />}
-{activeView === 'chat' && <ChatView />}
-{activeView === 'timeline' && <TimelineView />}
-{activeView === 'voting' && <VotingView />}
-{activeView === 'files' && <FilesView />}
-{activeView === 'dossier' && <DossierView />}
+{activeTab === 'dashboard' && <DashboardView />}
+{activeTab === 'story'     && <StoryView onReplay={...} />}
+{activeTab === 'intel'     && <IntelView />}
+{activeTab === 'chat'      && <ChatView />}   // self-framed
+{activeTab === 'timeline'  && <TimelineView />}   // no tile; view exists
+{activeTab === 'votes'     && <VotingView />}
+{activeTab === 'files'     && <FilesView />}
+{activeTab === 'dossier'   && <DossierView />}
+{activeTab === 'help'      && <HelpView />}
+{activeTab === 'host'      && <HostPanel />}
 ```
+
+Opening a screen resets the document scroll to the top (`useEffect` on `activeTab`).
+The scroll position survives a tab change — it is the same document with a new
+subtree — so a player who had scrolled the board down to reach a tile used to land
+part-way into whatever they opened. Most visible on the Story briefing, at ~2800px
+the tallest surface in the app.
+
+### **The Round 0 briefing (StoryIntro.jsx)**
+
+A fullscreen typed slideshow of the case: eight slides, swipe or tap to advance, a
+tap fills the current slide instantly, Skip leaves at any point. It takes over the
+screen for any player who logs in while the game is in Round 0 (see *Boot gate*
+above) and is re-openable from the Story screen's **Play the briefing** control.
+
+| Concern | How |
+|---|---|
+| Copy + pacing | [src/data/storyIntro.js](src/data/storyIntro.js) — also feeds `StoryView`, so the two can't drift. **Spoiler-gated**: Round 0 knowledge only (the vape is public; the toxin, cancer, SEBI and staging are not) |
+| Typing | [`useTypewriter`](src/hooks/useTypewriter.js) — heading and body lines are one stream, so the rhythm carries across the slide |
+| Sound | [`typeSound`](src/lib/typeSound.js) — on by default, mute toggle top-left, remembered |
+| Progress | `RoundRail` with `currentRound={index}` — the same component the chrome uses |
+| Gestures | Swipe ≥48px horizontal-dominant; a tap that moved >12px is a drag; clicks within 500ms of a `touchend` are ignored (touch devices synthesise one) |
+| Keyboard | → / Space / Enter advance, ← goes back, Esc exits. Skipped when a control has focus, or the footer button would fire twice |
+
+⚠️ **The screen sets `touch-action: none`.** A rightward swipe starting near the left
+edge is Chrome's history-back gesture and it beats any handler: measured, it replaced
+the whole document (`#root` and all), so a player swiping back one slide was thrown
+out of the game. `body { overscroll-behavior: contain }` is a related safety net for
+the rest of the app but does not save a fixed, non-scrolling layer.
 
 ### **Close Button Component**
 
@@ -618,6 +802,37 @@ Each tile opens a dedicated full-screen view with:
   ✕
 </button>
 ```
+
+### **Screen Notes (onboarding)**
+
+Every screen — plus the grid hub — carries a one-line note saying what it is for, so a
+first-time player never has to guess what "Intel" or "Dossier" means. It renders as a
+pinned aged-paper tooltip under the screen title (design spec: [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §6.10).
+
+**Copy** — [src/data/screenGuide.js](src/data/screenGuide.js). One entry per screen, four fields:
+
+| Field | Used by |
+|---|---|
+| `kicker`, `title` | the screen frame in [App.jsx](src/App.jsx) (`SCREEN_GUIDE[activeTab]`) |
+| `brief` | the screen note (`ScreenBrief`) — 1–2 short sentences |
+| `detail` | the "What each screen does" list on the Guide ([HelpView.jsx](src/components/views/HelpView.jsx)) |
+| `briefLabel` | optional label override (the hub uses "Start here") |
+
+**Component** — [src/components/ui/ScreenBrief.jsx](src/components/ui/ScreenBrief.jsx). Takes the whole
+guide entry, so new fields never change the signature:
+
+```javascript
+<ScreenBrief note={screen} currentRound={currentRound} className="mt-5" />
+```
+
+It renders nothing when `note.brief` is absent (the Host Console has no brief) or when
+`currentRound >= BRIEF_HIDDEN_FROM_ROUND` (2). Three call sites: [App.jsx](src/App.jsx) for the
+seven framed views, plus [GridMenu.jsx](src/components/GridMenu.jsx) and
+[ChatView.jsx](src/components/views/ChatView.jsx), which draw their own mastheads and so receive
+`note` as a prop rather than getting the frame from `App`.
+
+Because `currentRound` comes from Firestore, the notes clear on all 32 devices the moment the
+host advances to Round 2 — no per-device dismissal state exists, and none is wanted.
 
 ---
 
@@ -1623,35 +1838,32 @@ Then create `src/components/views/NewTileView.jsx` and add routing in `App.jsx`.
 
 ### **Customizing Styles**
 
-**Tailwind Config (tailwind.config.js):**
-```javascript
-export default {
-  content: ['./index.html', './src/**/*.{js,jsx}'],
-  theme: {
-    extend: {
-      colors: {
-        'custom': '#hexcolor'
-      },
-      fontFamily: {
-        'handwritten': ['Your Font', 'cursive']
-      }
-    }
-  }
-};
-```
+Read [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) before changing anything visual — the
+system is deliberately narrow, and most "I need a new colour" moments are answered by
+changing the *surface* instead.
 
-**Custom CSS (App.css):**
+**A new token — `src/index.css`, inside `@theme`:**
 ```css
-/* Add custom animations */
-@keyframes yourAnimation {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.your-class {
-  animation: yourAnimation 0.3s ease-in-out;
+@theme {
+  --color-signal: #E03127;   /* becomes bg-signal, text-signal, border-signal
+                                AND var(--color-signal) inside App.css */
 }
 ```
+Do **not** add colours to `tailwind.config.js`. Config colours become utilities but
+never emit custom properties, so `App.css` cannot read them.
+
+**A new component class — `src/App.css`:**
+```css
+/* Reads tokens, never literals. Lands in @layer components via the import
+   in index.css, so Tailwind utilities can still override it at call sites. */
+.er-thing {
+  border: 1px solid var(--color-line);
+  background: var(--color-ink-raised);
+}
+```
+
+**A new keyframe — `tailwind.config.js`** (the one thing `@theme` cannot express), or
+directly in `App.css` if it is only used by an `.er-*` class.
 
 ### **Modifying Round Count**
 

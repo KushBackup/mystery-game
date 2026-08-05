@@ -33,13 +33,14 @@ The TripleSpeed office gathers at the founders' Penthouse (4th floor, Indiranaga
 
 ### **Core Gameplay Loop**
 1. **Character Selection** - Players choose from 32 character identities
-2. **Round Progression** - Host advances through 7 rounds with specific unlocks
-3. **Accusation Distribution** - Round 1: Players receive pre-assigned accusation cards
-4. **Clue Discovery** - Players enter motive/revelation codes from printed cards
-5. **Evidence Unlocking** - Host unlocks case files at specific rounds (0, 3, 4)
-6. **Voting** - Players vote for suspects when host opens voting
-7. **Results Control** - Host controls when vote results are visible
-8. **Final Reveal** - Round 6: Host presses "REVEAL MURDERER" → big red full-screen overlay shows on every non-host player's phone naming Alam, **except Alam's own device** (Alam falls through to the regular OutroSplash). The action also flips `gameEnded` so players are locked into the terminal screen. Reset Game is the only way to undo.
+2. **Case Briefing** - While the game is still in Round 0, logging in opens a fullscreen typed briefing: eight slides covering the venue, the Series B night, the victim, the toast, the collapse, the sealed penthouse and the player's job. Swipe or tap through it, or Skip. It plays on every login and reload during Round 0 (so latecomers get it too) and never interrupts anyone after the host advances. Readable at any point afterwards from the **Story** tile on the board.
+3. **Round Progression** - Host advances through 7 rounds with specific unlocks
+4. **Accusation Distribution** - Round 1: Players receive pre-assigned accusation cards
+5. **Clue Discovery** - Players enter motive/revelation codes from printed cards
+6. **Evidence Unlocking** - Host unlocks case files at specific rounds (0, 3, 4)
+7. **Voting** - Players vote for suspects when host opens voting
+8. **Results Control** - Host controls when vote results are visible
+9. **Final Reveal** - Round 6: Host presses "REVEAL MURDERER" → big red full-screen overlay shows on every non-host player's phone naming Alam, **except Alam's own device** (Alam falls through to the regular OutroSplash). The action also flips `gameEnded` so players are locked into the terminal screen. Reset Game is the only way to undo.
 
 ### **Code System**
 - **Accusation Codes:** Pre-assigned, each player gets 1 unique accusation card
@@ -50,7 +51,7 @@ The TripleSpeed office gathers at the founders' Penthouse (4th floor, Indiranaga
 
 ### **Round Structure**
 ```
-Round 0: The Incident (Incident Report unlocked, explore TripleSpeed profiles)
+Round 0: The Incident (typed case briefing on login, Incident Report unlocked, explore TripleSpeed profiles)
 Round 1: Accusations (Each player receives 1 accusation card, shared verbally)
 Round 2: Motives (Enter printed motive codes - why suspects wanted Nikhil dead)
 Round 3: Evidence (Toxicology, vape analysis, Penthouse CCTV, funding/SEBI/HR docs)
@@ -199,11 +200,20 @@ mystery-game/
 │   │   │   ├── ChatView.jsx              # Real-time chat tab
 │   │   │   ├── VotingView.jsx            # Dedicated voting interface
 │   │   │   └── TimelineView.jsx          # Animated timeline view
+│   │   │   └── StoryView.jsx             # The case briefing as a readable document
 │   │   ├── CharacterSelect.jsx           # Login screen
 │   │   ├── GridMenu.jsx                  # Metro-style home hub
+│   │   ├── StoryIntro.jsx                # Round 0 typed briefing (fullscreen slideshow)
 │   │   └── HostPanel.jsx                 # Admin controls
 │   ├── data/
-│   │   └── gameData.js                   # All game constants
+│   │   ├── gameData.js                   # All game constants
+│   │   ├── screenGuide.js                # Per-screen kicker/title/brief/detail copy
+│   │   └── storyIntro.js                 # Briefing slides (spoiler-gated to Round 0)
+│   ├── hooks/
+│   │   ├── useCountUp.js                 # Numeral tick
+│   │   └── useTypewriter.js              # Character-at-a-time reveal
+│   ├── lib/
+│   │   └── typeSound.js                  # Synthesized typewriter clicks (Web Audio)
 │   ├── firebase/
 │   │   └── config.js                     # Firebase initialization
 │   ├── App.jsx                           # Main app controller
@@ -222,17 +232,26 @@ mystery-game/
 ## 🎨 UI/UX DESIGN
 
 ### **Navigation System - Metro Grid Hub**
-Windows 8/Nokia Lumia inspired interface with animated tile grid:
 
-**Metro Grid Tiles:**
-1. **ID** (Large 2x2 tile, Red) - Character role, secret, timeline, access code
-2. **CLUES** (Amber) - Evidence board with unlocked clues
-3. **CHAT** (Blue) - Real-time messaging between all players
-4. **TIMELINE** (Indigo) - Animated timeline of character's movements
-5. **VOTES** (Pink) - Dedicated voting interface with results
-6. **FILES** (Emerald) - Case files, reports, CCTV sketches
-7. **GUESTS** (Purple) - Guest profiles and information
-8. **LOGOUT** (Stone Gray) - Exit to character selection
+> ⚠️ **Colour names in this section are historical.** The app runs on the
+> "Evidence Room" system as of 2026-08-02 — ink, bone, one red, brass, and nothing
+> else. [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) is the authority; the tile list
+> below is current, the palette words further down this section are not.
+
+A corkboard of pinned paper tiles. Nine tiles in two columns — eight 4:3 paper
+tiles, then EXIT spanning the row as an ink bar:
+
+1. **IDENTITY** (bone) - Your role, profession, backstory and sealed secret
+2. **STORY** (bone-aged) - The case briefing: the night, in order. Replays the typed briefing on demand
+3. **EVIDENCE** (bone) - Evidence board with everything you have decoded
+4. **COMMS** (bone-aged) - Real-time messaging between all players
+5. **VOTE** (ink + signal) - The ballot; fills red only while voting is open
+6. **ARCHIVES** (bone-aged) - Case files released by the host
+7. **SUSPECTS** (bone) - All 32 guest profiles
+8. **GUIDE** (bone-aged) - The rulebook
+9. **EXIT** (ink, full width) - End session, back to character selection
+
+TIMELINE still exists as a view but has no tile.
 
 ### **Key UI Components**
 - **Character Select Screen** - Initial login to choose character

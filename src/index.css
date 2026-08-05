@@ -1,86 +1,198 @@
 @import "tailwindcss";
-@import url('https://fonts.googleapis.com/css2?family=Special+Elite&family=Caveat:wght@400;700&family=Courier+Prime&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Special+Elite&family=Caveat:wght@400;700&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+
+/* The Evidence Room component vocabulary (§6) and motion primitives (§7).
+   Imported INTO the components layer, not from main.jsx: unlayered CSS beats
+   every layered rule regardless of specificity, so a plain import would make
+   .er-card's padding and .er-title's size unoverridable by any Tailwind
+   utility. Inside `components` the utilities win, which is what call sites
+   like `er-title text-[28px]` expect. */
+@import "./App.css" layer(components);
 
 /* Tailwind v4 does NOT pick up tailwind.config.js automatically — without this
-   line the whole `mystery-*` palette and the custom keyframes resolve to
-   nothing, and every bg-mystery-paper / text-mystery-ink / animate-fade-in in
-   the app silently renders unstyled. Keep the config file authoritative rather
-   than duplicating the palette into @theme below. */
+   line the custom keyframes resolve to nothing and every animate-fade-in in the
+   app silently renders unstyled. The colour palette lives in @theme below
+   (not in the config file) because @theme emits real CSS custom properties,
+   which App.css and inline styles can read; config colours cannot. */
 @config "../tailwind.config.js";
 
 @theme {
-  --font-typewriter: 'Special Elite', 'Courier New', monospace;
+  /* ==========================================================
+     EVIDENCE ROOM — see DESIGN_LANGUAGE.md §2.1
+     Ink is the world. Bone is paper. Signal is the ONE accent.
+     Brass is numerals and nothing else, ever.
+     ========================================================== */
+
+  /* Surfaces */
+  --color-ink:        #0C0D0F;
+  --color-ink-raised: #141518;
+  --color-ink-hover:  #1C1E22;
+  --color-bone:       #EDE7DA;
+  --color-bone-aged:  #D8D0BF;
+
+  /* The one accent */
+  --color-signal:      #E03127;  /* fills, rules, borders, markers, ≥18px text */
+  --color-signal-deep: #8E1811;  /* the accent on bone */
+  --color-signal-lift: #F2564C;  /* small red text on ink — AA safe (5.75:1) */
+
+  /* Data only */
+  --color-brass: #D8A33C;
+
+  /* Text */
+  --color-dim:       #98948D;  /* secondary on ink — AA */
+  --color-dim-2:     #6B6964;  /* tertiary on ink — LARGE TEXT ONLY */
+  --color-body-bone: #4A453C;  /* body copy on bone */
+
+  /* Hairlines — depth comes from these, never from shadow */
+  --color-line:       rgba(237, 231, 218, 0.16);
+  --color-line-faint: rgba(237, 231, 218, 0.08);
+  --color-line-bone:  rgba(12, 13, 15, 0.22);
+
+  /* Type — four voices, strict roles (DESIGN_LANGUAGE.md §3.1)
+     display .... numerals + screen titles ONLY
+     mono ....... every label, tag, kicker, chrome element
+     typewriter . in-fiction headings
+     body ....... in-fiction body copy
+     handwriting  in-fiction margin notes */
+  --font-display:     'Big Shoulders Display', 'Big Shoulders', Impact, sans-serif;
+  --font-mono:        'IBM Plex Mono', ui-monospace, monospace;
+  --font-typewriter:  'Special Elite', 'Courier New', monospace;
   --font-handwriting: 'Caveat', cursive;
-  --font-body: 'Courier Prime', monospace;
+  --font-body:        'Courier Prime', monospace;
+
+  /* Motion (DESIGN_LANGUAGE.md §7) */
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-land:  cubic-bezier(0.34, 1.4, 0.5, 1);
 }
 
-/* Mystery Background */
+/* ============================================================
+   BASE
+   ============================================================ */
+
+html {
+  background-color: var(--color-ink);
+}
+
+:root {
+  /* Total height of the chrome rail: 64px of content + the 2px round rail +
+     10px of breathing room + the 1px hairline.
+     ChatView is the one fixed-position view and it pins itself directly under
+     the rail, so this has to be a single value both can read — as two literals
+     they drift the moment the header gains a row, which is exactly what
+     happened when the rail was added. */
+  --chrome-h: 77px;
+}
+
 body {
-  background-color: #0f0f0f;
-  background-image: 
-    radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 0.8), rgba(0, 0, 0, 1)),
-    url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E");
-  color: #e3dac9;
-  font-family: 'Courier Prime', monospace;
+  background-color: var(--color-ink);
+  color: var(--color-bone);
+  font-family: var(--font-body);
+  /* Both axes, not just y. A rightward swipe near the left edge is Chrome's
+     history-back gesture, which replaces the document — `#root` and all — and
+     drops the player out of the game mid-round. Nothing in this app scrolls
+     horizontally (see DESIGN_LANGUAGE.md §11), so containing x costs nothing.
+     Note this is a safety net, not a cure: on a fixed, non-scrolling layer the
+     gesture still wins, which is why the briefing also sets `touch-action: none`. */
+  overscroll-behavior: contain;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* The app's smallest content type is 15px (§2.4) — stop iOS shrinking it. */
+  -webkit-text-size-adjust: 100%;
+  /* Courier Prime is a monospace body face, so a line of it holds far fewer
+     characters than the metrics this copy was written against. At 390px that
+     leaves a one-word last line on most paragraphs; `pretty` pulls a word down
+     to avoid the orphan. Inherited, so it reaches every paragraph in the app. */
+  text-wrap: pretty;
 }
 
-/* Custom Utilities */
-.pb-safe { 
-  padding-bottom: env(safe-area-inset-bottom); 
+/* Headings balance instead — they are short enough that evening the lines out
+   beats protecting the last one. Covers the in-fiction typewriter headings on
+   paper as well as the display-face screen titles. */
+h1, h2, h3 {
+  text-wrap: balance;
 }
 
-/* Old Paper Effect */
-.bg-paper {
-  background-color: #e3dac9;
-  box-shadow: 
-    inset 0 0 30px rgba(0,0,0,0.1),
-    1px 1px 3px rgba(0,0,0,0.2);
+::selection {
+  background: var(--color-signal);
+  color: #fff;
 }
 
-.text-ink {
-  color: #1a1a1a;
+/* Square corners are the default — rounded cards fight the case-file
+   metaphor (§5). Only the pushpin and avatar discs are round. */
+input,
+textarea,
+button {
+  font-family: inherit;
+  border-radius: 0;
 }
 
-/* Custom Scrollbar - Noir Theme */
-.custom-scrollbar::-webkit-scrollbar { 
-  width: 6px; 
-}
-.custom-scrollbar::-webkit-scrollbar-track { 
-  background: #1a1a1a; 
-}
-.custom-scrollbar::-webkit-scrollbar-thumb { 
-  background: #3e2723;
-  border: 1px solid #1a1a1a; 
+input:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 2px;
 }
 
-/* Shadows */
-.shadow-noir {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.8), 0 4px 6px -2px rgba(0, 0, 0, 0.5);
+/* Safe-area helper for the bottom of the viewport on notched phones. */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-.shadow-paper {
-  box-shadow: 2px 3px 10px rgba(0,0,0,0.4);
+/* ============================================================
+   ATMOSPHERE — halftone grain + lamp pool.
+   The single sanctioned gradient in the system (§2.2): a radial
+   wash, not a UI fill. Both are decorative and non-interactive.
+   ============================================================ */
+
+.er-grain::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+  background-image: radial-gradient(circle, rgba(237, 231, 218, 0.09) 1px, transparent 1.4px);
+  background-size: 13px 13px;
 }
 
-/* Handwritten Note Style */
-.note-transform {
-  transform: rotate(-1deg);
-}
-.note-transform:nth-child(even) {
-  transform: rotate(1deg);
-}
-
-/* Animations */
-@keyframes flicker {
-  0% { opacity: 0.9; }
-  5% { opacity: 0.8; }
-  10% { opacity: 0.95; }
-  15% { opacity: 0.6; }
-  20% { opacity: 1; }
-  50% { opacity: 0.9; }
-  100% { opacity: 1; }
+.er-lamp {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  width: 640px;
+  height: 640px;
+  left: -220px;
+  top: -260px;
+  background: radial-gradient(circle, rgba(216, 163, 60, 0.10), rgba(216, 163, 60, 0.03) 42%, transparent 66%);
 }
 
-.animate-flicker {
-  animation: flicker 4s infinite;
+.er-lamp--signal {
+  left: auto;
+  top: auto;
+  right: -280px;
+  bottom: -320px;
+  background: radial-gradient(circle, rgba(224, 49, 39, 0.08), transparent 62%);
+}
+
+.er-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  box-shadow: inset 0 0 160px 40px rgba(0, 0, 0, 0.75);
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(237, 231, 218, 0.16);
 }

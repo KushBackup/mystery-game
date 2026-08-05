@@ -2,51 +2,44 @@ import React from 'react';
 import { User, Search, FileText, Users } from '../icons/IconComponents';
 import { MessageBubble } from '../icons/ChatIcons';
 
+const TABS = [
+  { id: 'DASHBOARD', label: 'ID', Icon: User },
+  { id: 'INTEL', label: 'Clues', Icon: Search },
+  { id: 'CHAT', label: 'Chat', Icon: MessageBubble },
+  { id: 'FILES', label: 'Files', Icon: FileText },
+  { id: 'DOSSIER', label: 'Guests', Icon: Users },
+];
+
+/**
+ * A bottom tab bar. Currently unused — the app navigates through GridMenu —
+ * but kept on-system so it can't reintroduce the old orange-on-stone palette
+ * if it is ever wired back in. Active state is signal-lift, which is the
+ * AA-safe red for text under 18px on ink (DESIGN_LANGUAGE.md §2.4).
+ */
 export const Navigation = ({ activeTab, onTabChange }) => {
   return (
-    <nav className="fixed bottom-0 w-full bg-stone-900 border-t-4 border-red-700 pb-safe z-30 shadow-2xl">
-      <div className="flex justify-around items-center h-16 sm:h-20 max-w-2xl mx-auto">
-        <button 
-          onClick={() => onTabChange('DASHBOARD')}
-          className={`flex flex-col items-center gap-1 w-full h-full justify-center transition-colors active:bg-stone-800 ${activeTab === 'DASHBOARD' ? 'text-orange-500' : 'text-stone-500'}`}
-        >
-          <User size={18} className="sm:w-5 sm:h-5" strokeWidth={3} />
-          <span className="text-[9px] sm:text-xs font-black uppercase">ID</span>
-        </button>
-        
-        <button 
-          onClick={() => onTabChange('INTEL')}
-          className={`flex flex-col items-center gap-1 w-full h-full justify-center transition-colors active:bg-stone-800 ${activeTab === 'INTEL' ? 'text-orange-500' : 'text-stone-500'}`}
-        >
-          <div className="relative">
-            <Search size={18} className="sm:w-5 sm:h-5" strokeWidth={3} />
-          </div>
-          <span className="text-[9px] sm:text-xs font-black uppercase">Clues</span>
-        </button>
-
-        <button 
-          onClick={() => onTabChange('CHAT')}
-          className={`flex flex-col items-center gap-1 w-full h-full justify-center transition-colors active:bg-stone-800 ${activeTab === 'CHAT' ? 'text-orange-500' : 'text-stone-500'}`}
-        >
-          <MessageBubble size={18} className="sm:w-5 sm:h-5" strokeWidth={3} />
-          <span className="text-[9px] sm:text-xs font-black uppercase">Chat</span>
-        </button>
-
-        <button 
-          onClick={() => onTabChange('FILES')}
-          className={`flex flex-col items-center gap-1 w-full h-full justify-center transition-colors active:bg-stone-800 ${activeTab === 'FILES' ? 'text-orange-500' : 'text-stone-500'}`}
-        >
-          <FileText size={18} className="sm:w-5 sm:h-5" strokeWidth={3} />
-          <span className="text-[9px] sm:text-xs font-black uppercase">Files</span>
-        </button>
-
-        <button 
-          onClick={() => onTabChange('DOSSIER')}
-          className={`flex flex-col items-center gap-1 w-full h-full justify-center transition-colors active:bg-stone-800 ${activeTab === 'DOSSIER' ? 'text-orange-500' : 'text-stone-500'}`}
-        >
-          <Users size={18} className="sm:w-5 sm:h-5" strokeWidth={3} />
-          <span className="text-[9px] sm:text-xs font-black uppercase">Guests</span>
-        </button>
+    <nav className="fixed bottom-0 w-full bg-ink border-t border-line pb-safe z-30">
+      <div className="flex justify-around items-stretch h-16 max-w-2xl mx-auto">
+        {TABS.map((tab) => {
+          const { id, label } = tab;
+          // Assigned rather than destructured in the parameter list: this repo's
+          // ESLint has no eslint-plugin-react, so JSX usage isn't tracked and a
+          // destructured `Icon` param would read as unused.
+          const Icon = tab.Icon;
+          const isActive = activeTab === id;
+          return (
+            <button
+              key={id}
+              onClick={() => onTabChange(id)}
+              className={`er-touch flex flex-col items-center justify-center gap-1.5 w-full ${
+                isActive ? 'text-signal-lift' : 'text-dim-2'
+              }`}
+            >
+              <Icon size={18} strokeWidth={1.75} />
+              <span className={`er-mono ${isActive ? 'er-mono--hot' : ''}`}>{label}</span>
+            </button>
+          );
+        })}
       </div>
     </nav>
   );

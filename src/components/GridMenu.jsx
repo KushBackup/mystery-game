@@ -1,226 +1,223 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { ScreenBrief } from './ui/ScreenBrief';
+import { Numeral } from './ui/Numeral';
 
-// Custom Sketched Icons
+// Sketched line icons — stroke-only so they inherit the surface's text colour.
+//
+// Stroke is 1.75, not 1.5: these sit directly above bold uppercase typewriter
+// labels at 19–23px, and an icon carries the optical weight of the text beside
+// it. At 1.5 against a 700-weight label the icon read as a hairline sketch
+// pinned above solid type — the pair looked like two different sets.
+const ICON_STROKE = 1.75;
+
 const FingerprintIcon = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={ICON_STROKE}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.131A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
   </svg>
 );
 
 const ClipboardIcon = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={ICON_STROKE}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
   </svg>
 );
 
 const ChatIcon = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={ICON_STROKE}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
   </svg>
 );
 
+// An open case file with a bookmark — the story as a bound document rather than
+// a loose clipping, which is what separates it at a glance from Archives.
+const BookIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={ICON_STROKE}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 5.5A1.5 1.5 0 015.5 4H10a2 2 0 012 2v13a2 2 0 00-2-2H4V5.5z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M20 5.5A1.5 1.5 0 0018.5 4H14a2 2 0 00-2 2v13a2 2 0 012-2h6V5.5z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16 4v5l1.5-1L19 9V4" />
+  </svg>
+);
+
 const FolderIcon = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={ICON_STROKE}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
   </svg>
 );
 
 const UsersIcon = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={ICON_STROKE}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 005.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
   </svg>
 );
 
 const ChartIcon = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={ICON_STROKE}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
   </svg>
 );
 
 const LogoutIcon = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={ICON_STROKE}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
   </svg>
 );
 
 const HelpIcon = ({ className }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={ICON_STROKE}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
   </svg>
 );
 
-export default function GridMenu({ onNavigate, voteCounts }) {
-  const [hoveredTile, setHoveredTile] = useState(null);
+// Module scope, so it survives this component unmounting and remounting — which
+// it does every single time the player closes a screen.
+//
+// Returning to the board is the app's most frequent navigation by a wide margin.
+// The full landing sequence is eight tiles at 60ms apart plus a 700ms overshoot,
+// which is ~1.2s of motion; paying that on every close is the definition of an
+// entrance animation on a high-frequency interaction. So the sequence plays once
+// per session, on the first visit, and every return after that is a single
+// 260ms lift with no stagger at all.
+let boardIntroPlayed = false;
 
+/**
+ * The investigation board (DESIGN_LANGUAGE.md §9, "Grid hub").
+ *
+ * Bone means "this is a document", so the tiles — pinned paper labels on a
+ * corkboard — are bone and bone-aged. EXIT is interface, not paper, so it is
+ * ink-hover. VOTE is the one signal focal point, and it only *fills* with
+ * signal while voting is genuinely open; the rest of the time it carries the
+ * accent as a 3px top border, because red is a scalpel, not a paint (§2.2).
+ */
+export default function GridMenu({ onNavigate, currentRound = 0, isVotingOpen = false, note }) {
+  // State, not a ref: this is read during render to pick the animation, and refs
+  // must not be read during render. The initialiser only *reads* the module flag
+  // (so it stays pure, and StrictMode's double-invoke gets the same answer both
+  // times); the effect is what commits it.
+  const [playIntro] = useState(() => !boardIntroPlayed);
+  useEffect(() => {
+    boardIntroPlayed = true;
+  }, []);
+
+  const tileMotion = playIntro ? 'er-land' : 'er-enter-quick';
+
+  // Nine tiles, so EXIT spans the row rather than sitting alone in a half-empty
+  // one. That reads as a footer control instead of a ninth destination, which is
+  // what it is — and it keeps the eight paper tiles a clean 4×2 board. The
+  // differentiation is surface, not hue (§2.2): ink, not paper.
   const menuItems = [
-    { 
-      id: 'dashboard', 
-      label: 'IDENTITY', 
-      subtext: 'CONFIDENTIAL',
-      icon: FingerprintIcon, 
-      rotate: '-rotate-1',
-      bgType: 'bg-mystery-paper',
-      textColor: 'text-mystery-ink'
-    },
-    { 
-      id: 'intel', 
-      label: 'EVIDENCE', 
-      subtext: 'BOARD',
-      icon: ClipboardIcon, 
-      rotate: 'rotate-2',
-      bgType: 'bg-mystery-paper',
-       textColor: 'text-mystery-ink'
-    },
-    { 
-      id: 'chat', 
-      label: 'COMMS', 
-      subtext: 'ENCRYPTED',
-      icon: ChatIcon, 
-      rotate: '-rotate-2',
-      bgType: 'bg-mystery-paper',
-       textColor: 'text-mystery-ink'
-    },
-    { 
-      id: 'votes', 
-      label: 'VOTE', 
-      subtext: 'SUSPECT LIST',
-      icon: ChartIcon, 
-      rotate: 'rotate-1',
-      bgType: 'bg-mystery-blood',
-      textColor: 'text-white'
-    },
-    { 
-      id: 'files', 
-      label: 'ARCHIVES', 
-      subtext: 'CASE FILES',
-      icon: FolderIcon, 
-      rotate: '-rotate-1',
-      bgType: 'bg-mystery-aged',
-      textColor: 'text-mystery-ink'
-    },
-    { 
-      id: 'dossier', 
-      label: 'SUSPECTS', 
-      subtext: 'PROFILES',
-      icon: UsersIcon, 
-      rotate: 'rotate-2',
-      bgType: 'bg-mystery-paper',
-       textColor: 'text-mystery-ink'
-    },
-    { 
-      id: 'help', 
-      label: 'GUIDE', 
-      subtext: 'READ ME',
-      icon: HelpIcon, 
-      rotate: '-rotate-2',
-      bgType: 'bg-mystery-sepia',
-      textColor: 'text-white'
-    },
-    { 
-      id: 'logout', 
-      label: 'EXIT', 
-      subtext: '',
-      icon: LogoutIcon, 
-      rotate: 'rotate-1',
-      bgType: 'bg-mystery-charcoal',
-      textColor: 'text-white'
-    }
+    { id: 'dashboard', label: 'Identity',  sub: 'Confidential', icon: FingerprintIcon, tone: 'bone',  rot: 'er-rotL' },
+    { id: 'story',     label: 'Story',     sub: 'The Night',    icon: BookIcon,        tone: 'aged',  rot: 'er-rotR' },
+    { id: 'intel',     label: 'Evidence',  sub: 'Board',        icon: ClipboardIcon,   tone: 'bone',  rot: 'er-rotR' },
+    { id: 'chat',      label: 'Comms',     sub: 'Encrypted',    icon: ChatIcon,        tone: 'aged',  rot: 'er-rotL' },
+    { id: 'votes',     label: 'Vote',      sub: isVotingOpen ? 'Open Now' : 'Standby', icon: ChartIcon, tone: 'vote', rot: 'er-rotL' },
+    { id: 'files',     label: 'Archives',  sub: 'Case Files',   icon: FolderIcon,      tone: 'aged',  rot: 'er-rotR' },
+    { id: 'dossier',   label: 'Suspects',  sub: 'Profiles',     icon: UsersIcon,       tone: 'bone',  rot: 'er-rotR' },
+    { id: 'help',      label: 'Guide',     sub: 'Read Me',      icon: HelpIcon,        tone: 'aged',  rot: 'er-rotL' },
+    { id: 'logout',    label: 'Exit',      sub: 'End Session',  icon: LogoutIcon,      tone: 'ink',   rot: '', wide: true },
   ];
 
   const handleTileClick = (itemId) => {
-    if (navigator.vibrate) {
-      navigator.vibrate(20);
-    }
+    // A 20ms buzz on tile tap is part of the product's texture (§4.3).
+    if (navigator.vibrate) navigator.vibrate(20);
     onNavigate(itemId);
   };
 
-  return (
-    <div className="min-h-screen bg-mystery-dark overflow-y-auto pb-10" style={{
-      backgroundImage: `
-        radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 0.9), rgba(0, 0, 0, 1)),
-        url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E")
-      `
-    }}>
-      {/* Cinematic Header */}
-      <div className="pt-8 pb-6 px-4 text-center relative">
-        <p className="font-typewriter text-mystery-aged tracking-[0.2em] text-xs sm:text-sm uppercase mb-2">
-          Astral Project Presents
-        </p>
-        <h1 className="font-typewriter text-4xl sm:text-5xl font-bold text-mystery-paper tracking-tighter uppercase border-b-2 border-mystery-blood inline-block pb-2 transform -rotate-1 shadow-lg">
-          The Murder Mystery Experience @ The Penthouse
-        </h1>
-        <div className="mt-4 transform rotate-1">
-          <span className="font-handwriting text-2xl text-mystery-blood bg-black/10 px-4 py-1 rounded inline-block">
-            "Trust No One."
-          </span>
-        </div>
-      </div>
+  // Surfaces, not hues (§2.2). Every branch below changes the *paper*, and
+  // only the vote tile is ever allowed to reach for the accent.
+  const toneClasses = (tone) => {
+    if (tone === 'vote') {
+      return isVotingOpen
+        ? 'er-touch--hot bg-signal text-white border border-signal er-pin'
+        : 'bg-ink-raised text-bone border border-line border-t-[3px] border-t-signal';
+    }
+    if (tone === 'ink') return 'bg-ink-hover text-bone border border-line';
+    if (tone === 'aged') return 'er-bone er-bone--aged er-pin';
+    return 'er-bone er-pin';
+  };
 
-      {/* Investigation Desk Grid */}
-      <div className="p-4 max-w-4xl mx-auto">
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 mt-4">
+  const subToneClass = (tone) => {
+    if (tone === 'vote') return isVotingOpen ? 'text-white/75' : 'er-mono--hot';
+    if (tone === 'ink') return 'er-mono--dim';
+    return 'text-signal-deep';
+  };
+
+  return (
+    <div className="min-h-screen bg-ink relative er-grain overflow-x-hidden">
+      <div className="er-lamp" aria-hidden="true" />
+      <div className="er-lamp er-lamp--signal" aria-hidden="true" />
+
+      <div className="relative z-10 max-w-2xl mx-auto px-4 pb-14">
+        {/* Chrome rail — mono label left, state right, hairline underneath. */}
+        <div className="pt-5">
+          <div className="flex items-end justify-between gap-3">
+            <span className="er-mono er-mono--wide er-mono--bone">Astral Project</span>
+            <div className="flex items-baseline gap-2">
+              <span className="er-mono">Round</span>
+              <Numeral value={currentRound} pad={2} className="er-num text-xl" />
+            </div>
+          </div>
+          <div className="er-rule mt-3" />
+        </div>
+
+        {/* Kicker + screen title */}
+        <div className={`pt-7 ${playIntro ? 'er-enter' : 'er-enter-quick'}`}>
+          <p className="er-mono er-mono--hot er-mono--wide">The Penthouse · Indiranagar</p>
+          <h1 className="er-title mt-2.5 text-[34px] sm:text-[46px]">
+            The Murder Mystery Experience
+          </h1>
+          <p className="font-handwriting text-signal-lift text-[19px] mt-3 -rotate-1 origin-left">
+            Trust no one.
+          </p>
+
+          <ScreenBrief note={note} currentRound={currentRound} className="mt-5" />
+        </div>
+
+        {/* Investigation board */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-8">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
-            
+            const isPaper = item.tone === 'bone' || item.tone === 'aged';
+
             return (
               <button
                 key={item.id}
                 onClick={() => handleTileClick(item.id)}
-                onMouseEnter={() => setHoveredTile(item.id)}
-                onMouseLeave={() => setHoveredTile(null)}
-                className={`
-                  relative group ${item.bgType} ${item.rotate}
-                  aspect-[4/3] w-full
-                  flex flex-col items-center justify-center
-                  shadow-[0_10px_25px_-5px_rgba(0,0,0,0.4),0_8px_10px_-6px_rgba(0,0,0,0.3)]
-                  hover:shadow-[0_20px_40px_-5px_rgba(0,0,0,0.5),0_15px_20px_-6px_rgba(0,0,0,0.4)]
-                  hover:scale-[1.03] hover:z-10 hover:-translate-y-1
-                  transition-all duration-300 ease-out
-                  border border-black/10 select-none
-                  before:content-[''] before:absolute before:inset-0 before:bg-[url('https://www.transparenttextures.com/patterns/paper.png')] before:opacity-30 before:pointer-events-none
-                `}
-                style={{
-                  animation: `slideInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) ${index * 0.1}s backwards`
-                }}
+                className={`er-touch er-lift ${tileMotion} relative w-full flex flex-col items-center justify-center gap-2 px-2 ${
+                  item.wide ? 'col-span-2 py-3.5' : 'aspect-[4/3]'
+                } ${item.rot} ${toneClasses(item.tone)}`}
+                style={playIntro ? { animationDelay: `${index * 60}ms` } : undefined}
               >
-                {/* Pin effect - centered at top */}
-                <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 bg-gradient-to-br from-gray-400 to-gray-600 rounded-full shadow-md z-20 pointer-events-none">
-                  <div className="absolute inset-0.5 bg-gradient-to-br from-gray-300 to-gray-500 rounded-full"></div>
-                  <div className="absolute top-1 left-1 w-1.5 h-1.5 bg-white/60 rounded-full"></div>
-                </div>
-                
-                {/* Pin shadow underneath the note */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2 h-8 bg-black/20 blur-sm pointer-events-none"></div>
+                <Icon
+                  className={`${item.wide ? 'w-6 h-6' : 'w-8 h-8 sm:w-10 sm:h-10'} ${
+                    isPaper ? 'text-ink/70' : ''
+                  }`}
+                />
 
-                {/* Content Container */}
-                <div className={`
-                  w-full h-full 
-                  flex flex-col items-center justify-center 
-                  p-2
-                  ${item.textColor}
-                  relative z-10
-                `}>
-                  <Icon className={`
-                    w-10 h-10 sm:w-12 sm:h-12 mb-2 stroke-[1.5px] opacity-90 group-hover:opacity-100 transition-opacity
-                    ${hoveredTile === item.id ? 'scale-105' : 'scale-100'}
-                  `} />
-                  
-                  <span className={`
-                    text-xl sm:text-3xl font-typewriter font-bold uppercase tracking-widest
-                    ${hoveredTile === item.id ? 'underline decoration-mystery-blood decoration-2' : ''}
-                  `}>
-                    {item.label}
-                  </span>
-                  
-                  {item.subtext && (
-                    <span className="hidden sm:block mt-1 font-handwriting text-lg sm:text-xl opacity-70">
-                      {item.subtext}
-                    </span>
-                  )}
-                </div>
+                <span
+                  className={`font-typewriter font-bold uppercase leading-none text-[19px] sm:text-[23px] ${
+                    isPaper ? 'text-ink' : ''
+                  }`}
+                >
+                  {item.label}
+                </span>
+
+                {/* Keyed on the copy so the ballot opening animates the label
+                    rather than silently swapping it under the player. */}
+                <span key={item.sub} className={`er-mono er-swap ${subToneClass(item.tone)}`}>
+                  {item.sub}
+                </span>
               </button>
             );
           })}
+        </div>
+
+        {/* Footer rail */}
+        <div className="mt-10">
+          <div className="er-rule" />
+          <div className="flex items-center justify-between pt-3">
+            <span className="er-mono">Case 8821-B</span>
+            <span className="er-mono">32 Guests · 1 Killer</span>
+          </div>
         </div>
       </div>
     </div>

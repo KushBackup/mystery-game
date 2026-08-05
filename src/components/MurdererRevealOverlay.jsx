@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
 
+/**
+ * The one time red owns the screen (DESIGN_LANGUAGE.md §2.2, §7).
+ *
+ * A full-bleed `signal` fill is forbidden everywhere else in the app, which is
+ * precisely what makes it land here. Type is bone and ink on that fill — pure
+ * white only on the small tag, per §2.2.
+ */
 export const MurdererRevealOverlay = ({ murderer }) => {
   const [stage, setStage] = useState(0);
 
@@ -17,47 +24,49 @@ export const MurdererRevealOverlay = ({ murderer }) => {
   if (!murderer) return null;
 
   return (
-    <div className="fixed inset-0 z-[200] bg-red-700 flex flex-col items-center justify-center px-6 text-center overflow-hidden">
-      {/* Pulsing red wash */}
-      <div className="absolute inset-0 bg-gradient-to-br from-red-800 via-red-600 to-red-900 animate-pulse opacity-90" />
-
-      <div className="relative z-10 max-w-xl w-full space-y-8">
+    // No vignette and no grain here. The whole screen going signal is the
+    // point; softening the edges would undo it.
+    <div className="fixed inset-0 z-[200] bg-signal flex flex-col items-center justify-center px-6 text-center overflow-hidden">
+      <div className="max-w-xl w-full">
+        {/* Every stage names the exact properties it transitions. Blanket
+            property transitions were the riskiest thing on this screen: the name
+            is set at 86px, so any layout property sliding into the set would
+            animate a reflow of the largest type in the product, on the one
+            screen that has to land perfectly. */}
         <p
-          className={`font-typewriter text-xl sm:text-2xl tracking-[0.4em] uppercase text-red-100 transition-opacity duration-700 ${
-            stage >= 1 ? 'opacity-100' : 'opacity-0'
+          className={`font-mono text-[12px] font-medium uppercase tracking-[0.32em] text-bone transition-[opacity,translate] duration-700 ease-out ${
+            stage >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
           }`}
         >
-          The Murderer Is
+          The murderer is
         </p>
 
+        {/* The rule draws itself out from the centre as the name arrives. */}
         <div
-          className={`mx-auto w-40 h-40 sm:w-48 sm:h-48 rounded-full bg-black/40 border-4 border-white flex items-center justify-center shadow-2xl transition-all duration-700 ${
-            stage >= 2 ? 'opacity-100 scale-100' : 'opacity-0 scale-75'
+          className={`mx-auto mt-8 mb-8 h-px w-24 origin-center transition-[opacity,scale] duration-700 ease-out ${
+            stage >= 1 ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'
           }`}
-        >
-          <span className="font-black text-7xl sm:text-8xl text-white">
-            {murderer.name?.charAt(0) || '?'}
-          </span>
-        </div>
+          style={{ background: 'rgba(237,231,218,.5)' }}
+        />
 
         <div
-          className={`space-y-2 transition-opacity duration-700 ${
-            stage >= 2 ? 'opacity-100' : 'opacity-0'
+          className={`transition-[opacity,translate] duration-700 ease-out ${
+            stage >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
           }`}
         >
-          <h1 className="font-black text-5xl sm:text-7xl text-white uppercase tracking-tight drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]">
+          <h1 className="font-display font-extrabold uppercase text-bone text-[56px] sm:text-[86px] leading-[0.9] tracking-[-0.02em]">
             {murderer.name}
           </h1>
           {murderer.profession && (
-            <p className="font-typewriter text-base sm:text-lg text-red-100 uppercase tracking-widest">
+            <p className="font-mono text-[12px] font-medium uppercase tracking-[0.24em] text-bone/75 mt-4">
               {murderer.profession}
             </p>
           )}
         </div>
 
         <p
-          className={`font-handwriting text-2xl sm:text-3xl text-red-50 italic pt-4 transition-opacity duration-1000 ${
-            stage >= 3 ? 'opacity-100' : 'opacity-0'
+          className={`font-handwriting text-[26px] sm:text-[32px] text-bone mt-12 transition-[opacity,translate] duration-1000 ease-out ${
+            stage >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
           }`}
         >
           The case is closed.

@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
-import { Ghost } from './icons/IconComponents';
-import { validateLoginCode, CHARACTERS } from '../data/gameData';
+import { validateLoginCode } from '../data/gameData';
 
+/**
+ * Identity verification (DESIGN_LANGUAGE.md §9, "Login").
+ *
+ * CONFIDENTIAL is a filled signal tag — the smallest atomic accent, and the
+ * only place pure white appears in the system. The access code is a fill-in
+ * blank (§6.9): a deliberately unknown value, tinted signal with a dashed
+ * underline, sitting on the bone document where the form lives.
+ */
 export const CharacterSelect = ({ onSelectCharacter }) => {
   const [loginCode, setLoginCode] = useState('');
   const [error, setError] = useState('');
@@ -12,125 +19,117 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
     setError('');
     setIsLoading(true);
 
-    // Check for host login code
+    // Host login code
     if (loginCode === 'KUSH6969') {
-      if (navigator.vibrate) {
-        navigator.vibrate([200]);
-      }
-      setTimeout(() => {
-        onSelectCharacter('host', true);
-      }, 500);
+      if (navigator.vibrate) navigator.vibrate([200]);
+      setTimeout(() => onSelectCharacter('host', true), 500);
       return;
     }
 
     const characterId = validateLoginCode(loginCode);
-    
+
     if (characterId) {
-      if (navigator.vibrate) {
-        navigator.vibrate([50, 50]);
-      }
-      setTimeout(() => {
-        onSelectCharacter(characterId, false);
-      }, 500);
+      if (navigator.vibrate) navigator.vibrate([50, 50]);
+      setTimeout(() => onSelectCharacter(characterId, false), 500);
     } else {
-      setError('ACCESS DENIED: INVALID CREDENTIALS');
+      setError('Access denied — invalid credentials');
       setIsLoading(false);
-      if (navigator.vibrate) {
-        navigator.vibrate([200, 100, 200]);
-      }
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
     }
   };
 
   return (
-    <div className="min-h-screen bg-mystery-dark text-mystery-paper flex flex-col items-center justify-center p-4 relative" style={{
-      backgroundImage: `
-        linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.9)),
-        url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E")
-      `
-    }}>
-      {/* Background Elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-10 right-10 w-64 h-64 bg-mystery-blood/10 rounded-full blur-[100px]"></div>
-        <div className="absolute bottom-10 left-10 w-96 h-96 bg-mystery-ink/50 rounded-full blur-[80px]"></div>
-      </div>
+    <div className="min-h-screen bg-ink text-bone flex flex-col justify-center px-4 py-10 relative er-grain overflow-hidden">
+      <div className="er-lamp" aria-hidden="true" />
+      <div className="er-lamp er-lamp--signal" aria-hidden="true" />
+      <div className="er-vignette" aria-hidden="true" />
 
-      <div className="max-w-md w-full relative z-10">
-        {/* Header - Classified Folder Look */}
-        <div className="text-center mb-8">
-          <div className="inline-block border-4 border-mystery-paper p-4 rotate-1 bg-black/50 backdrop-blur-sm shadow-xl">
-             <h1 className="text-3xl sm:text-4xl font-typewriter font-bold text-mystery-paper tracking-[0.2em] uppercase">
-              CONFIDENTIAL
-            </h1>
-          </div>
+      <div className="relative z-10 w-full max-w-md mx-auto">
+        {/* Chrome rail */}
+        <div className="flex items-center justify-between gap-3">
+          <span className="er-mono er-mono--wide er-mono--bone">Astral Project</span>
+          <span className="er-mono">Case 8821-B</span>
+        </div>
+        <div className="er-rule mt-3" />
+
+        {/* Kicker + title */}
+        <div className="pt-8 er-enter">
+          <span className="er-tag">Confidential</span>
+          <h1 className="er-title mt-4">Identity Verification</h1>
+          <p className="er-mono er-mono--dim mt-3">Restricted access · Authorised guests only</p>
         </div>
 
-        {/* Login Form - Paper pinned to board */}
-        <div className="bg-mystery-paper text-mystery-ink p-1 shadow-2xl transform -rotate-1 relative">
-          {/* Pin */}
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-4 h-4 rounded-full bg-black shadow-lg z-20 border border-gray-600"></div>
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-12 h-12 bg-black/20 blur-sm rounded-full -z-10"></div>
+        {/* The form is a document, so it is paper — pinned, rotated, and the
+            one element on this screen that casts a shadow (§5). */}
+        <form
+          onSubmit={handleSubmit}
+          className="er-bone er-pin er-rotL er-land mt-9 p-6 sm:p-7"
+          style={{ animationDelay: '120ms' }}
+        >
+          <p className="er-bone-label">Access Code</p>
+          <div className="er-bone-rule mt-2 mb-6" />
 
-          <div className="border border-mystery-ink/20 p-6 sm:p-8">
-            <div className="mb-6 text-center">
-              <h3 className="text-2xl font-bold mb-2 font-typewriter uppercase tracking-tighter">
-                Identity Verification
-              </h3>
-              <p className="font-handwriting text-xl text-gray-600 -rotate-1">
-                Enter your access code below...
-              </p>
-            </div>
+          <input
+            type="text"
+            value={loginCode}
+            onChange={(e) => {
+              setLoginCode(e.target.value.toUpperCase());
+              setError('');
+            }}
+            className="er-blank er-blank--onbone w-full text-center text-[28px] font-bold py-3 px-2"
+            placeholder="——————"
+            disabled={isLoading}
+            autoFocus
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="characters"
+            maxLength={20}
+            aria-label="Access code"
+          />
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="relative group">
-                <input
-                  type="text"
-                  value={loginCode}
-                  onChange={(e) => {
-                    setLoginCode(e.target.value.toUpperCase());
-                    setError('');
-                  }}
-                  className="w-full bg-mystery-aged/30 border-b-2 border-mystery-ink/50 p-4 text-center text-3xl font-typewriter font-bold uppercase tracking-widest focus:outline-none focus:border-mystery-blood focus:bg-mystery-aged/50 transition-all placeholder-mystery-ink/20"
-                  placeholder="CODE"
-                  disabled={isLoading}
-                  autoFocus
-                  maxLength={20}
-                />
-                <div className="absolute bottom-0 left-0 w-full h-[1px] bg-mystery-blood transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500"></div>
-              </div>
+          <p className="font-handwriting text-[19px] text-signal-deep mt-4 -rotate-1 origin-left">
+            Printed on the card you were handed at the door.
+          </p>
 
-              {error && (
-                <div className="text-center animate-shake">
-                  <p className="text-mystery-blood font-bold font-typewriter text-sm tracking-widest border border-mystery-blood p-2 inline-block transform rotate-1">
-                    {error}
-                  </p>
-                </div>
-              )}
+          {/* Keyed on the message so a second failed attempt re-runs the shake.
+              Without it the node is reused, the animation has already played,
+              and the second rejection is silent — the worst possible time for
+              the app to look like it ignored a tap. */}
+          {error && (
+            <p key={error} className="er-shake mt-5 inline-block er-tag er-tag--onbone">
+              {error}
+            </p>
+          )}
 
-              <button
-                type="submit"
-                disabled={isLoading || !loginCode.trim()}
-                className="w-full group relative overflow-hidden bg-mystery-ink text-mystery-paper font-typewriter font-bold py-5 px-8 shadow-2xl uppercase tracking-[0.3em] transition-all hover:bg-black hover:shadow-[0_0_30px_rgba(220,38,38,0.5)] border-2 border-mystery-paper/20 hover:border-mystery-blood disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] hover:scale-[1.02]"
-              >
-                <span className="relative z-10 text-lg">
-                  {isLoading ? 'Verifying...' : '▶ Access Case File'}
-                </span>
-                <div className="absolute inset-0 bg-mystery-blood transform -translate-x-full group-hover:translate-x-0 transition-transform duration-300 ease-out z-0 opacity-80"></div>
-              </button>
-            </form>
+          <button
+            type="submit"
+            disabled={isLoading || !loginCode.trim()}
+            className="er-touch w-full mt-7 bg-ink text-bone py-4 px-6 font-mono text-[12px] font-medium uppercase tracking-[0.24em] border border-ink hover:bg-ink-hover disabled:opacity-40 disabled:cursor-not-allowed transition-opacity"
+          >
+            {/* Keyed so the label change reads as the button acting on the tap,
+                rather than the word silently becoming a different word. */}
+            <span key={isLoading ? 'busy' : 'idle'} className="er-swap inline-block">
+              {isLoading ? 'Verifying…' : 'Open Case File'}
+            </span>
+          </button>
 
-            <div className="mt-8 pt-4 border-t border-dashed border-mystery-ink/30 text-center">
-               <p className="font-handwriting text-lg text-gray-500">
-                Unauthorized access is strictly prohibited.
-              </p>
-            </div>
+          <div
+            className="mt-6 pt-4"
+            style={{ borderTop: '1px solid var(--color-line-bone)' }}
+          >
+            <p className="er-bone-body text-[13px]">
+              Unauthorised access is strictly prohibited.
+            </p>
           </div>
-        </div>
+        </form>
 
-        {/* Footer */}
-        <div className="mt-8 text-center opacity-40">
-           <p className="font-typewriter text-xs text-mystery-aged">
-             SECURE CONNECTION ESTABLISHED
-           </p>
+        {/* Footer rail */}
+        <div className="mt-10">
+          <div className="er-rule" />
+          <div className="flex items-center justify-between pt-3">
+            <span className="er-mono">Secure Connection</span>
+            <span className="er-mono">32 Guests</span>
+          </div>
         </div>
       </div>
     </div>

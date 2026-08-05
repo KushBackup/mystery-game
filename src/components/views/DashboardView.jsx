@@ -1,94 +1,126 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Fingerprint } from '../icons/IconComponents';
 import { DoodleCoffeeStain } from '../ui/Doodles';
+import { RedactedLines } from '../ui/RedactedLines';
 
-export const DashboardView = ({ myCharacter, currentRound }) => {
+/**
+ * The player's own file (DESIGN_LANGUAGE.md §9, "Identity").
+ *
+ * One full bone card, because this *is* a document. The secret is a redaction
+ * bar (§6.7) the player taps to wipe open — a state change turned into a
+ * moment, instead of text that simply sits there.
+ */
+export const DashboardView = ({ myCharacter }) => {
+  const [secretOpen, setSecretOpen] = useState(false);
+
+  if (!myCharacter) return null;
+
+  const isMurderer = myCharacter.role === 'MURDERER';
+  const isVictim = myCharacter.role === 'VICTIM';
+
   return (
-    <div className="space-y-6 animate-fade-in relative z-10 w-full max-w-3xl mx-auto">
-      {/* Identity Card */}
-      <div className="bg-mystery-paper p-1 shadow-2xl transform rotate-1 relative">
-        {/* Paper Texture Overlay */}
-        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/aged-paper.png')]"></div>
-        
-        {/* Tape */}
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-32 h-8 bg-white/20 -rotate-1 shadow-sm backdrop-blur-[1px] opacity-70 z-20"></div>
+    <div className="er-land">
+      <article className="er-bone er-pin er-rotR relative p-5 sm:p-7">
+        <DoodleCoffeeStain />
 
-        <div className="border border-mystery-ink/20 p-4 sm:p-8 relative overflow-hidden h-full">
-          <DoodleCoffeeStain className="opacity-40 -top-10 -right-10 absolute pointer-events-none" />
-          
-          <div className="relative z-10">
-            {/* Header Section */}
-            <div className="flex flex-col items-center mb-8 border-b-2 border-dashed border-mystery-ink/30 pb-6">
-               <div className="w-24 h-24 sm:w-28 sm:h-28 bg-mystery-aged border-2 border-mystery-ink rounded-sm flex items-center justify-center mb-4 shadow-inner relative overflow-hidden group">
-                  <Fingerprint size={50} className="text-mystery-ink/40 sm:w-16 sm:h-16 opacity-70 group-hover:opacity-100 transition-opacity" />
-                  <div className="absolute bottom-0 w-full text-center bg-mystery-ink text-white text-[9px] py-1 font-typewriter">
-                    NO PHOTO AVAILABLE
-                  </div>
-               </div>
-              <h1 className="text-4xl sm:text-5xl font-typewriter font-bold text-mystery-ink text-center uppercase tracking-tighter mb-2">
-                {myCharacter.name}
-              </h1>
-              <span className="bg-mystery-ink text-mystery-paper px-5 py-2 text-sm sm:text-base font-typewriter font-bold -rotate-1 shadow-lg border border-mystery-paper">
-                {myCharacter.profession}
-              </span>
-            </div>
+        {/* Header pattern: mono label in signal-deep, then a 2px ink rule. */}
+        <p className="er-bone-label">Subject File · 8821-B</p>
+        <div className="er-bone-rule mt-2 mb-6" />
 
-            {myCharacter.role === 'MURDERER' ? (
-               <div className="bg-mystery-blood/10 border border-mystery-blood p-4 mb-6 shadow-inner relative overflow-hidden">
-                  <div className="absolute -right-4 -top-4 text-mystery-blood/10 text-9xl font-black z-0 rotate-12">!</div>
-                  <p className="relative z-10 text-mystery-blood font-typewriter font-bold uppercase text-center text-lg sm:text-2xl tracking-widest animate-pulse">
-                    ⚠️ CLASSIFIED: MURDERER
-                  </p>
-               </div>
-            ) : myCharacter.role === 'VICTIM' ? (
-              <div className="bg-purple-900/10 border border-purple-900 p-4 mb-6 shadow-inner">
-                  <p className="text-purple-900 font-typewriter font-bold uppercase text-center text-lg sm:text-2xl tracking-widest">
-                    ✝ DECEASED (VICTIM)
-                  </p>
-              </div>
-            ) : null}
+        {/* Identity block */}
+        <div className="flex items-start gap-4">
+          <div
+            className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 flex items-center justify-center bg-bone-aged"
+            style={{ border: '1px solid var(--color-line-bone)' }}
+          >
+            <Fingerprint size={40} className="text-ink/35" />
+          </div>
 
-            <div className="space-y-6">
-              {/* Bio Section */}
-              <div className="relative group">
-                  <div className="absolute -top-3 left-4 bg-mystery-ink text-mystery-paper px-2 py-0.5 text-xs font-typewriter uppercase tracking-widest border border-mystery-paper shadow-md z-10">
-                    Subject Profile
-                  </div>
-                  <div className="border-l-2 border-mystery-ink/50 pl-4 py-2 bg-mystery-aged/10">
-                    <p className="font-body text-mystery-ink text-base sm:text-lg leading-relaxed text-justify">
-                      {myCharacter.bio}
-                    </p>
-                  </div>
-              </div>
-
-              {/* Secret Section */}
-              <div className="relative group mt-8">
-                  <div className="absolute -top-3 left-4 bg-mystery-blood text-white px-2 py-0.5 text-xs font-typewriter uppercase tracking-widest border border-mystery-paper shadow-md z-10">
-                    Confidential Note
-                  </div>
-                  <div className="bg-mystery-aged/30 p-4 border border-mystery-ink/20 shadow-inner relative">
-                    <div className="absolute top-0 right-0 p-1 opacity-20">★ CONFIDENTIAL</div>
-                    <p className="font-handwriting text-2xl sm:text-3xl text-mystery-ink leading-relaxed rotate-0 pt-2">
-                      "{myCharacter.secret}"
-                    </p>
-                  </div>
-              </div>
-            </div>
-
-            {/* Footer Stamps */}
-            <div className="mt-8 flex justify-between items-end opacity-50 pointer-events-none select-none">
-              <div className="border-2 border-mystery-ink/50 px-2 py-1 rotate-3">
-                <span className="font-typewriter text-xs font-bold text-mystery-ink">VERIFIED</span>
-              </div>
-              <div className="flex flex-col items-end">
-                <span className="font-typewriter text-[10px] text-mystery-ink">CASE ID: #8821B</span>
-                <span className="font-typewriter text-[10px] text-mystery-ink">OFFICER: T. Mistry</span>
-              </div>
-            </div>
-
+          <div className="min-w-0 pt-1">
+            <h2 className="font-typewriter font-bold uppercase text-ink leading-[1.05] text-[26px] sm:text-[32px] break-words">
+              {myCharacter.name}
+            </h2>
+            <p className="er-bone-label mt-2">{myCharacter.profession}</p>
+            <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-body-bone/70 mt-2">
+              No photograph on record
+            </p>
           </div>
         </div>
-      </div>
+
+        {/* Role callout. Never a second hue — the surface and the label change,
+            not the colour (§2.2). */}
+        {(isMurderer || isVictim) && (
+          <div className="mt-6">
+            <span className={`er-tag ${isVictim ? 'er-tag--mute' : 'er-tag--onbone'}`}>
+              {isMurderer ? 'Classified · Murderer' : 'Deceased · Victim'}
+            </span>
+          </div>
+        )}
+
+        {/* Bio */}
+        <section className="mt-7">
+          <p className="er-bone-label">Subject Profile</p>
+          <div className="mt-2" style={{ borderTop: '1px solid var(--color-line-bone)' }} />
+          <p className="er-bone-body mt-3">{myCharacter.bio}</p>
+        </section>
+
+        {/* Secret — sealed behind a redaction bar until tapped. This is the
+            screen's whole interaction, so it gets the press feedback: `er-press`
+            rather than `er-touch`, because er-touch's shift to ink-hover would
+            punch a dark rectangle into the middle of the document. */}
+        <section className="mt-7">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="er-bone-label">Confidential Note</p>
+            <span
+              className={`font-mono text-[11px] tracking-[0.18em] uppercase text-body-bone/70 transition-opacity duration-300 ${
+                secretOpen ? 'opacity-0' : 'opacity-100'
+              }`}
+              aria-hidden={secretOpen}
+            >
+              Tap to unseal
+            </span>
+          </div>
+          <div className="mt-2" style={{ borderTop: '1px solid var(--color-line-bone)' }} />
+
+          <button
+            type="button"
+            onClick={() => {
+              if (secretOpen) return;
+              if (navigator.vibrate) navigator.vibrate(20);
+              setSecretOpen(true);
+            }}
+            aria-expanded={secretOpen}
+            aria-label={secretOpen ? 'Confidential note revealed' : 'Reveal your confidential note'}
+            className={`relative block w-full text-left mt-4 ${
+              secretOpen ? 'cursor-default' : 'er-press'
+            }`}
+          >
+            {/* The note rises in as the bars clear rather than sitting fully
+                formed behind them. */}
+            <span
+              className={`block font-handwriting text-[22px] sm:text-[26px] leading-[1.35] text-ink ${
+                secretOpen ? 'er-enter' : 'opacity-0'
+              }`}
+              style={secretOpen ? { animationDelay: '180ms' } : undefined}
+            >
+              “{myCharacter.secret}”
+            </span>
+
+            {/* Ragged marks, not one slab — see RedactedLines for why a
+                paragraph needs a different form from a line. */}
+            <RedactedLines open={secretOpen} />
+          </button>
+        </section>
+
+        {/* Footer stamps */}
+        <div className="mt-8 pt-4 flex items-end justify-between gap-3" style={{ borderTop: '1px solid var(--color-line-bone)' }}>
+          <span className="er-tag er-tag--onbone">Verified</span>
+          <div className="text-right">
+            <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-body-bone/70">Case 8821-B</p>
+            <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-body-bone/70 mt-1">Officer T. Mistry</p>
+          </div>
+        </div>
+      </article>
     </div>
   );
 };

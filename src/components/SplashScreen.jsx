@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react';
 
+/**
+ * The cold open. Deliberately the only place in the app that holds the player
+ * still, and it is over in 1.4s.
+ *
+ * The exit pairs the fade with a small lift and a scale rather than dropping
+ * opacity alone (§7): a plain opacity fade on a near-black screen reads as the
+ * device dimming rather than as a scene ending, because there is barely any
+ * luminance left to lose.
+ */
 export const SplashScreen = ({ onComplete }) => {
   const [fadeOut, setFadeOut] = useState(false);
 
@@ -14,17 +23,22 @@ export const SplashScreen = ({ onComplete }) => {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] bg-mystery-dark flex items-center justify-center transition-opacity duration-500 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}
-      style={{
-        backgroundImage: `
-          radial-gradient(circle at 50% 50%, rgba(20, 20, 20, 0.9), rgba(0, 0, 0, 1)),
-          url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.05'/%3E%3C/svg%3E")
-        `
-      }}
+      className={`fixed inset-0 z-[100] bg-ink flex items-center justify-center px-6 er-grain transition-opacity duration-500 ease-out ${
+        fadeOut ? 'opacity-0' : 'opacity-100'
+      }`}
     >
-      <h1 className="font-typewriter text-3xl sm:text-5xl font-bold text-mystery-paper tracking-tight uppercase text-center px-6">
-        Welcome to the Murder
-      </h1>
+      <div className="er-lamp" aria-hidden="true" />
+      <div className="er-vignette" aria-hidden="true" />
+
+      <div
+        className={`relative z-10 w-full max-w-md text-center er-enter transition-[translate,scale] duration-500 ease-out ${
+          fadeOut ? '-translate-y-2 scale-[0.98]' : 'translate-y-0 scale-100'
+        }`}
+      >
+        <p className="er-mono er-mono--hot er-mono--wide">Astral Project</p>
+        <div className="er-rule my-5" />
+        <h1 className="er-title text-[38px] sm:text-[52px]">Welcome to the Murder</h1>
+      </div>
     </div>
   );
 };

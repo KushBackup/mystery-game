@@ -1,73 +1,102 @@
 import React from 'react';
 import { X } from '../icons/IconComponents';
 
-export const GuestProfileModal = ({ 
-  guest, 
-  currentUser, 
-  isVotingOpen, 
-  onClose, 
-  onVote 
-}) => {
+/**
+ * A single guest's file. This one *is* a document, so it is a bone card with
+ * the standard header pattern: mono label in signal-deep, a 2px ink rule, then
+ * content (DESIGN_LANGUAGE.md §6.3).
+ */
+export const GuestProfileModal = ({ guest, currentUser, isVotingOpen, onClose, onVote }) => {
   if (!guest) return null;
 
+  const isMe = guest.id === currentUser;
+  const isVictim = guest.role === 'VICTIM';
+
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black animate-fade-in p-0 sm:p-4">
-      <div className="bg-mystery-paper w-full max-w-md p-6 border-t-4 sm:border-2 border-mystery-ink shadow-2xl relative rotate-0 sm:rotate-1 overflow-y-auto max-h-[85vh] sm:rounded-none rounded-t-2xl">
-        <div className="w-12 h-1 bg-mystery-aged rounded-full mx-auto mb-4 sm:hidden"></div>
-        <button 
-            onClick={onClose}
-            className="absolute top-4 right-4 bg-mystery-blood text-white p-2 border-2 border-white hover:bg-red-700 transition-colors shadow-lg z-10 sm:-top-4 sm:-right-4"
+    <div
+      className="er-fade fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/95 p-0 sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${guest.name} — guest file`}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="er-bone er-land w-full max-w-md max-h-[88vh] overflow-y-auto custom-scrollbar p-5 sm:p-6 relative">
+        <button
+          onClick={onClose}
+          aria-label="Close guest file"
+          className="er-touch absolute top-3 right-3 flex items-center justify-center w-11 h-11 text-ink hover:text-signal-deep"
+          style={{ border: '1px solid var(--color-line-bone)' }}
         >
-            <X size={20} className="sm:w-6 sm:h-6" />
+          <X size={20} />
         </button>
-        
-        <div className="flex flex-col items-center mb-6 mt-4 sm:mt-0">
-             <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-mystery-ink flex items-center justify-center font-typewriter font-bold text-3xl sm:text-4xl shadow-sm mb-4
-                ${guest.id === currentUser ? 'bg-mystery-blood text-white' : 'bg-mystery-aged text-mystery-ink'}
-              `}>
-                {guest.name.charAt(0)}
-              </div>
-            <h3 className="text-2xl sm:text-3xl font-typewriter font-bold text-mystery-ink uppercase text-center leading-none mb-2">{guest.name}</h3>
-            <span className="bg-mystery-ink text-white px-3 py-1 text-xs sm:text-sm font-typewriter font-bold shadow-sm transform -rotate-1">
-                {guest.profession}
-            </span>
+
+        <p className="er-bone-label">Guest File</p>
+        <div className="er-bone-rule mt-2 mb-5" />
+
+        {/* Identity */}
+        <div className="flex items-start gap-4 pr-12">
+          <span
+            className={`shrink-0 w-16 h-16 flex items-center justify-center font-typewriter font-bold text-2xl ${
+              isMe ? 'bg-signal-deep text-bone' : 'bg-bone-aged text-ink'
+            }`}
+            style={{ border: '1px solid var(--color-line-bone)' }}
+          >
+            {guest.name.charAt(0)}
+          </span>
+
+          <div className="min-w-0 pt-1">
+            <h3 className="font-typewriter font-bold uppercase text-ink text-[23px] leading-[1.1] break-words">
+              {guest.name}
+            </h3>
+            <p className="er-bone-label mt-2">{guest.profession}</p>
+          </div>
         </div>
 
-        <div className="space-y-4 pb-8 sm:pb-0">
-             <div className="text-center">
-                {guest.role === 'VICTIM' ? (
-                     <span className="inline-block border-2 border-purple-900 text-purple-900 bg-purple-100 px-3 py-1 font-typewriter font-bold uppercase text-xs sm:text-sm rotate-2">KNOWN VICTIM</span>
-                ) : (
-                    <span className="inline-block border-2 border-mystery-aged text-mystery-sepia bg-mystery-aged/20 px-3 py-1 font-typewriter font-bold uppercase text-xs sm:text-sm -rotate-1">SUSPECT</span>
-                )}
-             </div>
-
-            <div className="bg-mystery-aged/20 p-4 border-2 border-mystery-aged/50 relative mt-6">
-                <div className="absolute -top-3 -left-2 bg-mystery-ink text-white px-2 py-0.5 text-[10px] sm:text-xs rotate-[2deg] border border-mystery-paper shadow-sm font-typewriter">BIO</div>
-                <p className="text-mystery-ink leading-relaxed font-body text-sm sm:text-base">{guest.bio}</p>
-            </div>
-
-            <div className="bg-mystery-aged/30 p-4 border-2 border-mystery-ink/30 relative">
-                <div className="absolute -top-3 -right-2 bg-amber-600 text-white px-2 py-0.5 text-[10px] sm:text-xs rotate-[-3deg] border border-mystery-ink shadow-sm font-typewriter">KNOWN TRAIT</div>
-                <p className="text-mystery-ink font-handwriting text-lg sm:text-xl">"{guest.quirk}"</p>
-            </div>
-
-            {isVotingOpen && guest.role !== 'VICTIM' && (
-                 <button 
-                    onClick={() => { onVote(guest.id); onClose(); }}
-                    className="w-full bg-mystery-blood hover:bg-red-700 text-white font-typewriter font-bold py-4 border-b-4 border-red-900 active:border-b-0 active:translate-y-1 mt-4 uppercase tracking-widest"
-                 >
-                     VOTE AS SUSPECT
-                 </button>
-            )}
-
-            {guest.id === currentUser && (
-                 <div className="mt-6 border-t-2 border-dashed border-mystery-aged/30 pt-4 text-center">
-                    <p className="text-xs text-mystery-blood font-typewriter font-bold uppercase mb-1">THIS IS YOU</p>
-                    <p className="text-[10px] sm:text-xs text-mystery-sepia font-body">Check your ID Card tab for secret info.</p>
-                 </div>
-            )}
+        {/* Standing */}
+        <div className="mt-5">
+          <span className={`er-tag ${isVictim ? 'er-tag--mute' : 'er-tag--onbone'}`}>
+            {isVictim ? 'Known victim' : 'Suspect'}
+          </span>
         </div>
+
+        {/* Bio */}
+        <section className="mt-6">
+          <p className="er-bone-label">Background</p>
+          <div className="mt-2" style={{ borderTop: '1px solid var(--color-line-bone)' }} />
+          <p className="er-bone-body mt-3">{guest.bio}</p>
+        </section>
+
+        {/* Quirk — an in-fiction margin note, so it is handwriting (§3.2). */}
+        <section className="mt-6">
+          <p className="er-bone-label">Known trait</p>
+          <div className="mt-2" style={{ borderTop: '1px solid var(--color-line-bone)' }} />
+          <p className="font-handwriting text-[21px] leading-[1.35] text-ink mt-3 -rotate-1 origin-left">
+            “{guest.quirk}”
+          </p>
+        </section>
+
+        {isVotingOpen && !isVictim && (
+          <button
+            onClick={() => {
+              onVote(guest.id);
+              onClose();
+            }}
+            className="er-touch er-touch--hot w-full mt-7 bg-signal-deep text-bone py-4 px-6 font-mono text-[12px] font-medium uppercase tracking-[0.24em] border border-signal-deep"
+          >
+            Name as suspect
+          </button>
+        )}
+
+        {isMe && (
+          <div className="mt-6 pt-4" style={{ borderTop: '1px solid var(--color-line-bone)' }}>
+            <p className="er-bone-label">This is you</p>
+            <p className="er-bone-body text-[13px] mt-2">
+              Your secret is on the Identity screen, not here.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

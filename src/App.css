@@ -1,174 +1,840 @@
-/* Halloween Hypercasual Animations */
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(50px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+/* ============================================================
+   EVIDENCE ROOM — component vocabulary + motion
+   Spec: DESIGN_LANGUAGE.md §6 (components) and §7 (motion).
+
+   Tokens come from the @theme block in index.css, which emits
+   them as real CSS custom properties. Nothing here invents a
+   colour; if a value isn't in §2.1, it doesn't belong.
+   ============================================================ */
+
+/* ============================================================
+   1. MOTION PRIMITIVES (§7)
+   Never fade on opacity alone — every fade is paired with a
+   translate or a scale.
+   ============================================================ */
+
+@keyframes erEnterUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes slideInFromRight {
-  from {
-    opacity: 0;
-    transform: translateX(100%) rotate(5deg);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) rotate(0deg);
-  }
+@keyframes erEnterRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes slideInFromLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-100%) rotate(-5deg);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0) rotate(0deg);
-  }
+/* The mirror of the above, so a chat bubble can arrive from the side it was
+   sent from rather than every message rising off the same edge. */
+@keyframes erEnterLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
-@keyframes shimmer {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(100%);
-  }
+@keyframes erLand {
+  from { opacity: 0; transform: translateY(22px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+/* Exits are softer than enters (a small fixed translate, never a height
+   collapse) and shorter, because nothing is being read on the way out. */
+@keyframes erLeave {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-8px); }
 }
 
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.5) rotate(-10deg);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) rotate(0deg);
-  }
+/* A stamp landing. Used for "this is now recorded" — a vote committed, a code
+   accepted. One shot: it is a confirmation, not a state, so it must not pulse
+   forever the way the reveal's alarm does. */
+@keyframes erStamp {
+  0%   { transform: scale(0.965); }
+  60%  { transform: scale(1.008); }
+  100% { transform: scale(1); }
 }
 
-@keyframes shake {
-  0%, 100% {
-    transform: translateX(0) rotate(0deg);
-  }
-  10%, 30%, 50%, 70%, 90% {
-    transform: translateX(-5px) rotate(-2deg);
-  }
-  20%, 40%, 60%, 80% {
-    transform: translateX(5px) rotate(2deg);
-  }
+/* The redaction bar wiping open (§6.7). Origin is hard left. */
+@keyframes erWipe {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
 }
 
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+/* A clue arriving on the board, unsealing. The 3px state rule (§6.2) draws
+   itself across the card's top edge and then dissolves to leave the card's real
+   state colour behind.
+   Deliberately a rule rather than a redaction bar over the body copy: a wipe
+   across three or four full-width lines of a statement stops reading as a
+   redaction and becomes the slab of red §2.2 forbids. A rule is the sanctioned
+   way for the accent to move. */
+@keyframes erSeal {
+  0%   { transform: scaleX(0); opacity: 1; }
+  60%  { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
 }
 
-@keyframes wiggle {
-  0%, 100% {
-    transform: rotate(-3deg);
-  }
-  50% {
-    transform: rotate(3deg);
-  }
+/* The red thread drawing itself along the timeline spine (§6.8). */
+@keyframes erDraw {
+  from { transform: scaleY(0); }
+  to   { transform: scaleY(1); }
 }
 
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px) scale(1);
-  }
-  50% {
-    transform: translateY(-15px) scale(1.05);
-  }
+/* A chrome value being replaced by a newer one — the round title when the host
+   advances, a state label appearing. Small travel, because the label stays in
+   place and only its content changed; a full 16px rise would read as the whole
+   rail moving. */
+@keyframes erSwap {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes glow {
-  0%, 100% {
-    box-shadow: 0 0 10px rgba(255, 107, 53, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 30px rgba(255, 107, 53, 0.8), 0 0 50px rgba(247, 37, 133, 0.5);
-  }
+/* The one sanctioned bare fade: a modal scrim. §7's "never fade on opacity
+   alone" is about content — a scrim has no content to move, and translating it
+   would show the screen edge underneath. */
+@keyframes erFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-/* Casual Tile Styles */
-.casual-tile {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-  border-radius: 20px;
+@keyframes erShake {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-5px); }
+  40%      { transform: translateX(5px); }
+  60%      { transform: translateX(-3px); }
+  80%      { transform: translateX(3px); }
 }
 
-.casual-tile:active {
-  transform: scale(0.9) rotate(-2deg);
+/* RESERVED. An infinite pulse, for a genuine sustained alarm state and nothing
+   else. It is currently unused, and that is the correct number of uses: the vote
+   screen reached for it as a two-second "vote recorded" confirmation, where an
+   endless pulse read as "something is wrong with this card". A confirmation is
+   `.er-stamp` — one shot, then done. Do not use this for feedback. */
+@keyframes erAlarm {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.82; }
 }
 
-.casual-tile:hover {
-  transform: scale(1.1) translateY(-5px);
-  filter: brightness(1.2);
-  animation: float 2s ease-in-out infinite;
+.er-enter      { animation: erEnterUp 0.6s var(--ease-enter) backwards; }
+.er-enter-right{ animation: erEnterRight 0.5s var(--ease-enter) backwards; }
+.er-enter-left { animation: erEnterLeft 0.5s var(--ease-enter) backwards; }
+.er-land       { animation: erLand 0.7s var(--ease-land) backwards; }
+.er-leave      { animation: erLeave 0.22s var(--ease-enter) forwards; }
+.er-shake      { animation: erShake 0.4s ease-in-out; }
+.er-stamp      { animation: erStamp 0.42s var(--ease-land); }
+.er-swap       { animation: erSwap 0.3s var(--ease-enter) backwards; }
+.er-fade       { animation: erFade 0.2s ease-out backwards; }
+.er-alarm      { animation: erAlarm 2.4s ease-in-out infinite; }
+
+/* A short entrance for surfaces the player returns to constantly — the board
+   after closing a screen, a list re-rendering. Staggering those would tax the
+   same attention on every single navigation, so this one is deliberately fast
+   and never staggered. */
+.er-enter-quick { animation: erEnterUp 0.26s var(--ease-enter) backwards; }
+
+/* Stagger: 40–80ms between siblings, never reveal a group at once.
+   Set --i on the child (its index) and the delay follows. */
+.er-stagger { animation-delay: calc(var(--i, 0) * 60ms); }
+
+/* Screen transition. */
+.view-container { animation: erEnterUp 0.42s var(--ease-enter); }
+
+/* ============================================================
+   2. TYPE ROLES (§3.2)
+   ============================================================ */
+
+/* Mono label / kicker. Generous tracking is what makes monospace
+   read as editorial chrome rather than as code. */
+.er-mono {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 1.3;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-dim-2);
 }
 
-/* View Container Animation */
-.view-container {
-  animation: slideInFromRight 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+.er-mono--wide { letter-spacing: 0.24em; }
+.er-mono--bone { color: var(--color-bone); }
+.er-mono--dim  { color: var(--color-dim); }
+.er-mono--hot  { color: var(--color-signal-lift); }
+
+/* Numerals. Display face, brass, tabular so counts don't jitter. */
+.er-num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--color-brass);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.01em;
 }
 
-/* Smooth Transitions */
-* {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+/* Screen title. The only other place the display face appears.
+   Balanced wrapping matters more here than anywhere else in the app: at 32px
+   on a 390px phone almost every title is two lines, and the default greedy
+   break leaves a one-word orphan under a full line. */
+.er-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 32px;
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: var(--color-bone);
+  text-wrap: balance;
 }
 
-/* Disable pull-to-refresh on mobile */
-body {
-  overscroll-behavior-y: contain;
-  background: linear-gradient(135deg, #2B2D42 0%, #1a1b2e 100%);
-  min-height: 100vh;
+@media (min-width: 640px) {
+  .er-title { font-size: 40px; }
 }
 
-/* Button Styles */
-.btn-halloween {
+/* ============================================================
+   3. HAIRLINES (§5) — regions separate with 1px, never a shadow.
+   ============================================================ */
+
+.er-rule       { height: 1px; background: var(--color-line); border: 0; }
+.er-rule-faint { height: 1px; background: var(--color-line-faint); border: 0; }
+
+/* ============================================================
+   4. TAG (§6.1) — the smallest atomic accent.
+   ============================================================ */
+
+.er-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 4px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 1.2;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  background: var(--color-signal);
+  color: #fff; /* the only place pure white appears in the system */
+  border: 1px solid var(--color-signal);
+}
+
+/* Ghost — a state that is not yet true. */
+.er-tag--ghost {
+  background: transparent;
+  color: var(--color-signal-lift);
+  border-color: var(--color-signal);
+}
+
+/* Brass ghost — numeric state only. */
+.er-tag--brass {
+  background: transparent;
+  color: var(--color-brass);
+  border-color: var(--color-brass);
+}
+
+/* Neutral — inert chrome. */
+.er-tag--mute {
+  background: transparent;
+  color: var(--color-dim);
+  border-color: var(--color-line);
+}
+
+/* On a bone surface the accent darkens so it still passes AA. */
+.er-tag--onbone {
+  background: var(--color-signal-deep);
+  border-color: var(--color-signal-deep);
+  color: var(--color-bone);
+}
+
+/* ============================================================
+   5. CARD ON INK (§6.2)
+   The 3px top border is the state channel:
+   signal = active/urgent · brass = data · bone-aged = archived
+   ============================================================ */
+
+.er-card {
   position: relative;
-  overflow: hidden;
-  transition: all 0.3s ease;
+  background: var(--color-ink-raised);
+  border: 1px solid var(--color-line);
+  padding: 16px;
 }
 
-.btn-halloween::before {
+.er-card--signal { border-top: 3px solid var(--color-signal); }
+.er-card--brass  { border-top: 3px solid var(--color-brass); }
+.er-card--aged   { border-top: 3px solid var(--color-bone-aged); }
+
+/* ============================================================
+   6. BONE CARD (§6.3) — the document.
+   Bone means "this is a piece of paper". Never UI chrome.
+   Paper is the one thing in the system that casts a shadow,
+   because paper is physically on top of the board.
+   ============================================================ */
+
+.er-bone {
+  position: relative;
+  /* Isolate so the grain layer below can sit at z-index -1 — above the card's
+     own background, beneath every child — without escaping the card. Doing it
+     this way keeps absolutely-positioned children (stains, tape, badges)
+     working, which a blanket `.er-bone > * { position: relative }` would not. */
+  isolation: isolate;
+  background: var(--color-bone);
+  color: var(--color-ink);
+  box-shadow: 0 20px 44px rgba(0, 0, 0, 0.55);
+}
+
+/* Fibre grain, inlined so the PWA never reaches the network for it. */
+.er-bone::before {
   content: '';
   position: absolute;
-  top: 50%;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.16'/%3E%3C/svg%3E");
+}
+
+.er-bone--aged { background: var(--color-bone-aged); }
+
+/* Header pattern: mono label in signal-deep, then a 2px solid ink
+   rule, then content. That rule is the signature of the form. */
+.er-bone-label {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-signal-deep);
+}
+
+.er-bone-rule {
+  height: 2px;
+  background: var(--color-ink);
+  border: 0;
+}
+
+.er-bone-body {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--color-body-bone);
+  text-wrap: pretty;
+}
+
+/* Rotation belongs to paper only. Chrome never rotates (§5).
+   Uses the independent `rotate` property rather than `transform`, so the tap
+   feedback (`transform: scale(.98)`) and the landing animation compose with it
+   instead of wiping it out. */
+.er-rotL { rotate: -1.2deg; }
+.er-rotR { rotate: 1.2deg; }
+
+/* ============================================================
+   7. PUSHPIN (§6.4) — 16px dome, centred on the top edge.
+   ============================================================ */
+
+.er-pin::after {
+  content: '';
+  position: absolute;
+  top: -8px;
   left: 50%;
-  width: 0;
-  height: 0;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translate(-50%, -50%);
-  transition: width 0.6s, height 0.6s;
+  background: var(--color-signal);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.6), inset 0 -4px 6px rgba(0, 0, 0, 0.32);
+  z-index: 3;
+  pointer-events: none;
 }
 
-.btn-halloween:active::before {
-  width: 300px;
-  height: 300px;
+.er-pin--brass::after { background: var(--color-brass); }
+
+/* ============================================================
+   8. EM-DASH LIST (§6.5)
+   Bullets are — in signal, in a 20px hanging indent.
+   Never a disc, never a chevron.
+   ============================================================ */
+
+.er-list { list-style: none; padding: 0; margin: 0; }
+
+.er-list > li {
+  position: relative;
+  padding-left: 20px;
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--color-dim);
 }
 
+.er-list > li + li { margin-top: 8px; }
+
+.er-list > li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-family: var(--font-mono);
+  color: var(--color-signal);
+}
+
+.er-list--onbone > li { color: var(--color-body-bone); }
+.er-list--onbone > li::before { color: var(--color-signal-deep); }
+
+/* ============================================================
+   9. STAT (§6.6) — brass numeral over a mono label,
+   with the hairline ABOVE.
+   ============================================================ */
+
+.er-stat {
+  border-top: 1px solid var(--color-line);
+  padding-top: 8px;
+}
+
+.er-stat__num {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 34px;
+  line-height: 1;
+  color: var(--color-brass);
+  font-variant-numeric: tabular-nums;
+}
+
+.er-stat__label {
+  margin-top: 2px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-dim-2);
+}
+
+/* ============================================================
+   10. REDACTION BAR (§6.7)
+   A solid signal block over text that wipes open from the left.
+   Turns a state change into a moment.
+   ============================================================ */
+
+/* Display is deliberately not set — the caller picks block/inline-block with a
+   utility, and this class only owns the containing block and the bar. */
+.er-redact {
+  position: relative;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button.er-redact:not(.er-redact--open) { cursor: pointer; }
+
+.er-redact::after {
+  content: '';
+  position: absolute;
+  inset: -2px -4px;
+  background: var(--color-signal);
+  transform-origin: left center;
+  z-index: 2;
+}
+
+.er-redact--open::after {
+  /* will-change earns its keep here specifically: the bar is a full-width
+     solid block and the first frame of the wipe visibly stepped without it.
+     transform only — the one property the compositor can take. */
+  will-change: transform;
+  animation: erWipe 0.9s var(--ease-enter) forwards;
+}
+
+/* A clue arriving on the board lands first, *then* unseals — the two halves of
+   the §7 "clue unlocked" moment in order, rather than on top of each other. */
+.er-redact--late::after {
+  animation-delay: 0.34s;
+}
+
+/* The rule that sweeps across a freshly unsealed clue. Sits directly over the
+   card's own 3px top border (absolute `top` is measured from the padding box,
+   so -3px lands exactly on it) and dissolves to reveal it. */
+.er-unseal {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--color-signal);
+  transform-origin: left center;
+  will-change: transform, opacity;
+  animation: erSeal 0.8s var(--ease-enter) 0.2s forwards;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Hidden text must be unreadable to a screen reader too while sealed. */
+.er-redact--sealed > * { opacity: 0; }
+
+/* ------------------------------------------------------------
+   A redacted *paragraph*, as distinct from a redacted line.
+
+   One bar stretched over four full-width lines of copy stops reading as a
+   redaction and becomes a field of red, which §2.2 forbids outright — and it is
+   the exact defect that showed up on the Identity card, where the confidential
+   note is four lines of handwriting. Ragged single lines read as a redacted
+   page instead, and keep the accent to marks.
+
+   The bars are an overlay, so the real copy underneath still sets the height and
+   nothing shifts when they clear. `flex: 1` makes the bar count adapt: a short
+   note gets four thin marks, a long one gets four line-height marks, and neither
+   needs to know how many lines the text wrapped to.
+   ------------------------------------------------------------ */
+
+.er-redact-lines {
+  position: absolute;
+  inset: -2px -4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.er-redact-lines > span {
+  flex: 1;
+  max-height: 30px;
+  background: var(--color-signal);
+  transform-origin: left center;
+}
+
+/* Wiping open, one bar after the next — the sequence is what makes it read as
+   a document being cleared rather than a panel switching off. */
+.er-redact-lines--open > span {
+  will-change: transform;
+  animation: erWipe 0.55s var(--ease-enter) forwards;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+/* ============================================================
+   11. FILL-IN BLANK (§6.9)
+   Marks something deliberately unknown — the natural rendering
+   for an un-entered clue code.
+   ============================================================ */
+
+.er-blank {
+  background: rgba(224, 49, 39, 0.12);
+  border: 0;
+  border-bottom: 2px dashed var(--color-signal);
+  color: var(--color-bone);
+  font-family: var(--font-mono);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+
+.er-blank::placeholder {
+  color: var(--color-dim-2);
+  letter-spacing: 0.18em;
+}
+
+.er-blank:focus {
+  outline: none;
+  background: rgba(224, 49, 39, 0.18);
+  border-bottom-style: solid;
+}
+
+.er-blank--onbone {
+  color: var(--color-ink);
+  border-bottom-color: var(--color-signal-deep);
+}
+
+.er-blank--onbone::placeholder { color: rgba(12, 13, 15, 0.3); }
+
+/* ============================================================
+   12. RED THREAD (§6.8) — the connective motif.
+   One per screen at most.
+   ============================================================ */
+
+.er-thread {
+  position: absolute;
+  width: 1px;
+  background: var(--color-signal);
+  transform-origin: top center;
+  will-change: transform;
+  animation: erDraw 0.85s var(--ease-enter) backwards;
+}
+
+/* ============================================================
+   12b. TALLY BAR (§7, "vote cast")
+   A vote landing grows the bar. Driven by scaleX rather than
+   width: width is a layout property, so animating it relayouts
+   the row every frame, and with 32 possible bars on screen that
+   is the one place in this app that can actually drop frames.
+   ============================================================ */
+
+.er-bar {
+  height: 8px;
+  background: var(--color-ink-hover);
+  overflow: hidden;
+}
+
+.er-bar__fill {
+  height: 100%;
+  background: var(--color-signal);
+  transform-origin: left center;
+  transform: scaleX(var(--fill, 0));
+  transition: transform 0.7s var(--ease-enter);
+  will-change: transform;
+}
+
+/* ============================================================
+   13. TOUCH (§4.3)
+   Minimum target 44×44. Tap feedback is a scale plus a background
+   shift — never a colour flash.
+   ============================================================ */
+
+.er-touch {
+  min-height: 44px;
+  min-width: 44px;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  /* Never `all`: the enumerated list is what keeps a hover from also
+     transitioning a layout property somewhere down the line. `color` is in
+     here because several controls change text colour on hover, and without it
+     the border eased while the glyph snapped. */
+  transition: transform 0.16s var(--ease-enter), background-color 0.16s ease,
+    border-color 0.16s ease, color 0.16s ease;
+}
+
+/* 0.96, not 0.98. At 44px — the floor for every control here — 0.98 moves the
+   edge by less than a pixel, which is below the threshold where a press reads
+   as tactile at all. 0.96 is the smallest value that registers, and going
+   under 0.95 starts to read as exaggerated. */
+.er-touch:active {
+  transform: scale(0.96);
+  background-color: var(--color-ink-hover);
+}
+
+/* Paper doesn't shift to ink-hover when pressed — it just presses. */
+.er-touch.er-bone:active,
+.er-touch.er-bone-press:active {
+  background-color: var(--color-bone-aged);
+}
+
+/* A signal-filled control deepens instead of jumping to ink — otherwise the
+   default shift above would wipe the accent out on every tap. */
+.er-touch--hot:active {
+  background-color: var(--color-signal-deep);
+}
+
+/* Paper lifts a little under a cursor. Gated on `hover: hover` because the
+   primary target is a phone, where a hover style latches after a tap and leaves
+   the tile looking stuck.
+   Uses the independent `translate` property, not `transform`, so it composes
+   with the tile's `rotate` and with the press `transform` instead of wiping
+   either out — the same trap `.er-rotL` was already written around. */
+@media (hover: hover) {
+  .er-lift {
+    transition: translate 0.2s var(--ease-enter);
+  }
+
+  .er-lift:hover {
+    translate: 0 -3px;
+  }
+}
+
+/* Press feedback with no surface shift, for wide blocks and for controls that
+   sit *inside* paper — a shift to ink-hover there would punch a hole in the
+   document. Scales less than .er-touch because the same ratio on a full-width
+   block travels far more distance at the edges. */
+.er-press {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.16s var(--ease-enter), opacity 0.16s ease;
+}
+
+.er-press:active {
+  transform: scale(0.98);
+}
+
+/* ============================================================
+   13b. ROUND RAIL
+   The round indicator, as a progress rail rather than a number
+   alone: seven segments, one per round. Past rounds are
+   bone-aged and the live round is signal, which is the same
+   state channel the cards use (§6.2) rather than a new idiom.
+
+   Deliberately built on `transition`, not a keyframe: a
+   transition doesn't run on first paint, so opening a screen
+   shows the rail already filled and only an actual round
+   advance animates it. That is the §7 "rail fills to the new
+   round" moment, and it costs nothing on every other render.
+   ============================================================ */
+
+.er-rail {
+  display: flex;
+  gap: 3px;
+}
+
+.er-rail__seg {
+  position: relative;
+  flex: 1;
+  height: 2px;
+  background: var(--color-line-faint);
+  overflow: hidden;
+}
+
+.er-rail__seg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-bone-aged);
+  transform: scaleX(0);
+  transform-origin: left center;
+  /* Delayed so the brass numeral ticks first and the rail answers it. */
+  transition: transform 0.5s var(--ease-enter) 0.12s, background-color 0.3s ease;
+}
+
+.er-rail__seg--past::after { transform: scaleX(1); }
+
+.er-rail__seg--now::after {
+  background: var(--color-signal);
+  transform: scaleX(1);
+}
+
+/* ============================================================
+   14. SCREEN NOTE (§6.10)
+   The onboarding note pinned to the top of each screen through
+   rounds 00–01. Composes on .er-bone (it is paper), and adds
+   only the tooltip caret and the note's own type scale.
+   See components/ui/ScreenBrief.jsx.
+   ============================================================ */
+
+.er-brief {
+  padding: 13px 15px 15px;
+}
+
+/* The caret. A square rotated 45° poking out of the top edge — square-cut like
+   every other corner in the system (§5). It carries the note's own fill, so the
+   half that overlaps the card vanishes into it and only the point shows.
+   Uses `rotate`, not `transform`, so it survives alongside .er-land. */
+.er-brief__caret {
+  position: absolute;
+  top: -5px;
+  left: 22px;
+  width: 11px;
+  height: 11px;
+  background: var(--color-bone-aged);
+  rotate: 45deg;
+  pointer-events: none;
+}
+
+/* Handwriting, because this is a margin note (§3.1). Sized up from the body
+   scale: Caveat's x-height is small, so 15px would read as fine print. */
+.er-brief__body {
+  margin-top: 8px;
+  font-family: var(--font-handwriting);
+  font-size: 20px;
+  line-height: 1.35;
+  color: var(--color-ink);
+}
+
+@media (min-width: 640px) {
+  .er-brief__body { font-size: 23px; }
+}
+
+/* ============================================================
+   15. TYPED BRIEFING
+   The Round 0 story slideshow (components/StoryIntro.jsx).
+   The one screen that is neither chrome nor paper: ink, the
+   in-fiction voices (§3.1), and text that arrives a character
+   at a time.
+   ============================================================ */
+
+/* A line being typed. Two layers on purpose: the full text sits in flow but
+   invisible so it reserves the height, and the revealed text is laid over it.
+   Without that, every word that wraps adds a line box mid-sentence and shoves
+   the rest of the slide down while the player is reading it. Same reasoning as
+   .er-redact-lines — the real copy sets the box, the animated layer rides on top. */
+.er-type { position: relative; }
+
+.er-type__ghost { visibility: hidden; }
+
+.er-type__ink {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+/* Typewriter for the heading, Courier for the body — the in-fiction pair (§3.1).
+   The display face is deliberately absent here: it belongs to chrome and
+   numerals, and this screen is neither. */
+.er-story-head {
+  font-family: var(--font-typewriter);
+  font-size: 27px;
+  line-height: 1.14;
+  text-transform: uppercase;
+  color: var(--color-bone);
+}
+
+.er-story-line {
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.68;
+  color: var(--color-dim);
+}
+
+@media (min-width: 640px) {
+  .er-story-head { font-size: 34px; }
+  .er-story-line { font-size: 18px; line-height: 1.7; }
+}
+
+/* The strike position. Rendered only while a slide is still typing, so the blink
+   is never a permanent fixture of the screen — its absence is what tells the
+   player the page is finished (§7.1: only a genuine sustained alarm repeats).
+   `steps(1, end)` gives the hard on/off of a terminal caret rather than a pulse,
+   and under reduced motion the collapsed single iteration lands on the final
+   keyframe, leaving a static block. */
+.er-caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1em;
+  margin-left: 0.06em;
+  vertical-align: -0.12em;
+  background: var(--color-signal);
+  animation: erBlink 1.05s steps(1, end) infinite;
+}
+
+@keyframes erBlink {
+  0%, 49%   { opacity: 1; }
+  50%, 99%  { opacity: 0; }
+  100%      { opacity: 1; }
+}
+
+/* ============================================================
+   16. REDUCED MOTION (§7)
+   Match the deck: durations collapse, nothing is lost.
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.2s !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* A redaction that can't animate must still end up open. */
+  .er-redact--open::after { transform: scaleX(0); }
+
+  /* Collapsing the duration is enough for everything that only moves, but
+     will-change would keep compositor layers alive for animations that now
+     never run. */
+  .er-redact--open::after,
+  .er-redact-lines--open > span,
+  .er-thread,
+  .er-unseal,
+  .er-bar__fill {
+    will-change: auto;
+  }
+
+  /* Both wipes must still end up open when their duration is collapsed. */
+  .er-redact-lines--open > span { transform: scaleX(0); }
+
+  /* The sweep's `forwards` fill would otherwise leave it invisible-but-drawn at
+     the collapsed duration; explicitly finish it open. */
+  .er-unseal { opacity: 0; }
+}
