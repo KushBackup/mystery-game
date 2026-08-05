@@ -469,7 +469,7 @@ button.er-redact:not(.er-redact--open) { cursor: pointer; }
    One bar stretched over four full-width lines of copy stops reading as a
    redaction and becomes a field of red, which §2.2 forbids outright — and it is
    the exact defect that showed up on the Identity card, where the confidential
-   note is four lines of handwriting. Ragged single lines read as a redacted
+   note runs to several lines of the note face. Ragged single lines read as a redacted
    page instead, and keep the accent to marks.
 
    The bars are an overlay, so the real copy underneath still sets the height and
@@ -717,18 +717,21 @@ button.er-redact:not(.er-redact--open) { cursor: pointer; }
   pointer-events: none;
 }
 
-/* Handwriting, because this is a margin note (§3.1). Sized up from the body
-   scale: Caveat's x-height is small, so 15px would read as fine print. */
+/* The note voice, because this is a margin note (§3.1). 16px rather than the
+   17px note default: Special Elite runs ~24% wider per character than the
+   Caveat it replaced, and at 17px three of the nine briefs pick up a fourth
+   line on a card that is meant to be a glance, not a paragraph. At 16px eight
+   of nine keep their exact line count (§3.3). */
 .er-brief__body {
   margin-top: 8px;
-  font-family: var(--font-handwriting);
-  font-size: 20px;
+  font-family: var(--font-note);
+  font-size: 16px;
   line-height: 1.35;
   color: var(--color-ink);
 }
 
 @media (min-width: 640px) {
-  .er-brief__body { font-size: 23px; }
+  .er-brief__body { font-size: 18px; }
 }
 
 /* ============================================================

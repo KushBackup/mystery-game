@@ -49,7 +49,7 @@ export const StoryView = ({ onReplay }) => (
           ))}
 
           {beat.note && (
-            <p className="font-handwriting text-signal-deep text-[21px] mt-4 -rotate-1 origin-left">
+            <p className="font-note text-signal-deep text-[17px] mt-4 -rotate-1 origin-left">
               {beat.note}
             </p>
           )}

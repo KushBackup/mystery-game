@@ -119,7 +119,7 @@ export const CaseFilesSection = ({ unlockedFiles = [] }) => {
               </div>
 
               {file.caption && (
-                <p className="font-handwriting text-[21px] leading-[1.35] text-ink mt-5 -rotate-1 origin-left">
+                <p className="font-note text-[17px] leading-[1.35] text-ink mt-5 -rotate-1 origin-left">
                   “{file.caption}”
                 </p>
               )}

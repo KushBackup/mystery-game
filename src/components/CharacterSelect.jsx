@@ -87,7 +87,7 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
             aria-label="Access code"
           />
 
-          <p className="font-handwriting text-[19px] text-signal-deep mt-4 -rotate-1 origin-left">
+          <p className="font-note text-[17px] text-signal-deep mt-4 -rotate-1 origin-left">
             Printed on the card you were handed at the door.
           </p>
 

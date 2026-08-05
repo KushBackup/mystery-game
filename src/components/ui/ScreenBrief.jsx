@@ -14,7 +14,7 @@ import { BRIEF_HIDDEN_FROM_ROUND } from '../../data/screenGuide';
  * without any accent at all; and that leaves the screen's one signal focal
  * point (§10) where it belongs — on the decoder, the ballot, the reveal — instead
  * of spending it on onboarding. Diegetically it's a note the case officer
- * pinned to the file, which is why the body is in the handwriting face.
+ * pinned to the file, which is why the body is in the note face.
  */
 export const ScreenBrief = ({ note, currentRound = 0, className = '' }) => {
   if (!note?.brief || currentRound >= BRIEF_HIDDEN_FROM_ROUND) return null;

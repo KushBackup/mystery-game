@@ -101,13 +101,13 @@ The deck and the app are speaking to different audiences, and they should not so
 | Voice | **Editorial** — a serious magazine | **Diegetic** — an actual case file |
 | Display | Big Shoulders Display | Special Elite (typewriter) |
 | Body | Newsreader | Courier Prime |
-| Accent | IBM Plex Mono | Caveat (handwriting) |
+| Accent | IBM Plex Mono | Special Elite (the note voice) |
 
-**Do not replace the app's fonts with the deck's.** Special Elite and Caveat are doing something the deck's fonts can't: they make the phone feel like a prop inside the fiction. That's a genuine asset and it's why the app's screenshots look good.
+**Do not replace the app's fonts with the deck's.** Special Elite and Courier Prime are doing something the deck's fonts can't: they make the phone feel like a prop inside the fiction. That's a genuine asset and it's why the app's screenshots look good.
 
 **The recommendation is a split, by function:**
 
-- **In-fiction content keeps its current voice.** Character dossiers, clue cards, case files, accusations, chat — Special Elite for headings, Courier Prime for body, Caveat for margin notes and annotations.
+- **In-fiction content keeps its current voice.** Character dossiers, clue cards, case files, accusations, chat — Special Elite for headings, Courier Prime for body, Special Elite for margin notes and annotations.
 - **UI chrome adopts the deck's discipline.** Screen titles, tab labels, buttons, counters, round indicators, host controls — mono, uppercase, wide-tracked, in `dim`/`bone`.
 - **Numerals become display type.** Add **Big Shoulders Display** for one job only: numbers. Round number, vote counts, timers, clue counters. In `brass`. This is the single highest-impact typographic change you can make, and it's cheap — one extra font, used in maybe six places.
 
@@ -128,11 +128,30 @@ The deck's scale is authored at 1920×1080 and does not transfer. This is a nati
 | Numeral (large) | 56 / 0.9 | Big Shoulders 700 | `brass` | Round number, final tally |
 | Label / kicker | 11 / 1.3 | IBM Plex Mono 500 | `dim-2` | Uppercase, `0.18em` |
 | Label (active) | 11 / 1.3 | IBM Plex Mono 500 | `signal-lift` | Uppercase, `0.18em` |
-| Annotation | 17 / 1.3 | Caveat | `signal-lift` | In-fiction margin notes only |
+| Annotation | 17 / 1.35 | Special Elite | `signal-lift` | In-fiction margin notes only — see §3.3 |
 
 **Tracking rule:** mono labels get `0.18em`–`0.24em`. Generous letter-spacing is what makes monospace read as *editorial chrome* rather than as *code*. Display type goes the other way: `-0.01em`.
 
 **Case rule:** uppercase is for chrome and titles. Never uppercase a sentence.
+
+### 3.3 The note voice (annotations)
+
+The annotation role is **Special Elite** — the same face as in-fiction headings, on purpose. It replaced Caveat in 2026-08-05 because a handwriting script is the hardest thing on the page to read on a phone, and the app's notes carry real information (a character's one secret, a clue's statement, what a screen is for), not decoration.
+
+Notes are told apart from headings by **everything except the face**: headings are uppercase and untilted, notes are sentence case, tilted `-1deg` from `origin-left`, and usually carry the accent colour. Notes are told apart from Courier Prime body copy by weight — Special Elite is a visibly darker, inked impression next to Courier's thin monospace.
+
+**The scale. Do not swap these sizes 1:1 from any other face.**
+
+| Use | px (sm) | Where |
+|---|---|---|
+| Note — default | 17 (19) | Clue bodies, quirks, captions, story notes, taglines, hints |
+| Note — hero | 18 (20) | The one note a card is *about* — the Identity secret |
+| Note — display moment | 22–24 (26–28) | Short strings only: the murderer reveal, the outro |
+| Screen brief | 16 (18) | `.er-brief__body`, the §6.10 onboarding note |
+
+**Why the sizes dropped ~4px from the Caveat originals:** Special Elite runs **24% wider per character** (advance 60.0 vs 48.5 per 100px em), even though its x-height is *smaller* (43 vs 54). Width, not x-height, is what governs a face swap in a 390px column — a same-size substitution added a line to every long note and took the screen brief from 3 lines to 5. Measure both faces before changing this table; see [Lessons.md](Lessons.md) 2026-08-05.
+
+**Copy constraint that falls out of it:** a screen brief runs past 3 lines at ~95 characters. Keep briefs under that.
 
 ---
 
@@ -415,7 +434,7 @@ The app is Tailwind v4 with `@config "../tailwind.config.js"` wired in [src/inde
 Add the font in the same `@import` as the others:
 
 ```css
-@import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Special+Elite&family=Caveat:wght@400;700&family=Courier+Prime&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Special+Elite&family=Courier+Prime&display=swap');
 ```
 
 That yields `bg-ink`, `text-bone`, `border-signal`, `text-brass`, `font-display`, and `var(--color-signal)` in plain CSS.

@@ -65,7 +65,7 @@ export const MurdererRevealOverlay = ({ murderer }) => {
         </div>
 
         <p
-          className={`font-handwriting text-[26px] sm:text-[32px] text-bone mt-12 transition-[opacity,translate] duration-1000 ease-out ${
+          className={`font-note text-[22px] sm:text-[26px] text-bone mt-12 transition-[opacity,translate] duration-1000 ease-out ${
             stage >= 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
           }`}
         >

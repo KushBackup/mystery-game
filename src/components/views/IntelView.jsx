@@ -119,7 +119,7 @@ const ClueCard = ({ index, type, title, body, code, note, pinBrass, fresh }) => 
         title is legible from the first frame, so the card is never a card the
         player has to wait on to know what it is. */}
     <div className={fresh ? 'er-enter' : ''} style={fresh ? { animationDelay: '340ms' } : undefined}>
-      <p className="font-handwriting text-[21px] sm:text-[24px] leading-[1.4] text-ink whitespace-pre-line">
+      <p className="font-note text-[17px] sm:text-[19px] leading-[1.4] text-ink whitespace-pre-line">
         “{body}”
       </p>
 

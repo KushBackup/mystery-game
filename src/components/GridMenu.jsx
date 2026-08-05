@@ -163,7 +163,7 @@ export default function GridMenu({ onNavigate, currentRound = 0, isVotingOpen = 
           <h1 className="er-title mt-2.5 text-[34px] sm:text-[46px]">
             The Murder Mystery Experience
           </h1>
-          <p className="font-handwriting text-signal-lift text-[19px] mt-3 -rotate-1 origin-left">
+          <p className="font-note text-signal-lift text-[17px] mt-3 -rotate-1 origin-left">
             Trust no one.
           </p>
 

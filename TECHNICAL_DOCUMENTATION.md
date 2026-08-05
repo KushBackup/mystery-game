@@ -575,7 +575,7 @@ change the *surface* or the *label*, never the hue.
 
 ### **Typography**
 
-Five families, strict roles. UI chrome speaks in the deck's editorial voice; in-fiction
+Four families, five strict roles. UI chrome speaks in the deck's editorial voice; in-fiction
 content keeps the typewriter voice that makes the phone feel like a prop.
 
 | Token | Family | Used for |
@@ -584,7 +584,15 @@ content keeps the typewriter voice that makes the phone feel like a prop.
 | `font-mono` | IBM Plex Mono | Every label, tag, kicker, chrome element |
 | `font-typewriter` | Special Elite | In-fiction headings (names, clue titles) |
 | `font-body` | Courier Prime | In-fiction body copy |
-| `font-handwriting` | Caveat | Margin notes and annotations |
+| `font-note` | Special Elite | Margin notes and annotations |
+
+`font-note` and `font-typewriter` deliberately hold the same family. They stay separate
+tokens because they are separate roles with different size scales, and because notes are
+distinguished by tilt (`-rotate-1`), sentence case and accent colour rather than by face —
+so re-voicing annotations later is one line in the `@theme` block, not eleven call sites.
+`font-note` replaced `font-handwriting` (Caveat) on 2026-08-05; see
+[DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §3.3 for the size scale, which is **not** a 1:1
+swap of the old Caveat sizes.
 
 Mono labels are tracked `0.18em`–`0.24em` and uppercase; display type goes the other
 way at `-0.01em`. Body copy never drops below 15px, and red text under 18px must use

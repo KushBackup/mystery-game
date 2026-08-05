@@ -68,11 +68,11 @@ export const GuestProfileModal = ({ guest, currentUser, isVotingOpen, onClose, o
           <p className="er-bone-body mt-3">{guest.bio}</p>
         </section>
 
-        {/* Quirk — an in-fiction margin note, so it is handwriting (§3.2). */}
+        {/* Quirk — an in-fiction margin note, so it is the note face (§3.2). */}
         <section className="mt-6">
           <p className="er-bone-label">Known trait</p>
           <div className="mt-2" style={{ borderTop: '1px solid var(--color-line-bone)' }} />
-          <p className="font-handwriting text-[21px] leading-[1.35] text-ink mt-3 -rotate-1 origin-left">
+          <p className="font-note text-[17px] leading-[1.35] text-ink mt-3 -rotate-1 origin-left">
             “{guest.quirk}”
           </p>
         </section>

@@ -12,9 +12,10 @@
  * drifting apart when copy changes — they were separate before, and the Guide
  * was already describing screens in words the screens themselves never used.
  *
- * Briefs are written short on purpose: they are set in the handwriting face
- * (§3.1, "in-fiction margin notes"), which reads fast at a glance and badly in
- * paragraphs. One or two short sentences, sentence case, never uppercase.
+ * Briefs are written short on purpose: they are set in the note face (§3.1,
+ * "in-fiction margin notes") on a small paper card meant to be read at a
+ * glance, and it costs a line as soon as a brief runs past ~95 characters at
+ * 390px. One or two short sentences, sentence case, never uppercase.
  */
 
 // The note is onboarding, not chrome. By Round 02 the room has been through two

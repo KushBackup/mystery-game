@@ -198,4 +198,24 @@ When the same lesson recurs, **edit the existing entry** rather than adding a du
 
 ---
 
+### 2026-08-05 — Swapping a font is governed by advance width, not x-height
+
+**What happened:** Asked to replace Caveat with the typewriter face, I assumed Caveat had the small x-height (its own source comment in [App.css](src/App.css) said so: *"Caveat's x-height is small, so 15px would read as fine print"*) and that Special Elite would therefore need to come *down* in size. Measuring both faces on a canvas at 100px said the opposite on that axis — Caveat's x-height is **54** to Special Elite's **43** — so matching x-heights would have pushed 21px up to 26px. That would have been much worse: the real constraint is that Special Elite's **advance width is 24% greater** (60.0 vs 48.5 per character). At equal size it added a line to every long note; at x-height parity the longest quirk went from 8 lines to 13.
+
+**Why it was wrong:** I reached for the metric that describes how big a face *looks* when the thing that actually breaks a layout is how much horizontal room it *takes*. In a fixed 390px column, wrapping is the whole game. Both numbers were also cheap to get and I nearly skipped getting either.
+
+**What to do instead:** Before swapping a face, measure both on a canvas (`ctx.measureText(s).width / s.length` for advance, `actualBoundingBoxAscent` of `'x'` for x-height) and then **sweep candidate sizes against the real strings at the real container widths**, picking the largest size that doesn't add a line. That sweep is what set the whole scale ([DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §3.3) and it found the non-obvious case: the screen brief needed 16px where everything else took 17px, because three of the nine briefs gain a fourth line at 17. Two traps worth remembering. **Judge by total height, not line count** — the Identity secret gains a line at 18px yet is 51px *shorter*, because the line-height came down with the size; a strict no-new-lines rule would have forced it to 16px for nothing. And **my probe's line-height was wrong**: Tailwind preflight sets `line-height: 1.5` on `html`, so notes with no explicit leading class inherit 1.5, not the 1.2 I assumed — line *counts* were unaffected, but never trust a probe's assumed inherited value over `getComputedStyle` on the real element.
+
+---
+
+### 2026-08-05 — A capture loop that `break`s on "no button yet" silently captures nothing
+
+**What happened:** Driving the app to check the new note sizes, my "get past the intro" loop was `for (…) { const b = findButton(/skip|begin|…/); if (!b) break; b.click(); }`. The splash screen is a 1.4s timer with **no buttons at all**, so on iteration 0 `b` was undefined and the loop broke immediately. Every subsequent step then failed against a screen I was never on: eight of ten screens reported `MISSING`, and the two that "worked" were the splash. An earlier run had passed only because it happened to `waitFor` the first control instead of testing for it.
+
+**Why it was wrong:** `if (!absent) break` conflates *not there yet* with *not there* — the two states that a boot sequence spends all its time moving between. It fails in the worst direction, too: the run completes, writes a report, and exits 0, so the output looks like evidence.
+
+**What to do instead:** Poll for the control you need (`waitFor`, 20s), then assert you arrived somewhere identifiable before continuing — mine now returns the literal string `AT_HUB` after finding a known tile, so a boot failure is visible in the report rather than inferred from downstream damage. Related traps from the same session: the tile labels are **`Comms` and `Suspects`**, not Chat and Dossier, so text-matching on the screen name silently misses (and Timeline is not a tile at all); the Evidence hub tile and one of its five stacks are **both called "Evidence"**, so target the tile by its sub-label `Clues & Files` instead; the murderer-reveal overlay renders only for players who are **not** the murderer, so seeding the session as `char_alam` falls straight through to the outro; and a PowerShell `>` redirect opens its target *before* node runs, so redirecting into a directory the script is about to create fails — `New-Item -Force` the directory first.
+
+---
+
 <!-- Add new lessons above this line, newest first or oldest first — keep one consistent order. Current order: oldest first. -->

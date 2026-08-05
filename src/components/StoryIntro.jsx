@@ -313,7 +313,7 @@ export const StoryIntro = ({
             </div>
 
             {slide.note && done && (
-              <p className="font-handwriting text-signal-lift text-[21px] mt-5 -rotate-1 origin-left er-enter">
+              <p className="font-note text-signal-lift text-[17px] mt-5 -rotate-1 origin-left er-enter">
                 {slide.note}
               </p>
             )}

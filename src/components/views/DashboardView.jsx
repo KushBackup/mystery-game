@@ -98,7 +98,7 @@ export const DashboardView = ({ myCharacter }) => {
             {/* The note rises in as the bars clear rather than sitting fully
                 formed behind them. */}
             <span
-              className={`block font-handwriting text-[22px] sm:text-[26px] leading-[1.35] text-ink ${
+              className={`block font-note text-[18px] sm:text-[20px] leading-[1.35] text-ink ${
                 secretOpen ? 'er-enter' : 'opacity-0'
               }`}
               style={secretOpen ? { animationDelay: '180ms' } : undefined}

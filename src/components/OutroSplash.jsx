@@ -35,7 +35,7 @@ export const OutroSplash = ({ playerName }) => {
         </h1>
 
         <p
-          className={`font-handwriting text-[28px] sm:text-[34px] text-signal-lift mt-8 -rotate-1 ${staged(
+          className={`font-note text-[24px] sm:text-[28px] text-signal-lift mt-8 -rotate-1 ${staged(
             'delay-500'
           )}`}
         >

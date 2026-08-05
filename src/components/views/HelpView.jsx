@@ -157,7 +157,7 @@ export const HelpView = () => {
       <div className="er-card er-card--signal er-enter er-stagger text-center" style={{ '--i': 8 }}>
         <p className="er-mono er-mono--hot er-mono--wide">Ready</p>
         <p className="er-title text-[24px] mt-3">Trust your instincts</p>
-        <p className="font-handwriting text-[21px] text-signal-lift mt-3">
+        <p className="font-note text-[17px] text-signal-lift mt-3">
           The truth is in the room somewhere.
         </p>
       </div>
