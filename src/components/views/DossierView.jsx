@@ -106,15 +106,18 @@ export const DossierView = ({ currentUser, onSelectGuest }) => {
                 </span>
               </span>
 
-              <span className="shrink-0 self-start">
-                {isMe ? (
-                  <span className="er-tag">You</span>
-                ) : isVictim ? (
-                  <span className="er-tag er-tag--mute">Deceased</span>
-                ) : (
-                  <span className="er-mono er-mono--dim">{char.isSuspect ? 'Suspect' : 'Witness'}</span>
-                )}
-              </span>
+              {/* Only facts the room already knows get a tag here. Suspect vs
+                  witness is never shown — the player has to earn that from the
+                  clue deck. */}
+              {(isMe || isVictim) && (
+                <span className="shrink-0 self-start">
+                  {isMe ? (
+                    <span className="er-tag">You</span>
+                  ) : (
+                    <span className="er-tag er-tag--mute">Deceased</span>
+                  )}
+                </span>
+              )}
             </button>
           );
         })}

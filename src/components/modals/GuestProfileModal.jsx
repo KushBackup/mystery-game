@@ -11,7 +11,10 @@ export const GuestProfileModal = ({ guest, currentUser, isVotingOpen, onClose, o
 
   const isMe = guest.id === currentUser;
   const isVictim = guest.role === 'VICTIM';
-  const standingLabel = isVictim ? 'Known victim' : guest.isSuspect ? 'Prime suspect' : 'Witness';
+  // Deliberately neutral: the file never says whether this guest is a prime
+  // suspect or a witness. Working that out from the clue deck *is* the game, so
+  // `guest.isSuspect` must not reach a player-facing surface.
+  const standingLabel = isVictim ? 'Known victim' : 'Guest on record';
 
   return (
     <div

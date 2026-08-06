@@ -168,7 +168,9 @@ Uses `validateLoginCode()` and shows player count from `CASE_META.playerCount`.
 Uses `CASE_META` for venue, case title, case ID, player count, and killer count.
 
 ### DossierView / GuestProfileModal
-The roster surface is now framed as **Guests**, not **Suspects**, because only 10 of the 51 players are prime suspects. The modal distinguishes `Prime suspect`, `Witness`, and `Known victim` labels.
+The roster surface is now framed as **Guests**, not **Suspects**, because only 10 of the 51 players are prime suspects.
+
+**`isSuspect` must never reach a player-facing surface.** Neither the roster row nor the guest file says whether a guest is a prime suspect or a witness — working that out from the clue deck *is* the game, so labelling it hands players the answer for free. The only standings shown are ones the room already knows: `You`, `Deceased` (roster) and `Guest on record` / `Known victim` (modal). `getSuspects()` / `getWitnesses()` / `CASE_META.primeSuspectCount` are host-only and are read solely by [`hostReference.js`](src/data/hostReference.js) and [`HostReferenceView`](src/components/views/HostReferenceView.jsx). A player's *own* role is different — [`DashboardView`](src/components/views/DashboardView.jsx) may tag `myCharacter` as killer or victim, because that is self-knowledge.
 
 DossierView filters through the shared [`SearchField`](src/components/ui/SearchField.jsx) (name / profession / quirk, case-insensitive substring). The roster is pre-mapped to `{ char, fileNumber }` so the two-digit file number keeps referring to the guest's position in `CHARACTERS` while the list is filtered — renumbering by filtered position would make the number useless as a spoken reference.
 
