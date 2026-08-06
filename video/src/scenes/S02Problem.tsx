@@ -1,7 +1,7 @@
 /**
  * SCENE 02 — THE PROBLEM (360 frames / 12s)
  *
- * The 32 dots drift in and pull into five tight cliques, and then nothing
+ * The 50 dots drift in and pull into five tight cliques, and then nothing
  * happens. That stillness IS the beat — attendance is high, mixing is zero.
  * Deliberately cold: no lamp warmth on the dot field, no thread, no payoff.
  *
@@ -35,7 +35,7 @@ export const S02Problem: React.FC = () => {
     { x: 1136, y: 236, w: 688, h: 640 },
     { x: 72, y: 950, w: 936, h: 650 },
   );
-  const dotSize = pick(19, 21);
+  const dotSize = pick(15, 17);
 
   const dots: DotState[] = Array.from({ length: DOT_COUNT }, (_, i) => {
     const at = 40 + i * 2.6;
@@ -174,7 +174,7 @@ export const S02Problem: React.FC = () => {
           ...enter(frame, 210, { y: 14, dur: 24 }),
         }}
       >
-        32 guests · five groups · nobody moves
+        50 guests · five groups · nobody moves
       </div>
     </AbsoluteFill>
   );

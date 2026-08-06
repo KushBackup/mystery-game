@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ScreenBrief } from './ui/ScreenBrief';
 import { Numeral } from './ui/Numeral';
+import { CASE_META } from '../data/gameData';
 
 // Sketched line icons — stroke-only so they inherit the surface's text colour.
 //
@@ -109,7 +110,7 @@ export default function GridMenu({ onNavigate, currentRound = 0, isVotingOpen = 
     { id: 'intel',     label: 'Evidence',  sub: 'Clues & Files', icon: ClipboardIcon,  tone: 'bone',  rot: 'er-rotR' },
     { id: 'chat',      label: 'Comms',     sub: 'Encrypted',    icon: ChatIcon,        tone: 'aged',  rot: 'er-rotL' },
     { id: 'votes',     label: 'Vote',      sub: isVotingOpen ? 'Open Now' : 'Standby', icon: ChartIcon, tone: 'vote', rot: 'er-rotL' },
-    { id: 'dossier',   label: 'Suspects',  sub: 'Profiles',     icon: UsersIcon,       tone: 'bone',  rot: 'er-rotR' },
+    { id: 'dossier',   label: 'Guests',    sub: 'Profiles',     icon: UsersIcon,       tone: 'bone',  rot: 'er-rotR' },
     { id: 'help',      label: 'Guide',     sub: 'Read Me',      icon: HelpIcon,        tone: 'aged',  rot: '', wide: true },
     { id: 'logout',    label: 'Exit',      sub: 'End Session',  icon: LogoutIcon,      tone: 'ink',   rot: '', wide: true },
   ];
@@ -159,9 +160,9 @@ export default function GridMenu({ onNavigate, currentRound = 0, isVotingOpen = 
 
         {/* Kicker + screen title */}
         <div className={`pt-7 ${playIntro ? 'er-enter' : 'er-enter-quick'}`}>
-          <p className="er-mono er-mono--hot er-mono--wide">The Penthouse · Indiranagar</p>
+          <p className="er-mono er-mono--hot er-mono--wide">{CASE_META.venue}</p>
           <h1 className="er-title mt-2.5 text-[34px] sm:text-[46px]">
-            The Murder Mystery Experience
+            {CASE_META.title}
           </h1>
           <p className="font-note text-signal-lift text-[17px] mt-3 -rotate-1 origin-left">
             Trust no one.
@@ -213,8 +214,8 @@ export default function GridMenu({ onNavigate, currentRound = 0, isVotingOpen = 
         <div className="mt-10">
           <div className="er-rule" />
           <div className="flex items-center justify-between pt-3">
-            <span className="er-mono">Case 8821-B</span>
-            <span className="er-mono">32 Guests · 1 Killer</span>
+            <span className="er-mono">Case {CASE_META.caseId}</span>
+            <span className="er-mono">{CASE_META.playerCount} Guests · {CASE_META.killerCount} Killers</span>
           </div>
         </div>
       </div>

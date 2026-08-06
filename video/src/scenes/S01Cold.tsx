@@ -123,7 +123,7 @@ export const S01Cold: React.FC = () => {
             ...enter(frame, 92, { y: 26, dur: 30 }),
           }}
         >
-          Thirty-two strangers. One story. Every player holds a piece nobody
+          Fifty strangers. One story. Every player holds a piece nobody
           else has —{" "}
           <em style={{ fontStyle: "italic", color: C.bone }}>
             and the only way out is to talk to each other.

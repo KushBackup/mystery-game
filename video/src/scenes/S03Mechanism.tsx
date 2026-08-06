@@ -2,7 +2,7 @@
  * SCENE 03 — THE MECHANISM (270 frames / 9s)
  *
  * The film's turn, and the only scene that must be read against the one before
- * it. The SAME 32 dots start exactly where scene 2 left them — five closed
+ * it. The SAME 50 dots start exactly where scene 2 left them — five closed
  * cliques — then each lights up holding one red fragment, red threads shoot
  * between them, and the cliques break apart into a network.
  *
@@ -41,7 +41,7 @@ export const S03Mechanism: React.FC = () => {
     { x: 1136, y: 236, w: 688, h: 640 },
     { x: 72, y: 950, w: 936, h: 650 },
   );
-  const dotSize = pick(19, 21);
+  const dotSize = pick(15, 17);
 
   const positions = Array.from({ length: DOT_COUNT }, (_, i) => {
     const moveAt = 34 + i * 2.2;

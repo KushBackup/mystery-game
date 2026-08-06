@@ -25,7 +25,7 @@ const CONTROLS: [string, string][] = [
   ["Round control", "Advance or step back. Syncs to every device instantly."],
   ["Voting", "Open, close, and decide when the room sees the tally."],
   ["File releases", "Drop each case file on the beat you want it."],
-  ["The reveal", "One button. Thirty-two screens. Same second."],
+  ["The reveal", "One button. Fifty screens. Same second."],
 ];
 
 export const S11Host: React.FC = () => {

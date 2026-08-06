@@ -21,14 +21,14 @@ import { SplashScreen } from './components/SplashScreen';
 import { StoryIntro } from './components/StoryIntro';
 import { OutroSplash } from './components/OutroSplash';
 import { MurdererRevealOverlay } from './components/MurdererRevealOverlay';
-import { ROUNDS, CHARACTERS, CLUE_DB, stackKeyForClue, getAssignedAccusation, CONFESSION_CLUE, isMurderer } from './data/gameData';
+import { ROUNDS, CHARACTERS, CLUE_DB, stackKeyForClue, getAssignedAccusation, CONFESSION_CLUE, getKillers, isMurderer } from './data/gameData';
 import { SCREEN_GUIDE, EVIDENCE_STACKS } from './data/screenGuide';
 import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue } from './firebase/config';
 
 // Session is persisted so a reload — whether the host's force-sync broadcast, a
 // service-worker update, or a player accidentally swiping the tab away — drops
 // them back where they were instead of at the login screen. Mid-event, making
-// 32 people re-enter their printed codes is not a recoverable situation.
+// 51 people re-enter their printed codes is not a recoverable situation.
 const SESSION_KEY = 'astral.session';
 
 // Every screen wears the same three-part frame (DESIGN_LANGUAGE.md §4.2):
@@ -107,8 +107,6 @@ export default function App() {
   // stack's name, and this component owns the screen frame for every view (§4.2).
   const [evidenceStack, setEvidenceStack] = useState(null);
   const [selectedGuest, setSelectedGuest] = useState(null);
-  const [hostPanelOpen, setHostPanelOpen] = useState(false);
-  const [showVoteResults, setShowVoteResults] = useState(false);
   const [isHost, setIsHost] = useState(() => readSession().isHost);
 
   // True once the real game state is known — the first Firestore snapshot, or the
@@ -122,7 +120,7 @@ export default function App() {
   //
   // Deliberately NOT persisted. The briefing plays on every login and every
   // reload for as long as the game is still in Round 0, which is what a room of
-  // 32 people arriving at different times needs; once the host advances, it never
+  // 51 people arriving at different times needs; once the host advances, it never
   // interrupts anyone again. A logout resets it to 'pending' so the next player on
   // a shared device gets it too.
   const [briefingState, setBriefingState] = useState('pending');
@@ -151,8 +149,14 @@ export default function App() {
 
   // Check if player should see the confession (murderer in Round 6)
   const shouldShowConfession = useMemo(() => {
-    return isMurderer(currentUser) && revealedToMurderer && currentRound >= 6;
+    return (
+      isMurderer(currentUser) &&
+      revealedToMurderer &&
+      currentRound >= 6 &&
+      CONFESSION_CLUE.forCharacters?.includes(currentUser)
+    );
   }, [currentUser, revealedToMurderer, currentRound]);
+  // 51 people arriving at different times needs; once the host advances, it never
 
   // --- FIREBASE SYNC ---
   
@@ -303,7 +307,7 @@ export default function App() {
       await submitVoteToFirebase(currentUser, suspectId, currentRound);
       setFeedback({ type: 'success', msg: "VOTE RECORDED" });
       setTimeout(() => setFeedback(null), 3000);
-    } catch (error) {
+    } catch {
       setFeedback({ type: 'error', msg: "Failed to submit vote" });
       setTimeout(() => setFeedback(null), 3000);
     }
@@ -360,12 +364,11 @@ export default function App() {
     return <CaseHold />;
   }
 
-  // Public murderer reveal — terminal screen for all non-host players except
-  // the murderer themselves (Alam falls through to the OutroSplash branch).
+  // Public killer reveal — terminal screen for all non-host players except
+  // the killers themselves (they fall through to the confession/outro path).
   // Must come before the gameEnded check so it wins over OutroSplash for everyone else.
   if (revealedToMurderer && !isHostUser && !isMurderer(currentUser)) {
-    const murdererCharacter = CHARACTERS.find(c => c.role === 'MURDERER');
-    return <MurdererRevealOverlay murderer={murdererCharacter} />;
+    return <MurdererRevealOverlay killers={getKillers()} />;
   }
 
   // Show outro splash when game ends (but not for host)

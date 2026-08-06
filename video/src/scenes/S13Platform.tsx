@@ -23,7 +23,7 @@ import { useLayout } from "../layout";
 const WORLDS: { name: string; blurb: string; shipped: boolean }[] = [
   {
     name: "Murder Mystery",
-    blurb: "Whodunnit, 32 players, 7 rounds.",
+    blurb: "Whodunnit, 50 players, 7 rounds.",
     shipped: true,
   },
   {

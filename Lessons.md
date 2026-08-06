@@ -198,6 +198,26 @@ When the same lesson recurs, **edit the existing entry** rather than adding a du
 
 ---
 
+### 2026-08-06 — A story rewrite is more than one data file
+
+**What happened:** Replacing the main case data with a new 51-player story did not finish the job. Several secondary surfaces were still anchored to the retired case: the Story screen imported a non-existent `caseData` module, the Timeline view still hardcoded the Penthouse/Nikhil beats, the guest modal labeled every non-victim as a suspect, and the repo primers still described the old 32-player office case.
+
+**Why it was wrong:** A data-driven app still grows local constants and copy over time. Rewriting only `gameData.js` fixes the core content but leaves the product incoherent if story labels, onboarding copy, and docs continue to point at the previous canon.
+
+**What to do instead:** After any major narrative rewrite, run three sweeps before calling it done: 1) search the UI for old proper nouns and counts, 2) validate role-driven surfaces like reveal screens and profile labels, and 3) update the session-start docs (`Claude.md`, `memory.md`, `PROJECT_CONTEXT.md`, `STORY.md`, `TECHNICAL_DOCUMENTATION.md`, `CLUE_CODES.md`) in the same turn.
+
+---
+
+### 2026-08-06 — A second copy of an ID list is a rename waiting to break in silence
+
+**What happened:** The host released Round 3 and Round 4 case files and no player saw them. `unlockFilesForRound` in [config.js](src/firebase/config.js) held its own hardcoded round-to-file map — `3: ['f_toxreport','f_funding']`, `4: ['f_medical','f_insurance','f_sebi']` — and the Velvet Ember rewrite (the entry above) had renamed those files to `f_autopsy`/`f_security` and `f_audit`/`f_inventory`/`f_tax`. The host wrote IDs that no longer existed to Firestore; the client filters `CASE_FILES` by those IDs and matched nothing. Round 0 kept working purely because `f_incident` never got renamed, which is what made the failure look round-specific rather than structural.
+
+**Why it was wrong:** It was the *third* copy of the same mapping, and the two live copies disagreed. [HostPanel.jsx](src/components/HostPanel.jsx) derived its unlock list from `CASE_FILES` (correct) but checked "Released" against a hardcoded sentinel ID (stale, `f_toxreport`) — so even after fixing the write, the button would never have latched. The bug was invisible from the host's seat: local `setUnlockedFiles` painted the correct state for one frame before the Firestore snapshot overwrote it with the dead IDs. Nothing threw, nothing logged, lint and build were clean. A hardcoded ID list has no referent that a rename can break loudly.
+
+**What to do instead:** When data lives in `gameData.js`, every consumer derives from it — `CASE_FILES.filter(f => f.roundReq === n)` — and no one keeps a parallel list. Derive the *done* check from the same list too, so the control cannot claim a state the room isn't in. Sentinel-of-one is a bad completeness test regardless: use `ids.every(id => unlocked.includes(id))`. And when a symptom is "works for round 0, not 3 and 4", suspect a stale copy of a mapping before suspecting the sync layer — the working case is usually the one whose name happened not to change. Grep the old IDs repo-wide afterwards to confirm no fourth copy survives.
+
+---
+
 ### 2026-08-05 — Swapping a font is governed by advance width, not x-height
 
 **What happened:** Asked to replace Caveat with the typewriter face, I assumed Caveat had the small x-height (its own source comment in [App.css](src/App.css) said so: *"Caveat's x-height is small, so 15px would read as fine print"*) and that Special Elite would therefore need to come *down* in size. Measuring both faces on a canvas at 100px said the opposite on that axis — Caveat's x-height is **54** to Special Elite's **43** — so matching x-heights would have pushed 21px up to 26px. That would have been much worse: the real constraint is that Special Elite's **advance width is 24% greater** (60.0 vs 48.5 per character). At equal size it added a line to every long note; at x-height parity the longest quirk went from 8 lines to 13.

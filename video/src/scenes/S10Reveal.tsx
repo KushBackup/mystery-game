@@ -1,7 +1,7 @@
 /**
  * SCENE 10 — THE REVEAL (210 frames / 7s)
  *
- * Thirty-two screen rectangles. A red wave sweeps across them in a diagonal
+ * Fifty screen rectangles. A red wave sweeps across them in a diagonal
  * stagger — and then, on ONE frame, every screen in the venue turns at the same
  * instant. The staggered wave exists only to make the simultaneous flip land:
  * you have to see the room turn unevenly first for "same second" to mean
@@ -20,7 +20,7 @@ import { C, F } from "../theme";
 import { enter, linear, ramp } from "../anim";
 import { useLayout } from "../layout";
 
-/** The one frame on which all 32 screens turn together. */
+/** The one frame on which all 50 screens turn together. */
 const SYNC_FRAME = 132;
 /** The red field floods the whole frame just after the sync. */
 const FLOOD_AT = 140;
@@ -31,13 +31,13 @@ export const S10Reveal: React.FC = () => {
   const frame = useCurrentFrame();
   const { margin, pick, inner, width } = useLayout();
 
-  // 8 x 4 = the 32 devices in the room, in both cuts.
+  // 10 x 5 = the 50 devices in the room, in both cuts.
   // The master is HEIGHT-constrained (a width-derived tile would be 425px tall
   // and four rows would not fit in 1080), the social cut is width-constrained.
-  const cols = 8;
-  const rows = 4;
+  const cols = 10;
+  const rows = 5;
   const gap = pick(24, 14);
-  const tileH = pick(142, (inner - gap * (cols - 1)) / cols / PHONE_ASPECT);
+  const tileH = pick(108, (inner - gap * (cols - 1)) / cols / PHONE_ASPECT);
   const tileW = tileH * PHONE_ASPECT;
   const gridW = cols * tileW + (cols - 1) * gap;
   const gridLeft = pick(width - margin - gridW, margin);
@@ -71,7 +71,7 @@ export const S10Reveal: React.FC = () => {
           style={{ marginTop: pick(18, 22) }}
           lines={[
             [{ t: "One host. One button." }],
-            [{ t: "Thirty-two screens.", hot: true }],
+            [{ t: "Fifty screens.", hot: true }],
           ]}
         />
 
@@ -107,7 +107,7 @@ export const S10Reveal: React.FC = () => {
         </div>
       </div>
 
-      {/* The venue, as 32 rectangles. */}
+      {/* The venue, as 50 rectangles. */}
       <div style={{ position: "absolute", left: gridLeft, top: gridTop }}>
         {Array.from({ length: cols * rows }, (_, i) => {
           const col = i % cols;

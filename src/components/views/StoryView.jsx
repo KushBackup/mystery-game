@@ -1,5 +1,6 @@
 import React from 'react';
 import { STORY_SLIDES } from '../../data/storyIntro';
+import { CASE_META } from '../../data/gameData';
 
 /**
  * The case briefing, as a document you can go back to (DESIGN_LANGUAGE.md §9).
@@ -22,12 +23,11 @@ import { STORY_SLIDES } from '../../data/storyIntro';
 export const StoryView = ({ onReplay }) => (
   <div className="space-y-4">
     <article className="er-bone p-5 sm:p-7 er-land">
-      <p className="er-bone-label">Case Briefing · 8821-B</p>
+      <p className="er-bone-label">Case Briefing · {CASE_META.caseId}</p>
       <div className="er-bone-rule mt-2" />
 
       <p className="er-bone-body mt-4">
-        The night of 23 May 2026, as the room knows it. Compiled from the statements
-        given at the scene.
+        The night of {CASE_META.date}, as the room knows it. Built from what people said at the scene.
       </p>
 
       {STORY_SLIDES.map((beat, index) => (
@@ -64,10 +64,10 @@ export const StoryView = ({ onReplay }) => (
         <span className="er-tag er-tag--onbone">On record</span>
         <div className="text-right">
           <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-body-bone/70">
-            Indiranagar Division
+            {CASE_META.policeUnit}
           </p>
           <p className="font-mono text-[11px] tracking-[0.18em] uppercase text-body-bone/70 mt-1">
-            Insp. R. Mathur
+            {CASE_META.inspector}
           </p>
         </div>
       </div>

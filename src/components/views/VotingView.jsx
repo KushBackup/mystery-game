@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CHARACTERS } from '../../data/gameData';
+import { CHARACTERS, isMurderer } from '../../data/gameData';
 import { VoteResultsModal } from '../modals/VoteResultsModal';
 import { Numeral } from '../ui/Numeral';
 
@@ -26,9 +26,9 @@ export const VotingView = ({
 
   // Stable hash-sort the suspect list so every player sees the SAME jumbled
   // order (so chat references like "the 3rd one" still translate), but the
-  // ordering doesn't betray suspects-vs-witnesses or put the murderer near
-  // the top. Belt-and-suspenders: if the hash happens to place the murderer
-  // in the first row of the 2-col grid, push them past the midpoint.
+  // ordering doesn't betray suspects-vs-witnesses or cluster the killers near
+  // the top. Any killer the hash places in the first row of the 2-col grid is
+  // pushed deeper into the list.
   const suspects = React.useMemo(() => {
     const stableHash = (str) => {
       let h = 0;
@@ -39,11 +39,16 @@ export const VotingView = ({
       return h;
     };
     const list = [...CHARACTERS].sort((a, b) => stableHash(a.id) - stableHash(b.id));
-    const murdererIdx = list.findIndex(c => c.role === 'MURDERER');
-    if (murdererIdx > -1 && murdererIdx < 6) {
-      const [murderer] = list.splice(murdererIdx, 1);
-      list.splice(Math.floor(list.length / 2) + 3, 0, murderer);
-    }
+    const earlyKillers = list
+      .map((character, index) => ({ character, index }))
+      .filter(({ character, index }) => isMurderer(character.id) && index < 6)
+      .reverse();
+
+    earlyKillers.forEach(({ character, index }, offset) => {
+      list.splice(index, 1);
+      list.splice(Math.min(Math.floor(list.length / 2) + 3 + offset, list.length), 0, character);
+    });
+
     return list;
   }, []);
 
@@ -82,8 +87,8 @@ export const VotingView = ({
         <p className="font-body text-[15px] leading-[1.55] text-dim mt-3">
           {isVotingOpen
             ? hasVoted
-              ? 'Your vote is recorded. Tap another suspect to change it.'
-              : 'Tap a suspect to select, tap again to confirm.'
+              ? 'Your vote is recorded. Tap another name to change it.'
+              : 'Tap a name to select, tap again to confirm.'
             : 'Waiting for the host to open the ballot.'}
         </p>
 
@@ -178,8 +183,8 @@ export const VotingView = ({
                 )}
               </div>
 
-              {suspect.role === 'MURDERER' && currentRound >= 6 && (
-                <span className="er-tag absolute -top-2 left-3">Murderer</span>
+              {isMurderer(suspect.id) && currentRound >= 6 && (
+                <span className="er-tag absolute -top-2 left-3">Killer</span>
               )}
             </button>
           );

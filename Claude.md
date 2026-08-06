@@ -14,7 +14,7 @@ The folder lives at `d:\Unity Projects\mystery-game` for historical reasons, but
 
 ## TL;DR
 
-**Astral Project's Murder Mystery Experience** — a 32-player real-time web murder mystery party game. Players log in as one of 32 characters, decode clue codes across 7 rounds, chat in real time, vote on suspects, and ultimately uncover that the "victim" — Nikhil, TripleSpeed's Head of Marketing — staged his own death with Alam, the company's Head of HR, to collect on life insurance and collapse a SEBI fraud case against him. *(The Rohan/Esha version named here previously was an older draft of the story; the shipped narrative is Nikhil/Alam — see [STORY.md](STORY.md) and [memory.md](memory.md). [MYSTERY_IMPROVEMENTS_SUMMARY.md](MYSTERY_IMPROVEMENTS_SUMMARY.md) still describes that old draft and is historical only.)* Built as an installable PWA with offline support, deployed to GitHub Pages at base path `/mystery-game/`.
+**Astral Project's Murder Mystery Experience** — a 51-player real-time web murder mystery party game. Players log in as one of 51 guests, decode clue codes across 7 rounds, chat in real time, vote across the room, and ultimately uncover that the victim — Armaan Khanna, the fictional founder of Velvet Ember Spirits — was killed by a five-person conspiracy led by Sneha Ganesh. The shipped story is now the **Velvet Ember distillery case**, not the old TripleSpeed office case. Built as an installable PWA with offline support, deployed to GitHub Pages at base path `/mystery-game/`.
 
 ---
 
@@ -29,6 +29,7 @@ Always start at this file. Read the others on demand based on what you're workin
 | **[Lessons.md](Lessons.md)** | Mistakes Claude has made + lessons learned | Always, at session start |
 | **[PROJECT_CONTEXT.md](PROJECT_CONTEXT.md)** | Full project & game design overview | Working on game flow, mechanics, scope |
 | **[STORY.md](STORY.md)** | Narrative bible, character backstories, full timeline | Editing characters, clues, story content |
+| **[HOST_QA_BRIEFING.md](HOST_QA_BRIEFING.md)** | Host-only answers to likely story objections and logic questions | Tightening story logic, facilitating the live room |
 | **[TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md)** | Architecture, components, state management | Refactoring, adding components, debugging state |
 | **[DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md)** | "Evidence Room" design system — palette, type scale, components, motion, per-screen application | Any visual/theming work on the app or the deck |
 | **[CLUE_CODES.md](CLUE_CODES.md)** | All clue codes (accusation/motive/revelation) | Adding/changing clue codes |
@@ -49,7 +50,7 @@ Always start at this file. Read the others on demand based on what you're workin
 The files you will most often need to open:
 
 - [src/App.jsx](src/App.jsx) — main state machine, routing, Firebase wiring
-- [src/data/gameData.js](src/data/gameData.js) — 32 characters, ~30 clues, round definitions (the largest data file, ~2000 LOC)
+- [src/data/gameData.js](src/data/gameData.js) — 51 characters, 34 clue codes, round definitions, case metadata, and host script (the largest data file)
 - [src/data/screenGuide.js](src/data/screenGuide.js) — per-screen kicker/title/brief/detail copy; feeds the screen frames, the onboarding notes and the Guide
 - [src/data/storyIntro.js](src/data/storyIntro.js) — the Round 0 case briefing: eight slides + the typing speed. **Spoiler-gated to Round 0 knowledge** — read the header before editing. Feeds both the fullscreen briefing and the Story screen
 - [src/components/StoryIntro.jsx](src/components/StoryIntro.jsx) — the fullscreen typed briefing (Round 0 takeover, and the replay from the Story screen)
@@ -168,7 +169,7 @@ npm run deploy           # builds + pushes /dist to gh-pages branch (GitHub Page
 | Task | Files to touch | Don't forget |
 |---|---|---|
 | Add/change a clue code | [src/data/gameData.js](src/data/gameData.js) | Update [CLUE_CODES.md](CLUE_CODES.md) |
-| Add/edit a character | [src/data/gameData.js](src/data/gameData.js) — characters array | Stay within 32 slots; update [STORY.md](STORY.md) if backstory changes |
+| Add/edit a character | [src/data/gameData.js](src/data/gameData.js) — characters array | Keep the roster at 51 unless the user explicitly changes event scale; update [STORY.md](STORY.md) if backstory changes |
 | Theme/visual tweak | `@theme` in [src/index.css](src/index.css) for tokens; [src/App.css](src/App.css) for `.er-*` components | Follow [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md). Colours go in `@theme`, **never** in `tailwind.config.js` (config colours don't emit CSS custom properties). `App.css` is imported by `index.css` as `layer(components)` — importing it from `main.jsx` instead would make every `.er-*` rule un-overridable by Tailwind utilities |
 | Motion / microinteraction | [src/App.css](src/App.css) §1 primitives; `.er-*` motion classes | Read [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) **§7.1 (motion restraint)** before adding, not just §7 — the hard part is knowing where *not* to animate. Name the transitioned properties; never a blanket one. Then verify by measuring `getComputedStyle` over time, not by looking at a screenshot |
 | New modal | [src/components/modals/](src/components/modals/) + wire from [src/App.jsx](src/App.jsx) | — |

@@ -52,7 +52,7 @@ export const DashboardView = ({ myCharacter }) => {
         {(isMurderer || isVictim) && (
           <div className="mt-6">
             <span className={`er-tag ${isVictim ? 'er-tag--mute' : 'er-tag--onbone'}`}>
-              {isMurderer ? 'Classified · Murderer' : 'Deceased · Victim'}
+              {isMurderer ? 'Classified · Killer' : 'Deceased · Victim'}
             </span>
           </div>
         )}

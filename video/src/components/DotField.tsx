@@ -1,5 +1,5 @@
 /**
- * DotField — the 32 players as dots.
+ * DotField — the 50 players as dots.
  *
  * Scenes 2 and 3 both draw this. Scene 2 shows them cold and unlit in five
  * closed cliques; scene 3 lights each one and gives it a red fragment to hold.

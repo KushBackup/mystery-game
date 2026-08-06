@@ -11,7 +11,7 @@ import {
   triggerForceRefresh,
   endGame
 } from '../firebase/config';
-import { CASE_FILES, CLUE_DB, HOST_SCRIPT } from '../data/gameData';
+import { CASE_FILES, CASE_META, CLUE_DB, HOST_SCRIPT } from '../data/gameData';
 import { Numeral } from './ui/Numeral';
 import { ChevronRight } from './icons/IconComponents';
 
@@ -21,7 +21,7 @@ import { ChevronRight } from './icons/IconComponents';
  * This was the app's worst offender: violet/indigo gradients, rounded-2xl
  * cards, blue and green and amber buttons — none of them in any palette the
  * project has ever had. It is now ink, hairlines and mono chrome like every
- * other screen, and REVEAL MURDERER is the single full signal fill in the
+ * other screen, and REVEAL KILLERS is the single full signal fill in the
  * entire app, which is exactly why it reads as irreversible.
  */
 
@@ -141,7 +141,7 @@ export const HostPanel = ({
 
   const handleRevealMurderer = () => {
     if (revealedToMurderer) return;
-    if (window.confirm('Reveal the murderer to ALL 32 players? This ends the game and cannot be undone except by Reset Game.')) {
+    if (window.confirm(`Reveal the killers to the full room? ${CASE_META.playerCount - CASE_META.killerCount} players will see the public reveal. This ends the game and cannot be undone except by Reset Game.`)) {
       setRevealedToMurderer(true);
       setGameEnded(true);
       updateMurdererReveal(true);
@@ -185,11 +185,23 @@ export const HostPanel = ({
     revealCluesForRound(round);
   };
 
+  // "Released" is read off the same list the unlock writes, so the button can't
+  // disagree with what the room can actually see. It used to watch one
+  // hardcoded sentinel ID per round, and those sentinels died in the Velvet
+  // Ember rename along with the ones in unlockFilesForRound — the round would
+  // stay tappable forever because the ID it was looking for no longer existed.
   const fileRounds = [
-    { round: 0, label: 'Incident report', sentinel: 'f_incident' },
-    { round: 3, label: 'Evidence', sentinel: 'f_toxreport' },
-    { round: 4, label: 'Revelations', sentinel: 'f_medical' },
-  ].map(r => ({ ...r, count: CASE_FILES.filter(f => f.roundReq === r.round).length }));
+    { round: 0, label: 'Incident report' },
+    { round: 3, label: 'Evidence' },
+    { round: 4, label: 'Revelations' },
+  ].map((r) => {
+    const ids = CASE_FILES.filter(f => f.roundReq === r.round).map(f => f.id);
+    return {
+      ...r,
+      count: ids.length,
+      done: ids.length > 0 && ids.every(id => unlockedFiles.includes(id)),
+    };
+  });
 
   // Group clues by round (the confession is handled separately).
   const cluesByRound = {
@@ -331,14 +343,11 @@ export const HostPanel = ({
       {/* Case files */}
       <Section label="Release case files" meta={`${unlockedFiles.length} out`}>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {fileRounds.map(({ round, label, sentinel, count }) => {
-            const done = unlockedFiles.includes(sentinel);
-            return (
-              <Control key={round} disabled={done} onClick={() => handleUnlockRoundFiles(round)}>
-                {done ? 'Released · ' : ''}R{round} {label} ({count})
-              </Control>
-            );
-          })}
+          {fileRounds.map(({ round, label, count, done }) => (
+            <Control key={round} disabled={done} onClick={() => handleUnlockRoundFiles(round)}>
+              {done ? 'Released · ' : ''}R{round} {label} ({count})
+            </Control>
+          ))}
         </div>
       </Section>
 
@@ -414,10 +423,10 @@ export const HostPanel = ({
             }`}
           >
             {revealedToMurderer
-              ? 'Murderer revealed'
+              ? 'Killers revealed'
               : currentRound < 6
-                ? 'Reveal murderer · unlocks at round 6'
-                : 'Reveal murderer'}
+                ? 'Reveal killers · unlocks at round 6'
+                : 'Reveal killers'}
           </button>
 
           <Control danger onClick={handleEndGame}>End game</Control>

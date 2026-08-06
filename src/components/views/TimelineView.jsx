@@ -1,4 +1,5 @@
 import React from 'react';
+import { CASE_META, CASE_TIMELINE } from '../../data/gameData';
 
 /**
  * The night, as this character lived it (DESIGN_LANGUAGE.md §9, "Timeline").
@@ -12,20 +13,7 @@ import React from 'react';
  * chips; all of it is gone. Sequencing is now CSS stagger, not a timer.
  */
 
-// Key beats of the incident, shown only to characters who are in the frame.
-const MURDER_CONTEXT = [
-  { time: '5:30 PM', event: 'Alam alone in the Penthouse during HR-prep' },
-  { time: '8:00 PM', event: 'Sukhans + Elias announce Series B' },
-  { time: '8:15 PM', event: "Nikhil's thank-you toast on stage" },
-  { time: '8:18 PM', event: 'Nikhil hits his vape (toxin clock starts)' },
-  { time: '8:25 PM', event: 'Power flicker; hallway CCTV out ~3 min' },
-  { time: '8:40 PM', event: 'Nikhil sits on balcony, looking pale' },
-  { time: '8:45 PM', event: 'Nikhil collapses — critical moment' },
-  { time: '9:02 PM', event: 'Nikhil pronounced dead' },
-  { time: '9:30 PM', event: 'Bangalore Police arrive, Penthouse sealed' },
-];
-
-const CRITICAL = ['kitchen', 'ice', 'poison', 'collapse', 'speech'];
+const CRITICAL = ['bar', 'spray', 'poison', 'collapse', 'lights', 'blind'];
 
 const parseTimeline = (timelineText) => {
   if (!timelineText) return [];
@@ -54,8 +42,9 @@ export const TimelineView = ({ myCharacter }) => {
   if (!myCharacter) return null;
 
   const timelineEvents = parseTimeline(myCharacter.timeline);
+  const isMurderer = myCharacter.role === 'MURDERER';
   const canSeeMurderTimeline =
-    myCharacter.role === 'MURDERER' || myCharacter.role === 'SUSPECT';
+    isMurderer || myCharacter.role === 'SUSPECT';
 
   return (
     <div className="space-y-6">
@@ -66,8 +55,8 @@ export const TimelineView = ({ myCharacter }) => {
           Your movements on the night of the incident.
         </p>
         <div className="flex flex-wrap gap-2 mt-4">
-          <span className="er-tag er-tag--mute">The Penthouse · Indiranagar</span>
-          <span className="er-tag er-tag--brass">23 May 2026</span>
+          <span className="er-tag er-tag--mute">{CASE_META.venue}</span>
+          <span className="er-tag er-tag--brass">{CASE_META.date}</span>
         </div>
       </div>
 
@@ -124,7 +113,7 @@ export const TimelineView = ({ myCharacter }) => {
           <div className="er-rule mt-3 mb-4" />
 
           <ul className="space-y-3">
-            {MURDER_CONTEXT.map((item, index) => (
+            {CASE_TIMELINE.map((item, index) => (
               <li
                 key={item.time}
                 className="flex gap-3 er-enter"
@@ -146,9 +135,9 @@ export const TimelineView = ({ myCharacter }) => {
         </section>
       )}
 
-      {myCharacter.role === 'MURDERER' && (
+      {isMurderer && (
         <div className="er-card er-card--signal">
-          <span className="er-tag">You are the murderer</span>
+          <span className="er-tag">{CASE_META.killerCount > 1 ? 'You are one of the killers' : 'You are the killer'}</span>
           <p className="font-body text-[15px] leading-[1.55] text-dim mt-4">
             Your timeline is your alibi. Make it convincing.
           </p>

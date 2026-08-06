@@ -154,7 +154,7 @@ export const S07Codes: React.FC = () => {
           ...enter(frame, 176, { y: 14, dur: 24 }),
         }}
       >
-        Plus one personal code per character — thirty-two more reasons to
+        Plus one personal code per character — fifty more reasons to
         introduce yourself to a stranger.
       </div>
     </AbsoluteFill>

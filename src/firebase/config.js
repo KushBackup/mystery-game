@@ -3,8 +3,9 @@ import {
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
-  doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, getDocs, deleteDoc, writeBatch
+  doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, getDocs, writeBatch
 } from 'firebase/firestore';
+import { CASE_FILES } from '../data/gameData.js';
 
 // Firebase project configuration
 const firebaseConfig = {
@@ -22,7 +23,7 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firestore with IndexedDB offline persistence.
 //
-// 32 phones on shaky party wifi: the persistent cache lets the app keep
+// 51 phones on shaky party wifi: the persistent cache lets the app keep
 // rendering the last-known round, files and clues through a dropped connection
 // instead of blanking out, and replays queued writes when the link returns.
 // persistentMultipleTabManager is required because players routinely have the
@@ -154,7 +155,7 @@ export const endGame = async () => {
 //
 // Logins survive because App.jsx mirrors the session to localStorage. Do not
 // remove that without also removing this button — a reload without session
-// persistence dumps all 32 players back at the login screen mid-game.
+// persistence dumps all 51 players back at the login screen mid-game.
 export const triggerForceRefresh = async () => {
   const gameStateRef = doc(db, GAME_STATE_DOC);
   try {
@@ -185,15 +186,21 @@ export const unlockFiles = async (fileIds) => {
   }
 };
 
-// Unlock files for a specific round
+// Unlock every case file gated behind a given round.
+//
+// Derived from CASE_FILES at call time, never a hardcoded ID list. This
+// function used to keep its own copy of the round-to-file mapping, and the
+// Velvet Ember rewrite renamed the files out from under it (f_toxreport ->
+// f_autopsy, f_medical -> f_audit, and so on). The copy went on writing IDs
+// that no longer existed, so the host saw the round go out and every player
+// saw an empty archive — the client filters CASE_FILES by these IDs, and
+// nothing matched. Round 0 was the only one that appeared to work, because
+// f_incident happened to keep its name.
 export const unlockFilesForRound = async (roundNumber) => {
-  const roundFiles = {
-    0: ['f_incident'],
-    3: ['f_toxreport', 'f_funding'],
-    4: ['f_medical', 'f_insurance', 'f_sebi']
-  };
-  
-  const filesToUnlock = roundFiles[roundNumber] || [];
+  const filesToUnlock = CASE_FILES
+    .filter((f) => f.roundReq === roundNumber)
+    .map((f) => f.id);
+
   if (filesToUnlock.length > 0) {
     await unlockFiles(filesToUnlock);
   }

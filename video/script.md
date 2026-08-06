@@ -37,7 +37,7 @@ time. With `hasVO: false` the film renders identically, minus the audio track.
 
 ## 01 · Cold open — 0:00–0:08 (frames 0–240) · ~20 words
 
-Thirty-two strangers. One story. Every player holds a piece nobody else has —
+Fifty strangers. One story. Every player holds a piece nobody else has —
 and the only way out is to talk to each other.
 
 ## 02 · The problem — 0:08–0:20 (frames 240–600) · ~30 words
@@ -55,7 +55,7 @@ a stranger stops being social bravery and becomes the optimal move.
 
 ## 04 · What it is — 0:29–0:39 (frames 870–1170) · ~25 words
 
-Thirty-two guests. Seven rounds. Three hours. One host. No actors, no app-store
+Fifty guests. Seven rounds. Three hours. One host. No actors, no app-store
 download, no set to build. Everyone logs in as a character in a single murder case.
 
 ## 05 · You become someone — 0:39–0:49 (frames 1170–1470) · ~25 words
@@ -83,11 +83,11 @@ nobody outruns the story.
 ## 09 · The verdict — 1:20–1:29 (frames 2400–2670) · ~22 words
 
 Then voting opens, and the count moves in the open. Public commitment, publicly
-visible. Ten characters are under suspicion. One of them did it.
+visible. Twelve guests are under suspicion. One of them did it.
 
 ## 10 · The reveal — 1:29–1:36 (frames 2670–2880) · ~17 words
 
-One host. One button. Thirty-two screens. Every screen in the venue turns at the
+One host. One button. Fifty screens. Every screen in the venue turns at the
 same instant.
 
 *(Then silence. Let the flood and the cut to black play dry.)*
@@ -110,5 +110,5 @@ more are mapped. Because content is data, not code, a new world is a writing job
 
 ## 14 · Close — 2:04–2:10 (frames 3720–3900) · ~15 words
 
-Trust no one. Except, briefly, the thirty-one people you just spent three hours
-interrogating.
+Trust no one. Except, briefly, the 49 people you just spent three hours
+questioning.

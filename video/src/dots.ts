@@ -1,7 +1,7 @@
 /**
- * dots.ts — the 32 players, as geometry.
+ * dots.ts — the 50 players, as geometry.
  *
- * Scenes 2 and 3 are one continuous idea: the same 32 dots sit in five tight
+ * Scenes 2 and 3 are one continuous idea: the same 50 dots sit in five tight
  * cliques (the problem), then break apart into a connected network (the
  * mechanism). For that to read, the cluster positions must be IDENTICAL at the
  * end of scene 2 and the start of scene 3 — so both scenes import from here.
@@ -12,9 +12,9 @@
 
 import { random } from "remotion";
 
-export const DOT_COUNT = 32;
+export const DOT_COUNT = 50;
 
-/** Five cliques, sized 7/7/6/6/6 = 32. Normalised 0..1 inside the dot box. */
+/** Five cliques, sized 10/10/10/10/10 = 50. Normalised 0..1 inside the dot box. */
 const CLUSTER_CENTRES: [number, number][] = [
   [0.13, 0.27],
   [0.38, 0.12],
@@ -22,7 +22,7 @@ const CLUSTER_CENTRES: [number, number][] = [
   [0.24, 0.72],
   [0.64, 0.79],
 ];
-const CLUSTER_SIZES = [7, 7, 6, 6, 6];
+const CLUSTER_SIZES = [10, 10, 10, 10, 10];
 
 /** Which clique dot `i` belongs to. */
 export const clusterOf = (i: number): number => {
@@ -50,22 +50,22 @@ export const clusterPos = (i: number): Pt => {
   const c = clusterOf(i);
   const [cx, cy] = CLUSTER_CENTRES[c];
   const a = random(`ca-${i}`) * Math.PI * 2;
-  const r = 0.015 + random(`cr-${i}`) * 0.037;
+  const r = 0.012 + random(`cr-${i}`) * 0.043;
   return { x: cx + Math.cos(a) * r, y: cy + Math.sin(a) * r * 1.15 };
 };
 
 /**
- * The network. A jittered 8x4 lattice — spread wide enough that no dot is
+ * The network. A jittered 10x5 lattice — spread wide enough that no dot is
  * adjacent to its old clique, which is the whole point of the beat.
  */
 export const networkPos = (i: number): Pt => {
-  const cols = 8;
+  const cols = 10;
   const col = i % cols;
   const row = Math.floor(i / cols);
   return {
     // Generous jitter: a clean lattice would read as a diagram, not a room.
     x: 0.055 + (col / (cols - 1)) * 0.89 + (random(`nx-${i}`) - 0.5) * 0.085,
-    y: 0.1 + (row / 3) * 0.8 + (random(`ny-${i}`) - 0.5) * 0.1,
+    y: 0.09 + (row / 4) * 0.82 + (random(`ny-${i}`) - 0.5) * 0.092,
   };
 };
 
@@ -85,7 +85,7 @@ export const EDGES: [number, number][] = (() => {
       if (seen.has(key)) continue;
       seen.add(key);
       out.push(i < j ? [i, j] : [j, i]);
-      if (out.length >= 24) return out;
+      if (out.length >= 32) return out;
     }
   }
   return out;

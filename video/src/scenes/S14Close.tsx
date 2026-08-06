@@ -35,7 +35,7 @@ const BLACK_AT = 172;
 
 const CONTACT: [string, string][] = [
   ["Contact", "kushagra@triplespeed.ai"],
-  ["Based in", "Bangalore, India"],
+  ["Based in", "Panjim, Goa"],
   ["Experience", "Murder Mystery · v1.0"],
 ];
 
@@ -121,8 +121,8 @@ export const S14Close: React.FC = () => {
             ...enter(frame, 52, { y: 22, dur: 28 }),
           }}
         >
-          Except, briefly, the thirty-one people you just spent three hours
-          interrogating.
+          Except, briefly, the 49 people you just spent three hours
+          questioning.
         </p>
 
         <div

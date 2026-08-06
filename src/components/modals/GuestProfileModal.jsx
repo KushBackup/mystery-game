@@ -11,6 +11,7 @@ export const GuestProfileModal = ({ guest, currentUser, isVotingOpen, onClose, o
 
   const isMe = guest.id === currentUser;
   const isVictim = guest.role === 'VICTIM';
+  const standingLabel = isVictim ? 'Known victim' : guest.isSuspect ? 'Prime suspect' : 'Witness';
 
   return (
     <div
@@ -57,7 +58,7 @@ export const GuestProfileModal = ({ guest, currentUser, isVotingOpen, onClose, o
         {/* Standing */}
         <div className="mt-5">
           <span className={`er-tag ${isVictim ? 'er-tag--mute' : 'er-tag--onbone'}`}>
-            {isVictim ? 'Known victim' : 'Suspect'}
+            {standingLabel}
           </span>
         </div>
 
@@ -85,7 +86,7 @@ export const GuestProfileModal = ({ guest, currentUser, isVotingOpen, onClose, o
             }}
             className="er-touch er-touch--hot w-full mt-7 bg-signal-deep text-bone py-4 px-6 font-mono text-[12px] font-medium uppercase tracking-[0.24em] border border-signal-deep"
           >
-            Name as suspect
+            Cast vote
           </button>
         )}
 

@@ -1,3 +1,5 @@
+import { CASE_META } from './gameData';
+
 /**
  * What every screen is, in one place.
  *
@@ -72,7 +74,7 @@ export const SCREEN_GUIDE = {
     title: 'The Story',
     brief: 'What happened at the party, in order. Come back whenever you lose the thread.',
     detail:
-      "The case briefing: the venue, the victim, the toast, the collapse and the sealed penthouse — everything the room knows about the night. It plays as a briefing when the game opens, and lives here afterwards.",
+      'The case briefing: the distillery, the birthday ritual, the collapse, and the sealed venue — everything the room knows about the night. It plays as a briefing when the game opens, and lives here afterwards.',
   },
 
   intel: {
@@ -103,16 +105,16 @@ export const SCREEN_GUIDE = {
 
   dossier: {
     kicker: 'Profiles',
-    title: 'Suspects',
+    title: 'Guests',
     brief: 'Every guest on record. Open a file to read their background — or to vote against them.',
-    detail: 'All 32 guests. Tap anyone to open their file and read their background. Use it to work out who had access and who had motive.',
+    detail: `All ${CASE_META.playerCount} guests. Tap anyone to open their file and read their background. Use it to work out who had access and who had motive.`,
   },
 
   votes: {
     kicker: 'Suspect List',
     title: 'Vote',
     brief: 'Name who you think did it. You can change your vote until the host closes the ballot.',
-    detail: 'When the ballot opens, name who you think is responsible. Tap a suspect to select, tap again to confirm. You can change your vote until the host closes it.',
+    detail: 'When the ballot opens, name who you think is responsible. Tap a name to select, tap again to confirm. You can change your vote until the host closes it.',
   },
 
   help: {

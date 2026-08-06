@@ -96,7 +96,7 @@ export const S05Identity: React.FC = () => {
           }}
         >
           The first four minutes decide whether a guest plays or watches. No
-          account, no tutorial, and no host explaining rules to thirty-two
+          account, no tutorial, and no host explaining rules to fifty
           people at once.
         </p>
 

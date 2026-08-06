@@ -107,13 +107,13 @@ export const HelpView = () => {
       <Section index={4} label="How voting works">
         <ul className="er-list">
           <li>Wait for the host to open the ballot.</li>
-          <li>Open Vote — you will see the full suspect list.</li>
-          <li>Tap a suspect to select, tap again to confirm.</li>
+          <li>Open Vote — you will see the full guest list on record.</li>
+          <li>Tap a name to select, tap again to confirm.</li>
           <li>Change your mind as often as you like until the ballot closes.</li>
           <li>When the host releases the tally, open it from the Vote screen.</li>
         </ul>
         <p className="font-body text-[15px] leading-[1.55] text-dim mt-4">
-          Counts update live, and the suspect you picked is marked as your vote.
+          Counts update live, and the person you picked is marked as your vote.
         </p>
       </Section>
 

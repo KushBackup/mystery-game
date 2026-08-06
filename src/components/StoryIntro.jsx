@@ -39,7 +39,7 @@ import {
  *   slide finishes it is replaced by the static cue to move on.
  *
  * Navigation is three overlapping ways to do the same thing, because a room of
- * 32 people will try all three: swipe left/right, tap anywhere (fill, then
+ * 51 people will try all three: swipe left/right, tap anywhere (fill, then
  * advance), and the explicit control in the footer. Arrow keys and Escape work
  * too — that is how the host checks the screen on a laptop.
  */

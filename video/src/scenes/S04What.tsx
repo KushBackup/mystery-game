@@ -5,7 +5,7 @@
  * 8 frames apart, each with a mono label and a hairline rule drawing under it.
  *
  * Every figure here is from the deck and is true:
- *   32 simultaneous players · 7 host-gated rounds · 3hr typical runtime ·
+ *   50 simultaneous players · 7 host-gated rounds · 3hr typical runtime ·
  *   1 host per event · 0 professional actors · 0 app-store installs.
  * Nothing about revenue, tickets, attendance or customers appears in this film.
  */
@@ -22,7 +22,7 @@ import { enter, stagger } from "../anim";
 import { useLayout } from "../layout";
 
 const STATS: { value: number; label: string }[] = [
-  { value: 32, label: "Players" },
+  { value: 50, label: "Players" },
   { value: 7, label: "Rounds" },
   { value: 3, label: "Hours" },
   { value: 1, label: "Host" },
@@ -85,7 +85,7 @@ export const S04What: React.FC = () => {
             ...enter(frame, 48, { y: 22, dur: 28 }),
           }}
         >
-          Up to 32 guests log in as characters in a single murder case. Each one
+          Up to 50 guests log in as characters in a single murder case. Each one
           receives a private identity, a secret, a motive and a timeline.
         </p>
 

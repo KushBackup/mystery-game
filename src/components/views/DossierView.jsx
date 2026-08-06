@@ -6,7 +6,7 @@ import { Numeral } from '../ui/Numeral';
  * The suspect index (DESIGN_LANGUAGE.md §9, "Suspects").
  *
  * The roster is an interface, not a document, so it lives on ink and separates
- * with hairlines rather than 32 sheets of paper (§5). The individual profile —
+ * with hairlines rather than a paper card per guest (§5). The individual profile —
  * which *is* a document — becomes a bone card in GuestProfileModal.
  *
  * The old rainbow of avatar colours is gone: differentiation comes from the

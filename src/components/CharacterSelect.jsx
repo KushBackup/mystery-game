@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { validateLoginCode } from '../data/gameData';
+import { CASE_META, validateLoginCode } from '../data/gameData';
 
 /**
  * Identity verification (DESIGN_LANGUAGE.md §9, "Login").
@@ -128,7 +128,7 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
           <div className="er-rule" />
           <div className="flex items-center justify-between pt-3">
             <span className="er-mono">Secure Connection</span>
-            <span className="er-mono">32 Guests</span>
+            <span className="er-mono">{CASE_META.playerCount} Guests</span>
           </div>
         </div>
       </div>

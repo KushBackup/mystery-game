@@ -7,8 +7,12 @@ import React, { useEffect, useState } from 'react';
  * precisely what makes it land here. Type is bone and ink on that fill — pure
  * white only on the small tag, per §2.2.
  */
-export const MurdererRevealOverlay = ({ murderer }) => {
+export const MurdererRevealOverlay = ({ murderer, killers = murderer ? [murderer] : [] }) => {
   const [stage, setStage] = useState(0);
+  const revealedKillers = killers.filter(Boolean);
+  const leadKiller = revealedKillers[0] ?? null;
+  const accomplices = revealedKillers.slice(1);
+  const multipleKillers = revealedKillers.length > 1;
 
   useEffect(() => {
     const t1 = setTimeout(() => setStage(1), 200);
@@ -21,7 +25,7 @@ export const MurdererRevealOverlay = ({ murderer }) => {
     };
   }, []);
 
-  if (!murderer) return null;
+  if (!leadKiller) return null;
 
   return (
     // No vignette and no grain here. The whole screen going signal is the
@@ -38,7 +42,7 @@ export const MurdererRevealOverlay = ({ murderer }) => {
             stage >= 1 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
           }`}
         >
-          The murderer is
+          {multipleKillers ? 'The killers are' : 'The killer is'}
         </p>
 
         {/* The rule draws itself out from the centre as the name arrives. */}
@@ -54,13 +58,55 @@ export const MurdererRevealOverlay = ({ murderer }) => {
             stage >= 2 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
           }`}
         >
-          <h1 className="font-display font-extrabold uppercase text-bone text-[56px] sm:text-[86px] leading-[0.9] tracking-[-0.02em]">
-            {murderer.name}
-          </h1>
-          {murderer.profession && (
-            <p className="font-mono text-[12px] font-medium uppercase tracking-[0.24em] text-bone/75 mt-4">
-              {murderer.profession}
-            </p>
+          {multipleKillers ? (
+            <div className="space-y-5">
+              <div>
+                <p className="font-mono text-[11px] font-medium uppercase tracking-[0.24em] text-bone/75">
+                  Mastermind
+                </p>
+                <h1 className="font-display font-extrabold uppercase text-bone text-[40px] sm:text-[60px] leading-[0.9] tracking-[-0.02em] mt-3">
+                  {leadKiller.name}
+                </h1>
+                {leadKiller.profession && (
+                  <p className="font-mono text-[12px] font-medium uppercase tracking-[0.24em] text-bone/75 mt-3">
+                    {leadKiller.profession}
+                  </p>
+                )}
+              </div>
+
+              {accomplices.length > 0 && (
+                <div className="pt-5 border-t border-bone/30">
+                  <p className="font-mono text-[11px] font-medium uppercase tracking-[0.24em] text-bone/75">
+                    Worked with
+                  </p>
+                  <ul className="mt-4 space-y-3">
+                    {accomplices.map((killer) => (
+                      <li key={killer.id}>
+                        <p className="font-display font-extrabold uppercase text-bone text-[26px] sm:text-[36px] leading-[0.95] tracking-[-0.02em]">
+                          {killer.name}
+                        </p>
+                        {killer.profession && (
+                          <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-bone/70 mt-1">
+                            {killer.profession}
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <h1 className="font-display font-extrabold uppercase text-bone text-[56px] sm:text-[86px] leading-[0.9] tracking-[-0.02em]">
+                {leadKiller.name}
+              </h1>
+              {leadKiller.profession && (
+                <p className="font-mono text-[12px] font-medium uppercase tracking-[0.24em] text-bone/75 mt-4">
+                  {leadKiller.profession}
+                </p>
+              )}
+            </>
           )}
         </div>
 

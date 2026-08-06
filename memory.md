@@ -30,14 +30,15 @@
 - **Owner:** Kushagra (kushagra@triplespeed.ai)
 - **Brand:** Astral Project
 - **Game name:** Astral Project's Murder Mystery Experience
-- **Real-world purpose:** Office activity for TripleSpeed (Kushagra's company). Cast = real colleagues. The game's events are *not real* — it's a fictional murder mystery using the office as the setting.
-- **Player count:** 32 (the data model is built around exactly 32 character slots)
-- **Live game date in fiction:** 2026-05-23, set at the founders' Penthouse, 4th floor, Indiranagar, Bangalore.
-- **Victim (spoiler):** Nikhil — fictional Head of Marketing at TripleSpeed. NOT a real person on the team.
-- **Murderer reveal (spoiler):** Alam (Head of HR). Nikhil and Alam staged his death together. Nikhil had Stage 4 pancreatic cancer AND was about to be indicted in a SEBI inquiry into TripleSpeed's cooked engagement metrics. Suicide voids the insurance and the SEBI case continues posthumously through Nikhil's estate; a clean homicide pays out (Trust + key-person policy) AND collapses the SEBI case. Alam was Nikhil's HR-side fraud co-conspirator and is the named trustee on the personal life-insurance policy.
-- **Murder method:** sodium azide–laced vape cartridge, swapped during a 25-min window when Alam was alone in the Penthouse the morning of the party.
+- **Real-world purpose:** Social murder-mystery + networking event for 51 attendees who mostly do not know each other beforehand. The game's events are *not real*.
+- **Player count:** 51 playable guests.
+- **Live game date in fiction:** 2026-08-08, set at For the Record in Panjim, Goa.
+- **Victim (spoiler):** Armaan Khanna — fictional founder and CEO of Velvet Ember Spirits.
+- **Killer reveal (spoiler):** Five killers, led by Sneha Ganesh. The full team is Sneha Ganesh, Kiyaah Rose Raghuwanshi, Victoria Vance, Roddy Faustus, and Oindrilla Chatterjee.
+- **Murder method:** aconitine hidden in the orange-oil finishing spray for Armaan's private signature drink, the Last Light.
 - **Round structure:** 7 rounds (0–6) with codes unlocked progressively (accusation → motive → evidence → revelation → confession).
-- **Special clue `THE_TRUTH`:** only valid for the Alam character (`char_alam`) — gates the final confession reveal.
+- **Special clue `THE_TRUTH`:** valid only for the five killer characters — gates the final confession reveal.
+- **User decision (2026-08-06):** treat all 51 questionnaire rows as intentional cast members, even the noisy ones; do not drop joke entries unless the user explicitly removes them.
 
 ## Infrastructure
 
@@ -57,14 +58,14 @@
 - **`pitch-deck/index.html`** is a self-contained 35-slide HTML deck. Its `:root` block is the **canonical design system** ("Evidence Room") for all Astral Project marketing material — ink/bone/red/amber, plus Big Shoulders / Newsreader / IBM Plex Mono. Copy tokens from there; don't invent new ones.
 - **Two slides are `class="slide-archived"`** (the case studies). They are hidden *on purpose* because the real event data isn't ready. Do not restore or fill them without the user's data.
 - **The deck's cover line — "I spoke to more people in two hours than I did in six months at this office" — is an ILLUSTRATIVE line, not an attributed testimonial.** Never attach a name, role or company to it, and never present it as a quote from a real guest. It is omitted from the explainer film entirely for this reason.
-- **Hard rule for all Astral Project marketing output: no invented numbers.** No revenue, pricing, ticket sales, attendance, customer names, testimonials, ratings, funding, headcount or growth figures. The deck deliberately renders every unknown as a visible `.fill` blank rather than guessing. Safe/true figures: 32 players, 7 rounds, 2–3 hrs, 1 host, 0 actors, 0 app-store installs, 34 clue codes (10/10/7/6/1), 6 case files, 10 suspects, 1 murderer, 1 genre shipped + 5 mapped.
+- **Hard rule for all Astral Project marketing output: no invented numbers.** No revenue, pricing, ticket sales, attendance, customer names, testimonials, ratings, funding, headcount or growth figures. The deck deliberately renders every unknown as a visible `.fill` blank rather than guessing. Safe/true figures for the current case: 51 players, 7 rounds, 2–3 hrs, 1 host, 0 actors, 0 app-store installs, 34 clue codes (10/10/7/6/1), 6 case files, 10 prime suspects, 5 killers.
 - **`video/` is a separate npm project** with its own `package.json`, `node_modules` and React version (React 19.2.3 + Remotion 4.0.503). Run `npm install` **inside `video/`** — never from the repo root, and don't merge its deps into the PWA's `package.json`.
 - **`screen-09-host.png` is ~12% violet (≈`#43295D`)** because the shipped host console genuinely uses violet panels — that colour is outside the deck's palette. It is left as-is on purpose: doctoring a product screenshot would misrepresent the app. If the host panel is ever restyled, re-capture at 390×844 @2x and the deck and film both pick it up with no code change.
 
 ## Conventions the user has confirmed
 
 - **The Round 0 case briefing (decided 2026-08-05).** Four choices the user made explicitly when it was built:
-  1. It plays **on every login and every reload while the game is in Round 0**, not once per device — 32 people arrive at different times and everyone should get it. It never interrupts anyone after the host advances.
+  1. It plays **on every login and every reload while the game is in Round 0**, not once per device — 51 people arrive at different times and everyone should get it. It never interrupts anyone after the host advances.
   2. Claude drafts the slide copy; the user edits it. It lives in [src/data/storyIntro.js](src/data/storyIntro.js).
   3. Typing sound is **synthesized (Web Audio), on by default**, with a mute toggle. No audio files in the repo.
   4. The **Story** tile opens a normal in-app screen like every other tile — *not* the slideshow. (The slideshow is re-openable from a control on that screen.)

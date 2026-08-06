@@ -133,7 +133,7 @@ All in [`src/components/`](src/components/), all reused from the deck:
 | `Phone` | CSS bezel frame around a real screenshot. |
 | `Headline` | Display headline with red `.hot` spans and the cover's red underscore. |
 | `Kicker` / `Tag` / `EmDash` | Mono label, red block tag, red em-dash bullet (never a dot). |
-| `DotField` | The 32 players as dots, for scenes 2 and 3. |
+| `DotField` | The 50 players as dots, for scenes 2 and 3. |
 
 ### RedThread: match `len` to the path
 
@@ -177,15 +177,15 @@ the composition, the `<Series>` and the studio timeline all follow.
 | # | Frames | Beat |
 |---|---|---|
 | 01 | 0–240 | Cold open — the wordmark slams in, thread draws |
-| 02 | 240–600 | The problem — 32 dots pull into five closed cliques, then nothing |
+| 02 | 240–600 | The problem — 50 dots pull into five closed cliques, then nothing |
 | 03 | 600–870 | The mechanism — the same dots light up, threads shoot, the cliques break |
-| 04 | 870–1170 | What it is — 32 · 7 · 3 · 1, amber counters |
+| 04 | 870–1170 | What it is — 50 · 7 · 3 · 1, amber counters |
 | 05 | 1170–1470 | You become someone — screens 01→02→03, the SECRET unredacts |
 | 06 | 1470–1830 | The loop — three phones, thread cycling beneath them |
 | 07 | 1830–2070 | Codes are social objects — the pinned exhibit |
 | 08 | 2070–2400 | Seven rounds — the rail fills, padlocks flip open |
 | 09 | 2400–2670 | The verdict — tallies move, the lead changes hands |
-| 10 | 2670–2880 | The reveal — wave sweeps, all 32 turn at once, cut to black |
+| 10 | 2670–2880 | The reveal — wave sweeps, all 50 turn at once, cut to black |
 | 11 | 2880–3120 | Host control — the console rises out of the blackout |
 | 12 | 3120–3420 | Why it works — six mechanisms |
 | 13 | 3420–3720 | The platform — six worlds deal in, one marked shipped |

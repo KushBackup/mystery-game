@@ -8,7 +8,7 @@
  *
  * The suspects are redacted rather than named. The cast is fictional and
  * unpublished, so redaction is both the honest choice and the on-theme one — and
- * the totals never exceed the 32 players who exist.
+ * the totals never exceed the 50 players who exist.
  */
 
 import React from "react";
@@ -24,18 +24,18 @@ import { EASE, enter, stagger } from "../anim";
 import { useLayout } from "../layout";
 
 /**
- * Keyframed tallies. Final total is exactly 32 — the number of players in the
+ * Keyframed tallies. Final total is exactly 50 — the number of players in the
  * room — and no intermediate total exceeds it.
  */
 const KEYS = [70, 132, 200];
 const TALLIES: { counts: [number, number, number]; nameW: number }[] = [
-  { counts: [0, 6, 13], nameW: 0.74 },
-  { counts: [0, 9, 11], nameW: 0.58 },
-  { counts: [0, 4, 5], nameW: 0.86 },
-  { counts: [0, 2, 2], nameW: 0.5 },
-  { counts: [0, 1, 1], nameW: 0.68 },
+  { counts: [0, 9, 19], nameW: 0.74 },
+  { counts: [0, 13, 15], nameW: 0.58 },
+  { counts: [0, 7, 8], nameW: 0.86 },
+  { counts: [0, 3, 5], nameW: 0.5 },
+  { counts: [0, 2, 3], nameW: 0.68 },
 ];
-const MAX_COUNT = 13;
+const MAX_COUNT = 19;
 
 export const S09Verdict: React.FC = () => {
   const frame = useCurrentFrame();

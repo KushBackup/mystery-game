@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 /**
- * The curtain. This is the last thing 32 people look at, so it is the one screen
+ * The curtain. This is the last thing 51 people look at, so it is the one screen
  * in the app allowed to take its time — the entrance is staged rather than
  * arriving all at once (§7, stagger), and the whole sequence runs long on
  * purpose while the room is being talked to.
