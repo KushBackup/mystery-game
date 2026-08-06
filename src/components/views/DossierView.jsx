@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { CHARACTERS } from '../../data/gameData';
 import { Numeral } from '../ui/Numeral';
+import { SearchField } from '../ui/SearchField';
 
 /**
  * The suspect index (DESIGN_LANGUAGE.md §9, "Suspects").
@@ -13,6 +14,27 @@ import { Numeral } from '../ui/Numeral';
  * surface and the label, never from a new hue (§2.2).
  */
 export const DossierView = ({ currentUser, onSelectGuest }) => {
+  const [query, setQuery] = useState('');
+
+  // The file number is the guest's position in the roster, not their position
+  // in the filtered list — a file that reads 34 must keep reading 34 while the
+  // player is typing, or the number stops being a reference they can call out.
+  const roster = useMemo(
+    () => CHARACTERS.map((char, index) => ({ char, fileNumber: index + 1 })),
+    []
+  );
+
+  const results = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return roster;
+
+    return roster.filter(({ char }) =>
+      [char.name, char.profession, char.quirk]
+        .filter(Boolean)
+        .some((field) => field.toLowerCase().includes(needle))
+    );
+  }, [roster, query]);
+
   return (
     <div className="space-y-5">
       {/* Stat */}
@@ -26,9 +48,25 @@ export const DossierView = ({ currentUser, onSelectGuest }) => {
         </p>
       </div>
 
+      {/* Filter */}
+      <SearchField
+        value={query}
+        onChange={setQuery}
+        placeholder="Search by name, job or detail…"
+        label="Search guests"
+        resultCount={results.length}
+        totalCount={roster.length}
+      />
+
       {/* Index */}
       <div className="border border-line bg-ink-raised">
-        {CHARACTERS.map((char, index) => {
+        {results.length === 0 && (
+          <p className="px-3 py-6 font-body text-[15px] leading-[1.55] text-dim">
+            No guest on record matches “{query.trim()}”.
+          </p>
+        )}
+
+        {results.map(({ char, fileNumber }, index) => {
           const isMe = char.id === currentUser;
           const isVictim = char.role === 'VICTIM';
 
@@ -57,7 +95,7 @@ export const DossierView = ({ currentUser, onSelectGuest }) => {
                     {char.name}
                   </span>
                   <span className="er-num text-[13px] shrink-0">
-                    {String(index + 1).padStart(2, '0')}
+                    {String(fileNumber).padStart(2, '0')}
                   </span>
                 </span>
 

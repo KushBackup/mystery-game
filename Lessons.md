@@ -238,4 +238,12 @@ When the same lesson recurs, **edit the existing entry** rather than adding a du
 
 ---
 
+### 2026-08-06 — A centred flex child that grows will be clipped at the top, where the content is
+
+**What happened:** Adding a "How it happened" control to the murderer reveal and the outro made both columns taller. Both were `fixed inset-0 flex flex-col items-center justify-center` with no scroll — and the reveal already carries five killer names. Once a `justify-content: center` child exceeds its container it overflows in *both* directions, and the overflow above the container is unreachable: there is no scroll position that reveals it. On a short phone the reveal would have lost the words "THE KILLERS ARE" and the mastermind's name, which is the entire screen.
+
+**Why it was wrong:** I was thinking about whether the content *fitted*, not about what happens when it doesn't. Adding `overflow-y: auto` is not the fix on its own — a centred flex child still gets clipped at the start edge, which is the well-known flexbox centring trap. And this is invisible at the viewport I test at: the 390×844 capture showed `scrollHeight === clientHeight`, so the screen that proved it fine is the screen that could not show the failure.
+
+**What to do instead:** Centre with `my-auto` on the child rather than `justify-center` on the parent, and add `overflow-y-auto` to the parent. Auto margins absorb the free space when there is any and collapse to zero when there is not, so the child starts at the top and scrolls instead of being cut. Any time a fixed, non-scrolling terminal screen gains content, convert it — and assert on `container.scrollHeight > container.clientHeight` as well as on the document's, since the clipping container is the fixed layer, not the document.
+
 <!-- Add new lessons above this line, newest first or oldest first — keep one consistent order. Current order: oldest first. -->

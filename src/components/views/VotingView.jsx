@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CHARACTERS, isMurderer } from '../../data/gameData';
 import { VoteResultsModal } from '../modals/VoteResultsModal';
 import { Numeral } from '../ui/Numeral';
+import { SearchField } from '../ui/SearchField';
 
 /**
  * The ballot (DESIGN_LANGUAGE.md §9, "Vote").
@@ -23,6 +24,7 @@ export const VotingView = ({
   const [selectedSuspect, setSelectedSuspect] = useState(votes[currentRound] || null);
   const [showResults, setShowResults] = useState(false);
   const [confirmingVote, setConfirmingVote] = useState(null);
+  const [query, setQuery] = useState('');
 
   // Stable hash-sort the suspect list so every player sees the SAME jumbled
   // order (so chat references like "the 3rd one" still translate), but the
@@ -51,6 +53,20 @@ export const VotingView = ({
 
     return list;
   }, []);
+
+  // Filtering only hides cards — it never reorders them, so the shared jumbled
+  // order above stays intact and "the third one" still means the same person
+  // once the field is cleared.
+  const visibleSuspects = React.useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    if (!needle) return suspects;
+
+    return suspects.filter((suspect) =>
+      [suspect.name, suspect.profession]
+        .filter(Boolean)
+        .some((field) => field.toLowerCase().includes(needle))
+    );
+  }, [suspects, query]);
 
   const hasVoted = votes[currentRound] !== undefined;
   const hasAnyVotes = Object.keys(voteCounts || {}).length > 0;
@@ -124,9 +140,25 @@ export const VotingView = ({
         </div>
       )}
 
+      {/* Filter */}
+      <SearchField
+        value={query}
+        onChange={setQuery}
+        placeholder="Search the ballot by name or job…"
+        label="Search the ballot"
+        resultCount={visibleSuspects.length}
+        totalCount={suspects.length}
+      />
+
+      {visibleSuspects.length === 0 && (
+        <p className="er-card font-body text-[15px] leading-[1.55] text-dim">
+          Nobody on the ballot matches “{query.trim()}”.
+        </p>
+      )}
+
       {/* Suspects */}
       <div className="grid grid-cols-2 gap-3">
-        {suspects.map((suspect, index) => {
+        {visibleSuspects.map((suspect, index) => {
           const isSelected = selectedSuspect === suspect.id;
           const isMyVote = votes[currentRound] === suspect.id;
           const isMe = suspect.id === currentUser;

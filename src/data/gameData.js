@@ -207,7 +207,7 @@ export const CHARACTERS = [
     secret: 'I know more than I let on, mostly because people keep speaking around me.',
     neverDo: 'Listen to nonsense without naming it nonsense.',
     motive: 'Armaan promised to sponsor her classroom fundraiser, posted about it, and then vanished the second the invoices arrived.',
-    timeline: "7:28 PM - Entered with Tara's group and spent ten minutes admiring the mirror wall.\n9:36 PM - Heard Tara ask Armaan who had opened her crate.\n10:18 PM - Saw him blink hard like the room had tilted.",
+    timeline: "7:28 PM - Entered with Tara's group and spent ten minutes admiring the mirror wall.\n9:36 PM - Heard Tara tell Armaan the customs seal was already broken before she touched the crate.\n10:18 PM - Saw him blink hard like the room had tilted.",
     code: 'ECHO',
   }),
   witness({
@@ -246,7 +246,7 @@ export const CHARACTERS = [
     secret: 'I speak cloud when I am tired enough to be honest.',
     neverDo: 'Jump out of a plane for someone else\'s enlightenment.',
     motive: 'Armaan mocked the paper-installation concept Mahi designed for a school gala and then used the same idea in a brand deck.',
-    timeline: '7:41 PM - Arrived with Tara\'s table and gravitated to the cake station.\n10:08 PM - Watched the projector go dark from five feet away.\n10:20 PM - Noticed Armaan holding the glass too carefully, like it had become heavy.',
+    timeline: '7:41 PM - Arrived with Tara\'s table and gravitated to the cake station.\n10:08 PM - Watched the projector go dark from five feet away and noticed the side lane to the bar stayed open while the main floor turned.\n10:20 PM - Noticed Armaan holding the glass too carefully, like it had become heavy.',
     code: 'CLOUD',
   }),
   witness({
@@ -584,7 +584,7 @@ export const CHARACTERS = [
     secret: 'Every form is a test if you answer it like the room does not deserve the real you.',
     neverDo: 'Cheat when ambiguity will do more damage.',
     motive: 'Armaan once invited Amanda as a dare, forgot he had done it, and then introduced her to investors as if she were a prop. She remembered.',
-    timeline: '8:16 PM - Arrived with Vinod\'s group and drifted like she had always lived there.\n10:08 PM - Says the case started when the lights did.\n10:24 PM - Refused to explain whether that was a joke.',
+    timeline: '8:16 PM - Arrived with Vinod\'s group and drifted like she had always lived there.\n10:08 PM - Said the case started when the lights did because the people nearest the bar barely flinched.\n10:24 PM - Refused to explain whether that was a joke.',
     code: 'ENIGMA',
   }),
   witness({
@@ -1055,6 +1055,156 @@ export const CONFESSION_CLUE = {
   roundReq: 6,
   type: 'CONFESSION',
   forCharacters: KILLER_IDS,
+};
+
+/**
+ * THE ANSWER KEY. Read by [CaseSolution.jsx](../components/CaseSolution.jsx) only,
+ * and that screen is unreachable until the host sets `revealedToMurderer` — so this
+ * is the one block in this file allowed to say plainly what the clue ladder spends
+ * seven rounds proving. Nothing here may leak into a round-gated surface.
+ *
+ * It is a restatement of [STORY.md](../../STORY.md), not a second canon: every beat
+ * below is already established by a clue, a case file or a character timeline. If the
+ * story changes, change both, and check the beat times still agree with CASE_TIMELINE.
+ */
+export const CASE_SOLUTION = {
+  verdict:
+    'Sneha Ganesh led Kiyaah Rose Raghuwanshi, Victoria Vance, Roddy Faustus and Oindrilla Chatterjee in killing Armaan Khanna with aconitine hidden in the orange-oil spray that finished his own birthday drink — while a forged invoice, a 94-second blackout and ten separate circles of friends kept the room looking anywhere but at the five of them.',
+
+  why: [
+    'Armaan was two days from closing the Meridien buyout, and the red folder marked MONDAY was his plan for surviving it. It was a written script naming who would take the fall if the room ever stopped being loyal: Sneha for the rebate structure, Victoria for the shell ledgers, Oindrilla for the inventory breach, with Tara\'s customs paperwork and Tanvi\'s prototype held in reserve. His own note in the margin read: if the room turns, give them the planner. Nobody mourns the planner.',
+    'Roddy and Kiyaah were not in that binder at all. He had written Roddy off as an outsider and assumed the ritual and the grief sessions still kept Kiyaah quiet. That blind spot is where the conspiracy grew: he never counted the two people who could build the poison and carry it to his hand.',
+    'He spent years teaching this room to think in private humiliations, so that no two victims would ever compare notes. Five of them compared notes.',
+  ],
+
+  jobs: [
+    {
+      name: 'Sneha Ganesh',
+      group: 'Thimble',
+      job: 'The plan',
+      lead: true,
+      detail:
+        'She built the seating chart, the ten circles, and the belief that every table would only ever protect its own. Ten people with real motives, five of them innocent, and no reason for anyone to test whether the killer might be sitting at five different tables at once.',
+    },
+    {
+      name: 'Roddy Faustus',
+      group: 'Hemlock',
+      job: 'The toxin',
+      detail:
+        'Aconite tincture cut into a bitter-orange carrier — small enough to vanish under aromatic oil, large enough to stop a heart in minutes. The formula was his own. Armaan had copied the notebook page years earlier and written we own this now on the back of it.',
+    },
+    {
+      name: 'Kiyaah Rose Raghuwanshi',
+      group: 'Oracle',
+      job: 'The delivery',
+      detail:
+        'She wrote the Last Light service ritual, so hers were the only hands on that glass that looked ordinary. The consulting contract she was never fully paid for is the same document stating that the final orange-oil spray goes on Armaan\'s glass alone.',
+    },
+    {
+      name: 'Oindrilla Chatterjee',
+      group: 'Amber',
+      job: 'The blind spot',
+      detail:
+        'The 10:08 PM projector reboot came from an admin credential cloned off her own build environment and re-authenticated from an offline side console only she had configured. The same session tree briefly re-enabled a retired staff QR — one pass in, one pass out.',
+    },
+    {
+      name: 'Victoria Vance',
+      group: 'Forgery',
+      job: 'The false trail',
+      detail:
+        'A supplier invoice pushed into the bar inventory remotely at 5:14 PM, before a single guest arrived, giving the replacement atomizer a paper history running through Tara Singhania\'s customs vendor. Her job was never poison. Her job was where the room would look afterwards.',
+    },
+  ],
+
+  // `hidden: true` marks a beat nobody on the floor could have seen. Those carry the
+  // signal marker and the bone weight; the public record stays dim, the same two-tier
+  // treatment the Timeline screen uses for critical beats.
+  sequence: [
+    {
+      time: '5:14 PM',
+      hidden: true,
+      body: 'Doors are still shut. Victoria pushes a forged supplier invoice into the private-bar inventory from off-site, logging a replacement aromatic atomizer against Tara\'s customs vendor. The twin now has a paper history.',
+    },
+    {
+      time: '7:25 PM',
+      hidden: true,
+      body: 'Roddy arrives with a gift box of rare botanicals that never reaches the gift table. The poisoned atomizer is inside it — already filled, already labelled EMBER ORANGE, an exact twin of the one behind the bar.',
+    },
+    {
+      time: '7:40 PM',
+      body: 'Kiyaah comes in through the service entrance to inspect the private bar, at Armaan\'s own request. She confirms where the original atomizer sits and how the bar will be staffed during the reel.',
+    },
+    {
+      time: '9:50 PM',
+      body: 'Sneha argues with Armaan in the upstairs booth over the red folder marked MONDAY. She leaves composed. The folder stays upstairs, which is the only part of that conversation that mattered.',
+    },
+    {
+      time: '9:55 PM',
+      body: 'The tribute reel starts beside the private bar and the room turns toward the screen — exactly as the annotated floor plan predicted. Its margin notes read DO NOT BLOCK BAR DURING REEL and HOLD CAKE UNTIL ORANGE.',
+    },
+    {
+      time: '9:58 PM',
+      hidden: true,
+      body: 'While walking staff through the Last Light garnish sequence, Kiyaah collects a wrapped service roll from the prep pass. Roddy left it there minutes earlier. The two never hand each other anything — prep-room linen fibres on the atomizer\'s neck are all that survives of the exchange.',
+    },
+    {
+      time: '10:05 PM',
+      body: 'Roddy is seen in the prep-room corridor without the wrapped roll he carried out of the botanical case. Several guests notice. Nobody yet knows what it was.',
+    },
+    {
+      time: '10:08:14 PM',
+      hidden: true,
+      body: 'Oindrilla forces a projector reboot from the event-admin terminal. To the floor it is a glitch in the birthday video. Five seconds later the private-bar camera drops.',
+    },
+    {
+      time: '10:08–10:09',
+      hidden: true,
+      body: 'Ninety-four seconds of blind spot. The reactivated staff QR opens the private bar and closes it again, and the original silver atomizer is swapped for the twin. The blackout killed the camera, not every sightline: Parinitha, on the side banquette by the bar arch, sees the swap from the side.',
+    },
+    {
+      time: '10:09:53 PM',
+      body: 'The camera feed returns and the reel resumes. The room turns back to a bar that looks exactly as it did ninety-four seconds ago.',
+    },
+    {
+      time: '10:12 PM',
+      hidden: true,
+      body: 'Armaan raises the Last Light and Kiyaah finishes it tableside with two sprays over the top of the glass. That garnish is the murder. Aconitine reaches the rim, his lips and the drink at once — one serving, no splash, nothing else in the room touched.',
+    },
+    {
+      time: '10:19 PM',
+      body: 'His hands stop working mid-sentence. Aconitine takes the nerves first and the heart immediately after. Minutes, not hours — which is why the last person to touch the glass is the only one who could have done it.',
+    },
+    {
+      time: '10:22 PM',
+      body: 'He collapses at the stage rail. Roddy is kneeling beside him before the room finishes screaming — the one person there who already knows exactly what he is looking at.',
+    },
+    {
+      time: '10:24 PM',
+      hidden: true,
+      body: 'Victoria tells the first officer to seize the inventory logs. She wants her forged invoice found early, by the police, before anyone can ask how it got there.',
+    },
+    {
+      time: '10:48 PM',
+      body: 'Goa Police seal the venue. Nobody has left. Nobody needed to — all five of them are still in the room, sitting in five different circles.',
+    },
+  ],
+
+  misdirection: [
+    'Ten people here had a real, provable reason to want Armaan dead. Five of them were innocent: Tara Singhania, Tanvi Vartak, Rishi Raj Rahul, Vinod Raghuwanshi and Anna Russo. A coherent single-killer case could be built against any of them, and most of the room built one.',
+    'The killers sat in five separate circles — Thimble, Oracle, Forgery, Hemlock and Amber — so no single table ever looked complete. Every Round 1 accusation pointed at a suspect\'s own people covering for them, and that theory can never close on a five-way alignment.',
+    'Tara was framed, not involved. The forged invoice was built to piggyback on access to the display and customs world that was entirely legitimate, so that the swapped atomizer would look like it arrived through her.',
+    'The blackout was meant to be found. It is the obvious opportunity window, and it pulled the room toward the ninety-four seconds instead of the fifteen minutes before them, when the poison was already in the building and the paperwork was already six hours old.',
+  ],
+
+  proof: [
+    { clue: 'Toxicology Summary', proves: 'The bottles, the batch mixers and the cake were clean. The poison lived in one finished drink.' },
+    { clue: 'Signature Drink Atomizer Analysis', proves: 'The silver mister was a twin, not the bar\'s own listed piece — and its neck carried prep-room linen fibres.' },
+    { clue: 'Projector and Bar-Camera Log', proves: 'Ninety-four seconds of blind spot, ordered from a valid admin session. An interruption, not an outage.' },
+    { clue: 'Supplier Invoice Mismatch', proves: 'Someone built the twin a paper history through Tara\'s vendor: traced signature, wrong stock, entered remotely.' },
+    { clue: "Armaan's Monday Binder Index", proves: 'He had already written down who would take the fall for him, by initials.' },
+    { clue: 'Admin Override Trace', proves: 'The reboot and the revived staff QR came from one session tree built on Oindrilla\'s environment.' },
+    { clue: 'Burner Group Transcript', proves: 'Five guests, five sets of initials, five jobs, one unsaved thread. Coordination, across circles.' },
+  ],
 };
 
 export const CASE_FILES = [

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { CaseSolution } from './CaseSolution';
 
 /**
  * The one time red owns the screen (DESIGN_LANGUAGE.md §2.2, §7).
@@ -6,9 +7,19 @@ import React, { useEffect, useState } from 'react';
  * A full-bleed `signal` fill is forbidden everywhere else in the app, which is
  * precisely what makes it land here. Type is bone and ink on that fill — pure
  * white only on the small tag, per §2.2.
+ *
+ * Naming the killers is only half of what the room wants at that moment; the
+ * other half is *how*. That lives on [CaseSolution](CaseSolution.jsx), reached
+ * from the control below and swapped in for this screen rather than layered over
+ * it — a second full-bleed red layer behind the reveal would spend the one
+ * sanctioned alarm twice, and the reconstruction is a document, so it is ink and
+ * paper. The control only arrives once the reveal has finished landing (stage 4):
+ * a button appearing under a name that is still animating turns the moment into
+ * a prompt.
  */
 export const MurdererRevealOverlay = ({ murderer, killers = murderer ? [murderer] : [] }) => {
   const [stage, setStage] = useState(0);
+  const [showSolution, setShowSolution] = useState(false);
   const revealedKillers = killers.filter(Boolean);
   const leadKiller = revealedKillers[0] ?? null;
   const accomplices = revealedKillers.slice(1);
@@ -18,20 +29,34 @@ export const MurdererRevealOverlay = ({ murderer, killers = murderer ? [murderer
     const t1 = setTimeout(() => setStage(1), 200);
     const t2 = setTimeout(() => setStage(2), 1400);
     const t3 = setTimeout(() => setStage(3), 2600);
+    const t4 = setTimeout(() => setStage(4), 4200);
     return () => {
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
+      clearTimeout(t4);
     };
   }, []);
 
   if (!leadKiller) return null;
 
+  // Returning lands back on a fully-staged reveal — the timers have long since
+  // fired, so nothing replays and the name is simply there.
+  if (showSolution) {
+    return <CaseSolution onBack={() => setShowSolution(false)} backLabel="The verdict" />;
+  }
+
   return (
     // No vignette and no grain here. The whole screen going signal is the
     // point; softening the edges would undo it.
-    <div className="fixed inset-0 z-[200] bg-signal flex flex-col items-center justify-center px-6 text-center overflow-hidden">
-      <div className="max-w-xl w-full">
+    //
+    // Centred with `my-auto` on the child rather than `justify-center` on the
+    // flex parent: five killers plus the reconstruction control is tall enough to
+    // exceed a short phone, and a centred flex child that overflows gets clipped
+    // at the *top*, where the names are. `my-auto` centres while there is room
+    // and scrolls from the top when there is not.
+    <div className="fixed inset-0 z-[200] bg-signal flex flex-col items-center px-6 py-10 text-center overflow-y-auto">
+      <div className="max-w-xl w-full my-auto">
         {/* Every stage names the exact properties it transitions. Blanket
             property transitions were the riskiest thing on this screen: the name
             is set at 86px, so any layout property sliding into the set would
@@ -117,6 +142,24 @@ export const MurdererRevealOverlay = ({ murderer, killers = murderer ? [murderer
         >
           The case is closed.
         </p>
+
+        {/* Bone fill, ink type — the inversion of the screen, which is what makes
+            it the one thing on it you can touch. A signal-on-signal outline would
+            disappear into the fill, and white is reserved for the small tag. */}
+        <div
+          className={`mt-8 transition-[opacity,translate] duration-700 ease-out ${
+            stage >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => setShowSolution(true)}
+            disabled={stage < 4}
+            className="er-touch inline-flex items-center justify-center gap-2 min-h-[44px] px-6 bg-bone text-ink font-mono text-[11px] font-medium uppercase tracking-[0.24em]"
+          >
+            How it happened <span aria-hidden="true">→</span>
+          </button>
+        </div>
       </div>
     </div>
   );

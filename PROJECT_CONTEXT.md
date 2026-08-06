@@ -39,7 +39,7 @@ The public shape of the case is simple: ten prime suspects, each with their own 
 5. Round 2 distributes 10 printed motive cards.
 6. Round 3 unlocks forensics and evidence files, distributes 7 evidence cards, and reopens voting.
 7. Rounds 4 and 5 deliver the twist through 6 revelation cards and the late-game case files.
-8. Round 6 reveals the full killer team to the room and ends the game.
+8. Round 6 reveals the full killer team to the room, hands every player the full reconstruction of how the murder was done, and ends the game.
 
 ---
 
@@ -53,7 +53,7 @@ The public shape of the case is simple: ten prime suspects, each with their own 
 | 3 | Evidence | Single-drink poisoning, atomizer swap, blind spot, forged invoice, access trace |
 | 4 | Revelations | Monday scapegoat plan, stolen drink ritual, missing formula page, forged ledgers |
 | 5 | Finale | Admin override proof and burner-thread reveal showing cross-group collusion |
-| 6 | The Reveal | Public screen names the killer team; killers themselves get the confession |
+| 6 | The Reveal | Public screen names the killer team; killers themselves get the confession. Both screens open **How it happened** — the beat-by-beat reconstruction of the murder, the motive, the five jobs, and what proved each of them |
 
 ---
 

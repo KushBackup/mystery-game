@@ -174,6 +174,8 @@ The admin override trace and burner thread prove the killers coordinated across 
 ### Round 6
 The reveal names the killer team publicly. The killers themselves get the confession instead of the public overlay.
 
+Both of those screens then open **How it happened** — the full reconstruction, so every one of the 51 players gets the answer rather than just the names. It restates this file: the motive, the five jobs, the night beat by beat with the hidden actions filled in, why the misdirection held, and which clue proved what. It lives in `CASE_SOLUTION` in [src/data/gameData.js](src/data/gameData.js) and is rendered by [src/components/CaseSolution.jsx](src/components/CaseSolution.jsx). **It is a restatement of this bible, not a second canon — if the story changes here, change it there too**, and check the beat times still agree with `CASE_TIMELINE`.
+
 ---
 
 ## Canon Truth

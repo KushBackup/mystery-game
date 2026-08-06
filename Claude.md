@@ -30,6 +30,8 @@ Always start at this file. Read the others on demand based on what you're workin
 | **[PROJECT_CONTEXT.md](PROJECT_CONTEXT.md)** | Full project & game design overview | Working on game flow, mechanics, scope |
 | **[STORY.md](STORY.md)** | Narrative bible, character backstories, full timeline | Editing characters, clues, story content |
 | **[HOST_QA_BRIEFING.md](HOST_QA_BRIEFING.md)** | Host-only answers to likely story objections and logic questions | Tightening story logic, facilitating the live room |
+| **[HOST_LIVE_FACILITATION.md](HOST_LIVE_FACILITATION.md)** | Fast round-by-round run-of-show for the live host | Running the room in real time |
+| **[HOST_PRINT_PACK.md](HOST_PRINT_PACK.md)** | Printable host packet: clue manifest, witness relevance map, answer key | Preparing materials before the event |
 | **[TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md)** | Architecture, components, state management | Refactoring, adding components, debugging state |
 | **[DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md)** | "Evidence Room" design system — palette, type scale, components, motion, per-screen application | Any visual/theming work on the app or the deck |
 | **[CLUE_CODES.md](CLUE_CODES.md)** | All clue codes (accusation/motive/revelation) | Adding/changing clue codes |
@@ -51,18 +53,21 @@ The files you will most often need to open:
 
 - [src/App.jsx](src/App.jsx) — main state machine, routing, Firebase wiring
 - [src/data/gameData.js](src/data/gameData.js) — 51 characters, 34 clue codes, round definitions, case metadata, and host script (the largest data file)
+- [src/data/hostReference.js](src/data/hostReference.js) — structured host-only reference data for the in-app host guide screen
 - [src/data/screenGuide.js](src/data/screenGuide.js) — per-screen kicker/title/brief/detail copy; feeds the screen frames, the onboarding notes and the Guide
 - [src/data/storyIntro.js](src/data/storyIntro.js) — the Round 0 case briefing: eight slides + the typing speed. **Spoiler-gated to Round 0 knowledge** — read the header before editing. Feeds both the fullscreen briefing and the Story screen
 - [src/components/StoryIntro.jsx](src/components/StoryIntro.jsx) — the fullscreen typed briefing (Round 0 takeover, and the replay from the Story screen)
+- [src/components/CaseSolution.jsx](src/components/CaseSolution.jsx) — "How it happened": the full reconstruction of the murder, opened from *both* terminal screens (the killer reveal and the outro) so all 51 players can reach it. Copy comes from `CASE_SOLUTION` in [src/data/gameData.js](src/data/gameData.js) — **the answer key**, so nothing in it may leak into a round-gated surface
 - [src/firebase/config.js](src/firebase/config.js) — Firestore real-time sync (votes, chat, game state)
 - [src/components/HostPanel.jsx](src/components/HostPanel.jsx) — admin controls (round advance, voting toggle, file unlocks)
+- [src/components/views/HostReferenceView.jsx](src/components/views/HostReferenceView.jsx) — the in-app host guide: rounds, witness map, deck, materials, and objection handling
 - [src/components/CharacterSelect.jsx](src/components/CharacterSelect.jsx) — login screen
 - [src/components/GridMenu.jsx](src/components/GridMenu.jsx) — Metro-tile home hub
 - [src/components/views/](src/components/views/) — full-screen views (Dashboard, Intel, Chat, Voting, Timeline, Dossier, Help, Story). `IntelView` is the **Evidence** screen: a hub over five grouped stacks — accusations, motives, evidence, revelations, and `CaseFilesSection` (the old standalone "Archives" screen, merged in 2026-08-05)
 - [src/components/modals/DecoderModal.jsx](src/components/modals/DecoderModal.jsx) — clue code entry
 - [src/components/modals/](src/components/modals/) — Decoder, GuestProfile, VoteResults
 - [src/components/icons/](src/components/icons/) — all SVG icons (no PNG/SVG asset files used)
-- [src/components/ui/](src/components/ui/) — the shared motion/vocabulary pieces: `Numeral` (counting brass figure), `RoundRail`, `RedactedLines`, `ScreenBrief`, `FeedbackToast`, `Doodles`
+- [src/components/ui/](src/components/ui/) — the shared motion/vocabulary pieces: `Numeral` (counting brass figure), `RoundRail`, `RedactedLines`, `ScreenBrief`, `FeedbackToast`, `SearchField` (the shared list filter — Vote and Guests), `Doodles`
 - [src/hooks/](src/hooks/) — `useCountUp` (ticks a numeral on change, never on mount) and `useTypewriter` (character-at-a-time reveal on one rAF loop)
 - [src/lib/typeSound.js](src/lib/typeSound.js) — synthesized typewriter clicks + margin bell (Web Audio; **no audio files in this repo**), mute state in `localStorage['astral.sfx']`
 - [package.json](package.json) — dependencies & npm scripts
@@ -178,6 +183,7 @@ npm run deploy           # builds + pushes /dist to gh-pages branch (GitHub Page
 | Add/rename/regroup an Evidence stack | `CLUE_STACKS` in [src/data/gameData.js](src/data/gameData.js) (what it contains), `EVIDENCE_STACKS` in [src/data/screenGuide.js](src/data/screenGuide.js) (what it's called), `STACK_STYLE` in [IntelView.jsx](src/components/views/IntelView.jsx) (surface, tilt, empty state) | Three files on purpose — data, copy, presentation. A stack's `kicker` must not contain the word "Evidence": it is used as the screen kicker when the stack is open, so `Evidence Board / Evidence` is the frame you'd get |
 | Screen title / kicker / "what this screen is" copy | [src/data/screenGuide.js](src/data/screenGuide.js) only | Don't hardcode it in the view — the Guide reads the same entries, which is what stops the two drifting apart |
 | Story briefing copy or pacing | [src/data/storyIntro.js](src/data/storyIntro.js) only | It feeds both the fullscreen briefing and the Story screen. **Check any new line against the spoiler list in that file's header** — the toxin is Round 3, the cancer/SEBI/insurance are Round 4, the staging is Round 5+ |
+| The end-of-game explanation ("How it happened") | `CASE_SOLUTION` in [src/data/gameData.js](src/data/gameData.js) for copy; [src/components/CaseSolution.jsx](src/components/CaseSolution.jsx) for presentation | It restates [STORY.md](STORY.md), so change both together and re-check the beats against `CASE_TIMELINE`. It is reached from *two* screens — the reveal overlay and the outro — because killers never see the overlay; a change to one entry point needs the other |
 | Firestore schema change | [src/firebase/config.js](src/firebase/config.js) | Update [FIREBASE_VISUAL_GUIDE.md](FIREBASE_VISUAL_GUIDE.md); coordinate with user before deploying — breaks live games |
 | Host control | [src/components/HostPanel.jsx](src/components/HostPanel.jsx) | — |
 | PWA / service worker | [vite.config.js](vite.config.js) | Update [PWA_IMPLEMENTATION_COMPLETE.md](PWA_IMPLEMENTATION_COMPLETE.md) |

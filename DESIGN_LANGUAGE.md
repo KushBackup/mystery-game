@@ -357,6 +357,25 @@ Round numbers here stay in the stamp colour, **not brass** — brass on bone fai
 
 Copy lives in [src/data/screenGuide.js](src/data/screenGuide.js), which is also where the Guide reads its screen descriptions from, so the two can't drift apart.
 
+### 6.12 Filter field
+
+A one-line search field for any screen whose list is long enough that finding a known name by eye is the slow path. Used on the ballot and the suspect index — both of which are 51 rows. Implemented as [`SearchField`](src/components/ui/SearchField.jsx).
+
+| Part | Treatment |
+|---|---|
+| Surface | `ink` inside a `line` hairline, square corners — it is a control, so it never becomes paper |
+| Focus | Border goes `signal` via `focus-within`, 150ms, colour only. Same treatment as the chat composer, so the app has one input idiom |
+| Icon | §6-neutral magnifier at 16px in `dim-2`, left. No accent — it labels the field, it isn't the focal point |
+| Input | Body face, 15px, `bone`, placeholder `dim-2` |
+| Clear | The `X` icon at 16px in `dim`, appearing only once there is a query, inside `er-touch` |
+| Result count | 11px mono in `dim`, below the field, present only while filtering |
+
+Three rules:
+
+- **The count is mono, not brass.** Brass is game data — votes cast, guests on record (§2.2). "How many rows survived my typing" is chrome, and putting it in the display face makes a UI affordance compete with the evidence on the same screen.
+- **Filtering hides rows; it must never reorder them.** The ballot's order is a stable hash shared by all 51 players precisely so "the third one" translates across the room. A filter that re-sorted, or that renumbered the suspect index by filtered position, would break the references the room speaks in — file numbers stay tied to the roster position.
+- **The empty result is a sentence, not a blank panel.** An empty list under a field the player just typed into is indistinguishable from a screen that broke.
+
 ---
 
 ## 7. Motion
@@ -489,6 +508,7 @@ Migrate one view at a time; both palettes can coexist while you do.
 | Vote | [VotingView.jsx](src/components/views/VotingView.jsx) | **Currently off-palette (green).** Counts in `brass` display; selected suspect gets a `signal` border |
 | Case files | [CaseFilesSection.jsx](src/components/views/CaseFilesSection.jsx) | Locked files as ghost tags with round numbers; opened files as bone documents. *Was the standalone "Archives" screen until 2026-08-05; now one of the five Evidence stacks* |
 | Timeline | [TimelineView.jsx](src/components/views/TimelineView.jsx) | Red thread as the spine; times in mono `brass` |
+| Reconstruction | [CaseSolution.jsx](src/components/CaseSolution.jsx) | *Added 2026-08-06.* "How it happened", opened from the reveal overlay and the outro. Deliberately the **opposite surface to the screen it comes from**: the reveal is full-bleed `signal`, so this is ink and paper, and red appears only as marks — the thread, the beat markers, the mastermind's 3px state rule. One bone card (the finding of fact); everything else is ink cards, the §6.8 thread, and hairline-separated regions. The beats nobody could see are told apart by marker *size* as well as colour, so the key does not depend on separating `signal` from `dim-2` |
 | Host | [HostPanel.jsx](src/components/HostPanel.jsx) | **Currently off-palette (purple/indigo gradient) — the worst offender.** Rebuild on ink with hairlines; REVEAL MURDERER is the one full `signal` fill in the app |
 
 ### Known inconsistencies — ✅ all resolved 2026-08-02

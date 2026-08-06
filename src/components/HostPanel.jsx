@@ -12,6 +12,7 @@ import {
   endGame
 } from '../firebase/config';
 import { CASE_FILES, CASE_META, CLUE_DB, HOST_SCRIPT } from '../data/gameData';
+import { HostReferenceView } from './views/HostReferenceView';
 import { Numeral } from './ui/Numeral';
 import { ChevronRight } from './icons/IconComponents';
 
@@ -102,6 +103,7 @@ export const HostPanel = ({
 }) => {
   const [expandedRound, setExpandedRound] = useState(null);
   const [scriptOpen, setScriptOpen] = useState(true);
+  const [referenceOpen, setReferenceOpen] = useState(false);
 
   // The run sheet follows the live round, but the host can tab away to read
   // ahead. Only an explicit tap sets an override, and advancing the round
@@ -118,6 +120,10 @@ export const HostPanel = ({
   const activeScript = HOST_SCRIPT.find(s => s.id === scriptTab) || HOST_SCRIPT[0];
 
   if (!isOpen) return null;
+
+  if (referenceOpen) {
+    return <HostReferenceView currentRound={currentRound} onBack={() => setReferenceOpen(false)} />;
+  }
 
   // Optimistic UI: update local state instantly so the host sees feedback the
   // moment they tap, then fire-and-forget the Firestore write. The onSnapshot
@@ -230,6 +236,22 @@ export const HostPanel = ({
           <p className="er-stat__label">Clues out</p>
         </div>
       </div>
+
+      <section className="er-card er-card--signal">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <p className="er-mono er-mono--hot er-mono--wide">Host guide</p>
+            <p className="font-body text-[15px] leading-[1.55] text-dim mt-2">
+              Open the full facilitation screen: live round playbook, witness map, clue deck,
+              objections, and answer structure.
+            </p>
+          </div>
+
+          <Control className="sm:w-auto sm:min-w-[14rem]" onClick={() => setReferenceOpen(true)}>
+            Open host guide
+          </Control>
+        </div>
+      </section>
 
       {/* Run sheet */}
       <section className="er-card p-0">

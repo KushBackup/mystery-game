@@ -39,6 +39,19 @@ Owns the Round 0 public briefing only. It is spoiler-gated to knowledge availabl
 ### [src/data/screenGuide.js](src/data/screenGuide.js)
 Owns per-screen kicker/title/brief/detail copy plus labels for the five Evidence stacks.
 
+### [src/data/hostReference.js](src/data/hostReference.js)
+Owns the structured host-only reference content rendered in-app from the host console:
+
+- `HOST_REFERENCE_TABS` — top-level navigation for the host guide screen
+- `HOST_REFERENCE_SUMMARY` — event shape and host principles
+- `HOST_SUSPECT_ROSTER` — prime suspect lanes vs actual status
+- `HOST_KILLER_JOBS` — five-job solution map
+- `HOST_MATERIALS` — required and helpful physical materials
+- `HOST_ROUND_GUIDE` — operational prompts keyed to the live round
+- `HOST_WITNESS_LANES` — grouped witness nudges for stalled rooms
+- `HOST_FAST_ANSWERS` — objection handling before and after Round 5
+- `HOST_DECK` — clue manifest and counts for printed card prep
+
 ---
 
 ## Cast Model
@@ -85,9 +98,17 @@ The old app assumed a single murderer. The current implementation generalizes th
 In [src/App.jsx](src/App.jsx):
 
 - non-host, non-killer players see [src/components/MurdererRevealOverlay.jsx](src/components/MurdererRevealOverlay.jsx)
-- killers skip the public overlay
+- killers skip the public overlay and land on [src/components/OutroSplash.jsx](src/components/OutroSplash.jsx), because `updateMurdererReveal` sets `gameEnded` at the same time
 - only characters included in `CONFESSION_CLUE.forCharacters` receive the confession card in Round 6
 - the overlay can render either a single killer or a full killer team, with the first killer treated as the lead reveal block
+
+### The reconstruction
+
+Naming the killers is only half of the ending; [src/components/CaseSolution.jsx](src/components/CaseSolution.jsx) is the other half — the full explanation of how the murder was carried out, read by the whole room after the reveal.
+
+- Both terminal screens open it, which is what makes it reachable by all 51 players: the reveal overlay carries a `How it happened` control (gated to its final entrance stage), and the outro carries one for the five killers, who never see the overlay.
+- It is **swapped in for** the terminal screen rather than layered over it. Every terminal screen is `fixed inset-0` and non-scrolling; swapping lets the reconstruction scroll as a normal document and keeps its back control honest. Each host owns a local `showSolution` boolean — there is no App-level route, because these screens draw no `SCREEN_GUIDE` frame to keep in sync.
+- All copy lives in `CASE_SOLUTION` in [src/data/gameData.js](src/data/gameData.js): `verdict`, `why`, `jobs` (five, `lead: true` marks the mastermind), `sequence` (beats, `hidden: true` marks what nobody on the floor could see), `misdirection`, and `proof`. It is the answer key — unreachable until `revealedToMurderer` — and must not contradict [STORY.md](STORY.md).
 
 ### Player-facing labels
 
@@ -137,6 +158,8 @@ Uses `CASE_META` for venue, case title, case ID, player count, and killer count.
 ### DossierView / GuestProfileModal
 The roster surface is now framed as **Guests**, not **Suspects**, because only 10 of the 51 players are prime suspects. The modal distinguishes `Prime suspect`, `Witness`, and `Known victim` labels.
 
+DossierView filters through the shared [`SearchField`](src/components/ui/SearchField.jsx) (name / profession / quirk, case-insensitive substring). The roster is pre-mapped to `{ char, fileNumber }` so the two-digit file number keeps referring to the guest's position in `CHARACTERS` while the list is filtered — renumbering by filtered position would make the number useless as a spoken reference.
+
 ### TimelineView
 Uses `CASE_TIMELINE` from `gameData.js` rather than hardcoding one case's events in the component.
 
@@ -145,6 +168,14 @@ Both consume the same `STORY_SLIDES` source. StoryView now reads case metadata d
 
 ### VotingView
 Still renders from `CHARACTERS`, but now uses `isMurderer()` to avoid clustering any of the killers near the top of the ballot list.
+
+It also carries the shared [`SearchField`](src/components/ui/SearchField.jsx) above the ballot grid, matching on name and profession. The filter is applied *after* the stable hash sort and only removes cards, so the jumbled order every player shares is preserved and the vote already recorded is unaffected by what is currently visible.
+
+### HostPanel / HostReferenceView
+- [src/components/HostPanel.jsx](src/components/HostPanel.jsx) remains the live console for round control, voting, file release, and reveal actions.
+- It now also acts as the entry point for a dedicated in-app host guide screen via [src/components/views/HostReferenceView.jsx](src/components/views/HostReferenceView.jsx).
+- The guide stays inside the host route rather than becoming a separate App-level tab: HostPanel owns a local `referenceOpen` state and swaps the screen in place, which avoids building a second host navigation path into [src/App.jsx](src/App.jsx).
+- The host guide is a UI mirror of the external host docs: facilitation flow, witness map, clue manifest, materials, and objection handling in one place during the event.
 
 ---
 
