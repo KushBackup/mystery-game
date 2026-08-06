@@ -26,33 +26,11 @@ export const VotingView = ({
   const [confirmingVote, setConfirmingVote] = useState(null);
   const [query, setQuery] = useState('');
 
-  // Stable hash-sort the suspect list so every player sees the SAME jumbled
-  // order (so chat references like "the 3rd one" still translate), but the
-  // ordering doesn't betray suspects-vs-witnesses or cluster the killers near
-  // the top. Any killer the hash places in the first row of the 2-col grid is
-  // pushed deeper into the list.
-  const suspects = React.useMemo(() => {
-    const stableHash = (str) => {
-      let h = 0;
-      for (let i = 0; i < str.length; i++) {
-        h = ((h << 5) - h) + str.charCodeAt(i);
-        h |= 0;
-      }
-      return h;
-    };
-    const list = [...CHARACTERS].sort((a, b) => stableHash(a.id) - stableHash(b.id));
-    const earlyKillers = list
-      .map((character, index) => ({ character, index }))
-      .filter(({ character, index }) => isMurderer(character.id) && index < 6)
-      .reverse();
-
-    earlyKillers.forEach(({ character, index }, offset) => {
-      list.splice(index, 1);
-      list.splice(Math.min(Math.floor(list.length / 2) + 3 + offset, list.length), 0, character);
-    });
-
-    return list;
-  }, []);
+  // The ballot used to jumble the roster itself. That now happens once, at the
+  // data layer (`dealt()` in gameData.js), so the ballot, the Suspects index and
+  // every guest's file number all agree on one order — and no conspirator sits
+  // in the first row of the grid.
+  const suspects = CHARACTERS;
 
   // Filtering only hides cards — it never reorders them, so the shared jumbled
   // order above stays intact and "the third one" still means the same person

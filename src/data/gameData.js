@@ -14,7 +14,74 @@ const killer = (data) => ({ ...data, role: 'MURDERER', isSuspect: true });
 const suspect = (data) => ({ ...data, role: 'SUSPECT', isSuspect: true });
 const witness = (data) => ({ ...data, role: 'WITNESS', isSuspect: false });
 
-export const CHARACTERS = [
+// ---------------------------------------------------------------------------
+// Display order
+//
+// Source order in this file is authorial — the five conspirators are written
+// first so the data stays readable, and the per-suspect clue decks follow the
+// same sequence. Rendered as-is that put Sneha at the top of the roster, the
+// ballot, the accusation stack and the motive stack, which is a tell before a
+// single clue is decoded.
+//
+// `dealt()` re-orders a list by hashing each entry's id. The jumble is *stable*:
+// every player, on every device and every reload, gets the same sequence, so
+// "the third one" in chat still means the same person, and a guest's file
+// number never changes mid-game. `isHot` marks the entries that must not
+// cluster at the top (conspirators and their clues) — any that the hash happens
+// to place inside the first `safeTop` slots is pulled out and reinserted around
+// the middle of the list.
+// ---------------------------------------------------------------------------
+const stableHash = (str) => {
+  let h = 0;
+  for (let i = 0; i < str.length; i += 1) {
+    h = ((h << 5) - h) + str.charCodeAt(i);
+    h |= 0;
+  }
+  return h;
+};
+
+// The salt has to be *mixed* into the hash, not concatenated onto the string.
+// `acc_sneha` and `mot_sneha` differ by a fixed prefix of the same length, so a
+// concatenated salt shifts every hash in a deck by the same constant and leaves
+// the relative order identical — the accusation and motive stacks would come
+// out in the same sequence. XOR plus an avalanche step decorrelates them.
+const seeded = (salt, id) => {
+  let h = stableHash(id) ^ stableHash(salt);
+  h = Math.imul(h ^ (h >>> 15), 0x27d4eb2d);
+  return (h ^ (h >>> 15)) | 0;
+};
+
+const dealt = (list, { salt = '', isHot = () => false, safeTop = 0, group } = {}) => {
+  const out = [...list].sort((a, b) => {
+    if (group) {
+      const delta = group(a) - group(b);
+      if (delta !== 0) return delta;
+    }
+    return seeded(salt, a.id) - seeded(salt, b.id);
+  });
+
+  // One at a time, front to back: pulling an entry out slides the rest up, so a
+  // hot entry that was just below the line can end up above it. Re-checking
+  // after every move is what makes the guarantee hold. `guard` bounds the loop
+  // in case a caller ever asks for more clean slots than the list has cold
+  // entries to fill them with.
+  for (let guard = 0; guard < out.length; guard += 1) {
+    const offender = out.findIndex((item, index) => index < safeTop && isHot(item));
+    if (offender === -1) break;
+    const [item] = out.splice(offender, 1);
+    // Re-enter at a hashed slot below the clean zone rather than always at the
+    // midpoint — otherwise every evicted entry lands in the same place and two
+    // decks dealt with different salts end up with the conspirators bunched in
+    // the same band.
+    const room = out.length - safeTop + 1;
+    const slot = safeTop + (Math.abs(seeded(`${salt}:bump`, item.id)) % room);
+    out.splice(slot, 0, item);
+  }
+
+  return out;
+};
+
+const ROSTER = [
   killer({
     id: 'char_sneha',
     name: 'Sneha Ganesh',
@@ -680,6 +747,15 @@ export const CHARACTERS = [
   }),
 ];
 
+// The roster the whole app reads. Six clean slots at the top keeps the opening
+// screenful of the Suspects index and the first row of the ballot grid free of
+// conspirators.
+export const CHARACTERS = dealt(ROSTER, {
+  salt: 'roster',
+  isHot: (character) => character.role === 'MURDERER',
+  safeTop: 6,
+});
+
 export const CASE_META = {
   caseId: '8821-B',
   title: 'Velvet Ember: Birthday in Red',
@@ -721,7 +797,7 @@ const GROUPS = {
   REPLICA: ['char_anna', 'char_sanika', 'char_kristen', 'char_anjul', 'char_aaina'],
 };
 
-export const ACCUSATION_CLUES = [
+const ACCUSATION_DECK = [
   {
     id: 'acc_sneha',
     code: 'ACCUSE_SNEHA',
@@ -834,7 +910,17 @@ export const ACCUSATION_CLUES = [
   },
 ];
 
-export const MOTIVE_CLUES = [
+const targetsAKiller = (clue) => KILLER_IDS.includes(clue.targetSuspect);
+
+// Round 1's stack used to open on Sneha and then run three more conspirators
+// before the first innocent name. Now it opens on three clean names.
+export const ACCUSATION_CLUES = dealt(ACCUSATION_DECK, {
+  salt: 'accuse',
+  isHot: targetsAKiller,
+  safeTop: 3,
+});
+
+const MOTIVE_DECK = [
   {
     id: 'mot_sneha',
     code: 'THIMBLE',
@@ -937,7 +1023,15 @@ export const MOTIVE_CLUES = [
   },
 ];
 
-export const EVIDENCE_CLUES = [
+// Dealt with its own salt so the motive stack doesn't mirror the accusation
+// stack — matching positions across two screens would rebuild the same tell.
+export const MOTIVE_CLUES = dealt(MOTIVE_DECK, {
+  salt: 'motive',
+  isHot: targetsAKiller,
+  safeTop: 3,
+});
+
+const EVIDENCE_DECK = [
   {
     id: 'ev_tox',
     code: 'EVIDENCE_TOX',
@@ -996,7 +1090,12 @@ export const EVIDENCE_CLUES = [
   },
 ];
 
-export const REVELATION_CLUES = [
+// The forensics deck names no suspect on its face, so there is nothing to keep
+// out of the top slots — it is dealt only so the stack stops reading in the
+// order it was written.
+export const EVIDENCE_CLUES = dealt(EVIDENCE_DECK, { salt: 'evidence' });
+
+const REVELATION_DECK = [
   {
     id: 'rev_audit',
     code: 'REVEAL_AUDIT',
@@ -1046,6 +1145,14 @@ export const REVELATION_CLUES = [
     type: 'REVELATION',
   },
 ];
+
+// Grouped by round first: the Round 5 pair (the admin trace and the burner
+// thread) are the twist, and they have to stay behind the Round 4 documents no
+// matter where the hash would otherwise put them.
+export const REVELATION_CLUES = dealt(REVELATION_DECK, {
+  salt: 'reveal',
+  group: (clue) => clue.roundReq,
+});
 
 export const CONFESSION_CLUE = {
   id: 'confession',

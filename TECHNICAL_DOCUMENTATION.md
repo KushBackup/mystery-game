@@ -30,6 +30,18 @@ Owns the live case definition:
 - `REVELATION_CLUES` — 6 round-4/5 twist items
 - `CONFESSION_CLUE` — final reveal text, gated by `forCharacters`
 - `CASE_FILES` — 6 host-unlocked reports shown under Evidence → Case files
+
+#### Display order (`dealt()`)
+
+Source order in the file is authorial: the five conspirators are written first, and the per-suspect clue decks follow the same sequence. That leaked — Sneha sat at the top of the roster, the ballot, the accusation stack and the motive stack before a single clue was decoded.
+
+`dealt(list, { salt, isHot, safeTop, group })` re-orders a deck at module load and the exported constants (`CHARACTERS`, `ACCUSATION_CLUES`, `MOTIVE_CLUES`, `EVIDENCE_CLUES`, `REVELATION_CLUES`) are the dealt versions — every consumer inherits the jumble, so there is no per-screen shuffling to keep in sync. The raw literals stay in the file as `ROSTER`, `ACCUSATION_DECK`, `MOTIVE_DECK`, `EVIDENCE_DECK`, `REVELATION_DECK`.
+
+- **Stable, not random.** The order comes from a hash of each entry's `id`, so every player on every device and every reload sees the same sequence. "The third one" in chat keeps meaning the same person, and a guest's file number never changes mid-game.
+- **`salt` must be mixed, not concatenated.** `acc_sneha` and `mot_sneha` differ by a fixed same-length prefix, so a concatenated salt shifts every hash in a deck by one constant and leaves the relative order untouched — the accusation and motive stacks would deal out identically. `seeded()` XORs the two hashes and avalanches the result.
+- **`isHot` + `safeTop`** keep conspirators out of the opening slots (the first screenful of Suspects, the first row of the ballot grid, the top of the round-1 and round-2 stacks). Evicted entries re-enter at a hashed slot below the clean zone, not at a fixed midpoint, so they don't band up. Eviction re-checks after every move: removing an entry slides the rest up, which can push a hot entry above the line.
+- **`group`** is a primary sort key that survives the jumble. `REVELATION_CLUES` groups on `roundReq` so the Round 5 twist pair stays behind the Round 4 documents.
+- `CASE_FILES` is deliberately **not** dealt — it names no suspect and is already ordered by unlock round.
 - `HOST_SCRIPT` — host-facing run sheet for live facilitation
 - `LOGIN_CODE_MAP` — generated from the character roster
 
@@ -167,9 +179,9 @@ Uses `CASE_TIMELINE` from `gameData.js` rather than hardcoding one case's events
 Both consume the same `STORY_SLIDES` source. StoryView now reads case metadata directly from `CASE_META`; there is no separate `caseData` module.
 
 ### VotingView
-Still renders from `CHARACTERS`, but now uses `isMurderer()` to avoid clustering any of the killers near the top of the ballot list.
+Renders `CHARACTERS` in order. The ballot used to hash-sort the roster itself; that moved to `dealt()` in the data layer (above), so the ballot, the Suspects index and every guest's file number now agree on one order instead of drifting apart. `isMurderer()` is still used here, but only to badge the killers once round 6 lands.
 
-It also carries the shared [`SearchField`](src/components/ui/SearchField.jsx) above the ballot grid, matching on name and profession. The filter is applied *after* the stable hash sort and only removes cards, so the jumbled order every player shares is preserved and the vote already recorded is unaffected by what is currently visible.
+It also carries the shared [`SearchField`](src/components/ui/SearchField.jsx) above the ballot grid, matching on name and profession. The filter only removes cards and never reorders them, so the jumbled order every player shares is preserved and the vote already recorded is unaffected by what is currently visible.
 
 ### HostPanel / HostReferenceView
 - [src/components/HostPanel.jsx](src/components/HostPanel.jsx) remains the live console for round control, voting, file release, and reveal actions.
