@@ -147,7 +147,24 @@ Messages appear instantly
 - Messages stored in Firestore, not local state
 - Component subscribes to real-time updates
 - Auto-scrolls to bottom on new messages
-- Shows last 100 messages (configurable)
+- Shows last 100 messages (`MESSAGE_WINDOW` in [config.js](src/firebase/config.js))
+
+### The query (updated 2026-08-07)
+
+Both consumers subscribe through **`subscribeToMessages` in [config.js](src/firebase/config.js)** — never their own `onSnapshot`. Firestore shares one listen stream between identical queries, so a single definition means one watch on the wire for the thread *and* the hub badge.
+
+```javascript
+query(collection(db, 'messages'), orderBy('createdAt', 'desc'), limit(100))
+// ...then reversed client-side into reading order
+```
+
+**`desc`, not `asc`.** `asc` with a limit returns the *oldest* hundred, so once the room passed a hundred messages the thread would have frozen on the backlog and every message after it been invisible — including to the unread badge. With 51 players over an evening that was a certainty. `desc` + limit takes the newest hundred.
+
+### The unread badge (added 2026-08-07)
+
+The hub's **Comms** tile now reports the channel instead of describing it: a count badge on its icon, its sub-label swapping `Encrypted` → `N Unread`, and a small lateral jog of the icon when something new lands (capped at three per visit to the board). Opening Comms clears all three, and messages that arrive while the player is on the channel count as read.
+
+Driven by [`useUnreadMessages`](src/hooks/useUnreadMessages.js) from [App.jsx](src/App.jsx), with the read watermark — a message id — in `localStorage['astral.commsseen']`. A backlog never badges: a fresh device or a mid-game login seeds on the newest message and reports zero. See [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md) for the full behaviour and [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §6.1 / §7.1 for the badge and the motion budget.
 
 ---
 

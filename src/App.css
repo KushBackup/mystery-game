@@ -242,6 +242,40 @@
   color: var(--color-bone);
 }
 
+/* ------------------------------------------------------------
+   The unread badge — a count pinned to a hub tile's icon (§9).
+
+   The smallest member of the tag family, and the only one that
+   is positioned rather than placed in flow. It sits on the
+   Comms tile, which is aged paper, so the accent darkens to
+   `signal-deep` for the same reason `.er-tag--onbone` exists.
+   Square, like every other mark in the system.
+
+   Tracking is 0.06em, not the 0.18em every other mono label
+   carries: letter-spacing is applied *after* the last glyph, so
+   at 0.18em a two-digit count sits visibly left of centre in
+   its own box. Numbers are the one place the system's tracking
+   works against it.
+   ------------------------------------------------------------ */
+.er-badge {
+  position: absolute;
+  top: -7px;
+  right: -11px;
+  min-width: 19px;
+  padding: 2px 4px 1px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-align: center;
+  background: var(--color-signal-deep);
+  color: var(--color-bone);
+  border: 1px solid var(--color-signal-deep);
+  /* The tile underneath is the button. Nothing here is tappable. */
+  pointer-events: none;
+}
+
 /* ============================================================
    5. CARD ON INK (§6.2)
    The 3px top border is the state channel:
@@ -1093,6 +1127,55 @@ button.er-redact:not(.er-redact--open) { cursor: pointer; }
    class when the tally is read is what ends it. */
 .er-summon-tally {
   animation: erSummon 1.15s var(--ease-land) 520ms 2;
+}
+
+/* The comms jog — the Comms tile's icon when the channel has
+   something unread on it (components/GridMenu.jsx).
+
+   Why this is not `erSummon`. The other two knocks are a 14px
+   vertical hop on a free-standing control. This one lives on a
+   32px icon centred inside a fixed 4:3 paper tile with a count
+   badge pinned to its corner, and a 14px hop there reads as the
+   tile glitching rather than as the icon being pointed at. So
+   the *idea* is the same — §7.1's one "notice this" — and only
+   the axis changes: a small lateral rock with a touch of tilt,
+   like a pinned note being tapped.
+
+   Why this is not `.er-shake` either, which is the same axis and
+   would have been the obvious reuse. That one is the app's
+   *refusal*: a rejected login code, a wrong riddle answer. A new
+   message is an invitation, and the two must not share a motion
+   or the app says "no" when somebody says hello. Hence ±4px over
+   550ms against `erShake`'s ±5px over 400ms, plus the tilt —
+   near enough to read as a shake, far enough not to read as one.
+
+   The budget is the strictest in §17, because the trigger is the
+   most frequent thing in the app: a message can land every few
+   seconds once the room warms up, which is exactly what this
+   feature is for. Three jogs per visit to the board, ever, and
+   the board is a fresh visit every time a screen closes. Past
+   that the badge and the tile's own sub-label carry it alone —
+   motion is never the only channel (§7.1).
+
+   Delay clears the board's return entrance (`.er-enter-quick`,
+   260ms). It does not clear the once-per-session full landing
+   (Comms is tile 4, so 180ms + 700ms), and does not need to: a
+   session's first board visit is also the visit where the
+   watermark has just been seeded and there is nothing unread. */
+@keyframes erJog {
+  0%, 100% { transform: translateX(0); }
+  18%      { transform: translateX(-4px) rotate(-3.5deg); }
+  42%      { transform: translateX(4px)  rotate(3.5deg); }
+  64%      { transform: translateX(-2px) rotate(-1.5deg); }
+  82%      { transform: translateX(2px)  rotate(0deg); }
+}
+
+/* `transform`, not the independent `rotate`/`translate`
+   properties: this sits on a plain wrapper of its own, so it has
+   nothing to compose with — and the tile's `.er-rotL` tilt lives
+   on the button one level up, which is why that survives. */
+.er-jog {
+  animation: erJog 0.55s var(--ease-land) 620ms;
 }
 
 /* ============================================================

@@ -27,6 +27,7 @@ import { ROUNDS, CHARACTERS, CLUE_DB, stackKeyForClue, getAssignedAccusation, CO
 import { SCREEN_GUIDE, EVIDENCE_STACKS } from './data/screenGuide';
 import { TOOLTIPS } from './data/tooltips';
 import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue } from './firebase/config';
+import { useUnreadMessages } from './hooks/useUnreadMessages';
 
 // Session is persisted so a reload — whether the host's force-sync broadcast, a
 // service-worker update, or a player accidentally swiping the tab away — drops
@@ -181,9 +182,18 @@ export default function App() {
   // loop on every page load.
   const lastForceRefreshRef = useRef(null);
 
-  const myCharacter = useMemo(() => 
-    CHARACTERS.find(c => c.id === currentUser), 
+  const myCharacter = useMemo(() =>
+    CHARACTERS.find(c => c.id === currentUser),
   [currentUser]);
+
+  // What the Comms tile on the board is carrying. Lives here rather than in
+  // GridMenu because the hub unmounts on every navigation, and an unread count
+  // that resets whenever the player opens a screen is not an unread count.
+  //
+  // Being on the Comms screen is what marks it read, so the second argument is
+  // the screen itself — no separate "mark read" call to keep in sync with the
+  // routing.
+  const unread = useUnreadMessages(currentUser, activeTab === 'chat');
 
   const currentRoundData = ROUNDS[currentRound] || ROUNDS[ROUNDS.length - 1];
 
@@ -546,6 +556,8 @@ export default function App() {
           currentRound={currentRound}
           isVotingOpen={isVotingOpen}
           note={SCREEN_GUIDE.hub}
+          unreadCount={unread.count}
+          unreadKey={unread.newestId}
         />
 
         {/* Decoder Modal */}

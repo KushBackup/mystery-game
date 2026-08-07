@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+import { collection, addDoc, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { db, subscribeToMessages } from '../../firebase/config';
 import { Send } from '../icons/ChatIcons';
 import { ScreenBrief } from '../ui/ScreenBrief';
 import { InfoTip } from '../ui/InfoTip';
@@ -23,7 +23,6 @@ export const ChatView = ({ myCharacter, note, currentRound = 0 }) => {
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [lastMessageCount, setLastMessageCount] = useState(0);
   const [replyTo, setReplyTo] = useState(null);
   const [editingMessage, setEditingMessage] = useState(null);
   const [swipeState, setSwipeState] = useState({});
@@ -41,6 +40,11 @@ export const ChatView = ({ myCharacter, note, currentRound = 0 }) => {
   const seenIdsRef = useRef(null);
   const didFirstScrollRef = useRef(false);
 
+  // How long the channel was on the previous snapshot, for the arrival buzz. A
+  // ref, not state: it was state, which put it in the subscription's dependency
+  // array and tore down and rebuilt the listener on every single message.
+  const lastCountRef = useRef(0);
+
   const vibrate = (pattern = [200]) => {
     if ('vibrate' in navigator) navigator.vibrate(pattern);
   };
@@ -54,24 +58,17 @@ export const ChatView = ({ myCharacter, note, currentRound = 0 }) => {
     messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
   }, [messages]);
 
-  // Subscribe to messages in real-time
+  // Subscribe to messages in real-time.
+  //
+  // The query lives in firebase/config.js and is shared with the hub's unread
+  // badge (hooks/useUnreadMessages.js) — one query definition means Firestore
+  // serves both listeners off one watch stream, and it means the thread and the
+  // badge can never disagree about which hundred messages are the channel.
   useEffect(() => {
-    const q = query(
-      collection(db, 'messages'),
-      orderBy('createdAt', 'asc'),
-      limit(100)
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const incoming = snapshot.docs.map((docSnap) => ({
-          id: docSnap.id,
-          ...docSnap.data(),
-        }));
-
+    const unsubscribe = subscribeToMessages(
+      (incoming) => {
         // Buzz on a new message from someone else (not on initial load).
-        if (lastMessageCount > 0 && incoming.length > lastMessageCount) {
+        if (lastCountRef.current > 0 && incoming.length > lastCountRef.current) {
           const newestMessage = incoming[incoming.length - 1];
           if (newestMessage.characterId !== myCharacter.id) {
             vibrate([100, 50, 100]);
@@ -93,7 +90,7 @@ export const ChatView = ({ myCharacter, note, currentRound = 0 }) => {
         );
 
         setMessages(messageData);
-        setLastMessageCount(messageData.length);
+        lastCountRef.current = messageData.length;
         setLoading(false);
       },
       (error) => {
@@ -103,7 +100,7 @@ export const ChatView = ({ myCharacter, note, currentRound = 0 }) => {
     );
 
     return () => unsubscribe();
-  }, [lastMessageCount, myCharacter.id]);
+  }, [myCharacter.id]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();

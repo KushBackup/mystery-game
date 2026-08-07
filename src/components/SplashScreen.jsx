@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 /**
  * The cold open. Deliberately the only place in the app that holds the player
@@ -12,14 +12,31 @@ import React, { useEffect, useState } from 'react';
 export const SplashScreen = ({ onComplete }) => {
   const [fadeOut, setFadeOut] = useState(false);
 
+  // Held in a ref for the same reason `useTypewriter` holds its `onChar`: so a
+  // caller that rebuilds its callback every render cannot restart the loop.
+  //
+  // These two timers used to depend on `onComplete` directly, and App passes it
+  // as an inline arrow — a fresh function identity on every render. So *any*
+  // re-render of App while the splash was up cleared both timers and armed them
+  // again from zero, and the whole screen is only 1.4s long. Nothing re-rendered
+  // App at that rate until the hub's unread badge started watching the comms
+  // channel; a burst of messages landing during boot then held the player here
+  // indefinitely, with no error and nothing on screen but the masthead. Fixing
+  // it here rather than with a `useCallback` at the call site: a screen that
+  // owns a timer must not be re-armable by a parent it knows nothing about.
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
+
   useEffect(() => {
     const fadeTimer = setTimeout(() => setFadeOut(true), 1000);
-    const doneTimer = setTimeout(onComplete, 1400);
+    const doneTimer = setTimeout(() => onCompleteRef.current?.(), 1400);
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(doneTimer);
     };
-  }, [onComplete]);
+  }, []);
 
   return (
     <div

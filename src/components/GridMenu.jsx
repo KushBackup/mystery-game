@@ -76,6 +76,12 @@ const HelpIcon = ({ className }) => (
 // 260ms lift with no stagger at all.
 let boardIntroPlayed = false;
 
+// How many times the Comms icon may jog in one visit to the board (App.css §17).
+// The board is a fresh visit every time a screen closes, so this is a per-visit
+// budget rather than a per-session one — but within a visit it is hard, because a
+// busy channel would otherwise turn the tile into the infinite pulse §7.1 bans.
+const JOG_BUDGET = 3;
+
 /**
  * The investigation board (DESIGN_LANGUAGE.md §9, "Grid hub").
  *
@@ -85,7 +91,14 @@ let boardIntroPlayed = false;
  * signal while voting is genuinely open; the rest of the time it carries the
  * accent as a 3px top border, because red is a scalpel, not a paint (§2.2).
  */
-export default function GridMenu({ onNavigate, currentRound = 0, isVotingOpen = false, note }) {
+export default function GridMenu({
+  onNavigate,
+  currentRound = 0,
+  isVotingOpen = false,
+  note,
+  unreadCount = 0,
+  unreadKey = null,
+}) {
   // State, not a ref: this is read during render to pick the animation, and refs
   // must not be read during render. The initialiser only *reads* the module flag
   // (so it stays pure, and StrictMode's double-invoke gets the same answer both
@@ -96,6 +109,26 @@ export default function GridMenu({ onNavigate, currentRound = 0, isVotingOpen = 
   }, []);
 
   const tileMotion = playIntro ? 'er-land' : 'er-enter-quick';
+
+  // The jog ledger. `key` is the newest unread message this device has already
+  // jogged for, `spent` is how much of the budget this visit has used, and
+  // `nonce` is what remounts the wrapper — CSS keyframes only run once per
+  // mount, so a changing key is what replays the animation.
+  //
+  // Adjusted during render rather than from an effect, which is the pattern
+  // App.jsx uses for `seenTab` and the briefing: an effect that calls setState
+  // is what `react-hooks/set-state-in-effect` rejects, and it would also paint
+  // one un-jogged frame first. The assignment terminates immediately, because
+  // the next render finds `shake.key === unreadKey`.
+  const [shake, setShake] = useState({ nonce: 0, key: null, spent: 0 });
+  const jogWanted = unreadCount > 0 && unreadKey !== null;
+  if (jogWanted && unreadKey !== shake.key && shake.spent < JOG_BUDGET) {
+    setShake({ nonce: shake.nonce + 1, key: unreadKey, spent: shake.spent + 1 });
+  }
+  // Landing on the board with something unread counts as an arrival, so the
+  // nonce starts at 0 and the first jog is nonce 1 — which means "has jogged at
+  // least once this visit" and "is currently jogging" are the same condition.
+  const jogging = jogWanted && shake.nonce > 0;
 
   // Six destinations in a clean 3×2 board, then two full-width strips.
   //
@@ -110,7 +143,18 @@ export default function GridMenu({ onNavigate, currentRound = 0, isVotingOpen = 
     { id: 'dashboard', label: 'Identity',  sub: 'Confidential', icon: FingerprintIcon, tone: 'bone',  rot: 'er-rotL' },
     { id: 'story',     label: 'Story',     sub: 'The Night',    icon: BookIcon,        tone: 'aged',  rot: 'er-rotR' },
     { id: 'intel',     label: 'Evidence',  sub: 'Clues & Files', icon: ClipboardIcon,  tone: 'bone',  rot: 'er-rotR' },
-    { id: 'chat',      label: 'Comms',     sub: 'Encrypted',    icon: ChatIcon,        tone: 'aged',  rot: 'er-rotL' },
+    // Comms is the one tile whose sub-label is news rather than a descriptor.
+    // The badge is glanceable and the jog is a nudge; this is the line that says
+    // what either of them *means*, and it is the half that survives reduced
+    // motion, a spent jog budget and a player who simply wasn't looking (§7.1).
+    {
+      id: 'chat',
+      label: 'Comms',
+      sub: unreadCount > 0 ? `${unreadCount} Unread` : 'Encrypted',
+      icon: ChatIcon,
+      tone: 'aged',
+      rot: 'er-rotL',
+    },
     { id: 'votes',     label: 'Vote',      sub: isVotingOpen ? 'Open Now' : 'Standby', icon: ChartIcon, tone: 'vote', rot: 'er-rotL' },
     { id: 'dossier',   label: 'Guests',    sub: 'Profiles',     icon: UsersIcon,       tone: 'bone',  rot: 'er-rotR' },
     { id: 'help',      label: 'Guide',     sub: 'Read Me',      icon: HelpIcon,        tone: 'aged',  rot: '', wide: true },
@@ -182,6 +226,8 @@ export default function GridMenu({ onNavigate, currentRound = 0, isVotingOpen = 
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const isPaper = item.tone === 'bone' || item.tone === 'aged';
+            const isComms = item.id === 'chat';
+            const showBadge = isComms && unreadCount > 0;
 
             return (
               <button
@@ -192,11 +238,37 @@ export default function GridMenu({ onNavigate, currentRound = 0, isVotingOpen = 
                 } ${item.rot} ${toneClasses(item.tone)}`}
                 style={playIntro ? { animationDelay: `${index * 60}ms` } : undefined}
               >
-                <Icon
-                  className={`${item.wide ? 'w-6 h-6' : 'w-8 h-8 sm:w-10 sm:h-10'} ${
-                    isPaper ? 'text-ink/70' : ''
-                  }`}
-                />
+                {/* The icon carries its badge, so both move as one unit when
+                    the tile jogs — a badge pinned to a corner the icon has
+                    rocked away from is worse than no motion at all. Keyed on
+                    the jog nonce because keyframes only run once per mount.
+                    `flex`, not inline-flex: the parent is a flex container, so
+                    a wrapper is blockified either way and this shrink-wraps the
+                    icon at exactly the size it had as a direct child. */}
+                <span
+                  key={isComms ? shake.nonce : 'icon'}
+                  className={`relative flex ${isComms && jogging ? 'er-jog' : ''}`}
+                >
+                  <Icon
+                    className={`${item.wide ? 'w-6 h-6' : 'w-8 h-8 sm:w-10 sm:h-10'} ${
+                      isPaper ? 'text-ink/70' : ''
+                    }`}
+                  />
+
+                  {/* Uncapped, and it needs no cap: the channel is a 100-message
+                      window (MESSAGE_WINDOW, firebase/config.js) and one of those
+                      hundred is the watermark, so the count cannot exceed 99 and
+                      the badge is never wider than two digits. A `99+` branch
+                      here would be unreachable, and it would also put the badge
+                      and the sub-label into visible disagreement — they sit 3px
+                      apart. Hidden from the reader because the sub-label already
+                      says "12 Unread" in words. */}
+                  {showBadge && (
+                    <span className="er-badge" aria-hidden="true">
+                      {unreadCount}
+                    </span>
+                  )}
+                </span>
 
                 <span
                   className={`font-typewriter font-bold uppercase leading-none text-[19px] sm:text-[23px] ${

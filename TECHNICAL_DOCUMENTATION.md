@@ -310,7 +310,32 @@ end the evening holding evidence, which they can, by trading for codes.
 Uses `validateLoginCode()` and shows player count from `CASE_META.playerCount`.
 
 ### GridMenu
-Uses `CASE_META` for venue, case title, case ID, player count, and killer count.
+Uses `CASE_META` for venue, case title, case ID and player count. (Not killer count — see [the spoiler note under Player-facing labels](#player-facing-labels); it was removed from the footer rail on 2026-08-07.)
+
+Two tiles react to game state. **VOTE** fills with `signal` while `isVotingOpen`. **COMMS** reports the channel — see [The unread badge](#the-unread-badge) below.
+
+### ChatView (Comms)
+
+One query, defined once in [`config.js`](src/firebase/config.js) as `subscribeToMessages` and shared by both consumers — the thread and the hub's badge. Firestore serves identical queries off a single listen stream, so this is one watch on the wire, and neither surface can end up with a different idea of what "the channel" is.
+
+The query is **`orderBy('createdAt','desc').limit(100)`, reversed client-side**. It used to be `asc` with the same limit, which returns the *oldest* hundred: once the room passed a hundred messages the thread would have frozen on the backlog and every message after it been invisible. With 51 players over an evening that was a certainty, not an edge case. `MESSAGE_WINDOW = 100` also bounds the unread count at 99, since one of the hundred is always the read watermark.
+
+#### The unread badge
+
+The Comms tile looks identical whether the channel is silent or has forty messages on it, so a player with nothing to decode has no reason to open it. [`useUnreadMessages`](src/hooks/useUnreadMessages.js) is what lets the tile say *somebody is talking*: it drives an `.er-badge` count on the icon, the sub-label swapping `Encrypted` → `N Unread`, and up to three jogs of the icon (`.er-jog`, [App.css](src/App.css) §17).
+
+It lives in [App.jsx](src/App.jsx), not in GridMenu, because the hub unmounts on every navigation and an unread count that resets whenever the player opens a screen is not an unread count. **Being on the Comms screen is what marks it read** — the hook's second argument is `activeTab === 'chat'`, so there is no separate "mark read" call to keep in sync with the routing, and messages that land while the player is sitting on the channel are read too.
+
+Two deliberate constraints:
+
+- **A backlog is not news.** With no watermark — a fresh device, or a player logging in during Round 04 — the hook seeds on the newest message and reports zero. A badge reading 60 on arrival is noise, and it never clears in a way that means anything. The same branch covers a watermark that has fallen out of the window, whether deleted by its author or pushed off the tail.
+- **Your own messages never count**, and the id the hook publishes is the newest *unread* message rather than the newest message — GridMenu keys the jog on it, so sending a message must not jog the icon at the person who typed it.
+
+The ledger is `localStorage['astral.commsseen']`, holding a message id. Persisted and outside `SESSION_KEY` for the same reason as `astral.tallyseen` and `astral.askcue`: it must survive a reload, a service-worker update and the host's force-sync broadcast, none of which is a reason to tell somebody they have unread messages they read a minute ago. Private-mode Safari falls back to a module-scope copy that holds for the life of the tab.
+
+Every publish goes through a bail-out that returns the previous object when nothing changed. This hook sits at the top of App, so each write re-renders the whole tree, and most snapshots carry no news for the badge at all — the player's own message, an edit, a delete, a server timestamp resolving. That churn is also what surfaced the re-armable `SplashScreen` timer; see [Lessons.md](Lessons.md).
+
+**The jog budget is per board visit, held in GridMenu.** `JOG_BUDGET = 3` distinct new messages, adjusted during render (the pattern App.jsx uses for `seenTab`) rather than from an effect, which `react-hooks/set-state-in-effect` rejects. The wrapper is keyed on a nonce because CSS keyframes only run once per mount, and the badge rides *inside* that wrapper so both move as one unit — a badge pinned to a corner the icon has rocked away from is worse than no motion at all.
 
 ### DossierView / GuestProfileModal
 The roster surface is now framed as **Guests**, not **Suspects**, because only 10 of the 51 players are prime suspects.

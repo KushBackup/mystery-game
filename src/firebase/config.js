@@ -3,7 +3,8 @@ import {
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
-  doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, getDocs, writeBatch
+  doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, getDocs, writeBatch,
+  orderBy, limit
 } from 'firebase/firestore';
 import { CASE_FILES } from '../data/gameData.js';
 
@@ -233,6 +234,49 @@ export const revealCluesForRound = async (roundNumber) => {
   if (roundClues.length > 0) {
     await revealClues(roundClues);
   }
+};
+
+// --- COMMS CHANNEL ---
+
+// How many messages a client keeps in view. The channel is a party chat, not an
+// archive: 51 people over an evening will run well past this, and nobody scrolls
+// back two hours. It also bounds the unread badge — one of the hundred is the
+// read watermark, so the count can never exceed 99.
+const MESSAGE_WINDOW = 100;
+
+// The one subscription to the channel, shared by every consumer.
+//
+// Two consumers exist — ChatView (which renders the thread) and
+// useUnreadMessages (which drives the Comms badge on the hub). They MUST build
+// the query here rather than each rolling their own: Firestore shares a single
+// listen stream between identical queries, so one query definition is one watch
+// on the wire instead of two, and the thread and the badge cannot end up
+// disagreeing about which hundred messages are the channel.
+//
+// Ordered DESC and reversed, not ASC. `orderBy('createdAt','asc').limit(100)`
+// returns the *oldest* hundred — so the moment the room passed a hundred
+// messages the thread would freeze on the backlog and every message after it
+// would be invisible, badge included. DESC + limit takes the newest hundred;
+// the reverse below puts them back in reading order.
+export const subscribeToMessages = (callback, onError) => {
+  const q = query(
+    collection(db, 'messages'),
+    orderBy('createdAt', 'desc'),
+    limit(MESSAGE_WINDOW)
+  );
+
+  return onSnapshot(
+    q,
+    (snapshot) => {
+      const docs = snapshot.docs.map((docSnap) => ({
+        id: docSnap.id,
+        ...docSnap.data(),
+      }));
+      docs.reverse(); // oldest → newest, the order the channel reads in
+      callback(docs);
+    },
+    onError
+  );
 };
 
 // Clear all chat messages
