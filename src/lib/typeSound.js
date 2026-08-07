@@ -9,10 +9,11 @@
  * detuned per keystroke so a hundred characters don't sound like a hundred copies
  * of one click.
  *
- * Three sounds, all deliberately quiet — this plays in a room full of people:
- *   playKeyClick()    a key striking paper — every visible character
- *   playReturnClick() the carriage moving  — the break between lines
- *   playTypeBell()    the margin bell      — a slide finishing
+ * Four sounds, all deliberately quiet — this plays in a room full of people:
+ *   playKeyClick()     a key striking paper — every visible character
+ *   playReturnClick()  the carriage moving  — the break between lines
+ *   playTypeBell()     the margin bell      — a slide finishing
+ *   playSolveFanfare() three bells rising   — a riddle cracked
  *
  * The player's choice lives in localStorage under `astral.sfx`, separately from
  * the session key, so muting the app is not something a logout can undo.
@@ -194,5 +195,58 @@ export const playTypeBell = () => {
     osc.connect(amp).connect(audio.destination);
     osc.start(now);
     osc.stop(now + 0.55);
+  });
+};
+
+/**
+ * A riddle cracked (components/modals/RiddleModal.jsx).
+ *
+ * The margin bell, struck three times up a major triad, 90ms apart, with the
+ * last one held longest. It is the same instrument as `playTypeBell` on purpose
+ * — a synth arpeggio from a different voice would sound like a mobile game
+ * dropped into a 1970s case room. This is the machine being *pleased*, which
+ * is the loudest thing this app is allowed to be.
+ *
+ * Louder than the margin bell (1.6×) and still under a twentieth of full scale.
+ * It fires once, on a deliberate act, and it is the payoff for the whole screen;
+ * a reward the room cannot hear is not a reward.
+ */
+export const playSolveFanfare = () => {
+  if (!enabled) return;
+
+  const audio = ensureContext();
+  if (!audio || audio.state !== 'running') return;
+
+  const start = audio.currentTime;
+
+  // A major triad up: the interval says "resolved", which is exactly what the
+  // player just did. Held longer at each step so the top note is the one left
+  // ringing in the room.
+  [
+    [1568, 0, 0.5],
+    [1976, 0.09, 0.6],
+    [2349, 0.18, 1.0],
+  ].forEach(([root, offset, tail]) => {
+    const at = start + offset;
+
+    // Two partials per strike, same as the margin bell — one sine reads as a
+    // notification tone, two read as struck metal.
+    [
+      [root, BELL_GAIN * 1.6],
+      [root * 1.5, BELL_GAIN * 0.55],
+    ].forEach(([freq, peak]) => {
+      const osc = audio.createOscillator();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+
+      const amp = audio.createGain();
+      amp.gain.setValueAtTime(0.0001, at);
+      amp.gain.exponentialRampToValueAtTime(peak, at + 0.005);
+      amp.gain.exponentialRampToValueAtTime(0.0001, at + tail);
+
+      osc.connect(amp).connect(audio.destination);
+      osc.start(at);
+      osc.stop(at + tail + 0.05);
+    });
   });
 };

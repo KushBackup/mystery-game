@@ -15,6 +15,26 @@ This is the printable host packet for the live event.
 - Killers: 5
 - Method: aconitine hidden in the finishing spray of Armaan's personal Last Light drink
 - Core twist: the room thinks one suspect and their own circle did it; the truth is a five-person cross-group conspiracy
+- Clue delivery: **in-app riddle lock, no printed clue cards** — see below
+
+---
+
+## How Clues Reach Players
+
+Players earn clues themselves. On the Evidence screen, **ASK** deals a general riddle (nothing
+to do with the case, one-word answer); solving it unseals the next clue in that player's queue
+and shows a **code**. Anyone else who types that code into **CODE** gets the same clue.
+
+**ASK appears when you advance to Round 2** — nothing in the prize pool is reachable before
+then, so for Rounds 0–1 the corner is CODE alone. Say the loop out loud in the pre-game anyway;
+the button arriving to a room that already knows what it is for is the point.
+
+Every player's queue is ordered differently, so no two people win the same thing and the room
+only assembles the full picture by trading codes out loud. Your job during rounds 2–5 is to
+keep pushing them to share.
+
+The clue manifest further down this pack is your **override**: if a round stalls because nobody
+has solved anything, read a code out and the clue enters the room immediately.
 
 ---
 
@@ -25,7 +45,7 @@ This is the printable host packet for the live event.
 | Sneha Ganesh | THIMBLE | Monday binder, finance motive, upstairs-booth argument | Killer · mastermind |
 | Tara Singhania | CANVAS | customs crate, provenance fraud, apparent bar access | Innocent suspect |
 | Kiyaah Rose Raghuwanshi | ORACLE | private-bar ritual, victim-only drink | Killer · delivery |
-| Victoria Vance | FORGERY | study documents, forged paper trail, inventory logs | Killer · false trail |
+| Victoria Vance | FORGERY | back-office documents, forged paper trail, inventory logs | Killer · false trail |
 | Roddy Faustus | HEMLOCK | botanical case, toxin knowledge, prep-room path | Killer · poison |
 | Oindrilla Chatterjee | AMBER | sound-booth access, blackout, QR lane | Killer · systems |
 | Tanvi Vartak | PIXEL | sightlines, event choreography, floor plan | Innocent suspect |
@@ -52,51 +72,51 @@ This is the printable host packet for the live event.
 ### Round 1 · Accusations
 | Code | Target | Assigned count | What it does |
 |---|---|---:|---|
-| ACCUSE_SNEHA | Sneha | 5 | Opens mastermind lane |
-| ACCUSE_TARA | Tara | 5 | Opens customs/frame lane |
-| ACCUSE_KIYAAH | Kiyaah | 5 | Opens ritual/bar lane |
-| ACCUSE_VICTORIA | Victoria | 5 | Opens paper-trail lane |
-| ACCUSE_RODDY | Roddy | 5 | Opens toxin lane |
-| ACCUSE_OINDRILLA | Oindrilla | 5 | Opens blackout lane |
-| ACCUSE_TANVI | Tanvi | 5 | Opens choreography lane |
-| ACCUSE_RISHI | Rishi | 5 | Opens pressure/rage lane |
-| ACCUSE_VINOD | Vinod | 5 | Opens power/exit lane |
-| ACCUSE_ANNA | Anna | 6 | Opens display-swap lane |
+| LANTERN | Sneha | 5 | Opens mastermind lane |
+| HARBOR | Tara | 5 | Opens customs/frame lane |
+| CADENCE | Kiyaah | 5 | Opens ritual/bar lane |
+| MARBLE | Victoria | 5 | Opens paper-trail lane |
+| COMPASS | Roddy | 5 | Opens toxin lane |
+| TANGENT | Oindrilla | 5 | Opens blackout lane |
+| SATCHEL | Tanvi | 5 | Opens choreography lane |
+| PARADE | Rishi | 5 | Opens pressure/rage lane |
+| BOULDER | Vinod | 5 | Opens power/exit lane |
+| CARNIVAL | Anna | 6 | Opens display-swap lane |
 
 ### Round 2 · Motives
 | Code | Target | What it proves |
 |---|---|---|
-| THIMBLE | Sneha | Armaan planned to scapegoat her in Monday audit |
-| CANVAS | Tara | provenance fraud pressure |
-| ORACLE | Kiyaah | stolen ritual + personal leverage |
-| FORGERY | Victoria | forged ledgers + fall-girl setup |
-| HEMLOCK | Roddy | stolen formula and ownership theft |
-| AMBER | Oindrilla | system abuse and blame memo |
-| PIXEL | Tanvi | prototype theft and stalking threat |
-| MYTHOS | Rishi | staffing theft and reputation sabotage |
-| REGENT | Vinod | regulatory leverage and secret recordings |
-| REPLICA | Anna | insurance-adjacent replica fraud |
+| PENDULUM | Sneha | Armaan planned to scapegoat her in Monday audit |
+| SAFFRON | Tara | provenance fraud pressure |
+| DRIFTWOOD | Kiyaah | stolen ritual + personal leverage |
+| GRANITE | Victoria | forged ledgers + fall-girl setup |
+| THISTLE | Roddy | stolen formula and ownership theft |
+| LATTICE | Oindrilla | system abuse and blame memo |
+| ORIGAMI | Tanvi | prototype theft and stalking threat |
+| STAMPEDE | Rishi | staffing theft and reputation sabotage |
+| OBELISK | Vinod | regulatory leverage and secret recordings |
+| MOSAIC | Anna | insurance-adjacent replica fraud |
 
 ### Round 3 · Evidence
 | Code | Title | What it proves |
 |---|---|---|
-| EVIDENCE_TOX | Toxicology Summary | One altered drink, not poisoned batch |
-| EVIDENCE_ATOMIZER | Atomizer Analysis | Twin mister, aconite carrier, prep-room fibres |
-| EVIDENCE_CCTV | Projector and Bar-Camera Log | 94-second blind spot |
-| EVIDENCE_FLOOR | Floor Plan and Sightline Notes | Tanvi's lane logic and side-banquette visibility |
-| EVIDENCE_INVOICE | Supplier Invoice Mismatch | Tara frame-job |
-| EVIDENCE_ACCESS | Service QR Access Trace | cloned QR and sound-booth session |
-| EVIDENCE_BINDER | Monday Binder Index | Armaan's scapegoat map |
+| BEACON | Toxicology Summary | One altered drink, not poisoned batch |
+| FILAMENT | Atomizer Analysis | Twin mister, aconite carrier, prep-room fibres |
+| HALOGEN | Projector and Bar-Camera Log | 94-second blind spot |
+| GABLE | Floor Plan and Sightline Notes | Tanvi's lane logic and side-banquette visibility |
+| PARCHMENT | Supplier Invoice Mismatch | Tara frame-job |
+| TURNSTILE | Service QR Access Trace | cloned QR and sound-booth session |
+| QUARRY | Monday Binder Index | Armaan's scapegoat map |
 
 ### Rounds 4-5 · Revelations
 | Code | Title | What it proves |
 |---|---|---|
-| REVEAL_AUDIT | Monday Audit Packet | Sneha was Monday's planned sacrifice |
-| REVEAL_BAR | Private Bar Program Contract | Kiyaah owned the Last Light ritual |
-| REVEAL_FORMULA | Roddy's Missing Notebook Page | Roddy had method knowledge |
-| REVEAL_TAX | Victoria's Signature Sheet | Victoria was framed and framing |
-| REVEAL_ADMIN | Admin Override Trace | Oindrilla's system path enabled the blind spot |
-| REVEAL_THREAD | Burner Group Transcript | five-way coordination across groups |
+| SOLSTICE | Monday Audit Packet | Sneha was Monday's planned sacrifice |
+| HOLLOW | Private Bar Program Contract | Kiyaah owned the Last Light ritual |
+| BRAMBLE | Roddy's Missing Notebook Page | Roddy had method knowledge |
+| COBALT | Victoria's Signature Sheet | Victoria was framed and framing |
+| ZEPHYR | Admin Override Trace | Oindrilla's system path enabled the blind spot |
+| CATACOMB | Burner Group Transcript | five-way coordination across groups |
 
 ---
 
@@ -110,7 +130,7 @@ Use this when deciding whom to nudge.
 - Parinitha — sees Kiyaah swap the atomizers
 - Aarushi — says the bitter-orange note is not from the bottle
 - Flora — smells medicinal note under the orange peel
-- John — hears one drink is for Armaan only
+- John — hears Kiyaah tell staff one drink is for Armaan only
 - Aaina — notices Kiyaah behind the private bar alone too long
 - Vidya — notices orange-oil streak on tray
 
@@ -118,7 +138,8 @@ Use this when deciding whom to nudge.
 - Lakshmi — sees Oindrilla at the admin screen
 - Vaidehi — sees admin override flicker
 - Nanu — sees Oindrilla with admin tablet
-- Chinmay — hears the service QR beep
+- Chinmay — hears the service QR beep with no staff member near it
+- Anjul — sees a staff apron come down the service stair on someone who is not staff (the other end of that QR pass)
 - Dona — is at the mic when the projector glitches
 - Dinesh — sees reboot happen from the side console
 - Mahi — notices the side bar lane stays open while the floor turns
@@ -137,11 +158,10 @@ Use this when deciding whom to nudge.
 - Fabiola — hears Tara say the customs seal was already broken before she touched the crate
 - Khyati — sees Tara's crate reopened after Armaan said it would stay sealed
 - Chayne — has footage placing Anna near the gift table during the glitch
-- Anjul — sees fake staff apron on service stair
 
 ### Mastermind / Monday binder lane
-- Chryselle — sees Sneha leave the upstairs booth with the binder
-- Sunali — hears Sneha ask whether the binder was still upstairs
+- Chryselle — sees Sneha leave the upstairs booth empty handed, folder still on the table
+- Sunali — hears Sneha ask which upstairs room the red folder had been left in
 - Natasha — catches Sneha and Kiyaah ending a conversation too quickly
 
 ### Symptom / collapse lane
@@ -166,14 +186,15 @@ Use this when deciding whom to nudge.
 
 ## Materials Checklist
 
+> **There are no clue cards to print.** The motive, evidence and revelation codes are won in
+> the app through the riddle lock (see below). Login cards are the only paper the players get.
+
 ### Mandatory
 - 51 login cards
-- 10 motive cards
-- 7 evidence cards
-- 6 revelation cards
 - 1 host device
 - 1 printed copy of [HOST_LIVE_FACILITATION.md](HOST_LIVE_FACILITATION.md)
 - 1 printed copy of [HOST_QA_BRIEFING.md](HOST_QA_BRIEFING.md)
+- 1 printed copy of the clue manifest below — your override when a round stalls
 
 ### Nice to have
 - Printed suspect roster for the host

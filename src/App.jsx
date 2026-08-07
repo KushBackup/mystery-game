@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { Calculator } from './components/icons/IconComponents';
+import { Calculator, Riddle } from './components/icons/IconComponents';
 import { FeedbackToast } from './components/ui/FeedbackToast';
 import { Header } from './components/layout/Header';
 import GridMenu from './components/GridMenu';
@@ -13,16 +13,19 @@ import { HelpView } from './components/views/HelpView';
 import { StoryView } from './components/views/StoryView';
 import { GuestProfileModal } from './components/modals/GuestProfileModal';
 import { DecoderModal } from './components/modals/DecoderModal';
+import { RiddleModal } from './components/modals/RiddleModal';
 import { VoteResultsModal } from './components/modals/VoteResultsModal';
 import { ScreenBrief } from './components/ui/ScreenBrief';
+import { InfoTip } from './components/ui/InfoTip';
 import { CharacterSelect } from './components/CharacterSelect';
 import { HostPanel } from './components/HostPanel';
 import { SplashScreen } from './components/SplashScreen';
 import { StoryIntro } from './components/StoryIntro';
 import { OutroSplash } from './components/OutroSplash';
 import { MurdererRevealOverlay } from './components/MurdererRevealOverlay';
-import { ROUNDS, CHARACTERS, CLUE_DB, stackKeyForClue, getAssignedAccusation, CONFESSION_CLUE, getKillers, isMurderer } from './data/gameData';
+import { ROUNDS, CHARACTERS, CLUE_DB, stackKeyForClue, getAssignedAccusation, CONFESSION_CLUE, getKillers, isMurderer, nextRiddleReward, ASK_OPENS_AT } from './data/gameData';
 import { SCREEN_GUIDE, EVIDENCE_STACKS } from './data/screenGuide';
+import { TOOLTIPS } from './data/tooltips';
 import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue } from './firebase/config';
 
 // Session is persisted so a reload — whether the host's force-sync broadcast, a
@@ -73,6 +76,36 @@ const readSession = () => {
   }
 };
 
+// The one-time ASK cue (App.css §17). ASK is absent for the first two rounds and
+// then appears mid-game beside a CODE button the player already knows, so the
+// first time they land on Evidence with it there it knocks to be noticed.
+//
+// Persisted, and deliberately not part of SESSION_KEY: it must survive a reload,
+// a service-worker update and the host's force-sync broadcast, all of which are
+// routine mid-event and none of which are a reason to bounce a button at someone
+// who has been tapping it for three rounds. Not cleared on logout either — it is
+// a fact about this screen, not about this player.
+const ASK_CUE_KEY = 'astral.askcue';
+
+const askCueSpent = () => {
+  try {
+    return window.localStorage.getItem(ASK_CUE_KEY) === 'seen';
+  } catch {
+    // Private-mode Safari again. Treat an unreadable ledger as already spent:
+    // the failure mode of the other answer is a button that knocks on every
+    // single visit to Evidence for the whole evening.
+    return true;
+  }
+};
+
+const spendAskCue = () => {
+  try {
+    window.localStorage.setItem(ASK_CUE_KEY, 'seen');
+  } catch {
+    // Nothing to do — see above.
+  }
+};
+
 export default function App() {
   // Global State
   const [splashComplete, setSplashComplete] = useState(false);
@@ -102,6 +135,13 @@ export default function App() {
   // the list, so without knowing which one is new there is no moment to play.
   const [justUnlockedClue, setJustUnlockedClue] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [riddleOpen, setRiddleOpen] = useState(false);
+  // Clues this device has just won but whose Firestore write has not come back
+  // round yet. Without it, solving two riddles quickly pays out the same clue
+  // twice: the reward queue is computed from `unlockedClues`, and that only
+  // updates when the snapshot lands. Local, and deliberately never cleaned up —
+  // once the snapshot arrives the ids are simply duplicates in a Set.
+  const [pendingUnlocks, setPendingUnlocks] = useState([]);
   // Which stack the Evidence screen has open — null is its hub. It lives here
   // rather than inside IntelView because on a stack the screen *title* is the
   // stack's name, and this component owns the screen frame for every view (§4.2).
@@ -302,6 +342,72 @@ export default function App() {
     setTimeout(() => setFeedback(null), 3000);
   };
 
+  // The clue the next solved riddle pays out. Null once this player holds
+  // everything the round can give, which is what the modal checks before it
+  // deals a puzzle it cannot pay for. Host-revealed clues count as held: the
+  // riddle lock must not spend a solve on something the room already has.
+  const riddleReward = useMemo(
+    () =>
+      currentUser
+        ? nextRiddleReward(currentUser, currentRound, [
+            ...unlockedClues,
+            ...revealedClues,
+            ...pendingUnlocks,
+          ])
+        : null,
+    [currentUser, currentRound, unlockedClues, revealedClues, pendingUnlocks]
+  );
+
+  // ASK stays off the screen until the lock has something to pay out — Round 02
+  // as the decks stand (ASK_OPENS_AT, data/gameData.js).
+  const askVisible = currentRound >= ASK_OPENS_AT;
+
+  // Whether this device still owes the player the one-time cue that points at
+  // ASK the round it turns up. Read from the ledger once, in a *pure*
+  // initialiser, so StrictMode's double invoke gets the same answer both times;
+  // the effect spends it, and the wrapper's `animationend` retires it.
+  const [askCueOwed, setAskCueOwed] = useState(() => !askCueSpent());
+
+  // It fires on first *sight* rather than at the round advance: most of the room
+  // is on Chat or Guests when the host moves the case on, and a knock nobody is
+  // looking at is a knock spent.
+  const askCueLive = askCueOwed && askVisible && activeTab === 'intel';
+  const askCueStarted = useRef(false);
+
+  useEffect(() => {
+    if (askCueLive) {
+      // Spent on sight, not on completion. The ledger is written the moment the
+      // cue starts, so a reload two seconds in does not replay it — and leaving
+      // the screen mid-knock has to retire it too, or the in-session behaviour
+      // and the reloaded behaviour disagree about what "once" means.
+      spendAskCue();
+      askCueStarted.current = true;
+      return;
+    }
+    if (askCueStarted.current) setAskCueOwed(false);
+  }, [askCueLive]);
+
+  // A riddle cracked. The modal has already played the celebration — this is
+  // only the bookkeeping, so it must not block or undo anything on screen.
+  const handleRiddleSolved = (clue) => {
+    setPendingUnlocks((ids) => [...ids, clue.id]);
+    setJustUnlockedClue(clue.id);
+
+    addUnlockedClue(currentUser, clue.id).catch((error) => {
+      console.error('Error adding clue:', error);
+      setFeedback({ type: 'error', msg: 'Saved locally — sync failed' });
+      setTimeout(() => setFeedback(null), 3000);
+    });
+  };
+
+  // "Read it", from the solve screen: close the lock and land on the stack the
+  // clue belongs to, so the §7.2 unseal moment plays where the player is looking.
+  const handleReadReward = () => {
+    setRiddleOpen(false);
+    setActiveTab('intel');
+    setEvidenceStack(stackKeyForClue(justUnlockedClue));
+  };
+
   const submitVote = async (suspectId) => {
     try {
       await submitVoteToFirebase(currentUser, suspectId, currentRound);
@@ -447,6 +553,13 @@ export default function App() {
 
   const isSelfFramed = SELF_FRAMED_VIEWS.has(activeTab);
 
+  // Close undoes one level, not the whole trip. An open Evidence stack is framed as
+  // a screen of its own, so the X on it has to behave like the X on a screen — it
+  // returns to the Evidence hub, and the next one returns to the board. Dropping
+  // straight to the board from a stack would skip a screen the player never left.
+  const inEvidenceStack = activeTab === 'intel' && evidenceStack !== null;
+  const closeScreen = () => (inEvidenceStack ? setEvidenceStack(null) : setActiveTab(null));
+
   // Ink is the world; only diegetic documents get a bone surface (§5).
   //
   // `overflow-x-clip` on the root: the atmospheric lamp is a 640px radial wash
@@ -464,7 +577,8 @@ export default function App() {
         currentRound={currentRound}
         currentRoundData={currentRoundData}
         isVotingOpen={isVotingOpen}
-        onClose={() => setActiveTab(null)}
+        onClose={closeScreen}
+        closeLabel={inEvidenceStack ? 'Close and return to the evidence board' : undefined}
       />
 
       {/* Main Content */}
@@ -575,19 +689,66 @@ export default function App() {
           </div>
         )}
 
-        {/* Decoder — square, because the decoder is chrome, not paper. It lands
-            in a beat after the screen so it reads as arriving *for* this screen
-            rather than as part of the frame. */}
+        {/* The two ways evidence reaches a phone, side by side — square, because
+            both are chrome, not paper. They land in a beat after the screen so
+            they read as arriving *for* this screen rather than as part of the
+            frame, and ASK lands second because CODE is the one a player with a
+            code in their ear is already reaching for.
+            ASK is the riddle lock, which replaced the printed clue cards: solve
+            a riddle, win a clue, and get a code to hand to everybody else. CODE
+            is where those handed-around codes get typed in.
+            ASK only exists from Round 02 (`askVisible`) — before that the lock
+            has no reward it could unseal, so the corner is CODE alone. */}
         {activeTab === 'intel' && (
-          <button
-            onClick={() => setModalOpen(true)}
-            aria-label="Enter a clue code"
-            className="er-touch er-land fixed bottom-6 right-4 z-40 flex flex-col items-center justify-center gap-1 w-16 h-16 bg-ink-raised border border-signal text-signal-lift shadow-[0_12px_28px_rgba(0,0,0,0.6)]"
-            style={{ animationDelay: '260ms' }}
-          >
-            <Calculator size={22} strokeWidth={1.75} />
-            <span className="er-mono er-mono--hot text-[9px]">Code</span>
-          </button>
+          <div className="fixed bottom-6 right-4 z-40 flex flex-col items-end gap-2.5">
+            {/* ASK and CODE are the whole economy of the evening and the two
+                labels under them are four letters each, so this is the one
+                tooltip that stands alone as a control of its own rather than
+                trailing a label (§6.13). It lands last, after both buttons.
+                The copy follows the corner: while ASK is absent it explains
+                CODE only, rather than describing a button that isn't there. */}
+            <InfoTip
+              tip={askVisible ? TOOLTIPS.evidenceTools : TOOLTIPS.evidenceCode}
+              variant="chip"
+              className="er-land"
+              style={{ animationDelay: '380ms' }}
+            />
+
+            <div className="flex items-end gap-3">
+              {askVisible && (
+                /* The wrapper carries the one-time cue (App.css §17) because the
+                   button is already spending its own `animation` on the landing.
+                   `animationend` bubbles, so the guard is what stops that landing
+                   from retiring the cue before it has knocked once. */
+                <span
+                  className={`inline-flex ${askCueLive ? 'er-summon' : ''}`}
+                  onAnimationEnd={(event) => {
+                    if (event.target === event.currentTarget) setAskCueOwed(false);
+                  }}
+                >
+                  <button
+                    onClick={() => setRiddleOpen(true)}
+                    aria-label="Solve a riddle to unseal a clue"
+                    className="er-touch er-land flex flex-col items-center justify-center gap-1 w-16 h-16 bg-ink-raised border border-line text-bone shadow-[0_12px_28px_rgba(0,0,0,0.6)]"
+                    style={{ animationDelay: '320ms' }}
+                  >
+                    <Riddle size={22} strokeWidth={1.75} />
+                    <span className="er-mono text-[9px]">Ask</span>
+                  </button>
+                </span>
+              )}
+
+              <button
+                onClick={() => setModalOpen(true)}
+                aria-label="Enter a clue code"
+                className="er-touch er-land flex flex-col items-center justify-center gap-1 w-16 h-16 bg-ink-raised border border-signal text-signal-lift shadow-[0_12px_28px_rgba(0,0,0,0.6)]"
+                style={{ animationDelay: '260ms' }}
+              >
+                <Calculator size={22} strokeWidth={1.75} />
+                <span className="er-mono er-mono--hot text-[9px]">Code</span>
+              </button>
+            </div>
+          </div>
         )}
       </main>
 
@@ -607,6 +768,16 @@ export default function App() {
         onInputChange={(e) => setInputCode(e.target.value)}
         onSubmit={handleCodeSubmit}
         onClose={() => setModalOpen(false)}
+      />
+
+      {/* Riddle lock — the replacement for the printed clue cards. */}
+      <RiddleModal
+        isOpen={riddleOpen}
+        reward={riddleReward}
+        currentRound={currentRound}
+        onSolved={handleRiddleSolved}
+        onRead={handleReadReward}
+        onClose={() => setRiddleOpen(false)}
       />
     </div>
   );

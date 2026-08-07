@@ -1,7 +1,9 @@
 import React from 'react';
 import { DoodleCoffeeStain, DoodleCCTV } from '../ui/Doodles';
 import { CASE_FILES } from '../../data/gameData';
+import { TOOLTIPS } from '../../data/tooltips';
 import { Numeral } from '../ui/Numeral';
+import { InfoTip } from '../ui/InfoTip';
 
 /**
  * The case-file archive — the lower region of the Evidence screen
@@ -36,7 +38,12 @@ export const CaseFilesSection = ({ unlockedFiles = [] }) => {
         <div>
           {/* Ticks when the host releases a batch mid-screen. */}
           <Numeral as="p" value={availableFiles.length} pad={2} className="er-stat__num" />
-          <p className="er-stat__label">Released</p>
+          {/* These are the one stack that needs no code, and a player who has
+              spent the evening trading them will assume otherwise (§6.13). */}
+          <p className="er-stat__label flex items-center gap-2">
+            Released
+            <InfoTip tip={TOOLTIPS.caseFiles} />
+          </p>
         </div>
         <div className="text-right">
           <p className="er-stat__num">{String(CASE_FILES.length).padStart(2, '0')}</p>

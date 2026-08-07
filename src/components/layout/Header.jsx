@@ -2,7 +2,9 @@ import React from 'react';
 import { X } from '../icons/IconComponents';
 import { Numeral } from '../ui/Numeral';
 import { RoundRail } from '../ui/RoundRail';
+import { InfoTip } from '../ui/InfoTip';
 import { ROUNDS } from '../../data/gameData';
+import { roundTip } from '../../data/tooltips';
 
 /**
  * The chrome rail (DESIGN_LANGUAGE.md §4.2). Mono label left, state right,
@@ -19,7 +21,15 @@ import { ROUNDS } from '../../data/gameData';
  *
  * Height is `--chrome-h` (index.css); ChatView pins itself to the same value.
  */
-export const Header = ({ currentRound, currentRoundData, isVotingOpen, onClose }) => {
+export const Header = ({
+  currentRound,
+  currentRoundData,
+  isVotingOpen,
+  onClose,
+  // Where this X actually goes. It is not always the board — from an open Evidence
+  // stack it steps back to the Evidence hub — and a screen reader is told the truth.
+  closeLabel = 'Close and return to the board',
+}) => {
   const roundTitle = currentRoundData?.title || 'Standby';
 
   return (
@@ -41,9 +51,18 @@ export const Header = ({ currentRound, currentRoundData, isVotingOpen, onClose }
             )}
 
             {/* Round is a number, so it is brass, and it is the display face
-                (§3.1). It ticks rather than jumps (§7). */}
+                (§3.1). It ticks rather than jumps (§7).
+
+                The tooltip beside it is the most valuable one in the app: the
+                rail is on every screen, so this is the only place a player can
+                ask "what can I do right now?" without leaving what they are
+                doing. It names the round and prints that round's line from the
+                Guide (§6.13). */}
             <div className="text-right">
-              <div className="er-mono">Round</div>
+              <div className="flex items-center justify-end gap-1.5">
+                <span className="er-mono">Round</span>
+                <InfoTip tip={roundTip(currentRound)} />
+              </div>
               <Numeral
                 as="div"
                 value={currentRound}
@@ -55,7 +74,7 @@ export const Header = ({ currentRound, currentRoundData, isVotingOpen, onClose }
             {onClose && (
               <button
                 onClick={onClose}
-                aria-label="Close and return to the board"
+                aria-label={closeLabel}
                 className="er-touch flex items-center justify-center w-11 h-11 border border-line text-bone hover:border-signal hover:text-signal-lift"
               >
                 <X size={20} />

@@ -98,6 +98,20 @@ export const Calculator = (props) => (
   </IconBase>
 );
 
+/**
+ * The riddle lock (components/modals/RiddleModal.jsx) — a question mark on a
+ * filing card. Square-cornered rather than the usual circled query, because
+ * corners are square (DESIGN_LANGUAGE.md §5) and this sits directly beside the
+ * decoder's Calculator, which is drawn on the same rectangle.
+ */
+export const Riddle = (props) => (
+  <IconBase {...props}>
+    <rect x="3" y="3" width="18" height="18" />
+    <path d="M9.2 9.1a2.9 2.9 0 0 1 5.6 1c0 1.9-2.8 2.4-2.8 4" />
+    <line x1="12" y1="17.4" x2="12.01" y2="17.4" />
+  </IconBase>
+);
+
 export const ChevronRight = (props) => (
   <IconBase {...props}>
     <polyline points="9 18 15 12 9 6" />

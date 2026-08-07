@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { ScreenBrief } from './ui/ScreenBrief';
 import { Numeral } from './ui/Numeral';
+import { InfoTip } from './ui/InfoTip';
 import { CASE_META } from '../data/gameData';
+import { roundTip } from '../data/tooltips';
 
 // Sketched line icons — stroke-only so they inherit the surface's text colour.
 //
@@ -150,9 +152,13 @@ export default function GridMenu({ onNavigate, currentRound = 0, isVotingOpen = 
         <div className="pt-5">
           <div className="flex items-end justify-between gap-3">
             <span className="er-mono er-mono--wide er-mono--bone">Astral Project</span>
+            {/* The board is where a player lands after every screen, so the
+                round tooltip is repeated here rather than living only in the
+                chrome rail — this is the one surface that has no rail. */}
             <div className="flex items-baseline gap-2">
               <span className="er-mono">Round</span>
               <Numeral value={currentRound} pad={2} className="er-num text-xl" />
+              <InfoTip tip={roundTip(currentRound)} className="self-center" />
             </div>
           </div>
           <div className="er-rule mt-3" />

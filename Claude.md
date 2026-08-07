@@ -14,7 +14,7 @@ The folder lives at `d:\Unity Projects\mystery-game` for historical reasons, but
 
 ## TL;DR
 
-**Astral Project's Murder Mystery Experience** — a 51-player real-time web murder mystery party game. Players log in as one of 51 guests, decode clue codes across 7 rounds, chat in real time, vote across the room, and ultimately uncover that the victim — Armaan Khanna, the fictional founder of Velvet Ember Spirits — was killed by a five-person conspiracy led by Sneha Ganesh. The shipped story is now the **Velvet Ember distillery case**, not the old TripleSpeed office case. Built as an installable PWA with offline support, deployed to GitHub Pages at base path `/mystery-game/`.
+**Astral Project's Murder Mystery Experience** — a 51-player real-time web murder mystery party game. Players log in as one of 51 guests, earn clue codes by solving riddles and trade them around the room across 7 rounds, chat in real time, vote across the room, and ultimately uncover that the victim — Armaan Khanna, the fictional founder of Velvet Ember Spirits — was killed by a five-person conspiracy led by Sneha Ganesh. The shipped story is now the **Velvet Ember distillery case**, not the old TripleSpeed office case. Built as an installable PWA with offline support, deployed to GitHub Pages at base path `/mystery-game/`.
 
 ---
 
@@ -52,9 +52,12 @@ Always start at this file. Read the others on demand based on what you're workin
 The files you will most often need to open:
 
 - [src/App.jsx](src/App.jsx) — main state machine, routing, Firebase wiring
-- [src/data/gameData.js](src/data/gameData.js) — 51 characters, 34 clue codes, round definitions, case metadata, and host script (the largest data file)
+- [src/data/gameData.js](src/data/gameData.js) — 51 characters, 34 clue codes, round definitions, case metadata, the riddle-lock reward queue, and host script (the largest data file)
+- [src/data/riddles.js](src/data/riddles.js) — the 100 riddles behind the **riddle lock**, plus answer matching and the seen-ledger. **Nothing in it may touch the case** — read the header before adding one
+- [src/components/modals/RiddleModal.jsx](src/components/modals/RiddleModal.jsx) — the riddle lock: ASK on the Evidence screen. Solving a riddle unseals the next clue in that player's queue and hands them a shareable code. **This replaced the printed clue cards** — there are none left in the game
 - [src/data/hostReference.js](src/data/hostReference.js) — structured host-only reference data for the in-app host guide screen
-- [src/data/screenGuide.js](src/data/screenGuide.js) — per-screen kicker/title/brief/detail copy; feeds the screen frames, the onboarding notes and the Guide
+- [src/data/screenGuide.js](src/data/screenGuide.js) — per-screen kicker/title/brief/detail copy plus `ROUND_GUIDE`; feeds the screen frames, the onboarding notes, the Guide and the round tooltip
+- [src/data/tooltips.js](src/data/tooltips.js) — all tooltip copy, and `roundTip()`. The **pulled** half of the help layer: the screen notes expire at Round 02, these never do
 - [src/data/storyIntro.js](src/data/storyIntro.js) — the Round 0 case briefing: eight slides + the typing speed. **Spoiler-gated to Round 0 knowledge** — read the header before editing. Feeds both the fullscreen briefing and the Story screen
 - [src/components/StoryIntro.jsx](src/components/StoryIntro.jsx) — the fullscreen typed briefing (Round 0 takeover, and the replay from the Story screen)
 - [src/components/CaseSolution.jsx](src/components/CaseSolution.jsx) — "How it happened": the full reconstruction of the murder, opened from *both* terminal screens (the killer reveal and the outro) so all 51 players can reach it. Copy comes from `CASE_SOLUTION` in [src/data/gameData.js](src/data/gameData.js) — **the answer key**, so nothing in it may leak into a round-gated surface
@@ -67,7 +70,7 @@ The files you will most often need to open:
 - [src/components/modals/DecoderModal.jsx](src/components/modals/DecoderModal.jsx) — clue code entry
 - [src/components/modals/](src/components/modals/) — Decoder, GuestProfile, VoteResults
 - [src/components/icons/](src/components/icons/) — all SVG icons (no PNG/SVG asset files used)
-- [src/components/ui/](src/components/ui/) — the shared motion/vocabulary pieces: `Numeral` (counting brass figure), `RoundRail`, `RedactedLines`, `ScreenBrief`, `FeedbackToast`, `SearchField` (the shared list filter — Vote and Guests), `Doodles`
+- [src/components/ui/](src/components/ui/) — the shared motion/vocabulary pieces: `Numeral` (counting brass figure), `RoundRail`, `RedactedLines`, `ScreenBrief`, `InfoTip` (the `?` tooltip), `FeedbackToast`, `SearchField` (the shared list filter — Vote and Guests), `Doodles`
 - [src/hooks/](src/hooks/) — `useCountUp` (ticks a numeral on change, never on mount) and `useTypewriter` (character-at-a-time reveal on one rAF loop)
 - [src/lib/typeSound.js](src/lib/typeSound.js) — synthesized typewriter clicks + margin bell (Web Audio; **no audio files in this repo**), mute state in `localStorage['astral.sfx']`
 - [package.json](package.json) — dependencies & npm scripts
@@ -173,7 +176,9 @@ npm run deploy           # builds + pushes /dist to gh-pages branch (GitHub Page
 
 | Task | Files to touch | Don't forget |
 |---|---|---|
-| Add/change a clue code | [src/data/gameData.js](src/data/gameData.js) | Update [CLUE_CODES.md](CLUE_CODES.md) |
+| Add/change a clue code | [src/data/gameData.js](src/data/gameData.js) | Update [CLUE_CODES.md](CLUE_CODES.md). A motive/evidence/revelation clue is automatically in the riddle-lock prize pool — check `RIDDLE_REWARD_POOL` still means what you want |
+| Add/change a riddle | [src/data/riddles.js](src/data/riddles.js) only | Answers must be **one word** with a generous `alt` list, and the riddle must not touch the case in any way — a riddle that brushes the fiction gets theorised about as a clue. Rerun the deck checks: 100 entries, unique ids, unique answers |
+| Change how clues are earned or shared | [RiddleModal.jsx](src/components/modals/RiddleModal.jsx) + `riddleQueueFor`/`nextRiddleReward` in [gameData.js](src/data/gameData.js) | The reward queue is **stable per player and different between players** on purpose — that is what stops 51 phones holding the same clue and gives codes something to be worth. Also update the host copy: `HOST_SCRIPT` in gameData.js, [hostReference.js](src/data/hostReference.js), [HOST_LIVE_FACILITATION.md](HOST_LIVE_FACILITATION.md), [HOST_PRINT_PACK.md](HOST_PRINT_PACK.md) |
 | Add/edit a character | [src/data/gameData.js](src/data/gameData.js) — characters array | Keep the roster at 51 unless the user explicitly changes event scale; update [STORY.md](STORY.md) if backstory changes |
 | Theme/visual tweak | `@theme` in [src/index.css](src/index.css) for tokens; [src/App.css](src/App.css) for `.er-*` components | Follow [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md). Colours go in `@theme`, **never** in `tailwind.config.js` (config colours don't emit CSS custom properties). `App.css` is imported by `index.css` as `layer(components)` — importing it from `main.jsx` instead would make every `.er-*` rule un-overridable by Tailwind utilities |
 | Motion / microinteraction | [src/App.css](src/App.css) §1 primitives; `.er-*` motion classes | Read [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) **§7.1 (motion restraint)** before adding, not just §7 — the hard part is knowing where *not* to animate. Name the transitioned properties; never a blanket one. Then verify by measuring `getComputedStyle` over time, not by looking at a screenshot |
@@ -182,6 +187,8 @@ npm run deploy           # builds + pushes /dist to gh-pages branch (GitHub Page
 | Case files (forensics, exhibits, reports) | [src/components/views/CaseFilesSection.jsx](src/components/views/CaseFilesSection.jsx) | It is the **Case files** stack of the Evidence screen, not a screen of its own. Anything that tells a player where to find a file must say "Evidence → Case files" — including the `HOST_SCRIPT` copy in [src/data/gameData.js](src/data/gameData.js) |
 | Add/rename/regroup an Evidence stack | `CLUE_STACKS` in [src/data/gameData.js](src/data/gameData.js) (what it contains), `EVIDENCE_STACKS` in [src/data/screenGuide.js](src/data/screenGuide.js) (what it's called), `STACK_STYLE` in [IntelView.jsx](src/components/views/IntelView.jsx) (surface, tilt, empty state) | Three files on purpose — data, copy, presentation. A stack's `kicker` must not contain the word "Evidence": it is used as the screen kicker when the stack is open, so `Evidence Board / Evidence` is the frame you'd get |
 | Screen title / kicker / "what this screen is" copy | [src/data/screenGuide.js](src/data/screenGuide.js) only | Don't hardcode it in the view — the Guide reads the same entries, which is what stops the two drifting apart |
+| Add/edit a tooltip | `TOOLTIPS` in [src/data/tooltips.js](src/data/tooltips.js) for copy; drop an `<InfoTip>` beside the label in the view | Read [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) **§6.13** first. A mark added to a `justify-between` row can wrap the label opposite it — pin the label column with `shrink-0` and verify by counting the client rects of the label's text node, not by looking. Never place one where the copy could leak the case: tooltips are read in every round, including Round 00 |
+| Round descriptions ("what happens in Round 3") | `ROUND_GUIDE` in [src/data/screenGuide.js](src/data/screenGuide.js) only | Titles come from `ROUNDS` in gameData.js. Both the Guide and the round tooltip render this list — don't retype it in either |
 | Story briefing copy or pacing | [src/data/storyIntro.js](src/data/storyIntro.js) only | It feeds both the fullscreen briefing and the Story screen. **Check any new line against the spoiler list in that file's header** — the toxin is Round 3, the cancer/SEBI/insurance are Round 4, the staging is Round 5+ |
 | The end-of-game explanation ("How it happened") | `CASE_SOLUTION` in [src/data/gameData.js](src/data/gameData.js) for copy; [src/components/CaseSolution.jsx](src/components/CaseSolution.jsx) for presentation | It restates [STORY.md](STORY.md), so change both together and re-check the beats against `CASE_TIMELINE`. It is reached from *two* screens — the reveal overlay and the outro — because killers never see the overlay; a change to one entry point needs the other |
 | Firestore schema change | [src/firebase/config.js](src/firebase/config.js) | Update [FIREBASE_VISUAL_GUIDE.md](FIREBASE_VISUAL_GUIDE.md); coordinate with user before deploying — breaks live games |

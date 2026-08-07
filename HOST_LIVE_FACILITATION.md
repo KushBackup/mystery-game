@@ -12,32 +12,60 @@ Use this at the event, not during writing. This is the fast operational layer ov
 - Cast: 51 guests
 - Prime suspects: 10
 - Killers: 5
-- Flow: 7 rounds, 1 host, printed clue cards, live discussion, repeated voting
+- Flow: 7 rounds, 1 host, in-app riddle lock for clues, live discussion, repeated voting
 
 Your job is not to perform the story. Your job is to keep the room pointed at the right problem at the right time.
+
+---
+
+## The one thing that changed: there are no clue cards
+
+You do not hand out evidence any more. Players earn it themselves.
+
+On the Evidence screen there are two buttons, bottom right:
+
+- **ASK** — deals a riddle. Not a case riddle; a general riddle, deliberately unrelated to the
+  murder. One-word answer. Get it right and a new clue unseals on that player's phone, along
+  with **a code**.
+- **CODE** — the decoder. Anyone who is given that code and types it in gets the same clue.
+
+**ASK is not on their screens until you advance to Round 2.** Nothing in the prize pool is
+reachable before then — the earliest reward is a Round 2 motive — so a button that could only
+refuse is simply absent, and the corner is CODE alone for the first two rounds. When it does
+appear it knocks to be noticed, once, the first time each player looks at Evidence. Expect a
+small ripple around the room a few seconds after you advance; that is the button arriving.
+
+Every player's clue queue is in a different order, so no two people are winning the same thing.
+That means **the room only sees the full picture if codes circulate**, and getting them to
+circulate is now your main job during rounds 2 through 5. Say "read your code out" more often
+than feels necessary.
+
+**Your override:** [CLUE_CODES.md](CLUE_CODES.md), also on the Host Guide's **Deck** tab, lists
+every code in the game. If a round stalls because nobody has cracked a riddle, read one out and
+the clue is in the room instantly. Use it sparingly — the trading is half the fun.
 
 ---
 
 ## Pre-Game
 
 ### Material check
-- 51 login cards
-- 10 motive cards
-- 7 evidence cards
-- 6 revelation cards
+- 51 login cards *(the only paper in the game)*
 - Host phone logged in and synced
 - Round 3 and Round 4 case-file unlock buttons tested
 - Emergency reference: [HOST_QA_BRIEFING.md](HOST_QA_BRIEFING.md)
+- Codes to read out if a round stalls: [CLUE_CODES.md](CLUE_CODES.md)
 
 ### Room instruction
 Say this plainly before you start:
 
-"Your phone is your case file. The printed cards are not props. Read them, trade them, lie about them if you want, but do not lose them."
+"Your phone is your case file. Nobody is going to hand you evidence tonight — you earn it. In two rounds a button marked ASK appears on your Evidence screen. You tap it, you get a riddle, nothing to do with this murder. Solve it and you unlock a clue nobody else has, plus a code. Read that code out and everyone else gets the clue too. Trade them, lie about them if you want, but a code you sit on is a code that helps nobody."
 
 ### Host watch-for
 - Anyone stuck on login
 - Anyone who has not opened Story / Incident Report before the first vote
 - Any cluster that becomes isolated too early
+- Anyone hunting for ASK during Rounds 0–1 — tell them it arrives with Round 2, and that the
+  waiting is not a bug
 
 ---
 
@@ -99,9 +127,12 @@ If one suspect starts dominating too early, redirect toward a different accusati
 Make all 10 prime suspects feel individually dangerous.
 
 ### Host actions
-- Hand out the 10 motive cards
-- Mix distribution across groups rather than giving every suspect their own card
-- Remind players the decoder is on Evidence
+- Announce that the riddle lock is now live — the 10 motive files are the prize pool
+- Tell the room ASK has just appeared beside CODE, bottom right on Evidence — it was not there
+  a minute ago, and players who were mid-screen will have seen it knock
+- Show one table how ASK works; the mechanic spreads faster by imitation than by instruction
+- Keep pushing codes into the open; call out anyone sitting on one
+- The distribution mixes itself: every player's queue is in a different order
 
 ### What to emphasize
 - This round is about why someone would want Armaan dead
@@ -125,7 +156,7 @@ Break the poisoned-bottle theory and move the room toward one altered drink.
 
 ### Host actions
 - Unlock Round 3 case files
-- Hand out all 7 evidence cards
+- Tell the room 7 forensic files just entered the riddle pool
 - Reopen voting
 
 ### What to emphasize
@@ -160,7 +191,7 @@ Flip the case from one suspect to overlapping interests.
 
 ### Host actions
 - Unlock Round 4 case files
-- Hand out the first 4 revelation cards
+- Tell the room the first 4 revelations are now winnable through ASK
 
 ### What to emphasize
 - Armaan had a Monday scapegoat plan
@@ -169,7 +200,7 @@ Flip the case from one suspect to overlapping interests.
 
 ### Best witness nudges
 - Chryselle
-n- Sunali
+- Sunali
 - Ajay
 - Meera
 - Nolani
@@ -190,7 +221,7 @@ At least one table starts linking suspects across groups instead of inside a sin
 Make the room name a team, not just a mastermind.
 
 ### Host actions
-- Hand out the last 2 revelation cards
+- Tell the room the last 2 revelations are in the riddle pool — these two matter most, so read the codes out yourself if nobody lands them
 - Keep voting open or reopen it for final locking
 - Use [HOST_QA_BRIEFING.md](HOST_QA_BRIEFING.md) if the room pokes at physical plausibility
 

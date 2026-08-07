@@ -277,7 +277,12 @@ export const HostReferenceView = ({ currentRound, onBack }) => {
             </div>
           </Block>
 
-          <Block label="Clue manifest" meta="Codes and targets">
+          {/* Since the riddle lock replaced the printed stacks, this manifest is
+              no longer a packing list — it is the host's override. Players earn
+              these codes by solving riddles and pass them around themselves, but
+              if a round stalls because nobody has cracked anything, reading one
+              of these out puts the clue into the room instantly. */}
+          <Block label="Clue manifest" meta="Your override if the room stalls">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <div>
                 <p className="er-mono er-mono--dim">Round 1 · Accusations</p>

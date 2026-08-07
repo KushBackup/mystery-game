@@ -12,7 +12,9 @@
 **State model:** React local state + Firebase Firestore realtime sync  
 **Current case scale:** 51 playable guests, 10 prime suspects, 5 killers, 6 case files, 34 clue codes
 
-The app remains structurally the same as the earlier versions: one host advances the room through seven rounds while players decode clue cards, chat, vote, and inspect guest profiles. The major implementation change in this version is narrative scale. The data layer now supports a 51-player cast and a multi-killer reveal instead of a single murderer.
+The app remains structurally the same as the earlier versions: one host advances the room through seven rounds while players decode clues, chat, vote, and inspect guest profiles. The major implementation change in this version is narrative scale. The data layer now supports a 51-player cast and a multi-killer reveal instead of a single murderer.
+
+As of 2026-08-07, clue codes are no longer distributed on printed cards. They are earned in-app through the **riddle lock** — see [The riddle lock](#the-riddle-lock) below.
 
 ---
 
@@ -42,6 +44,7 @@ Source order in the file is authorial: the five conspirators are written first, 
 - **`isHot` + `safeTop`** keep conspirators out of the opening slots (the first screenful of Suspects, the first row of the ballot grid, the top of the round-1 and round-2 stacks). Evicted entries re-enter at a hashed slot below the clean zone, not at a fixed midpoint, so they don't band up. Eviction re-checks after every move: removing an entry slides the rest up, which can push a hot entry above the line.
 - **`group`** is a primary sort key that survives the jumble. `REVELATION_CLUES` groups on `roundReq` so the Round 5 twist pair stays behind the Round 4 documents.
 - `CASE_FILES` is deliberately **not** dealt — it names no suspect and is already ordered by unlock round.
+- `RIDDLE_REWARD_POOL` / `riddleQueueFor()` / `nextRiddleReward()` — the riddle lock's prize side (see [The riddle lock](#the-riddle-lock))
 - `HOST_SCRIPT` — host-facing run sheet for live facilitation
 - `LOGIN_CODE_MAP` — generated from the character roster
 
@@ -49,7 +52,14 @@ Source order in the file is authorial: the five conspirators are written first, 
 Owns the Round 0 public briefing only. It is spoiler-gated to knowledge available before the investigation starts.
 
 ### [src/data/screenGuide.js](src/data/screenGuide.js)
-Owns per-screen kicker/title/brief/detail copy plus labels for the five Evidence stacks.
+Owns per-screen kicker/title/brief/detail copy, labels for the five Evidence stacks, and `ROUND_GUIDE` — one line per round saying what that round is for.
+
+`ROUND_GUIDE` has two readers and no third copy: [HelpView](src/components/views/HelpView.jsx) prints the whole list (titles come from `ROUNDS` in gameData.js, not retyped), and `roundTip()` prints the live round's line into the chrome rail's tooltip. Both were hardcoded lists before, which is a rewording away from the app contradicting its own rulebook mid-game.
+
+### [src/data/tooltips.js](src/data/tooltips.js)
+Owns every tooltip's copy (`TOOLTIPS`) plus the one generated tip (`roundTip(currentRound)`).
+
+The split against `screenGuide.js` is deliberate: that file describes a **screen** and is pushed at the player automatically through rounds 00–01; this one describes a **control or number** and is only ever pulled. Which is why it never expires — see [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §6.13 for the placement table and the copy constraints (labels under ~22 characters, bodies under ~200, and nothing that could leak the case, since these are readable in Round 00).
 
 ### [src/data/hostReference.js](src/data/hostReference.js)
 Owns the structured host-only reference content rendered in-app from the host console:
@@ -58,11 +68,11 @@ Owns the structured host-only reference content rendered in-app from the host co
 - `HOST_REFERENCE_SUMMARY` — event shape and host principles
 - `HOST_SUSPECT_ROSTER` — prime suspect lanes vs actual status
 - `HOST_KILLER_JOBS` — five-job solution map
-- `HOST_MATERIALS` — required and helpful physical materials
+- `HOST_MATERIALS` — required and helpful physical materials (login cards only; there are no clue cards)
 - `HOST_ROUND_GUIDE` — operational prompts keyed to the live round
 - `HOST_WITNESS_LANES` — grouped witness nudges for stalled rooms
 - `HOST_FAST_ANSWERS` — objection handling before and after Round 5
-- `HOST_DECK` — clue manifest and counts for printed card prep
+- `HOST_DECK` — clue manifest and counts; now the host's *override*, read out when a round stalls, rather than a packing list
 
 ---
 
@@ -128,6 +138,16 @@ Naming the killers is only half of the ending; [src/components/CaseSolution.jsx]
 - the Timeline screen says `You are one of the killers` when more than one killer exists
 - the host terminal action reads `Reveal killers`
 
+A tag alone was not enough: `Classified · Killer` reads as a redaction stamp, and killers were
+reaching Round 1 unsure whether they had actually done it. The five murderers' `secret` strings
+in [gameData.js](src/data/gameData.js) now open by telling the player outright that they killed
+Armaan and what their part in it was, so the Confidential Note is the briefing rather than one
+more piece of flavour. Two presentation consequences in
+[DashboardView.jsx](src/components/views/DashboardView.jsx): a killer's note is **not** wrapped
+in quotation marks (it addresses the player, it is not a line the character says), and it is
+sealed with seven redaction marks instead of four, because the copy runs roughly twice as long
+as a guest's.
+
 ---
 
 ## Clue Model
@@ -137,10 +157,30 @@ The clue engine itself is unchanged. The case is still data-driven.
 ### Categories
 
 - `ACCUSATION` — 10 cards, automatically available in Round 1
-- `MOTIVE` — 10 printed codes, Round 2
+- `MOTIVE` — 10 codes, Round 2
 - `EVIDENCE` / `FORENSICS` / `CCTV` — 7 round-3 items sharing the same Evidence stack
 - `REVELATION` — 6 round-4/5 items
 - `CONFESSION` — 1 final gated clue
+
+### Code namespaces
+
+`character.code` (51 login codes) and `clue.code` (34 clue codes) are read by two different
+inputs — [CharacterSelect.jsx](src/components/CharacterSelect.jsx) via `validateLoginCode`, and
+the decoder via `handleCodeSubmit` in [App.jsx](src/App.jsx) — but they share one keyspace in
+practice, because a player can type anything into either field. **The two sets must stay
+disjoint.**
+
+They were not, until 2026-08-07: the ten motive codes were literally the ten prime suspects'
+login codes. Since Round 2 asks players to shout motive codes across the room, that published
+the five killers' credentials, and [DashboardView.jsx](src/components/views/DashboardView.jsx)
+prints `Classified · Killer` on a murderer's Identity screen. `handleCodeSubmit` checks
+`CLUE_DB` before `CHARACTERS`, so the decoder itself behaved — the leak was entirely at the
+login screen.
+
+Clue codes are now meaningless single words: never a login code, never descriptive of the clue,
+never derivable from the roster. A dev-only assertion at the bottom of
+[gameData.js](src/data/gameData.js) logs an error if either invariant breaks. See
+[CLUE_CODES.md](CLUE_CODES.md).
 
 ### Evidence organization
 
@@ -153,9 +193,111 @@ The clue engine itself is unchanged. The case is still data-driven.
 
 Case files remain a fifth surface through [src/components/views/CaseFilesSection.jsx](src/components/views/CaseFilesSection.jsx).
 
+Which stack is open lives in `evidenceStack` on [App.jsx](src/App.jsx) — `null` is the hub — because App owns the screen frame and a stack's name is the screen *title*. Two consequences, both in App:
+
+- `closeScreen()` steps back one level: from an open stack the chrome-rail X clears `evidenceStack`; anywhere else it clears `activeTab`. `Header` takes a `closeLabel` prop so the `aria-label` names the real destination.
+- Leaving the Evidence tab clears `evidenceStack`, so reopening Evidence lands on the hub.
+
+The player's own accusation appears **twice** on purpose: pinned on the hub under "Yours alone" (with the confession), and leading the Accusations stack. It comes from the `myAccusation` prop, not from the decoded set, so `cluesIn()` filters the same clue out of the found list — otherwise a host reveal of that accusation would render the card twice. `countIn()` adds the +1 back for the tile count and the hub's "Collected" total, which is summed from the tiles rather than counted off `unlockedClues` so the two can't disagree.
+
 ### Assignment integrity
 
 This version intentionally preserves 10 accusation narratives instead of scaling to 51 unique accusation cards. Coverage is achieved by distributing those 10 cards across all 51 players via the `assignedTo` arrays.
+
+---
+
+## The riddle lock
+
+Added 2026-08-07, replacing the three printed clue stacks. Solving a riddle unseals the next
+clue in that player's queue and shows its code; the code is what circulates.
+
+### Files
+
+| File | Owns |
+|---|---|
+| [src/data/riddles.js](src/data/riddles.js) | `RIDDLES` (100), answer matching, the "already seen" ledger |
+| [src/data/gameData.js](src/data/gameData.js) | `RIDDLE_REWARD_POOL`, `ASK_OPENS_AT`, `riddleQueueFor()`, `nextRiddleReward()`, `riddleRewardsInPlay()` |
+| [src/components/modals/RiddleModal.jsx](src/components/modals/RiddleModal.jsx) | The screen: question, misses, hint, celebration, code sharing |
+| [src/App.css](src/App.css) §16 | `.er-solve` / `.er-burst` / `.er-fleck` / `.er-seal` — the celebration |
+| [src/App.css](src/App.css) §17 | `.er-summon` / `@keyframes erSummon` — the one-time ASK cue |
+| [src/lib/typeSound.js](src/lib/typeSound.js) | `playSolveFanfare()` — three synthesized bells up a major triad |
+| [src/App.jsx](src/App.jsx) | `riddleReward`, `handleRiddleSolved`, `pendingUnlocks`, `askVisible`, `askCueOwed`, the ASK button |
+
+### The ASK button is round-gated, and announces itself once
+
+`ASK_OPENS_AT` is `Math.min(...RIDDLE_REWARD_POOL.map(c => c.roundReq))` — Round 2 as the decks
+stand. It is derived rather than typed because it is a consequence, not a preference: below that
+round `nextRiddleReward()` can only return null, and a button whose only possible answer is "not
+yet" teaches the player the wrong thing about the control. Move a reward earlier and the button
+follows it. Every surface that names ASK reads the same constant — the Evidence empty-stack hint
+([IntelView.jsx](src/components/views/IntelView.jsx) `emptyHint`) and the corner tooltip
+(`TOOLTIPS.evidenceCode` vs `evidenceTools`) both swap below it, and the host script, the Guide
+and the decoder's footnote all say "from Round 02" in prose.
+
+Because it appears **mid-game**, beside a CODE button players have used for two rounds, in the
+corner their thumb already rests on, it knocks once — `.er-summon`, three hops with a blink, then
+nothing. The bookkeeping is three pieces:
+
+- `askCueOwed` — initialised from `localStorage['astral.askcue']` in a **pure** state
+  initialiser, so StrictMode's double invoke gets the same answer twice. Persisted separately
+  from `SESSION_KEY` because it must survive a reload, a service-worker update and the host's
+  force-sync broadcast; not cleared on logout, because it is a fact about the screen rather than
+  about the player. An unreadable ledger (private-mode Safari) counts as *spent* — the other
+  failure mode is a button that knocks on every visit all evening.
+- The effect spends the ledger the moment the cue goes live — first sight, meaning the Evidence
+  screen with the button on it, not the round advance (most of the room is on Chat when the host
+  advances, and a knock nobody is looking at is a knock wasted).
+- `animationend` on the wrapper retires it, which is why no duration is duplicated in JS. The
+  wrapper exists because the button already spends its own `animation` on `.er-land`; the
+  `event.target === event.currentTarget` guard is load-bearing, since that landing animation
+  bubbles and would otherwise retire the cue at ~1.05s, before its first hop.
+
+### Riddle selection is random; clue selection is not
+
+The two halves are deliberately opposite to every other deck in the project:
+
+- **Riddles are dealt at random** (`dealRiddle()`), with a `localStorage['astral.riddles.seen']`
+  ledger so a player does not meet the same puzzle twice until all 100 are used. Randomness is
+  the point — the person beside you is holding a different question, so shouting an answer
+  across the room achieves nothing. Only *solved* riddles are marked seen; skipping one puts it
+  back in circulation.
+- **Rewards are dealt stably** (`riddleQueueFor(characterId)`), grouped by `roundReq` first and
+  then **rotated** within each round-block by the player's ordinal in `RIDDLE_ORDINAL` — their
+  position, 0 to 50, in a stable shuffle of the roster. Stable so a reload cannot reshuffle the
+  queue under a player mid-game; per-player so 51 devices do not all pay out the same clue and
+  leave the room with nothing to trade.
+
+  It rotates rather than hash-sorts because only the **first** reward really matters — most
+  players solve one or two riddles all evening — and a hash sort does not spread it. The old
+  sort gave `PENDULUM` to 7 players and `OBELISK` to 8 while `LATTICE` (a killer's motive) was
+  the opening prize for exactly 1 of 51. Rotating by a raw hash is no better: `hash % 10`
+  inherits the hash's bias in its low bits and measured worse (12 and 1). An ordinal is what
+  makes the modulo uniform. Measured now: **5 or 6 players on each of the 10 motive clues**,
+  51 distinct queues across 51 players.
+
+Accusations and the confession are **not** in the pool — the first is dealt automatically at
+Round 1, the second belongs to the killers.
+
+### Answer matching
+
+`isCorrectAnswer()` folds to lowercase, strips a leading `a`/`an`/`the`, and discards every
+non-alphanumeric character before comparing against `a` plus the riddle's `alt` list. A phone
+in a dark room supplies smart apostrophes, trailing spaces and autocapitalization; none of
+those is a wrong answer. Being right and being marked wrong is the one failure mode this
+screen cannot afford.
+
+### Double-payout guard
+
+`riddleReward` is computed from `unlockedClues` (Firestore) ∪ `revealedClues` (host) ∪
+`pendingUnlocks` (local). The third set exists because the Firestore snapshot is a round trip
+behind: without it, solving two riddles in quick succession pays out the same clue twice.
+
+### Failure is free
+
+No lockout, no attempt limit, no penalty for a wrong answer; "Another riddle" redeals with the
+same prize attached; three misses reveals the shape of the word. The riddle is a toll booth on
+the way to the story, not a skill gate — a player who cannot crack one must still be able to
+end the evening holding evidence, which they can, by trading for codes.
 
 ---
 
@@ -184,6 +326,23 @@ Both consume the same `STORY_SLIDES` source. StoryView now reads case metadata d
 Renders `CHARACTERS` in order. The ballot used to hash-sort the roster itself; that moved to `dealt()` in the data layer (above), so the ballot, the Suspects index and every guest's file number now agree on one order instead of drifting apart. `isMurderer()` is still used here, but only to badge the killers once round 6 lands.
 
 It also carries the shared [`SearchField`](src/components/ui/SearchField.jsx) above the ballot grid, matching on name and profession. The filter only removes cards and never reorders them, so the jumbled order every player shares is preserved and the vote already recorded is unaffected by what is currently visible.
+
+### The in-app help layer
+
+Two components, one surface, deliberately opposite in behaviour:
+
+| | [`ScreenBrief`](src/components/ui/ScreenBrief.jsx) | [`InfoTip`](src/components/ui/InfoTip.jsx) |
+|---|---|---|
+| Trigger | Pushed — pinned under the screen title | Pulled — an 18px `?` beside a label |
+| Describes | a screen | a control or a number |
+| Lifetime | rounds 00–01 (`BRIEF_HIDDEN_FROM_ROUND`) | never expires |
+| Copy | [`screenGuide.js`](src/data/screenGuide.js) | [`tooltips.js`](src/data/tooltips.js) |
+
+They share the aged-bone surface, the caret and the note voice — the body rule in [App.css](src/App.css) is literally one selector list covering both — so the app has a single idiom for "here is what this is". The pairing is what closes the gap the briefs left: they clear at Round 02 and the game runs to Round 06.
+
+`InfoTip` renders its panel through `createPortal` into `document.body`. That is not cosmetic: paper in this system tilts with the `rotate` property, and `rotate` establishes a containing block for `position: fixed`, so a panel rendered inside a bone card would anchor to the card and inherit its 1.2° tilt. The portal also clears the modals (z-70 against their z-50) and the root's `overflow-x: clip`. Position is written straight to `style.left` / `style.top` in a layout effect rather than held in state — `setState` there re-runs the effect, which measures again and sets a fresh object, looping forever — and `data-placed` hides the pre-measurement frame. Full rules and the placement table are in [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §6.13.
+
+`roundTip(currentRound)` is the one generated tip. It sits in the chrome rail and on the board masthead, so "what should I be doing right now?" is answerable from every screen in the game, and it is built from `ROUNDS` + `ROUND_GUIDE` so it cannot disagree with the Guide.
 
 ### HostPanel / HostReferenceView
 - [src/components/HostPanel.jsx](src/components/HostPanel.jsx) remains the live console for round control, voting, file release, and reveal actions.

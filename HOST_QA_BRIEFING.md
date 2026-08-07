@@ -23,7 +23,7 @@ A good host answer should make the room feel rewarded for noticing something, no
 The prep-room path matters. Track Roddy's case, Kiyaah's bar setup, and the mister itself.
 
 **Canonical answer after Round 5:**
-Roddy prepared the poisoned twin atomizer inside his botanical case and moved it through the prep-room as a wrapped service roll. Kiyaah collected that wrapped mister during bar setup before the blackout. The atomizer later carries prep-room linen fibres, which is the physical trace tying the handoff together.
+Roddy prepared the poisoned twin atomizer inside his botanical case and carried it into the prep-room corridor at 10:02 PM, leaving it on the prep pass as a wrapped service roll. He came back out at 10:05 without it. Kiyaah collected it at 10:06, two minutes before the blackout. The two never hand each other anything — the atomizer's prep-room linen fibres are the only physical trace of the handoff.
 
 **Canon support:**
 - Roddy timeline in [src/data/gameData.js](src/data/gameData.js)
@@ -84,6 +84,34 @@ Because Armaan only planned scapegoats for the threats he thought mattered to Mo
 **Canonical answer after Round 5:**
 Armaan saw Sneha, Victoria, and Oindrilla as business-risk liabilities tied to the buyout, paper trail, and system controls. He used Tara and Tanvi as convenient innocent fall girls. He underestimated Roddy as an outsider and assumed he still controlled Kiyaah through the ritual and personal leverage. That blind spot is part of why the conspiracy works.
 
+### 6a. Who actually walked through the cloned QR? Kiyaah already worked that bar.
+
+**Short answer before Round 5:**
+Ask what the QR was for. It is not an access problem — it is a log problem.
+
+**Canonical answer after Round 5:**
+Kiyaah did, over a borrowed service apron. She never needed the pass to get into the private bar; she had been behind it since 7:40 PM. What she needed was for the access log to name a staffer who had already clocked out rather than naming her. Oindrilla revived a retired staff QR under the same session tree as the projector reboot, good for exactly one pass in at 10:08 and one pass out at 10:09. Anjul saw the apron come back down the service stair and clocked that the face under it was not staff.
+
+**Canon support:**
+- Service QR Access Trace and Admin Override Trace clues in [src/data/gameData.js](src/data/gameData.js)
+- Kiyaah, Anjul, Aaina, Chinmay and Parinitha timelines in [src/data/gameData.js](src/data/gameData.js)
+
+### 6b. S.G. could be Sneha Ganesh, Shubham Goyal or Savvy Grover. Which one?
+
+**Short answer before Round 5:**
+Good catch — say so out loud. Then ask which S.G. could have written those particular lines.
+
+**Canonical answer after Round 5:**
+Sneha. The roster really does hold three S.G.s, and two of them sit inside conspirators' circles — Shubham in Thimble, Savvy in Forgery — which is exactly why the initial is worth arguing about. Content settles it. The burner S.G. controls the Monday folder and rules out tables and families; the binder S.G. carries the rebate structure. A software engineer and a freelance creative are nowhere near a rebate model. Initials narrow the field; the job names the person.
+
+### 6c. Are the four Raghuwanshis related?
+
+**Short answer before Round 5:**
+No relationship is established anywhere in the case. Treat it as a coincidence of guest lists.
+
+**Canonical answer after Round 5:**
+No. Kiyaah Rose Raghuwanshi, Vinod Raghuwanshi, Meera Victoria Raghuwanshi and Meenal Raghuvanshi share a name and nothing else. No family link exists in the case and no clue depends on one. If a table builds a theory on it, let them enjoy it, then point out that the conspiracy aligns people by job, not by blood.
+
 ### 7. Why doesn't the burner thread simply list all five names?
 
 **Short answer before Round 5:**
@@ -127,8 +155,8 @@ Use these only as conversational nudges, not as forced reveals.
 - Chayne: phone footage places Anna near the gift table during the glitch
 
 ### Mastermind lane
-- Chryselle: saw Sneha leave the upstairs booth with the Monday binder
-- Sunali: heard Sneha ask whether the Monday binder was still upstairs
+- Chryselle: saw Sneha leave the upstairs booth empty handed, the red folder still open on the table
+- Sunali: heard Sneha ask which upstairs room the red folder had been left in
 
 ---
 

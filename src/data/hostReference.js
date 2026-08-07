@@ -24,7 +24,7 @@ export const HOST_REFERENCE_SUMMARY = {
     `Cast: ${CASE_META.playerCount} guests`,
     `Prime suspects: ${CASE_META.primeSuspectCount}`,
     `Killers: ${CASE_META.killerCount}`,
-    'Format: 7 rounds, printed clue cards, live discussion, repeated voting',
+    'Format: 7 rounds, in-app riddle lock for clues, live discussion, repeated voting',
   ],
   principles: [
     'Do not rescue the room from uncertainty too early.',
@@ -55,7 +55,7 @@ export const HOST_SUSPECT_ROSTER = [
   {
     name: 'Victoria Vance',
     group: 'FORGERY',
-    lane: 'Study documents, forged paper trail, inventory logs',
+    lane: 'Back-office documents, forged paper trail, inventory logs',
     status: 'Killer · false trail',
   },
   {
@@ -129,12 +129,16 @@ export const HOST_KILLER_JOBS = [
   },
 ];
 
+/**
+ * Nothing here is a clue card any more. The 23 motive, evidence and revelation
+ * clues used to be three printed stacks the host walked around the room; they
+ * are now won in the app through the riddle lock (components/modals/RiddleModal.jsx),
+ * and the codes circulate player-to-player. The only paper left is the login
+ * cards, which are how a person gets into the app in the first place.
+ */
 export const HOST_MATERIALS = {
   required: [
     '51 login cards',
-    '10 motive cards',
-    '7 evidence cards',
-    '6 revelation cards',
     '1 host device logged in and synced',
     'Round 3 and Round 4 case-file unlock buttons checked before guests arrive',
   ],
@@ -151,12 +155,12 @@ export const HOST_ROUND_GUIDE = {
     objective: 'Get every player into the app and into the fiction before the room starts free-form theorizing.',
     actions: [
       'Check login issues immediately.',
-      'Confirm everyone has their physical card set for later rounds.',
+      'Describe the ASK → code → CODE loop out loud. The button itself does not appear until Round 2, so this is telling, not showing.',
       'Point players toward Identity and Story before any social chaos starts.',
     ],
     emphasize: [
       'Phones are case files, not props.',
-      'Printed cards matter and should not be lost.',
+      'Clues are won by solving riddles, and every solve produces a code worth sharing.',
       'Players can lie, but they still need to stay inside the room’s logic.',
     ],
     prompts: [
@@ -168,7 +172,7 @@ export const HOST_ROUND_GUIDE = {
       'People skipping Story or Incident Report',
       'Tables becoming socially closed too early',
     ],
-    advanceWhen: 'Everyone is logged in and the room understands how evidence will reach them.',
+    advanceWhen: 'Everyone is logged in and the room understands that evidence is earned with ASK and spread with CODE.',
   },
   0: {
     objective: 'Orient the room, then force a bad first vote before certainty exists.',
@@ -212,8 +216,10 @@ export const HOST_ROUND_GUIDE = {
   2: {
     objective: 'Make all 10 prime suspects feel individually dangerous.',
     actions: [
-      'Hand out the 10 motive cards across different groups.',
-      'Remind players the decoder lives on Evidence.',
+      'Announce that the riddle lock is now live.',
+      'Tell the room ASK has just appeared beside CODE, bottom right on Evidence.',
+      'Show one table how ASK works so the mechanic spreads by imitation.',
+      'Call out anyone sitting on a code they have not read out.',
     ],
     emphasize: [
       'This round is about why someone would want Armaan dead.',
@@ -230,7 +236,7 @@ export const HOST_ROUND_GUIDE = {
     objective: 'Break the poisoned-bottle theory and move the room toward one altered drink.',
     actions: [
       'Unlock Round 3 case files.',
-      'Hand out all 7 evidence cards.',
+      'Tell the room 7 forensic files just entered the riddle pool.',
       'Reopen voting.',
     ],
     emphasize: [
@@ -250,7 +256,7 @@ export const HOST_ROUND_GUIDE = {
     objective: 'Flip the case from one suspect to overlapping interests.',
     actions: [
       'Unlock Round 4 case files.',
-      'Hand out the first 4 revelation cards.',
+      'Tell the room the first 4 revelations are now winnable through ASK.',
     ],
     emphasize: [
       'Armaan had a Monday scapegoat plan.',
@@ -267,7 +273,7 @@ export const HOST_ROUND_GUIDE = {
   5: {
     objective: 'Make the room name a team, not just a mastermind.',
     actions: [
-      'Hand out the last 2 revelation cards.',
+      'Tell the room the last 2 revelations are in the riddle pool.',
       'Keep voting open or reopen it for final locking.',
       'Use the objection sheet if the room presses on physical plausibility.',
     ],
@@ -315,7 +321,7 @@ export const HOST_WITNESS_LANES = [
       { name: 'Parinitha', clue: 'Saw Kiyaah swap the atomizers from the bar-side banquette.' },
       { name: 'Aarushi', clue: 'Said the bitter-orange note was not coming from the bottle.' },
       { name: 'Flora', clue: 'Smelled something medicinal under the orange peel.' },
-      { name: 'John', clue: 'Heard staff say one drink was for Armaan only.' },
+      { name: 'John', clue: 'Heard Kiyaah tell staff one drink was for Armaan only.' },
       { name: 'Aaina', clue: 'Noticed Kiyaah behind the private bar alone too long.' },
       { name: 'Vidya', clue: 'Spotted the orange-oil streak on the bar tray.' },
     ],
@@ -328,7 +334,8 @@ export const HOST_WITNESS_LANES = [
       { name: 'Lakshmi', clue: 'Saw Oindrilla at the admin screen.' },
       { name: 'Vaidehi', clue: 'Saw the admin override flicker.' },
       { name: 'Nanu', clue: 'Saw Oindrilla with an admin tablet near the booth.' },
-      { name: 'Chinmay', clue: 'Heard the service QR beep.' },
+      { name: 'Chinmay', clue: 'Heard the service QR beep with no staff member near it.' },
+      { name: 'Anjul', clue: 'Saw a staff apron come down the service stair on someone who was not staff — the other end of that QR pass.' },
       { name: 'Dona', clue: 'Was at the mic when the projector glitched.' },
       { name: 'Dinesh', clue: 'Saw the reboot happen from the side console.' },
       { name: 'Mahi', clue: 'Noticed the side lane to the bar stayed open while the main floor turned.' },
@@ -357,7 +364,6 @@ export const HOST_WITNESS_LANES = [
       { name: 'Fabiola', clue: 'Heard Tara say the customs seal was already broken before she touched the crate.' },
       { name: 'Khyati', clue: 'Saw Tara’s crate reopened after Armaan said it would stay sealed.' },
       { name: 'Chayne', clue: 'Has footage placing Anna near the gift table during the glitch.' },
-      { name: 'Anjul', clue: 'Saw a fake staff apron on the service stair.' },
     ],
   },
   {
@@ -365,8 +371,8 @@ export const HOST_WITNESS_LANES = [
     title: 'Mastermind / Monday Binder',
     cue: 'Use when the room understands the method but not the social architecture.',
     witnesses: [
-      { name: 'Chryselle', clue: 'Saw Sneha leave the upstairs booth with the binder.' },
-      { name: 'Sunali', clue: 'Heard Sneha ask whether the binder was still upstairs.' },
+      { name: 'Chryselle', clue: 'Saw Sneha leave the upstairs booth empty handed, folder still on the table.' },
+      { name: 'Sunali', clue: 'Heard Sneha ask which upstairs room the red folder had been left in.' },
       { name: 'Natasha', clue: 'Caught Sneha and Kiyaah ending a conversation too quickly.' },
     ],
   },
@@ -430,6 +436,24 @@ export const HOST_FAST_ANSWERS = [
     before: 'Armaan only planned scapegoats for the threats he thought mattered to Monday.',
     after:
       'He saw Sneha, Victoria, and Oindrilla as buyout-risk liabilities. He underestimated Roddy as an outsider and assumed he still controlled Kiyaah through the ritual and personal leverage.',
+  },
+  {
+    question: 'Who actually walked through the cloned QR? Kiyaah already worked that bar.',
+    before: 'Ask what the QR was for. It is not an access problem — it is a log problem.',
+    after:
+      'Kiyaah did, over a borrowed service apron. She never needed the pass to get in; she needed the entry log to name a staffer who had already clocked out instead of naming her. Oindrilla revived a retired QR for exactly one pass in and one pass out. Anjul saw the apron come back down the service stair at 10:09 and clocked that the face under it was not staff.',
+  },
+  {
+    question: 'S.G. could be Sneha Ganesh, Shubham Goyal or Savvy Grover. Which one?',
+    before: 'Good catch — say so. Then ask them which S.G. could have written those particular lines.',
+    after:
+      'Sneha. The roster genuinely holds three S.G.s, and two of them sit inside conspirators\' circles, which is why the initial is worth arguing about. But content settles it: the burner S.G. controls the Monday folder and tells four people there will be no tables and no families, and the binder S.G. is the one carrying the rebate structure. Shubham is a software engineer in Thimble and Savvy is a freelance creative in Forgery — neither is anywhere near a rebate model. Initials narrow the field; the job names the person.',
+  },
+  {
+    question: 'Are the four Raghuwanshis related?',
+    before: 'No relationship is established. Treat it as a coincidence of guest lists.',
+    after:
+      'No. Kiyaah Rose Raghuwanshi, Vinod Raghuwanshi, Meera Victoria Raghuwanshi and Meenal Raghuvanshi share a name and nothing else — no family link exists in the case, and none of the clue deck depends on one. If a table builds a theory on it, let them enjoy it, then point out that the burner thread aligns people by job, not by blood.',
   },
   {
     question: 'Why does the burner thread use initials instead of full names?',

@@ -1,7 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { CHARACTERS } from '../../data/gameData';
 import { Numeral } from '../ui/Numeral';
+import { InfoTip } from '../ui/InfoTip';
 import { SearchField } from '../ui/SearchField';
+import { TOOLTIPS } from '../../data/tooltips';
 
 /**
  * The suspect index (DESIGN_LANGUAGE.md §9, "Suspects").
@@ -39,9 +41,20 @@ export const DossierView = ({ currentUser, onSelectGuest }) => {
     <div className="space-y-5">
       {/* Stat */}
       <div className="er-stat flex items-end justify-between gap-4">
-        <div>
+        {/* `shrink-0`, unlike the other stat rows: this one has a sentence
+            opposite it rather than a second numeral, and flex shrinks both
+            sides — so the 26px the mark adds came out of the label and wrapped
+            "Guests on record" onto two lines (measured at 390px). Pinning this
+            column makes the paragraph absorb it instead, which it can: it is
+            already two lines at its own max width. */}
+        <div className="shrink-0">
           <Numeral as="p" value={CHARACTERS.length} pad={2} className="er-stat__num" />
-          <p className="er-stat__label">Guests on record</p>
+          {/* The file number beside each name is a reference the room speaks
+              in, and nothing on the screen says so (§6.13). */}
+          <p className="er-stat__label flex items-center gap-2">
+            Guests on record
+            <InfoTip tip={TOOLTIPS.guests} />
+          </p>
         </div>
         <p className="font-body text-[15px] leading-[1.55] text-dim text-right max-w-[16rem]">
           Tap any name to open their file.

@@ -321,7 +321,7 @@ The display face is deliberately absent here — it belongs to numerals and scre
 
 A screen whose content is several long document stacks, which opens on a **grid of the stacks** and drills into one. Used once so far, on Evidence ([IntelView.jsx](src/components/views/IntelView.jsx)): accusations, motives, evidence, revelations, and the host-released case files.
 
-It is the grid hub (§9) recursed one level, and it borrows that screen's vocabulary deliberately — pinned paper, slight rotation, a label and a mono sub-label — because each tile *is* a stack of printed cards. Bone is the honest surface for it.
+It is the grid hub (§9) recursed one level, and it borrows that screen's vocabulary deliberately — pinned paper, slight rotation, a label and a mono sub-label — because each tile *is* a stack of case paper. Bone is the honest surface for it.
 
 | Part | Treatment |
 |---|---|
@@ -332,17 +332,21 @@ It is the grid hub (§9) recursed one level, and it borrows that screen's vocabu
 | Sealed tile | Not paper at all: `ink-raised` + `line` border, carrying a `er-tag--ghost` reading `Opens R0X`, and `disabled` |
 | Wide tile | The one stack that is a different *kind* of thing spans the row, as EXIT does on the main board |
 
-Five rules, each of which was a defect first:
+Seven rules, each of which was a defect first:
 
 - **Reach for this only when the stacks are genuinely long.** Measurement is what forced it: with everything released the clue stacks are 31 cards / ~23,000px and the archive is 6 documents / ~4,800px, so any flat arrangement buried something 6–28 screens down. Two *short* regions should just be separated by a hairline (§10).
 - **A sealed tile is inert.** A tap that only tells you it was sealed is a dead end. The ghost tag already says when it opens.
 - **Which stack is open belongs to the router, not the view.** On a stack the screen's *title* is the stack's name, and [App.jsx](src/App.jsx) owns the frame for every screen (§4.2). Holding it locally means either three stacked headings — Evidence / Evidence / Motives — or duplicating the whole frame into the view.
 - **A stack's kicker must not repeat the screen's name.** The stacks are framed as screens, so the evidence stack would otherwise read `Evidence Board / Evidence`. Give each stack a descriptor for its kicker (`Hard findings`, `Who saw what`, `Official record`) and let the back control name the parent. Storing that kicker in [screenGuide.js](src/data/screenGuide.js) and reusing it as the tile's sub-label is what stops a tile and the screen it opens describing the same stack differently.
 - **An action that produces content in a stack must open that stack.** A decoded code opens its own stack so the §7.2 unseal moment plays where the player is looking — set in the decode handler, which is an event, not an effect.
+- **Close undoes one level, not the whole trip.** A stack is framed as a screen, so the chrome-rail X on it has to behave like the X on a screen: it returns to the hub, and the next one returns to the board. Dropping straight to the board skips a screen the player never left — and because the label is read aloud by a screen reader, the `aria-label` has to change with the destination, not stay `Close and return to the board`.
+- **A card that is the player's own still belongs in its stack.** The Evidence hub pins the two cards you *perform* — the confession and your own accusation — so they are never behind a tap. That is not a reason to withhold the accusation from the Accusations stack: everybody else's is there, and a stack missing only yours reads as a hole rather than as a promotion. Show it in both, lead the stack with it under the hub's own `Yours alone` label, and drop the found copy so a host reveal can't put the same card on screen twice.
 
 ### 6.10 Screen note
 
 A `bone-aged` note pinned under a screen's title, saying in one line what that screen is for. It behaves like a tooltip — anchored to the title by a caret, and **temporary**: it clears itself from Round 02 (`BRIEF_HIDDEN_FROM_ROUND` in [src/data/screenGuide.js](src/data/screenGuide.js)), because by then the room knows the app and a permanent explainer is just furniture.
+
+It is one half of a pair. This half is *pushed* and expires; the §6.13 tooltip is *pulled* and never does. Same surface on purpose, so the app has one idiom for "here is what this is" rather than two.
 
 It is deliberately **paper, not a chrome callout**. Aged bone on ink is the highest-contrast thing on the screen, so it reads as highlighted with no accent at all — which leaves the screen's one `signal` focal point (§10) on the decoder, the ballot or the reveal instead of spending it on onboarding.
 
@@ -376,6 +380,46 @@ Three rules:
 - **Filtering hides rows; it must never reorder them.** The ballot's order is a stable hash shared by all 51 players precisely so "the third one" translates across the room. A filter that re-sorted, or that renumbered the suspect index by filtered position, would break the references the room speaks in — file numbers stay tied to the roster position.
 - **The empty result is a sentence, not a blank panel.** An empty list under a field the player just typed into is indistinguishable from a screen that broke.
 
+### 6.13 Tooltip
+
+An 18px `?` mark that opens a scrap of paper explaining the control or number it sits beside. Implemented as [`InfoTip`](src/components/ui/InfoTip.jsx); copy lives in [src/data/tooltips.js](src/data/tooltips.js), for the same reason the screen briefs live in [screenGuide.js](src/data/screenGuide.js) — the Guide states the same facts, and two copies of an explanation drift.
+
+It is the **pulled** half of the explanation layer and the counterpart to §6.10. The screen note is pushed and expires at Round 02; this one is asked for and never expires, because the game runs to Round 06 and by Round 04 the player is looking at four stacks, two floating buttons, a withheld tally and a number called "in play this round" with nothing on screen to explain any of it.
+
+| Part | Treatment |
+|---|---|
+| Mark | 18×18, 1px `line` border, square (§5), 11px mono `?` in `dim`. Open/hover goes `signal-lift` + `signal` border |
+| Mark on bone | `signal-deep` text, `line-bone` border; open fills at `rgba(142,24,17,.09)` — `signal-lift` on bone fails contrast (§2.3), and there is no darker paper to shift to |
+| Chip variant | 36×36 on `ink-raised` with the FAB shadow, for the one mark that stands alone rather than trailing a label. Stays `dim`, never `signal`: the CODE button is that screen's one focal point (§10) |
+| Panel | `.er-bone .er-bone--aged`, `min(300px, 100vw − 24px)`, `12px 14px 14px` |
+| Caret | The §6.10 caret, but its x is driven by `--caret-x` from the trigger's centre |
+| Label | `er-bone-label`. Under ~22 characters or it wraps in a 300px panel |
+| Body | The §6.10 note voice, 16px (18px ≥640px) — the rule is literally shared with `.er-brief__body` |
+| Motion | 180ms opacity + 6px translate, direction following the flip. Never opacity alone (§7) |
+
+Six rules, five of which were a defect first:
+
+- **The panel is portalled to `document.body`.** Paper tilts with the `rotate` property, and `rotate` establishes a containing block for `position: fixed` — so a tooltip rendered inside a bone card anchors to the card *and inherits its 1.2° tilt*, pointing the caret at nothing. The portal also clears the modals (z-70 vs z-50) and the root's `overflow-x: clip`.
+- **The panel does not rotate**, alone among paper in this system. It is anchored to a specific word by a caret, and 1.2° walks the point off the thing it points at. §5's rotation rule is a permission, not a requirement.
+- **Position is written to the DOM, not held in state.** Measuring in a layout effect and calling `setState` re-runs the effect, which measures again and sets a fresh object — an infinite loop. `data-placed` keeps the unmeasured first frame invisible.
+- **The caret clamp must be looser than the worst real anchor.** It only bites when a viewport edge has pushed the panel off-centre — which is exactly when the trigger sits nearest the panel's own edge. At an 18px inset the app's right-most mark (the round tip on the board masthead, centre landing 287px into a 300px panel) had its caret pulled 5px off target. 12px, measured.
+- **The mark is 18px and the target is 44px** (§4.3), expanded with a pseudo-element rather than padding: a 44px-tall control inline in an 11px label row sets that row's height to 44px everywhere it appears.
+- **Adding a mark to a `justify-between` row can wrap the label opposite it.** Flex shrinks *both* sides, so the 26px the mark adds comes out of whichever column has slack. On the Suspects stat — a label opposite a sentence rather than a second numeral — it wrapped "Guests on record" onto two lines at 390px. Pin the label column with `shrink-0` and let the prose absorb it. Verify by counting the client rects of the label's text node, not by eyeballing row height: several of these rows also carry a 20px numeral and are legitimately tall.
+
+Where they are placed, and why each earns it:
+
+| Surface | Anchor | Answers |
+|---|---|---|
+| Chrome rail + board masthead | `Round` | *What should I be doing right now?* Generated from `ROUNDS` + `ROUND_GUIDE`, so it cannot contradict the Guide |
+| Evidence hub & every stack | `Collected`, `In play this round` | Whether a stack is empty because you are behind or because the round has not opened it |
+| Evidence | the ASK / CODE pair | The whole economy of the evening, behind two four-letter labels. The copy follows the corner: Rounds 00–01 have no ASK, so the tooltip explains CODE alone rather than a button that isn't there |
+| Evidence → Case files | `Released` | That these need no code, unlike everything else the player has been trading |
+| Identity | `Subject File` | That the secret is yours alone and sharing it is a choice |
+| Timeline | your name, `Key events` | What the red marks mean; public record vs. your own account |
+| Comms | `Comms` | That every message is signed and nothing can be unsaid |
+| Suspects | `Guests on record` | That the file number is a reference the room speaks in, and that the list never says who is a suspect |
+| Vote | `Ballot open/closed`, `Votes cast` | Who opens the ballot; that a withheld tally is hidden from everyone, not just you |
+
 ---
 
 ## 7. Motion
@@ -401,6 +445,8 @@ Every rule above says *add motion*. This one says where not to, and it matters m
 
 **A confirmation is one shot; only a genuine sustained alarm repeats.** The vote screen used to hold `.er-alarm` — an infinite 2.4s pulse — for two seconds after a vote landed. An endless pulse reads as *something is wrong with this card*, not *recorded*. Confirmations are `.er-stamp`: 420ms, once, done. `.er-alarm` is reserved and currently unused, which is the correct number of uses.
 
+**A control that arrives mid-game may knock, three times, once per device, ever** (`.er-summon`, App.css §17). ASK is the only case, and it is unlike anything else in the app: it is absent for the first two rounds because the riddle lock has nothing to pay out yet, and then it appears at a round advance beside a CODE button the player has been tapping all evening, in the corner their thumb already rests on. Left alone it reads as furniture. So it hops and blinks three times — about 3.5s, after its own landing has finished — and then stops dead at its resting position. The budget is deliberately small and deliberately spent: it does not repeat next round, it does not repeat on the next visit, and it does not survive a reload, because the ledger is in `localStorage` rather than in session state. The temptation this rule exists to refuse is the obvious one — leaving it pulsing until the player taps it. That is the reserved `.er-alarm`, and a button that pulses all evening reads as broken rather than new. Motion is not the only channel here either: the button is labelled, and the corner tooltip swaps to explain it the moment it appears.
+
 ### 7.2 Signature moments
 
 *All four are implemented.*
@@ -411,6 +457,9 @@ Every rule above says *add motion*. This one says where not to, and it matters m
 | Round advance | Round title crossfades, brass numeral ticks, rail fills the new segment 120ms behind it |
 | Vote cast | Bar grows by `scaleX`, brass numeral counts up, the card takes a single stamp |
 | Murderer reveal | Full-bleed `signal` — the one time red owns the screen |
+| Riddle cracked | Two square `signal` rings expand and rotate out of the centre, fourteen 8×2px paper flecks (bone / aged bone / brass / signal) tumble outward behind them, and a `SOLVED` seal drops in over-scaled and off-angle and settles at −9°. Three synthesized bells up a major triad, three haptic pulses. The clue card and the shareable code rise in behind it |
+
+**On the riddle-cracked moment and §7.1.** It is the loudest motion in the app after the reveal, and it earns that the same way: the trigger is a player choosing to solve a puzzle — a handful of times an evening, never incidentally — on a surface that exists only to deliver the payoff. It is still one shot, nothing loops, and the static half carries the meaning on its own: the seal reads `SOLVED`, the code is set in 30px mono, the clue names itself. Under `prefers-reduced-motion` the rings and flecks are `display: none` and the seal is simply stamped from the first frame; nothing is lost.
 
 **Verify motion by measuring it, not by looking at a still.** `getComputedStyle` returns the *animated* value mid-animation, so the `scaleX` component of a matrix is an exact reading of a wipe's progress — which is how the staggered redaction was confirmed to start covered, stagger, and finish fully open, including under `prefers-reduced-motion`.
 
@@ -502,8 +551,9 @@ Migrate one view at a time; both palettes can coexist while you do.
 | Story | [StoryView.jsx](src/components/views/StoryView.jsx) | *Added 2026-08-05.* The same beats as one long bone document — sections split by `line-bone` hairlines, `On record` stamp, no rotation (a 900px page rotated 1.2° reads as broken, not as pinned) |
 | Grid hub | [GridMenu.jsx](src/components/GridMenu.jsx) | Already the strongest screen. Keep pins and rotation; swap tile colours to `bone`/`bone-aged`, VOTE to `signal`, EXIT to `ink-hover`. *Updated 2026-08-05:* six destinations in a 3×2 board, then GUIDE and EXIT as full-width strips — both are utilities rather than places in the fiction, and an odd tile count would otherwise leave a hole in the board |
 | Identity | [DashboardView.jsx](src/components/views/DashboardView.jsx) | Full bone card. Secret becomes a **redaction bar** the player taps to reveal |
-| Evidence | [IntelView.jsx](src/components/views/IntelView.jsx) | Clue cards as pinned bone cards; locked clues as redaction bars; category via 3px top border. *Updated 2026-08-05:* a §6.11 stack hub over five stacks — accusations, motives, evidence, revelations, case files — with your own accusation and the confession pinned on the hub itself |
+| Evidence | [IntelView.jsx](src/components/views/IntelView.jsx) | Clue cards as pinned bone cards; locked clues as redaction bars; category via 3px top border. *Updated 2026-08-05:* a §6.11 stack hub over five stacks — accusations, motives, evidence, revelations, case files — with your own accusation and the confession pinned on the hub itself. *Updated 2026-08-07:* your accusation also leads the Accusations stack, and the chrome-rail X on an open stack steps back to the hub rather than out to the board |
 | Decoder | [DecoderModal.jsx](src/components/modals/DecoderModal.jsx) | Fill-in blank input; three outcomes in `signal` / `brass` / `dim-2` |
+| Riddle lock | [RiddleModal.jsx](src/components/modals/RiddleModal.jsx) | *Added 2026-08-07,* replacing the printed clue cards. Sits beside the decoder as the second Evidence FAB — **ASK in `line`/`bone`, CODE in `signal`**, because the pair must not read as two equal buttons and CODE is the one a player with a code in their ear is reaching for. The riddle is a pinned bone card (a question handed to you is paper); the answer field is the same fill-in blank as the decoder. The solve is §7.2's fifth signature moment, and the shared code sits under a `brass` 3px rule — the only card in the app whose *content* is a value to be copied. *Updated 2026-08-07:* ASK is **not on screen until Round 02** — the pool's earliest reward is a Round 2 motive, so before then the lock could only refuse — and it knocks three times the first time each player sees it (§7.1, `.er-summon`) |
 | Comms | [ChatView.jsx](src/components/views/ChatView.jsx) | **Currently off-palette (orange).** Own messages `signal`, others `ink-raised`, names in mono `signal-lift` |
 | Vote | [VotingView.jsx](src/components/views/VotingView.jsx) | **Currently off-palette (green).** Counts in `brass` display; selected suspect gets a `signal` border |
 | Case files | [CaseFilesSection.jsx](src/components/views/CaseFilesSection.jsx) | Locked files as ghost tags with round numbers; opened files as bone documents. *Was the standalone "Archives" screen until 2026-08-05; now one of the five Evidence stacks* |

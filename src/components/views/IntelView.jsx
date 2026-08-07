@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { CLUE_DB, CASE_FILES, CLUE_STACKS, CLUE_STACK_BY_KEY } from '../../data/gameData';
+import { CLUE_DB, CASE_FILES, CLUE_STACKS, CLUE_STACK_BY_KEY, ASK_OPENS_AT } from '../../data/gameData';
 import { EVIDENCE_STACKS } from '../../data/screenGuide';
+import { TOOLTIPS } from '../../data/tooltips';
 import { Numeral } from '../ui/Numeral';
+import { InfoTip } from '../ui/InfoTip';
 import { CaseFilesSection } from './CaseFilesSection';
 
 /**
@@ -27,6 +29,12 @@ import { CaseFilesSection } from './CaseFilesSection';
  * The two cards that are *yours* rather than found — the confession and your own
  * accusation — stay pinned on the hub instead of living in a stack. They are what
  * you perform out loud, so they are never behind a tap.
+ *
+ * Your accusation also *leads the Accusations stack*, which is the one place a
+ * duplicate is right: the stack is where a player goes looking for an accusation,
+ * and finding everyone's but their own there would read as a hole. It is dealt
+ * rather than decoded, so it is added explicitly — `cluesIn` still drops the
+ * host-revealed copy of the same clue, which is what stops it appearing twice.
  */
 
 // One hue, two depths: signal on the plot beats, signal-deep on the claims,
@@ -48,12 +56,17 @@ const ruleFor = (type) => TYPE_RULE[type] || 'var(--color-ink)';
  * `sealedLines` is that empty state: two ragged marks, never more and never wide.
  * Three at 80%+ read as a field of red rather than a redacted page, which §2.2
  * forbids — and a stack with nothing in it has nothing else on screen to balance it.
+ *
+ * `hint` overrides the line under those marks. Accusations need their own: they are
+ * the one stack outside the riddle reward pool (every player is dealt exactly one at
+ * Round 1), so telling a player to go solve a riddle for one would be a lie.
  */
 const STACK_STYLE = {
   accusations: {
     tone: 'bone',
     rot: 'er-rotL',
     sealedLines: [['Witness statement withheld', '66%'], ['Name redacted', '42%']],
+    hint: 'Every other player was dealt an accusation of their own. Enter a code somebody reads out to collect it.',
   },
   motives: {
     tone: 'aged',
@@ -138,7 +151,7 @@ const ClueCard = ({ index, type, title, body, code, note, pinBrass, fresh }) => 
  * A stack tile on the hub.
  *
  * Paper, pinned and slightly rotated, like the main board — each tile *is* a stack
- * of printed cards, so bone is the honest surface. The count is the display face in
+ * of case paper, so bone is the honest surface. The count is the display face in
  * `ink`, not brass: brass on bone is not a sanctioned pair (§2.3), while `ink` on
  * `bone` is the highest-contrast pair in the system at 15.78:1.
  *
@@ -191,10 +204,51 @@ const StackTile = ({ label, sub, count, sealedUntil, tone, rot, wide, onClick, m
   );
 };
 
+/**
+ * The two numbers the hub and an open stack both carry.
+ *
+ * One component for both because the tooltips are the point: "in play this
+ * round" is a number nobody can interpret on sight, and it is the difference
+ * between a stack that is empty because the player is behind and one that is
+ * empty because the round has not opened it yet. Two hand-written copies of the
+ * row would eventually explain that in two different ways.
+ */
+const EvidenceStat = ({ collected, inPlay }) => (
+  <div className="er-stat flex items-end justify-between gap-4">
+    <div>
+      <Numeral as="p" value={collected} pad={2} className="er-stat__num" />
+      <p className="er-stat__label flex items-center gap-2">
+        Collected
+        <InfoTip tip={TOOLTIPS.collected} />
+      </p>
+    </div>
+    <div className="text-right">
+      <Numeral as="p" value={inPlay} pad={2} className="er-stat__num" />
+      <p className="er-stat__label flex items-center justify-end gap-2">
+        In play this round
+        <InfoTip tip={TOOLTIPS.inPlay} />
+      </p>
+    </div>
+  </div>
+);
+
+/**
+ * The line under the sealed marks, when the stack has no hint of its own.
+ *
+ * It names ASK only once ASK is on screen. The button does not exist before
+ * Round 02 (ASK_OPENS_AT, data/gameData.js) because the lock has nothing to pay
+ * out yet, and sending a player to hunt the corner for a control that isn't
+ * there costs more than the shorter sentence does.
+ */
+const emptyHint = (askVisible) =>
+  askVisible
+    ? 'Solve a riddle with ASK to win one, or enter a code somebody has shared with you.'
+    : 'Enter a code somebody reads out to collect one.';
+
 /** A sealed page rather than a blank panel — §6.7, two ragged marks so red marks and never fills. */
-const EmptyStack = ({ lines }) => (
+const EmptyStack = ({ lines, title = 'Nothing decoded yet', hint }) => (
   <div className="er-card">
-    <p className="er-mono er-mono--hot er-mono--wide">Nothing decoded yet</p>
+    <p className="er-mono er-mono--hot er-mono--wide">{title}</p>
     <div className="space-y-2.5 mt-4" aria-hidden="true">
       {lines.map(([line, width]) => (
         <div key={line} className="er-redact er-redact--sealed block" style={{ width }}>
@@ -205,7 +259,7 @@ const EmptyStack = ({ lines }) => (
       ))}
     </div>
     <p className="font-body text-[15px] leading-[1.55] text-dim mt-5">
-      Enter a code from a printed card to unseal one.
+      {hint}
     </p>
   </div>
 );
@@ -230,15 +284,23 @@ export const IntelView = ({
   const hasAccusationYet = Boolean(myAccusation) && currentRound >= 1;
   const releasedFiles = CASE_FILES.filter((f) => unlockedFiles.includes(f.id)).length;
 
-  // The player's own accusation is pinned on the hub, so it must not also appear
-  // inside the Accusations stack — it is in ACCUSATION_CLUES, and the host is able
-  // to reveal those to the whole room.
+  // The player's own accusation is drawn from `myAccusation`, not from the decoded
+  // set, so the found list drops it wherever it turns up — it is in ACCUSATION_CLUES
+  // and the host can reveal those to the whole room, which would otherwise put the
+  // same card on screen twice.
   const cluesIn = (def) =>
     unlockedClueItems.filter(
       (c) =>
         def.clues.some((s) => s.id === c.id) &&
         !(hasAccusationYet && myAccusation && c.id === myAccusation.id)
     );
+
+  // …and it is added back at the head of the Accusations stack, where a player
+  // looking for an accusation expects to find it. One predicate for both the tile
+  // count and the stack, so the number on the hub can't disagree with the cards.
+  const ownAccusationIn = (def) => hasAccusationYet && def.key === 'accusations';
+  const countIn = (def) => cluesIn(def).length + (ownAccusationIn(def) ? 1 : 0);
+  const collected = CLUE_STACKS.reduce((total, def) => total + countIn(def), 0);
 
   // State, not a ref: this is read during render to pick the animation, and refs
   // must not be read during render. The initialiser only *reads* the module flag
@@ -276,6 +338,7 @@ export const IntelView = ({
     const def = CLUE_STACK_BY_KEY[stack];
     const style = STACK_STYLE[stack];
     const items = cluesIn(def);
+    const showMine = ownAccusationIn(def);
     const inPlay = def.clues.filter((c) => c.roundReq <= currentRound).length;
 
     // The freshly decoded card floats to the top of its stack — source order
@@ -291,21 +354,36 @@ export const IntelView = ({
       <div className="space-y-5">
         {back}
 
-        <div className="er-stat flex items-end justify-between gap-4">
-          <div>
-            <Numeral as="p" value={items.length} pad={2} className="er-stat__num" />
-            <p className="er-stat__label">Collected</p>
-          </div>
-          <div className="text-right">
-            <Numeral as="p" value={inPlay} pad={2} className="er-stat__num" />
-            <p className="er-stat__label">In play this round</p>
-          </div>
-        </div>
+        <EvidenceStat collected={items.length + (showMine ? 1 : 0)} inPlay={inPlay} />
+
+        {/* Yours leads, under the same label the hub uses — it is the one card here
+            you perform rather than collect, and the room's accusations arrive under
+            a rule of their own so the two never read as one undifferentiated pile. */}
+        {showMine && (
+          <>
+            <p className="er-mono er-mono--hot er-mono--wide">Yours alone</p>
+            <ClueCard
+              index={0}
+              type="Your Accusation"
+              title={myAccusation.title}
+              body={myAccusation.accusation}
+              code={`Code ${myAccusation.code}`}
+              note="Share this out loud. It is what your character witnessed."
+              pinBrass
+            />
+            {ordered.length > 0 && (
+              <div className="pt-1">
+                <div className="er-rule" />
+                <p className="er-mono er-mono--hot er-mono--wide pt-3">From the room</p>
+              </div>
+            )}
+          </>
+        )}
 
         {ordered.map((clue, idx) => (
           <ClueCard
             key={clue.id}
-            index={idx}
+            index={showMine ? idx + 1 : idx}
             type={clue.type}
             title={clue.title}
             body={clue.type === 'ACCUSATION' ? clue.accusation : clue.content}
@@ -314,7 +392,13 @@ export const IntelView = ({
           />
         ))}
 
-        {ordered.length === 0 && <EmptyStack lines={style.sealedLines} />}
+        {ordered.length === 0 && (
+          <EmptyStack
+            lines={style.sealedLines}
+            title={showMine ? 'Nobody else’s yet' : 'Nothing decoded yet'}
+            hint={style.hint || emptyHint(currentRound >= ASK_OPENS_AT)}
+          />
+        )}
       </div>
     );
   }
@@ -329,17 +413,10 @@ export const IntelView = ({
 
   return (
     <div className="space-y-5">
-      {/* Stat — brass numeral over a mono label, hairline above (§6.6). */}
-      <div className="er-stat flex items-end justify-between gap-4">
-        <div>
-          <Numeral as="p" value={unlockedClueItems.length} pad={2} className="er-stat__num" />
-          <p className="er-stat__label">Collected</p>
-        </div>
-        <div className="text-right">
-          <Numeral as="p" value={reachable} pad={2} className="er-stat__num" />
-          <p className="er-stat__label">In play this round</p>
-        </div>
-      </div>
+      {/* Stat — brass numeral over a mono label, hairline above (§6.6). Summed from
+          the tiles rather than counted off the decoded set, so the total can never
+          disagree with the four numbers sitting directly under it. */}
+      <EvidenceStat collected={collected} inPlay={reachable} />
 
       {/* The five stacks. Case files spans the row: it is the official record
           rather than something you decoded, which is a different kind of thing —
@@ -350,7 +427,7 @@ export const IntelView = ({
             key={def.key}
             label={EVIDENCE_STACKS[def.key].title}
             sub={EVIDENCE_STACKS[def.key].kicker}
-            count={cluesIn(def).length}
+            count={countIn(def)}
             sealedUntil={currentRound < def.opensAt ? def.opensAt : null}
             tone={STACK_STYLE[def.key].tone}
             rot={STACK_STYLE[def.key].rot}

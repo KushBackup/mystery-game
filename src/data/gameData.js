@@ -89,7 +89,7 @@ const ROSTER = [
     group: 'THIMBLE',
     bio: "One of Armaan Khanna's oldest friends. The person he called whenever the numbers, the mood, or the guest list needed to look calmer than they really were.",
     quirk: 'Can act, tailor a jacket seam, and steal a pen without anybody noticing the moment it went missing.',
-    secret: 'I have klepto tendencies, and Armaan was one of the few people who found that charming until it threatened him.',
+    secret: 'You are one of the five people who killed Armaan Khanna, and the plan was yours. Nobody in this room can be allowed to prove it. Your smaller secret: klepto tendencies, which Armaan found charming right up until they threatened him.',
     neverDo: 'Betray someone who trusted me first.',
     motive: "Sneha built the expansion model Armaan used to sell Velvet Ember's buyout story. The model was real; the side letters hiding kickbacks were not. Two days before the party, she learned Armaan planned to hand the Monday audit a binder that painted her as the architect of the fraud while he walked away with a retention bonus and a birthday headline.",
     timeline: '7:05 PM - Arrived early with the seating plan Armaan wanted rearranged.\n9:50 PM - In the upstairs booth arguing with Armaan over a red folder marked MONDAY.\n10:08 PM - Standing near the listening-room doors when the tribute video froze.\n10:12 PM - Raised her own glass but never looked at Armaan when he drank.',
@@ -102,10 +102,10 @@ const ROSTER = [
     group: 'ORACLE',
     bio: 'Armaan loved introducing Kiyaah as the only person in the room who could read him. He kept inviting her anyway.',
     quirk: 'Can profile a stranger in two minutes and pour a drink to match the lie they are telling.',
-    secret: 'My father disappeared years ago, and I stopped pretending I do not know more about that night than I say.',
+    secret: 'You are one of the five people who killed Armaan Khanna, and yours was the hand that gave him the glass. Play innocent all night. Your older secret: your father disappeared years ago, and you know more about that night than you say.',
     neverDo: 'Take orders from a man just because he is louder.',
     motive: "Kiyaah designed the private tasting ritual Armaan used to seduce investors: smoked glass, a single clear cube, and the orange-mist finish he called theater. He stole the whole program, scrubbed her name from it, and used grief-session confessions about her father to keep her compliant whenever she pushed back.",
-    timeline: '7:40 PM - Came in through the service entrance because Armaan asked her to inspect the private bar.\n9:58 PM - Behind the tasting counter showing staff the Last Light garnish sequence and collecting a wrapped mister from the prep pass.\n10:08 PM - Off camera for less than two minutes during the projector reboot.\n10:12 PM - Handed Armaan the only drink nobody else was allowed to touch.',
+    timeline: '7:40 PM - Came in through the service entrance because Armaan asked her to inspect the private bar.\n9:58 PM - Behind the tasting counter walking staff through the Last Light garnish sequence.\n10:06 PM - Collected a wrapped service roll from the prep pass while the room watched the tribute reel.\n10:08 PM - Off camera for less than two minutes during the projector reboot.\n10:12 PM - Handed Armaan the only drink nobody else was allowed to touch.',
     code: 'ORACLE',
   }),
   killer({
@@ -115,10 +115,10 @@ const ROSTER = [
     group: 'FORGERY',
     bio: "Came into Armaan's orbit as a fixer and stayed because his messes kept getting more expensive to survive.",
     quirk: 'Can copy a signature so cleanly that people trust the ink more than the person.',
-    secret: 'I have siphoned money out of clients who never realized their adviser was the thief in the room.',
+    secret: 'You are one of the five people who killed Armaan Khanna, and you are the one who made the paperwork behind it look ordinary. Admit nothing. Your other secret: you have siphoned money out of clients who never realized their adviser was the thief in the room.',
     neverDo: 'Admit guilt before I know the whole board.',
     motive: "Victoria structured excise cleanups, customs rebates, and reimbursements Armaan preferred not to explain twice. On Tuesday she discovered he had forged her sign-off on three shell-company ledgers and was about to let investigators find them first. He needed a scapegoat with expensive taste and good handwriting. She was the obvious choice.",
-    timeline: "8:05 PM - Arrived with a cream envelope and did not let it out of sight.\n9:42 PM - In Armaan's study while he initialed documents and swore at her for demanding every page.\n10:06 PM - Walked past the private bar carrying a supplier folder.\n10:24 PM - Told the first officer to seize the inventory logs before anyone else touched them.",
+    timeline: "8:05 PM - Arrived with a cream envelope and did not let it out of sight.\n9:42 PM - In the venue's back office while Armaan initialed documents and swore at her for demanding every page.\n10:06 PM - Walked past the private bar carrying a supplier folder.\n10:24 PM - Told the first officer to seize the inventory logs before anyone else touched them.",
     code: 'FORGERY',
   }),
   killer({
@@ -128,10 +128,10 @@ const ROSTER = [
     group: 'HEMLOCK',
     bio: "Supplies botanicals to half the city's self-appointed connoisseurs. Speaks like a man translating from a dead century.",
     quirk: 'Practices toxicology as if it were philosophy and remembers every plant by the damage it can do.',
-    secret: 'There is a private fortune set aside for the day I finally decide who deserves it.',
+    secret: 'You are one of the five people who killed Armaan Khanna, and the poison in that glass came out of your case. Let the room chase anyone but you. Your other secret: a private fortune set aside for the day you finally decide who deserves it.',
     neverDo: 'Harm an animal that never volunteered to be in the experiment.',
     motive: "Roddy developed the original bittering base for Velvet Ember's limited botanical line. Armaan copied the notebook, cheapened the formula, and then floated the idea of patenting the entire line under company ownership. Roddy knew exactly what kind of rage a theft like that should produce.",
-    timeline: '7:25 PM - Arrived with a gift box of rare botanicals that never reached the gift table.\n9:30 PM - Spoke to Armaan beside the stage rail and did not smile once.\n10:05 PM - Seen in the prep-room corridor without the wrapped service roll he had taken out of that case.\n10:22 PM - Already kneeling by the body before the room finished screaming.',
+    timeline: '7:25 PM - Arrived with a gift box of rare botanicals that never reached the gift table.\n9:30 PM - Spoke to Armaan beside the stage rail and did not smile once.\n10:02 PM - Took the case into the prep-room corridor.\n10:05 PM - Back on the floor without it, and without the wrapped service roll that had been inside it.\n10:22 PM - Already kneeling by the body before the room finished screaming.',
     code: 'HEMLOCK',
   }),
   killer({
@@ -141,7 +141,7 @@ const ROSTER = [
     group: 'AMBER',
     bio: 'Competitive, polished, and better with systems than with fools. Armaan liked that right up until the systems started remembering too much.',
     quirk: 'A fragrance obsessive who also knows exactly how every access log in a room should read.',
-    secret: 'I once took four international trips with a coworker I could not stand, which taught me how convincingly I can perform affection.',
+    secret: 'You are one of the five people who killed Armaan Khanna, and you are the one who took the room\'s eyes off him. Deny it calmly. Your other secret: four international trips with a coworker you could not stand taught you how convincingly you can perform affection.',
     neverDo: 'Lose because I was slow.',
     motive: "Oindrilla built Velvet Ember's event dashboard, QR access flow, and loyalty-data layer. Armaan reused her tools to watch employees, scrub stock movement, and stage scarcity. When a warehouse discrepancy surfaced, he started drafting a memo that blamed the entire breach on her admin credentials.",
     timeline: '7:15 PM - Arrived early to test the tribute reel and guest check-in scanner.\n9:57 PM - In the sound booth when the birthday montage began.\n10:08 PM - Logged an unexplained reboot from the event-admin terminal.\n10:13 PM - Back in the crowd before anyone finished complaining that the music had glitched.',
@@ -157,7 +157,7 @@ const ROSTER = [
     secret: 'I have bid against my own clients to drive prices up when they were too trusting to notice.',
     neverDo: "Reveal a collector's secrets just because someone begs well.",
     motive: "Tara sourced the vintage mirrors, posters, and private-collection bottles that made Velvet Ember feel older and richer than it was. Armaan slipped counterfeit provenance into one of her consignments, pocketed the margin, and hinted that customs would find her name first if anybody got curious.",
-    timeline: '7:50 PM - Arrived with a lacquered gift crate no one was allowed to open early.\n9:35 PM - Cornered Armaan about a missing customs seal.\n10:10 PM - Near the record wall when the projector cut out.\n10:21 PM - First person to say the drink smelled wrong.',
+    timeline: '7:50 PM - Arrived with a lacquered gift crate no one was allowed to open early.\n9:35 PM - Cornered Armaan about a missing customs seal.\n10:10 PM - Near the record wall when the projector cut out.\n10:21 PM - Said the drink smelled wrong, then said it again louder when nobody moved.',
     code: 'CANVAS',
   }),
   suspect({
@@ -261,7 +261,7 @@ const ROSTER = [
     secret: 'If conversation fails, I can happily talk paddle ball until everyone leaves.',
     neverDo: 'Miss the chance to greet a dog.',
     motive: 'Armaan stole a tasting-menu sequence Ricardo built for a hotel pitch and handed it to a consultant with a cleaner shirt.',
-    timeline: "7:35 PM - Arrived with Sneha's table and drifted to the canape station.\n9:59 PM - Heard Kiyaah ask for a fresh orange-oil mister.\n10:22 PM - First thing he noticed was that Armaan's glass was nearly empty.",
+    timeline: "7:35 PM - Arrived with Sneha's table and drifted to the canape station.\n9:59 PM - Heard Kiyaah ask for a fresh orange-oil mister.\n10:20 PM - Noticed Armaan's glass was already nearly empty and that nobody had been allowed near it to refill it.",
     code: 'HOUND',
   }),
   witness({
@@ -287,7 +287,7 @@ const ROSTER = [
     secret: 'Sometimes I eat fridge-cold khichdi straight from the bowl and call it efficiency.',
     neverDo: 'Do two late nights in a row for free.',
     motive: 'Armaan wanted sustainability language for the buyout deck, not an actual sustainability plan, and used Govind\'s notes exactly once before ghosting him.',
-    timeline: '7:48 PM - Arrived and got trapped in a conversation about climate-washed branding.\n10:03 PM - Saw Roddy leave the prep-room corridor empty handed.\n10:25 PM - Told police the blackout mattered more than the shouting.',
+    timeline: '7:48 PM - Arrived and got trapped in a conversation about climate-washed branding.\n10:05 PM - Saw Roddy leave the prep-room corridor empty handed.\n10:25 PM - Told police the blackout mattered more than the shouting.',
     code: 'ESPRESSO',
   }),
   witness({
@@ -339,7 +339,7 @@ const ROSTER = [
     secret: 'When I say I do not know, it usually means I know but do not trust you yet.',
     neverDo: 'Shout if a quieter correction will work.',
     motive: 'Armaan ordered custom welcome hampers from Swati, delayed payment, and told guests a luxury concierge had sourced them instead.',
-    timeline: '7:38 PM - Arrived with Kiyaah\'s table carrying hand-wrapped soaps.\n10:05 PM - Noticed a polished silver mister on the bar tray that had not been there earlier.\n10:23 PM - Saw Victoria washing her hands before anyone understood why the room had gone still.',
+    timeline: '7:38 PM - Arrived with Kiyaah\'s table carrying hand-wrapped soaps.\n10:10 PM - Noticed a polished silver mister on the bar tray that had not been there earlier.\n10:23 PM - Saw Victoria washing her hands before anyone understood why the room had gone still.',
     code: 'SOAPSTONE',
   }),
   witness({
@@ -430,7 +430,7 @@ const ROSTER = [
     secret: 'I have a chemistry degree that people stop remembering the second they see the flowers.',
     neverDo: 'Use violence when better growing conditions would solve it.',
     motive: 'Armaan underpaid Flora for a botanical installation and then bragged about the formula for its scent profile as if he had invented it himself.',
-    timeline: '7:18 PM - Arrived with Roddy\'s circle to inspect the floral arch.\n10:06 PM - Smelled something medicinal under the orange peel near the bar.\n10:23 PM - Said out loud that the bottle was not the point.',
+    timeline: '7:18 PM - Arrived with Roddy\'s circle to inspect the floral arch.\n10:07 PM - Smelled something medicinal under the orange peel near the bar.\n10:23 PM - Said out loud that the bottle was not the point.',
     code: 'BLOOM',
   }),
   witness({
@@ -508,7 +508,7 @@ const ROSTER = [
     secret: 'Trust issues make me pay attention longer than people enjoy.',
     neverDo: 'Climb a mountain for personal growth.',
     motive: 'Armaan filmed Chryselle\'s storytelling concept for a school fundraiser, trimmed her name off the credits, and thanked his internal brand team instead.',
-    timeline: '7:53 PM - Arrived with Oindrilla\'s table and stayed close enough to watch, not participate.\n9:51 PM - Saw Sneha leave the upstairs booth with the red Monday binder.\n10:23 PM - Noted how quickly Kiyaah moved staff away from the bar.',
+    timeline: '7:53 PM - Arrived with Oindrilla\'s table and stayed close enough to watch, not participate.\n9:51 PM - Saw Sneha come out of the upstairs booth empty handed, with the red Monday folder still lying open on the table behind her.\n10:23 PM - Noted how quickly Kiyaah moved staff away from the bar.',
     code: 'OBSERVER',
   }),
   witness({
@@ -521,7 +521,7 @@ const ROSTER = [
     secret: 'Privacy is a strategy, not a personality flaw.',
     neverDo: 'Go back to Gurgaon just because nostalgia asked nicely.',
     motive: 'Armaan lifted the structure of Akash\'s investor deck for his own acquisition narrative and then told him the original lacked conviction.',
-    timeline: '8:14 PM - Arrived with Oindrilla\'s circle and drifted toward the service doors.\n9:29 PM - Saw Vinod come back from a private meeting with Armaan.\n10:25 PM - Told police the loudest argument tonight was not the one by the bar.',
+    timeline: '8:14 PM - Arrived with Oindrilla\'s circle and drifted toward the service doors.\n9:31 PM - Saw Vinod come back from a private meeting with Armaan.\n10:25 PM - Told police the loudest argument tonight was not the one by the bar.',
     code: 'JATT',
   }),
   witness({
@@ -573,7 +573,7 @@ const ROSTER = [
     secret: 'I used to shoplift and still know exactly how security patterns work in retail rooms.',
     neverDo: 'Dance for a reel if the reel itself is stupid.',
     motive: 'Armaan mined Sunali\'s nonprofit contact list for donors, turned the dinner into a luxury alcohol launch, and acted shocked that she objected.',
-    timeline: '8:01 PM - Arrived with Tanvi\'s group and started talking to absolutely everyone.\n9:52 PM - Heard Sneha ask whether the Monday binder was still upstairs.\n10:25 PM - Was the first person to say the blackout and the drink belonged in the same sentence.',
+    timeline: '8:01 PM - Arrived with Tanvi\'s group and started talking to absolutely everyone.\n9:46 PM - Heard Sneha ask a member of staff which upstairs room the red folder had been left in.\n10:25 PM - Was the first person to say the blackout and the drink belonged in the same sentence.',
     code: 'FICTION',
   }),
   witness({
@@ -800,18 +800,18 @@ const GROUPS = {
 const ACCUSATION_DECK = [
   {
     id: 'acc_sneha',
-    code: 'ACCUSE_SNEHA',
+    code: 'LANTERN',
     targetSuspect: 'char_sneha',
     targetName: 'Sneha Ganesh',
     title: 'Suspicious Behavior: Sneha Ganesh',
-    accusation: 'Sneha had Armaan\'s red Monday binder in her hands right before the lights glitched. When I passed the upstairs booth she said, if you throw me overboard, I take the ship with me. Ten minutes later she was back downstairs looking composed enough to be dangerous.',
+    accusation: 'When I passed the upstairs booth, Sneha was in there with Armaan and the red folder marked MONDAY, and I heard her say, if you throw me overboard, I take the ship with me. She came back down without it, composed enough to be dangerous. The lights went out not long after.',
     roundReq: 1,
     type: 'ACCUSATION',
     assignedTo: GROUPS.REPLICA,
   },
   {
     id: 'acc_tara',
-    code: 'ACCUSE_TARA',
+    code: 'HARBOR',
     targetSuspect: 'char_tara',
     targetName: 'Tara Singhania',
     title: 'Suspicious Behavior: Tara Singhania',
@@ -822,7 +822,7 @@ const ACCUSATION_DECK = [
   },
   {
     id: 'acc_kiyaah',
-    code: 'ACCUSE_KIYAAH',
+    code: 'CADENCE',
     targetSuspect: 'char_kiyaah',
     targetName: 'Kiyaah Rose Raghuwanshi',
     title: 'Suspicious Behavior: Kiyaah Rose Raghuwanshi',
@@ -833,29 +833,29 @@ const ACCUSATION_DECK = [
   },
   {
     id: 'acc_victoria',
-    code: 'ACCUSE_VICTORIA',
+    code: 'MARBLE',
     targetSuspect: 'char_victoria',
     targetName: 'Victoria Vance',
     title: 'Suspicious Behavior: Victoria Vance',
-    accusation: 'Victoria arrived with documents, made Armaan initial something in the study, and later washed her hands before the room even knew there was a problem. She kept saying check the logs like she already knew what the logs would say.',
+    accusation: 'Victoria arrived with documents, made Armaan initial something in the back office, and later washed her hands before the room even knew there was a problem. She kept saying check the logs like she already knew what the logs would say.',
     roundReq: 1,
     type: 'ACCUSATION',
     assignedTo: GROUPS.ORACLE,
   },
   {
     id: 'acc_roddy',
-    code: 'ACCUSE_RODDY',
+    code: 'COMPASS',
     targetSuspect: 'char_roddy',
     targetName: 'Roddy Faustus',
     title: 'Suspicious Behavior: Roddy Faustus',
-    accusation: 'Roddy brought a gift box full of botanicals that vanished before the gifts were opened. He spent the evening asking what Armaan had been drinking, whether he had eaten, and how quickly his fingers went numb. Nobody talks like that unless they already think they know the answer.',
+    accusation: 'Roddy brought a gift box full of botanicals that vanished before the gifts were opened. He was down beside the body before anyone else moved, asking what Armaan had been drinking, whether he had eaten, and how fast the numbness had climbed his hands. Nobody asks it in that order unless they already think they know the answer.',
     roundReq: 1,
     type: 'ACCUSATION',
     assignedTo: GROUPS.FORGERY,
   },
   {
     id: 'acc_oindrilla',
-    code: 'ACCUSE_OINDRILLA',
+    code: 'TANGENT',
     targetSuspect: 'char_oindrilla',
     targetName: 'Oindrilla Chatterjee',
     title: 'Suspicious Behavior: Oindrilla Chatterjee',
@@ -866,7 +866,7 @@ const ACCUSATION_DECK = [
   },
   {
     id: 'acc_tanvi',
-    code: 'ACCUSE_TANVI',
+    code: 'SATCHEL',
     targetSuspect: 'char_tanvi',
     targetName: 'Tanvi Vartak',
     title: 'Suspicious Behavior: Tanvi Vartak',
@@ -877,7 +877,7 @@ const ACCUSATION_DECK = [
   },
   {
     id: 'acc_rishi',
-    code: 'ACCUSE_RISHI',
+    code: 'PARADE',
     targetSuspect: 'char_rishi',
     targetName: 'Rishi Raj Rahul',
     title: 'Suspicious Behavior: Rishi Raj Rahul',
@@ -888,7 +888,7 @@ const ACCUSATION_DECK = [
   },
   {
     id: 'acc_vinod',
-    code: 'ACCUSE_VINOD',
+    code: 'BOULDER',
     targetSuspect: 'char_vinod',
     targetName: 'Vinod Raghuwanshi',
     title: 'Suspicious Behavior: Vinod Raghuwanshi',
@@ -899,7 +899,7 @@ const ACCUSATION_DECK = [
   },
   {
     id: 'acc_anna',
-    code: 'ACCUSE_ANNA',
+    code: 'CARNIVAL',
     targetSuspect: 'char_anna',
     targetName: 'Anna Russo',
     title: 'Suspicious Behavior: Anna Russo',
@@ -923,7 +923,7 @@ export const ACCUSATION_CLUES = dealt(ACCUSATION_DECK, {
 const MOTIVE_DECK = [
   {
     id: 'mot_sneha',
-    code: 'THIMBLE',
+    code: 'PENDULUM',
     targetSuspect: 'char_sneha',
     targetName: 'Sneha Ganesh',
     title: 'Motive: Sneha Ganesh',
@@ -933,7 +933,7 @@ const MOTIVE_DECK = [
   },
   {
     id: 'mot_tara',
-    code: 'CANVAS',
+    code: 'SAFFRON',
     targetSuspect: 'char_tara',
     targetName: 'Tara Singhania',
     title: 'Motive: Tara Singhania',
@@ -943,17 +943,17 @@ const MOTIVE_DECK = [
   },
   {
     id: 'mot_kiyaah',
-    code: 'ORACLE',
+    code: 'DRIFTWOOD',
     targetSuspect: 'char_kiyaah',
     targetName: 'Kiyaah Rose Raghuwanshi',
     title: 'Motive: Kiyaah Rose Raghuwanshi',
-    content: "Kiyaah designed the private tasting ritual Armaan used on buyers and investors, from the smoked glass to the orange-mist finish. He took the bar program, erased her name, and used the vulnerability she had shown him in confidence to keep her from fighting back. Worse, pieces of the program came from her late father's old bar book. Armaan stole a language of grief, polished it, and sold it as founder genius.",
+    content: "Kiyaah designed the private tasting ritual Armaan used on buyers and investors, from the smoked glass to the orange-mist finish. He took the bar program, erased her name, and used the vulnerability she had shown him in confidence to keep her from fighting back. Worse, pieces of the program came from her father's old bar book — the one thing left behind when he disappeared. Armaan stole a language of grief, polished it, and sold it as founder genius.",
     roundReq: 2,
     type: 'MOTIVE',
   },
   {
     id: 'mot_victoria',
-    code: 'FORGERY',
+    code: 'GRANITE',
     targetSuspect: 'char_victoria',
     targetName: 'Victoria Vance',
     title: 'Motive: Victoria Vance',
@@ -963,7 +963,7 @@ const MOTIVE_DECK = [
   },
   {
     id: 'mot_roddy',
-    code: 'HEMLOCK',
+    code: 'THISTLE',
     targetSuspect: 'char_roddy',
     targetName: 'Roddy Faustus',
     title: 'Motive: Roddy Faustus',
@@ -973,7 +973,7 @@ const MOTIVE_DECK = [
   },
   {
     id: 'mot_oindrilla',
-    code: 'AMBER',
+    code: 'LATTICE',
     targetSuspect: 'char_oindrilla',
     targetName: 'Oindrilla Chatterjee',
     title: 'Motive: Oindrilla Chatterjee',
@@ -983,7 +983,7 @@ const MOTIVE_DECK = [
   },
   {
     id: 'mot_tanvi',
-    code: 'PIXEL',
+    code: 'ORIGAMI',
     targetSuspect: 'char_tanvi',
     targetName: 'Tanvi Vartak',
     title: 'Motive: Tanvi Vartak',
@@ -993,7 +993,7 @@ const MOTIVE_DECK = [
   },
   {
     id: 'mot_rishi',
-    code: 'MYTHOS',
+    code: 'STAMPEDE',
     targetSuspect: 'char_rishi',
     targetName: 'Rishi Raj Rahul',
     title: 'Motive: Rishi Raj Rahul',
@@ -1003,7 +1003,7 @@ const MOTIVE_DECK = [
   },
   {
     id: 'mot_vinod',
-    code: 'REGENT',
+    code: 'OBELISK',
     targetSuspect: 'char_vinod',
     targetName: 'Vinod Raghuwanshi',
     title: 'Motive: Vinod Raghuwanshi',
@@ -1013,7 +1013,7 @@ const MOTIVE_DECK = [
   },
   {
     id: 'mot_anna',
-    code: 'REPLICA',
+    code: 'MOSAIC',
     targetSuspect: 'char_anna',
     targetName: 'Anna Russo',
     title: 'Motive: Anna Russo',
@@ -1034,15 +1034,15 @@ export const MOTIVE_CLUES = dealt(MOTIVE_DECK, {
 const EVIDENCE_DECK = [
   {
     id: 'ev_tox',
-    code: 'EVIDENCE_TOX',
+    code: 'BEACON',
     title: 'Toxicology Summary',
-    content: 'FORENSIC LAB - GOA\n\nCASE: Armaan Khanna / For the Record, Panjim\nSPECIMENS: Blood, saliva, gastric wash, glass residue, orange-oil atomizer residue.\n\nFINDINGS:\n- Cause of death: acute aconitine toxicity\n- Delivery pattern: concentrated contact + ingestion, not a contaminated bottle batch\n- Highest residue: victim\'s lips, glass rim, and the nozzle of a silver aromatic atomizer recovered from the private bar\n- Birthday cake, shared bottle service, staff batch mixers: NEGATIVE\n\nCONCLUSION: Armaan was not poisoned by the room\'s alcohol supply. The toxin was delivered to one drink at the final finishing stage.',
+    content: 'STATE FORENSIC SCIENCE LABORATORY - GOA\n\nCASE: Armaan Khanna / For the Record, Panjim\nSPECIMENS: Blood, saliva, gastric wash, glass residue, orange-oil atomizer residue.\n\nFINDINGS:\n- Cause of death: acute aconitine toxicity\n- Delivery pattern: concentrated contact + ingestion, not a contaminated bottle batch\n- Highest residue: victim\'s lips, glass rim, and the nozzle of a silver aromatic atomizer recovered from the private bar\n- Birthday cake, shared bottle service, staff batch mixers: NEGATIVE\n\nCONCLUSION: Armaan was not poisoned by the room\'s alcohol supply. The toxin was delivered to one drink at the final finishing stage.',
     roundReq: 3,
     type: 'FORENSICS',
   },
   {
     id: 'ev_atomizer',
-    code: 'EVIDENCE_ATOMIZER',
+    code: 'FILAMENT',
     title: 'Signature Drink Atomizer Analysis',
     content: 'ITEM: Silver atomizer labeled EMBER ORANGE, recovered from the private bar.\n\nFINDINGS:\n- Exterior recently polished; no usable prints\n- Internal residue: bitter-orange oil cut with concentrated aconite tincture\n- Label adhesive newer than the bottle itself\n- Atomizer body is a twin, not the original piece listed in the bar inventory\n- Linen fibres on the neck match service towels from the prep room\n\nNOTES: Velvet Ember\'s signature birthday drink, the Last Light, is finished with two sprays from a silver atomizer over the top of the glass. Staff confirm that only Armaan received that final garnish that night.',
     roundReq: 3,
@@ -1050,7 +1050,7 @@ const EVIDENCE_DECK = [
   },
   {
     id: 'ev_cctv',
-    code: 'EVIDENCE_CCTV',
+    code: 'HALOGEN',
     title: 'Projector and Bar-Camera Log',
     content: 'SECURITY SUMMARY - FOR THE RECORD / PRIVATE BAR\n\n9:55 PM - Birthday tribute reel begins.\n10:08:14 PM - Event-admin terminal forces a projector reboot.\n10:08:19 PM - Bar camera feed drops.\n10:09:53 PM - Camera feed returns.\n\nLength of blind spot: 94 seconds.\n\nNOTES:\n- No master power failure occurred anywhere else in the venue.\n- Reboot command came from a valid admin session, not a random outage.\n- The blind spot aligns with the only moment the private bar was visually occluded from the main room by the crowd turning toward the screen.',
     roundReq: 3,
@@ -1058,7 +1058,7 @@ const EVIDENCE_DECK = [
   },
   {
     id: 'ev_floor',
-    code: 'EVIDENCE_FLOOR',
+    code: 'GABLE',
     title: 'Floor Plan and Sightline Notes',
     content: 'RECOVERED FROM EVENT PLANNING FOLDER\n\nThe party layout placed each of Armaan\'s ten direct invitees at the center of a five-person cluster, with one cluster expanded to six. Handwritten arrows mark clear sightlines from the sound booth to the private bar, plus notes reading DO NOT BLOCK BAR DURING REEL and HOLD CAKE UNTIL ORANGE. A second scribble in the margin reads: keep lane clean for cake camera. The side banquette by the bar arch remains visible even when the main floor turns toward the screen.\n\nThe handwriting is not Armaan\'s. It matches the same black fineliner used on the birthday game cards distributed around the room. The notes explain why Tanvi was managing sightlines, but they also prove someone with access to the plan could predict exactly when the room would turn toward the screen.',
     roundReq: 3,
@@ -1066,7 +1066,7 @@ const EVIDENCE_DECK = [
   },
   {
     id: 'ev_invoice',
-    code: 'EVIDENCE_INVOICE',
+    code: 'PARCHMENT',
     title: 'Supplier Invoice Mismatch',
     content: 'DOCUMENT CHECK - PRIVATE BAR INVENTORY\n\nA supplier invoice entered at 5:14 PM lists a replacement aromatic atomizer, imported bitters glassware, and a customs seal reference tied to Tara Singhania\'s art-logistics vendor. The document uses the correct vendor mark but the wrong paper stock, the signature block carries pressure patterns consistent with traced forgery rather than a natural signature, and upload metadata shows the entry was pushed remotely rather than drafted on the venue terminal.\n\nIn plain English: someone wanted the swapped atomizer to look like it arrived through Tara\'s world.',
     roundReq: 3,
@@ -1074,15 +1074,15 @@ const EVIDENCE_DECK = [
   },
   {
     id: 'ev_access',
-    code: 'EVIDENCE_ACCESS',
+    code: 'TURNSTILE',
     title: 'Service QR Access Trace',
-    content: 'ACCESS CONTROL TRACE\n\n- 7:12 PM - Event-admin credential activates the sound booth\n- 9:57 PM - Same credential opens the sound booth again\n- 10:08 PM - Service QR enters private bar during blind spot\n- 10:09 PM - Same QR exits private bar\n\nThe service QR used at 10:08 PM belongs to a staff apron that had already been clocked out and returned. Someone cloned or reactivated it for a single pass. The only people with legitimate knowledge of the event-admin layer were operations, event staff, and the person who built the system.',
+    content: 'ACCESS CONTROL TRACE\n\n- 7:20 PM - Event-admin credential activates the sound booth\n- 9:57 PM - Same credential opens the sound booth again\n- 10:08 PM - Service QR enters private bar during blind spot\n- 10:09 PM - Same QR exits private bar\n\nThe service QR used at 10:08 PM belongs to a staff apron that had already been clocked out and returned. Someone cloned or reactivated it for a single pass. The only people with legitimate knowledge of the event-admin layer were operations, event staff, and the person who built the system.',
     roundReq: 3,
     type: 'EVIDENCE',
   },
   {
     id: 'ev_binder',
-    code: 'EVIDENCE_BINDER',
+    code: 'QUARRY',
     title: "Armaan's Monday Binder Index",
     content: 'RECOVERED INDEX PAGE - RED FOLDER MARKED MONDAY\n\nSections in the binder include:\n1. Meridien buyout talking points\n2. Excise exposure if timeline leaks\n3. Draft statement shifting rebate structure to S.G.\n4. Customs provenance fallback - T.S.\n5. Shell-ledger exposure - V.V.\n6. Inventory anomaly responsibility - O.C.\n7. Buyer-experience prototype misuse - T.V.\n\nThe folder is not evidence of murder. It is evidence that Armaan had already written scripts for who would take the fall if the room around him ever stopped being loyal.',
     roundReq: 3,
@@ -1098,7 +1098,7 @@ export const EVIDENCE_CLUES = dealt(EVIDENCE_DECK, { salt: 'evidence' });
 const REVELATION_DECK = [
   {
     id: 'rev_audit',
-    code: 'REVEAL_AUDIT',
+    code: 'SOLSTICE',
     title: 'Monday Audit Packet',
     content: 'INTERNAL MEMO - DRAFT\nPrepared for Monday post-birthday review with Meridien Beverage Group legal counsel.\n\nThe packet includes a fallback narrative positioning Sneha Ganesh as the operational architect of the undisclosed rebate structure attached to Velvet Ember\'s buyout model. A handwritten note from Armaan reads: if the room turns, give them the planner. Nobody mourns the planner.\n\nThis is the first hard proof that Armaan intended to survive the buyout by sacrificing someone else in public.',
     roundReq: 4,
@@ -1106,7 +1106,7 @@ const REVELATION_DECK = [
   },
   {
     id: 'rev_bar',
-    code: 'REVEAL_BAR',
+    code: 'HOLLOW',
     title: 'Private Bar Program Contract',
     content: 'CONTRACT EXTRACT - LAST LIGHT SERVICE RITUAL\n\nKiyaah Rose Raghuwanshi authored the original Last Light service ritual for Velvet Ember under a short consulting agreement that was never fully paid. The agreement states that the final orange-oil spray is applied tableside only to Armaan\'s glass during investor nights because the founder wanted the ritual to feel personal.\n\nAttached message from Armaan: your name staying off this is the price of access.\n\nMeaning: only a small handful of people even knew the finishing spray was part of the kill path.',
     roundReq: 4,
@@ -1114,7 +1114,7 @@ const REVELATION_DECK = [
   },
   {
     id: 'rev_formula',
-    code: 'REVEAL_FORMULA',
+    code: 'BRAMBLE',
     title: "Roddy's Missing Notebook Page",
     content: 'RECOVERED NOTEBOOK FRAGMENT\n\nThe missing page from Roddy\'s botanical notebook describes a bitter-orange carrier stabilized with aconite tincture in a dose small enough to hide under aromatic oil and large enough to trigger collapse within minutes. The reverse side contains a delivery note in Armaan\'s handwriting: we own this now.\n\nIt is both motive and method in one object: Armaan stole the work, and the work later described exactly how he died.',
     roundReq: 4,
@@ -1122,7 +1122,7 @@ const REVELATION_DECK = [
   },
   {
     id: 'rev_tax',
-    code: 'REVEAL_TAX',
+    code: 'COBALT',
     title: "Victoria's Signature Sheet",
     content: 'HANDWRITING COMPARISON - SHELL LEDGERS\n\nThree ledgers tied to Velvet Ember shell companies carry Victoria Vance\'s name but not her natural signature motion. Pressure analysis shows traced starts, hesitation marks, and identical flourish lift-offs across pages allegedly signed days apart.\n\nAttached voicemail from Armaan to Victoria, timestamped the afternoon before the party: Monday gets ugly for somebody. It does not have to be me.\n\nNow the forged supplier invoice from Round 3 has a clearer owner too.',
     roundReq: 4,
@@ -1130,7 +1130,7 @@ const REVELATION_DECK = [
   },
   {
     id: 'rev_admin',
-    code: 'REVEAL_ADMIN',
+    code: 'ZEPHYR',
     title: 'Admin Override Trace',
     content: 'EVENT SYSTEM AUDIT\n\nThe 10:08 PM reboot came from an admin credential cloned off Oindrilla\'s build environment and then re-authenticated from the side console she alone had previously configured for offline use. Minutes earlier, a retired staff QR was temporarily re-enabled under the same session tree.\n\nThis is the first point in the case where the room has to stop asking who had motive and start asking who each suspect was quietly helping. One person can poison. One person can forge. One person can stage a blackout. This case has all three at once.',
     roundReq: 5,
@@ -1138,7 +1138,7 @@ const REVELATION_DECK = [
   },
   {
     id: 'rev_thread',
-    code: 'REVEAL_THREAD',
+    code: 'CATACOMB',
     title: 'Burner Group Transcript',
     content: 'RECOVERED CHAT - UNSAVED BURNER THREAD\n\nDevice metadata places five different guests inside the same unsaved burner group, but the recovered image only resolves initials and fragments, not full names.\n\nExtracts:\nS.G.: monday folder stays upstairs. we finish it tonight.\nK.R.R.: orange is cleaner than bottle.\nV.V.: ledger points at canvas if anyone needs a story.\nR.F.: one serving. no splash. no batch contamination.\nO.C.: reel drops for ninety. qr in and out. after the cheer.\nS.G.: good. no tables. no families. just us.\n\nThis is the twist clue, not the final answer. It proves coordination across five different circles and destroys the theory that one suspect simply used their own group. The room still has to map the initials, the roles, and the method together.',
     roundReq: 5,
@@ -1156,7 +1156,7 @@ export const REVELATION_CLUES = dealt(REVELATION_DECK, {
 
 export const CONFESSION_CLUE = {
   id: 'confession',
-  code: 'THE_TRUTH',
+  code: 'KEYSTONE',
   title: 'The Truth',
   content: 'We did it. Sneha designed it. The rest of us made sure the design lived long enough to kill him.\n\nArmaan thought the room existed to absorb his damage. He had already written the Monday script: Sneha for the numbers, Victoria for the ledgers, Oindrilla for the system breach, Tara for the provenance trail if needed, anyone useful turned into collateral if the buyout needed a villain. He wanted five different people frightened enough to stay helpful and isolated enough to stay quiet.\n\nInstead, five of us compared notes. Roddy knew how to hide aconite in the orange carrier. Kiyaah knew Armaan would never let anyone else finish the Last Light. Victoria built the paper trail that shoved suspicion sideways. Oindrilla gave us a blind spot and a cloned pass. Sneha made the room believe each table would only protect its own.\n\nThat was the whole trick. Not poison. Alignment. Armaan had spent years teaching people to think in private humiliations. We answered with public coordination.\n\nHe raised the glass because he always believed the ritual belonged to him. Then the room turned, exactly on time.',
   roundReq: 6,
@@ -1250,13 +1250,18 @@ export const CASE_SOLUTION = {
       body: 'The tribute reel starts beside the private bar and the room turns toward the screen — exactly as the annotated floor plan predicted. Its margin notes read DO NOT BLOCK BAR DURING REEL and HOLD CAKE UNTIL ORANGE.',
     },
     {
-      time: '9:58 PM',
+      time: '10:02 PM',
       hidden: true,
-      body: 'While walking staff through the Last Light garnish sequence, Kiyaah collects a wrapped service roll from the prep pass. Roddy left it there minutes earlier. The two never hand each other anything — prep-room linen fibres on the atomizer\'s neck are all that survives of the exchange.',
+      body: 'Roddy carries the botanical case into the prep-room corridor and leaves a wrapped service roll on the prep pass. The poisoned twin is inside it.',
     },
     {
       time: '10:05 PM',
-      body: 'Roddy is seen in the prep-room corridor without the wrapped roll he carried out of the botanical case. Several guests notice. Nobody yet knows what it was.',
+      body: 'Roddy comes back out onto the floor without the case he carried in. Several guests notice. Nobody yet knows what was in it.',
+    },
+    {
+      time: '10:06 PM',
+      hidden: true,
+      body: 'While walking staff through the Last Light garnish sequence, Kiyaah collects the wrapped roll from the prep pass. The two never hand each other anything — prep-room linen fibres on the atomizer\'s neck are all that survives of the exchange.',
     },
     {
       time: '10:08:14 PM',
@@ -1266,7 +1271,7 @@ export const CASE_SOLUTION = {
     {
       time: '10:08–10:09',
       hidden: true,
-      body: 'Ninety-four seconds of blind spot. The reactivated staff QR opens the private bar and closes it again, and the original silver atomizer is swapped for the twin. The blackout killed the camera, not every sightline: Parinitha, on the side banquette by the bar arch, sees the swap from the side.',
+      body: 'Ninety-four seconds of blind spot. Kiyaah goes in over a service apron and the reactivated staff QR — not her own credential — so the access log records a member of staff who had already gone home, and swaps the original silver atomizer for the twin. She had every right to be behind that bar; what she needed was for the log not to say so. Anjul sees the apron come back down the service stair at 10:09 and clocks that the face under it is not staff. The blackout killed the camera, not every sightline: Parinitha, on the side banquette by the bar arch, sees the swap itself.',
     },
     {
       time: '10:09:53 PM',
@@ -1300,6 +1305,7 @@ export const CASE_SOLUTION = {
     'Ten people here had a real, provable reason to want Armaan dead. Five of them were innocent: Tara Singhania, Tanvi Vartak, Rishi Raj Rahul, Vinod Raghuwanshi and Anna Russo. A coherent single-killer case could be built against any of them, and most of the room built one.',
     'The killers sat in five separate circles — Thimble, Oracle, Forgery, Hemlock and Amber — so no single table ever looked complete. Every Round 1 accusation pointed at a suspect\'s own people covering for them, and that theory can never close on a five-way alignment.',
     'Tara was framed, not involved. The forged invoice was built to piggyback on access to the display and customs world that was entirely legitimate, so that the swapped atomizer would look like it arrived through her.',
+    'Tanvi was not framed and not involved — she was used. The annotated floor plan really is hers, in her own fineliner, written for a cake reveal: DO NOT BLOCK BAR DURING REEL and HOLD CAKE UNTIL ORANGE are stage directions, not instructions. Sneha arrived at 7:05 with the seating plan Armaan wanted rearranged, which is where she learned that Tanvi had already worked out, on paper, the exact second the whole room would turn its back on the private bar. The conspiracy did not have to engineer a blind spot in the crowd. The party planner had drawn them one.',
     'The blackout was meant to be found. It is the obvious opportunity window, and it pulled the room toward the ninety-four seconds instead of the fifteen minutes before them, when the poison was already in the building and the paperwork was already six hours old.',
   ],
 
@@ -1307,6 +1313,8 @@ export const CASE_SOLUTION = {
     { clue: 'Toxicology Summary', proves: 'The bottles, the batch mixers and the cake were clean. The poison lived in one finished drink.' },
     { clue: 'Signature Drink Atomizer Analysis', proves: 'The silver mister was a twin, not the bar\'s own listed piece — and its neck carried prep-room linen fibres.' },
     { clue: 'Projector and Bar-Camera Log', proves: 'Ninety-four seconds of blind spot, ordered from a valid admin session. An interruption, not an outage.' },
+    { clue: 'Floor Plan and Sightline Notes', proves: 'The moment the room would turn away from the bar was predictable in advance — and the side banquette stayed in view throughout, which is why there is still a witness to the swap.' },
+    { clue: 'Service QR Access Trace', proves: 'One pass in and one pass out of the private bar during the blind spot, on a staff credential whose owner had already clocked out.' },
     { clue: 'Supplier Invoice Mismatch', proves: 'Someone built the twin a paper history through Tara\'s vendor: traced signature, wrong stock, entered remotely.' },
     { clue: "Armaan's Monday Binder Index", proves: 'He had already written down who would take the fall for him, by initials.' },
     { clue: 'Admin Override Trace', proves: 'The reboot and the revived staff QR came from one session tree built on Oindrilla\'s environment.' },
@@ -1328,8 +1336,8 @@ export const CASE_FILES = [
     id: 'f_autopsy',
     type: 'REPORT',
     title: 'TOXICOLOGY REPORT',
-    date: '9 August 2026',
-    content: 'FORENSIC LABORATORY - BANGALORE\n\nCAUSE OF DEATH: Acute aconitine toxicity\nSOURCE: Victim-specific finishing stage of one drink\n\nFINDINGS:\n- Blood and saliva positive for aconitine\n- Shared bottles, mixers, and cake negative\n- Highest environmental residue on private-bar atomizer nozzle and victim glass rim\n\nCONCLUSION:\nThe poison was not in the batch. It was applied to Armaan\'s drink alone.',
+    date: '8 August 2026',
+    content: 'STATE FORENSIC SCIENCE LABORATORY - GOA\nFIELD SCREEN - PRELIMINARY. Full panel to follow.\n\nCAUSE OF DEATH: Acute aconitine toxicity\nSOURCE: Victim-specific finishing stage of one drink\n\nFINDINGS:\n- Blood and saliva positive for aconitine\n- Shared bottles, mixers, and cake negative\n- Highest environmental residue on private-bar atomizer nozzle and victim glass rim\n\nCONCLUSION:\nThe poison was not in the batch. It was applied to Armaan\'s drink alone.',
     stamped: true,
     roundReq: 3,
   },
@@ -1337,7 +1345,7 @@ export const CASE_FILES = [
     id: 'f_security',
     type: 'REPORT',
     title: 'SECURITY AND DEVICE LOG',
-    date: '8-9 August 2026',
+    date: '8 August 2026',
     content: 'VENUE DEVICE SUMMARY\n\n10:08 PM - Projector reboot issued from event-admin console\n10:08 PM - Private-bar camera feed lost for 94 seconds\n10:08 PM - Retired staff QR reactivated for one bar-entry event\n\nNo venue-wide power failure occurred. This was an intentional interruption, not a random outage.',
     stamped: true,
     roundReq: 3,
@@ -1346,8 +1354,8 @@ export const CASE_FILES = [
     id: 'f_audit',
     type: 'REPORT',
     title: 'MERIDIEN BUYOUT MEMO',
-    date: '11 August 2026',
-    content: 'MERIDIEN BEVERAGE GROUP - DRAFT CLOSING NOTES\n\nThe buyout was scheduled to move into legal diligence on Monday. Attached fallback notes identify possible internal scapegoats should rebate disclosures, shell payments, customs provenance, or inventory anomalies surface during review. Several of those fallback notes point to guests in this room by initials.',
+    date: '7 August 2026',
+    content: 'MERIDIEN BEVERAGE GROUP - DRAFT CLOSING NOTES\nRecovered from the victim\'s own files, dated the day before the party.\n\nThe buyout was scheduled to move into legal diligence on Monday. Attached fallback notes identify possible internal scapegoats should rebate disclosures, shell payments, customs provenance, or inventory anomalies surface during review. Several of those fallback notes point to guests in this room by initials.',
     stamped: true,
     roundReq: 4,
   },
@@ -1356,7 +1364,7 @@ export const CASE_FILES = [
     type: 'REPORT',
     title: 'PRIVATE BAR INVENTORY',
     date: '8 August 2026',
-    content: 'PRIVATE BAR CHECKLIST\n\n- One original silver atomizer assigned to Last Light service\n- One unlisted twin recovered after the death\n- Replacement entry supported by forged invoice on mismatched paper stock\n\nThe bar records were tampered with before the party ended.',
+    content: 'PRIVATE BAR CHECKLIST\n\n- One original silver atomizer assigned to Last Light service\n- One twin recovered after the death, never checked in against any bar record\n- A replacement atomizer does appear on a supplier invoice entered at 5:14 PM, on mismatched paper stock with a traced signature\n- No member of bar staff remembers taking delivery of it\n\nThe paperwork for the second atomizer was created before the party. The atomizer itself never came through the door that paperwork claims it came through.',
     stamped: true,
     roundReq: 4,
   },
@@ -1391,6 +1399,113 @@ export const CLUE_STACK_BY_KEY = Object.fromEntries(CLUE_STACKS.map((stack) => [
 export const stackKeyForClue = (clueId) =>
   CLUE_STACKS.find((stack) => stack.clues.some((clue) => clue.id === clueId))?.key ?? null;
 
+// ---------------------------------------------------------------------------
+// The riddle lock (components/modals/RiddleModal.jsx, data/riddles.js)
+//
+// Clue codes used to arrive on printed cards the host handed out. They now
+// arrive by solving a riddle: solve one, and the next clue in *your* queue
+// unseals, code and all, which you are then free to shout across the room.
+//
+// Accusations are not in the pool. Every player is already dealt exactly one
+// automatically the moment Round 1 opens, and the confession belongs to the
+// killers alone — neither is something to be won. What is left is the three
+// decks that used to be paper: motives, evidence, revelations.
+// ---------------------------------------------------------------------------
+export const RIDDLE_REWARD_POOL = [...MOTIVE_CLUES, ...EVIDENCE_CLUES, ...REVELATION_CLUES];
+
+/**
+ * The round ASK appears on the Evidence screen — Round 2 as the decks stand.
+ *
+ * Derived rather than typed, because it is not a design preference: the lock can
+ * only pay out a clue whose round has already opened, so until the earliest
+ * reward in the pool is reachable `nextRiddleReward` returns null and the modal
+ * has nothing to deal. A button whose only possible answer is "not yet" costs
+ * the player a tap and teaches them the wrong thing about the control, so it
+ * stays off screen until it can pay. Move a reward earlier and ASK follows it.
+ *
+ * Rounds 00–01 are the briefing and the accusation each player is dealt
+ * automatically — neither is won, so nothing is lost by the button being absent.
+ */
+export const ASK_OPENS_AT = Math.min(...RIDDLE_REWARD_POOL.map((clue) => clue.roundReq));
+
+/**
+ * The order this player earns clues in — stable for them, different from
+ * everybody else's.
+ *
+ * Stable, because a player who solves three riddles and then reloads must not
+ * find the fourth reward reshuffled underneath them. Different per player,
+ * because if all 51 devices paid out in the same order the room would hold 51
+ * copies of the same clue and nobody would have a reason to trade a code. The
+ * per-player offset is what turns solving into circulation.
+ *
+ * Round order comes first regardless: a clue is unreachable until its round
+ * anyway, so grouping by round means the queue never stalls behind a Round 5
+ * revelation while Round 2 motives sit further down it.
+ *
+ * Within a round the queue is the deck **rotated** by the player's ordinal, not
+ * sorted by a per-player hash. Both are stable and both differ between players,
+ * but a hash sort only randomises the order — it does not spread the *first*
+ * reward, and that is the one that matters, because most players will solve one
+ * or two riddles all evening. Measured across the 51-person roster the hash sort
+ * paid out PENDULUM to 7 players and OBELISK to 8 while LATTICE — Oindrilla's
+ * motive, a killer's — was the opening prize for exactly one. If that one player
+ * never tapped ASK, a conspirator's motive could sit in the room unspoken all
+ * night.
+ *
+ * Rotating by a raw hash does not fix it either, and that is the trap: `hash %
+ * 10` inherits the hash's bias in its low bits, which measured *worse* (one code
+ * to 12 players, another to 1). The offset has to be an **ordinal** — the
+ * player's position in a stable shuffle of the roster, 0 to 50 — because
+ * consecutive integers are what make `% blockLength` uniform. 51 players over a
+ * 10-card block is then five or six openers each by construction, with no hash
+ * luck left in it.
+ */
+const RIDDLE_ORDINAL = new Map(
+  ROSTER.map((character) => character.id)
+    .sort((a, b) => seeded('riddle', a) - seeded('riddle', b))
+    .map((id, index) => [id, index])
+);
+
+export const riddleQueueFor = (characterId) => {
+  const blocks = new Map();
+  for (const clue of RIDDLE_REWARD_POOL) {
+    if (!blocks.has(clue.roundReq)) blocks.set(clue.roundReq, []);
+    blocks.get(clue.roundReq).push(clue);
+  }
+
+  // One ordinal for the whole player, applied modulo each block's own length.
+  // The blocks are 10, 7, 4 and 2 cards; 10 and 7 are coprime, so two players
+  // who share a motive opener almost never share an evidence opener too.
+  const offset = RIDDLE_ORDINAL.get(characterId) ?? 0;
+
+  return [...blocks.keys()]
+    .sort((a, b) => a - b)
+    .flatMap((round) => {
+      const block = blocks.get(round);
+      const start = offset % block.length;
+      return [...block.slice(start), ...block.slice(0, start)];
+    });
+};
+
+/**
+ * The clue the next solved riddle will pay out, or null when this player has
+ * everything the round has to give. The modal checks this *before* dealing a
+ * riddle — asking someone to think for two minutes and then telling them there
+ * was no prize is the one outcome this feature cannot produce.
+ */
+export const nextRiddleReward = (characterId, currentRound, ownedClueIds = []) => {
+  const owned = new Set(ownedClueIds);
+  return (
+    riddleQueueFor(characterId).find(
+      (clue) => clue.roundReq <= currentRound && !owned.has(clue.id)
+    ) ?? null
+  );
+};
+
+/** How many of the pool are reachable this round — the denominator on the modal. */
+export const riddleRewardsInPlay = (currentRound) =>
+  RIDDLE_REWARD_POOL.filter((clue) => clue.roundReq <= currentRound).length;
+
 export const getAssignedAccusation = (characterId) => {
   return ACCUSATION_CLUES.find((accusation) => accusation.assignedTo.includes(characterId));
 };
@@ -1420,14 +1535,72 @@ export const validateLoginCode = (code) => {
   return LOGIN_CODE_MAP[upperCode] || null;
 };
 
+// Login codes and clue codes are two namespaces that must never intersect.
+//
+// They did once. The ten motive clues were coded THIMBLE, ORACLE, FORGERY,
+// HEMLOCK, AMBER … — the same strings as the ten prime suspects' login codes.
+// Round 2 works by players shouting motive codes across the room, so within
+// minutes the whole party held the five killers' credentials: log out, type
+// THIMBLE, and the Identity screen prints "Classified · Killer". The case was
+// over in Round 2.
+//
+// Nothing in the app would have complained, so this does. Dev-only and
+// non-fatal: a live game must never be taken down by a data assertion, but a
+// build that reintroduces the overlap should be impossible to miss locally.
+if (import.meta.env?.DEV) {
+  const loginCodes = new Set(Object.keys(LOGIN_CODE_MAP));
+  const collisions = CLUE_DB.map((clue) => clue.code).filter((code) => loginCodes.has(code));
+  if (collisions.length > 0) {
+    console.error(
+      `[gameData] ${collisions.length} clue code(s) are also login codes: ${collisions.join(', ')}. ` +
+        'Anyone who hears one of these can log in as that character. Rename the clue code.'
+    );
+  }
+
+  const clueCodes = CLUE_DB.map((clue) => clue.code);
+  const duplicates = clueCodes.filter((code, index) => clueCodes.indexOf(code) !== index);
+  if (duplicates.length > 0) {
+    console.error(`[gameData] duplicate clue codes: ${[...new Set(duplicates)].join(', ')}`);
+  }
+
+  // Riddle answers are the third namespace reachable from a keyboard, and they
+  // leaked into the other two: `echo` and `cloud` were Fabiola's and Mahi's
+  // login codes, `compass` was Roddy's accusation code. Solve r001, log out,
+  // type ECHO, and you are somebody else.
+  //
+  // Imported dynamically so the 100-riddle deck is never pulled into gameData's
+  // module graph in a production build — `import.meta.env.DEV` is compiled to
+  // `false`, so this whole block is dropped rather than tree-shaken on faith.
+  import('./riddles')
+    .then(({ RIDDLES }) => {
+      const spoken = new Set();
+      for (const riddle of RIDDLES) {
+        spoken.add(riddle.a.toUpperCase());
+        for (const alt of riddle.alt ?? []) spoken.add(alt.toUpperCase());
+      }
+      const leaked = [...loginCodes, ...clueCodes].filter((code) => spoken.has(code));
+      if (leaked.length > 0) {
+        console.error(
+          `[gameData] ${leaked.length} code(s) are also riddle answers: ${leaked.join(', ')}. ` +
+            'Anyone who solves that riddle can type the word into the decoder or the login screen. ' +
+            'Rename the riddle answer (riddles.js), not the code.'
+        );
+      }
+    })
+    .catch(() => {
+      // The check is a convenience, never a dependency. A resolution failure
+      // must not take the module down.
+    });
+}
+
 export const HOST_SCRIPT = [
   {
     id: 'pregame',
     title: 'Pre-Game · Welcome',
     duration: '~5 min',
-    setup: `Before you start: confirm all ${CASE_META.playerCount} players have arrived and have their printed login cards. Keep three printed stacks ready by round - Motives (Round 2), Evidence (Round 3), Revelations (Rounds 4 and 5).`,
-    announce: `"Welcome to For the Record in Panjim, Goa. The night is ${CASE_META.date}. Armaan Khanna invited ten close friends to his birthday and told each of them to bring people interesting enough not to bore him. Hours later, he is dead.\n\nYour phone is your case file. Log in with the code on your card. When you receive a printed clue later, type the CODE into the decoder on the Evidence screen. Stay in character. Share carefully. Lie if you have to. The room wins only if it names the right team, not just the loudest suspect."`,
-    during: 'Help late arrivals log in and point everyone toward their Identity and Story screens before the first vote.',
+    setup: `Before you start: confirm all ${CASE_META.playerCount} players have arrived and have their printed login cards. There are no clue cards to hand out any more - clues are won in the app by solving riddles, and the codes spread from player to player. Your only job on distribution is to keep telling the room to share.`,
+    announce: `"Welcome to For the Record in Panjim, Goa. The night is ${CASE_META.date}. Armaan Khanna invited ten close friends to his birthday and told each of them to bring people interesting enough not to bore him. Hours later, he is dead.\n\nYour phone is your case file. Log in with the code on your card. Nobody is going to hand you evidence tonight - you earn it. From Round 2 a button marked ASK appears on your Evidence screen. Tap it and you get a riddle, nothing to do with this case. Solve it and a new clue unseals on your phone, along with a code. Read that code out and everybody who types it into CODE gets the same clue. The first two rounds are the room getting its bearings - the earning starts when that button arrives. Stay in character. Share carefully. Lie if you have to. The room wins only if it names the right team, not just the loudest suspect."`,
+    during: 'Help late arrivals log in and point everyone toward their Identity and Story screens before the first vote. ASK is not on their screens yet - it appears when you advance to Round 2 - so tell them the loop now and let the button arrive to a room that already knows what it is for. If anyone goes hunting for it early, that is the answer.',
     end: 'When the room is settled, advance to Round 0 and let the briefing play.',
   },
   {
@@ -1452,17 +1625,17 @@ export const HOST_SCRIPT = [
     id: 2,
     title: 'Round 2 · Motives',
     duration: '~15 min',
-    setup: 'Hand out the 10 printed motive cards now. Suggested play: give some to suspects, some to people outside those circles, so the room cross-pollinates.',
-    announce: '"Round 2. Motives. Some of you now have printed cards. Enter the CODE into the decoder. These ten motive files explain why each prime suspect might have wanted Armaan dead. Share them. Distort them. Protect yourself with them if you need to."',
-    during: 'If anyone cannot find the decoder, remind them it lives on the Evidence screen.',
+    setup: 'Nothing to hand out. The riddle lock opens itself the moment Round 2 starts - the ASK button appears on every Evidence screen, and knocks once the first time each player looks at it - and the ten motive files are now the prize pool. Every player is working down a different order, so the room cross-pollinates on its own - as long as they share.',
+    announce: '"Round 2. Motives. The riddle lock is live - open Evidence and you will see a second button, ASK, that was not there a minute ago. Tap it, solve the riddle, and you get one of ten motive files - plus a code. Read the code out. Everyone else types it into CODE and gets the same file. Nobody is holding the same clue as the person next to them, so the only way this room sees all ten is if you keep talking. Share them. Distort them. Protect yourself with them if you need to."',
+    during: 'If anyone cannot find ASK or CODE, remind them both live bottom right on the Evidence screen. Watch for players hoarding codes - call it out warmly and often.',
     end: 'Advance to Round 3 when the room has moved from gossip to real theory.',
   },
   {
     id: 3,
     title: 'Round 3 · Evidence',
     duration: '~15-20 min',
-    setup: 'Unlock the Round 3 case files, hand out the 7 Evidence cards, and reopen voting for the first evidence-backed ballot.',
-    announce: '"Round 3. Evidence. Open Case Files inside Evidence. The toxicology and security logs are live. Armaan was not poisoned by the whole room\'s alcohol. One drink was altered at the finishing stage. Some of you also have new Evidence codes. Enter them now. Voting is open again."',
+    setup: 'Unlock the Round 3 case files and reopen voting for the first evidence-backed ballot. The 7 evidence clues join the riddle pool automatically - no cards, no distribution.',
+    announce: '"Round 3. Evidence. Open Case Files inside Evidence. The toxicology and security logs are live. Armaan was not poisoned by the whole room\'s alcohol. One drink was altered at the finishing stage. Seven forensic files have just entered the riddle pool - go and earn them, and pass the codes on. Voting is open again."',
     during: 'This is where bottle theory should start collapsing. Let the room work.',
     end: 'Advance to Round 4 when they begin asking who controlled the bar, the paperwork, and the blackout.',
   },
@@ -1470,8 +1643,8 @@ export const HOST_SCRIPT = [
     id: 4,
     title: 'Round 4 · Revelations',
     duration: '~15-20 min',
-    setup: 'Unlock the Round 4 case files and hand out the first four Revelation cards.',
-    announce: '"Round 4. Revelations. The story flips here. Armaan did not just have enemies - he had a Monday plan for whose life he would wreck next. Start entering the Revelation codes. You are no longer solving one motive. You are solving overlap."',
+    setup: 'Unlock the Round 4 case files. The first four Revelation clues enter the riddle pool on their own the moment the round advances.',
+    announce: '"Round 4. Revelations. The story flips here. Armaan did not just have enemies - he had a Monday plan for whose life he would wreck next. Four revelations are in the riddle pool. Solve, share the codes, and read what everyone else has unsealed. You are no longer solving one motive. You are solving overlap."',
     during: 'Listen for the room to move from one-table theories toward linked suspects.',
     end: 'Advance to Round 5 once at least one group starts suspecting coordination across circles.',
   },
@@ -1479,8 +1652,8 @@ export const HOST_SCRIPT = [
     id: 5,
     title: 'Round 5 · Finale',
     duration: '~10-15 min',
-    setup: 'Hand out the final two Revelation cards. Keep voting open or reopen it if you want a last locked-in ballot before the reveal.',
-    announce: '"Round 5. Finale. The last pieces are in the room now. If you only name one person, you may still be wrong. Work out who planned it, who enabled it, and who made the room look the wrong way while it happened."',
+    setup: 'The final two Revelation clues unlock in the riddle pool automatically. Keep voting open or reopen it if you want a last locked-in ballot before the reveal.',
+    announce: '"Round 5. Finale. The last two revelations are in the pool - somebody solve them and get those codes into the room. If you only name one person, you may still be wrong. Work out who planned it, who enabled it, and who made the room look the wrong way while it happened."',
     during: 'Push the room to name a full team, not just the mastermind.',
     end: 'Advance to Round 6 when the theories converge on a complete answer.',
   },

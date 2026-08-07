@@ -721,8 +721,13 @@ button.er-redact:not(.er-redact--open) { cursor: pointer; }
    17px note default: Special Elite runs ~24% wider per character than the
    Caveat it replaced, and at 17px three of the nine briefs pick up a fourth
    line on a card that is meant to be a glance, not a paragraph. At 16px eight
-   of nine keep their exact line count (§3.3). */
-.er-brief__body {
+   of nine keep their exact line count (§3.3).
+
+   Shared with the tooltip body (§14b) on purpose: the pinned note and the
+   asked-for note are the same voice saying the same kind of thing, and two
+   copies of this block would drift the first time the scale moves. */
+.er-brief__body,
+.er-tip__body {
   margin-top: 8px;
   font-family: var(--font-note);
   font-size: 16px;
@@ -731,8 +736,137 @@ button.er-redact:not(.er-redact--open) { cursor: pointer; }
 }
 
 @media (min-width: 640px) {
-  .er-brief__body { font-size: 18px; }
+  .er-brief__body,
+  .er-tip__body { font-size: 18px; }
 }
+
+/* ============================================================
+   14b. TOOLTIP (§6.13)
+   The on-demand half of the explanation layer: a `?` mark that
+   opens the same aged-bone scrap the screen note uses. The note
+   above clears at Round 02; this one never does, because the
+   game runs to Round 06 and the controls it explains only get
+   more numerous.
+   See components/ui/InfoTip.jsx.
+   ============================================================ */
+
+/* The mark. 18px of ink on the page, 44px of target around it (§4.3) — the
+   expansion is a pseudo-element rather than padding, because a 44px-tall
+   control sitting inline in an 11px label row would set that row's height to
+   44px on every screen it appears on. */
+.er-tip__btn {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--color-dim);
+  background: transparent;
+  border: 1px solid var(--color-line);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  /* Named, never blanket (§7) — `transform` is in the list for the press. */
+  transition: color 0.16s ease, border-color 0.16s ease,
+    background-color 0.16s ease, transform 0.16s var(--ease-enter);
+}
+
+.er-tip__btn::after {
+  content: '';
+  position: absolute;
+  inset: -13px;
+}
+
+.er-tip__btn:active { transform: scale(0.9); }
+
+.er-tip__btn:hover,
+.er-tip__btn.is-open {
+  color: var(--color-signal-lift);
+  border-color: var(--color-signal);
+}
+
+/* On paper the accent has to deepen — signal-lift on bone fails contrast
+   (§2.3) — and the open state fills faintly rather than brightening, because
+   there is no darker paper to shift to. */
+.er-tip__btn--bone {
+  color: var(--color-signal-deep);
+  border-color: var(--color-line-bone);
+}
+
+.er-tip__btn--bone:hover,
+.er-tip__btn--bone.is-open {
+  color: var(--color-signal-deep);
+  border-color: var(--color-signal-deep);
+  background: rgba(142, 24, 17, 0.09);
+}
+
+/* The one instance that stands alone instead of trailing a label: the helper
+   above the Evidence screen's ASK / CODE pair. It is chrome, so it takes the
+   ink surface and the same shadow the two controls under it carry — but it
+   stays `dim`, never signal, because the CODE button is that screen's one
+   focal point (§10) and a second red control would split it. */
+.er-tip__btn--chip {
+  width: 36px;
+  height: 36px;
+  font-size: 15px;
+  background: var(--color-ink-raised);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6);
+}
+
+.er-tip__btn--chip::after { inset: -4px; }
+
+/* The panel. Portalled to <body> and fixed — see InfoTip.jsx for why that is
+   not optional (paper's `rotate` would otherwise become its containing block).
+   z-70 puts it over the modals at z-50, which is what lets a tip work inside
+   one. Unlike every other piece of paper here it does NOT rotate: it is
+   anchored to a specific word by a caret, and a 1.2° tilt walks the point off
+   the thing it is pointing at. */
+.er-tip__panel {
+  position: fixed;
+  z-index: 70;
+  width: min(300px, calc(100vw - 24px));
+  padding: 12px 14px 14px;
+  animation: erTipIn 0.18s var(--ease-enter) both;
+}
+
+/* The first frame, before the layout effect has measured it. Without this the
+   panel paints once at 0,0 in the top-left corner. */
+.er-tip__panel:not([data-placed]) { visibility: hidden; }
+
+.er-tip__panel[data-flip='up'] { animation-name: erTipInUp; }
+
+@keyframes erTipIn {
+  from { opacity: 0; translate: 0 -6px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+
+@keyframes erTipInUp {
+  from { opacity: 0; translate: 0 6px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+
+/* Same square-cut caret as the screen note, but its horizontal position is
+   driven by `--caret-x`, which InfoTip writes from the trigger's centre. That
+   is what keeps it pointing at the mark after the panel has been clamped
+   against a viewport edge. */
+.er-tip__caret {
+  position: absolute;
+  left: var(--caret-x, 20px);
+  margin-left: -5.5px;
+  width: 11px;
+  height: 11px;
+  background: var(--color-bone-aged);
+  rotate: 45deg;
+  pointer-events: none;
+}
+
+.er-tip__panel[data-flip='down'] .er-tip__caret { top: -5px; }
+.er-tip__panel[data-flip='up'] .er-tip__caret { bottom: -5px; }
 
 /* ============================================================
    15. TYPED BRIEFING
@@ -804,7 +938,134 @@ button.er-redact:not(.er-redact--open) { cursor: pointer; }
 }
 
 /* ============================================================
-   16. REDUCED MOTION (§7)
+   16. THE SOLVE (§7.2 — a signature moment)
+   The riddle cracked. Everything here fires exactly once, on a
+   deliberate act, on a surface that exists only to deliver it.
+
+   This is the loudest motion in the app after the murderer
+   reveal, and §7.1 permits it for the same reason it permits
+   that one: the cost of an animation is paid on every trigger,
+   and this trigger is a player choosing to solve a puzzle —
+   a handful of times an evening, never incidentally.
+
+   It is still one shot. Nothing here loops, nothing here is a
+   state, and the static cues carry the meaning on their own:
+   the seal reads SOLVED, the code is set in 34px mono, and the
+   clue names itself. Turn every animation off and the screen
+   still says the same thing (§7.1, "motion is never the only
+   feedback channel").
+   ============================================================ */
+
+/* The impact ring. Square, because corners are square (§5) — a circle here
+   would be the one round thing in the app. Two of them, offset, so the hit
+   reads as a strike with a shockwave rather than as a single balloon. */
+@keyframes erBurst {
+  0%   { opacity: 0.85; transform: rotate(0deg) scale(0.25); }
+  100% { opacity: 0;    transform: rotate(24deg) scale(3.6); }
+}
+
+/* Paper slivers thrown off the strike. Two rotations at once: the ring the
+   fleck travels along (`--a`, fixed per fleck) and its own tumble as it goes. */
+@keyframes erFleck {
+  0%   { opacity: 0; transform: translate(-50%, -50%) rotate(var(--a)) translateX(4px) rotate(0deg); }
+  14%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--a)) translateX(var(--d)) rotate(260deg); }
+}
+
+/* The seal coming down on the page — a rubber stamp, so it arrives from above
+   the surface (over-scaled and off-angle) and settles onto it, rather than
+   rising the way paper does. */
+@keyframes erSealDrop {
+  0%   { opacity: 0; transform: rotate(-22deg) scale(2.1); }
+  55%  { opacity: 1; }
+  70%  { transform: rotate(-6deg) scale(0.94); }
+  100% { opacity: 1; transform: rotate(-9deg) scale(1); }
+}
+
+.er-solve { position: relative; }
+
+.er-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 76px;
+  height: 76px;
+  margin: -38px 0 0 -38px;
+  border: 2px solid var(--color-signal);
+  pointer-events: none;
+  /* transform + opacity only — the compositor takes the whole thing (§7). */
+  /* oth, not ackwards: the last keyframe is opacity 0, and without a
+     forwards fill the ring snaps back to its base style — a solid red square
+     parked over the seal — the instant the animation ends. */
+  animation: erBurst 820ms var(--ease-enter) both;
+  animation-delay: calc(var(--i, 0) * 150ms);
+}
+
+.er-fleck {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 2px;
+  /* Palette only (§2.1): bone, aged bone, brass, signal. Brass appears here as
+     a 8×2px sliver of paper edge, not as a value — §2.2's "brass is for
+     numerals" is about type, and a fleck carries no reading. */
+  background: var(--fleck, var(--color-bone));
+  pointer-events: none;
+  animation: erFleck 900ms var(--ease-land) both;
+  animation-delay: calc(var(--i, 0) * 16ms);
+}
+
+.er-seal {
+  /* oth holds the settled tilt. A stamp that straightens itself the moment
+     it lands is a stamp that was never pressed. */
+  animation: erSealDrop 620ms var(--ease-land) both;
+}
+
+/* ============================================================
+   17. THE ASK CUE (§7.1)
+   ASK is not on screen until Round 02 (ASK_OPENS_AT in
+   data/gameData.js — before then the riddle lock has nothing to
+   pay out). So the round it does appear, it appears mid-game,
+   beside a CODE button the player has been tapping for two
+   rounds, in the corner their thumb already rests on. Left
+   alone it is a new control that reads as furniture.
+
+   This knocks three times and stops. It is not a state and it
+   must never become one: §7.1 reserves the infinite pulse for a
+   genuine sustained alarm, and a button that pulses all evening
+   reads as something being wrong with it. Three knocks is the
+   whole budget, once per device, ever.
+
+   Motion is not the only channel either — the button is labelled
+   Ask, and the tooltip beside it says what ASK does. Turn the
+   animation off and the player still learns the control; they
+   just have to find it themselves.
+   ============================================================ */
+
+/* One knock: a hop with a blink at the top of it, then a smaller
+   settling hop, then a still tail so three iterations read as
+   three knocks rather than one continuous jiggle. Transform and
+   opacity only — the compositor takes the whole thing (§7). */
+@keyframes erSummon {
+  0%   { transform: translateY(0);     opacity: 1; }
+  16%  { transform: translateY(-14px); opacity: 0.35; }
+  38%  { transform: translateY(0);     opacity: 1; }
+  52%  { transform: translateY(-5px); }
+  66%  { transform: translateY(0); }
+  100% { transform: translateY(0);     opacity: 1; }
+}
+
+/* The delay clears the button's own `.er-land` entrance (320ms + 700ms) so the
+   two never fight over the same 64px of screen. `animationend` on the wrapper is
+   what retires the cue in App.jsx, which is why the count is finite and why no
+   duration is duplicated in JS. */
+.er-summon {
+  animation: erSummon 1.15s var(--ease-land) 1.05s 3;
+}
+
+/* ============================================================
+   18. REDUCED MOTION (§7)
    Match the deck: durations collapse, nothing is lost.
    ============================================================ */
 
@@ -840,4 +1101,19 @@ button.er-redact:not(.er-redact--open) { cursor: pointer; }
   /* The sweep's `forwards` fill would otherwise leave it invisible-but-drawn at
      the collapsed duration; explicitly finish it open. */
   .er-unseal { opacity: 0; }
+
+  /* The solve (§16). The ring and the flecks both end their keyframes at
+     opacity 0, so a collapsed duration lands them exactly where they belong —
+     gone — and the seal's last keyframe is its resting state, so it is simply
+     stamped from the first frame. Nothing is lost: the celebration was never
+     carrying information the static page does not already show. Removed from
+     the flow as well as hidden, so a collapsed 8px sliver can't sit over the
+     code the player came here to read. */
+  .er-burst,
+  .er-fleck { display: none; }
+
+  /* The ASK cue (§17) needs no override and must not get one: its last keyframe
+     is the button's resting state, so a single collapsed iteration lands it
+     exactly there — and `animationend` still fires, so App.jsx still retires it.
+     A cue that never ends would leave the button owing an animation forever. */
 }

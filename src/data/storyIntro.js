@@ -80,7 +80,7 @@ export const STORY_SLIDES = [
     kicker: '10:22 PM',
     heading: 'The Collapse',
     lines: [
-      'Ten minutes later his grip failed first. Then his knees. Then the room understood this was not drunkenness.',
+      'Seven minutes later his grip failed. Three after that, his knees. By then the room understood this was not drunkenness.',
       'He hit the copper rail on the way down. At 10:34 the paramedics stopped trying.',
     ],
   },
@@ -107,7 +107,7 @@ export const STORY_SLIDES = [
     kicker: 'Your Job',
     heading: 'Break The Story',
     lines: [
-      'Seven rounds. Evidence reaches you on printed cards; the codes go in your decoder.',
+      'Seven rounds. Solve a riddle to unseal evidence, then trade its code around the room.',
       'Talk, lie, accuse, vote. The room only wins if it names what really happened.',
     ],
     // Handwriting closes the briefing, the way it closes the board (§3.1 —

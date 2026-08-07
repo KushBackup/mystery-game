@@ -3,6 +3,8 @@ import { collection, addDoc, query, orderBy, limit, onSnapshot, serverTimestamp,
 import { db } from '../../firebase/config';
 import { Send } from '../icons/ChatIcons';
 import { ScreenBrief } from '../ui/ScreenBrief';
+import { InfoTip } from '../ui/InfoTip';
+import { TOOLTIPS } from '../../data/tooltips';
 
 /**
  * Comms (DESIGN_LANGUAGE.md §9, "Comms").
@@ -265,7 +267,12 @@ export const ChatView = ({ myCharacter, note, currentRound = 0 }) => {
       <div className="shrink-0 px-4 pt-5 pb-4 border-b border-line">
         <p className="er-mono er-mono--hot er-mono--wide">Encrypted</p>
         <div className="flex items-baseline justify-between gap-3 mt-2">
-          <h1 className="er-title text-[28px]">Comms</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="er-title text-[28px]">Comms</h1>
+            {/* Every message is signed and nothing can be unsaid — the screen
+                note says so in rounds 00–01 and then stops (§6.13). */}
+            <InfoTip tip={TOOLTIPS.comms} className="self-center" />
+          </div>
           <span className="er-mono er-mono--dim truncate">{myCharacter.name}</span>
         </div>
 

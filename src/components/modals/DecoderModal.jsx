@@ -5,6 +5,12 @@ import { X } from '../icons/IconComponents';
  * The decoder (DESIGN_LANGUAGE.md §9). The code field is a fill-in blank
  * (§6.9) — a value the system knows is deliberately missing, marked with a
  * signal tint and a dashed signal underline rather than a normal input chrome.
+ *
+ * Codes used to arrive on printed cards the host handed round. They now arrive
+ * from other players: solving a riddle in the RiddleModal hands you a clue *and*
+ * its code, and this is where everyone else spends it. That makes the decoder
+ * the receiving end of a trade rather than a data-entry chore, so the copy names
+ * the person who gave you the code rather than the object it was written on.
  */
 export const DecoderModal = ({ isOpen, inputCode, onInputChange, onSubmit, onClose }) => {
   if (!isOpen) return null;
@@ -43,7 +49,7 @@ export const DecoderModal = ({ isOpen, inputCode, onInputChange, onSubmit, onClo
 
         <form onSubmit={onSubmit}>
           <label className="er-mono er-mono--dim block mb-3" htmlFor="clue-code">
-            Code from a printed card
+            Code somebody gave you
           </label>
 
           <input
@@ -69,7 +75,9 @@ export const DecoderModal = ({ isOpen, inputCode, onInputChange, onSubmit, onClo
         </form>
 
         <p className="font-body text-[15px] leading-[1.55] text-dim mt-5">
-          Codes that belong to a later round will not open yet.
+          Codes come from other players — anyone who solves a riddle is handed one to
+          share. From Round 02 you can earn your own with ASK, beside this button.
+          Codes belonging to a later round will not open yet.
         </p>
       </div>
     </div>

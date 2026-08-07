@@ -36,10 +36,54 @@ The public shape of the case is simple: ten prime suspects, each with their own 
 2. Round 0 opens with the fullscreen typed briefing and the Incident Report.
 3. The host opens a blind first vote before the room has enough evidence.
 4. Round 1 automatically gives every player one accusation card on the Evidence screen.
-5. Round 2 distributes 10 printed motive cards.
-6. Round 3 unlocks forensics and evidence files, distributes 7 evidence cards, and reopens voting.
-7. Rounds 4 and 5 deliver the twist through 6 revelation cards and the late-game case files.
+5. Round 2 opens the **riddle lock** and puts the 10 motive files into its prize pool.
+6. Round 3 unlocks forensics case files, adds the 7 evidence clues to the pool, and reopens voting.
+7. Rounds 4 and 5 deliver the twist through 6 revelation clues and the late-game case files.
 8. Round 6 reveals the full killer team to the room, hands every player the full reconstruction of how the murder was done, and ends the game.
+
+---
+
+## How clues reach players — the riddle lock
+
+**There are no printed clue cards.** The 23 motive, evidence and revelation clues used to be
+three paper stacks the host walked around the room; since 2026-08-07 they are earned inside
+the app instead. Login cards are the only paper left.
+
+On the Evidence screen two buttons sit bottom right:
+
+| Button | What it does |
+|---|---|
+| **ASK** | Deals a riddle — a general riddle, nothing to do with the case. Answer it in one word and the next clue in *your* queue unseals, along with its code. **Appears in Round 02, not before.** |
+| **CODE** | The decoder. Type in a code somebody else has given you and the same clue lands on your board. Present from Round 00. |
+
+**ASK is round-gated, and the gate is derived, not chosen.** `ASK_OPENS_AT` in
+[src/data/gameData.js](src/data/gameData.js) is the earliest `roundReq` in the reward pool —
+Round 2, where the motive deck opens. Before that `nextRiddleReward()` returns null and the lock
+has nothing it could unseal, so the button is simply absent rather than present-and-refusing.
+Rounds 00–01 lose nothing by it: the briefing and the automatically-dealt accusation are not
+things a player wins. Move a reward to an earlier round and ASK follows it without a code change.
+
+Because the button arrives mid-game, next to a CODE button players have been using for two
+rounds, it **knocks once** — three hops with a blink — the first time each player sees the
+Evidence screen with it there. Once per device, ever, then it behaves like any other button
+([DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §7.1).
+
+Three properties make this a social mechanic rather than a chore:
+
+- **Every player has a different queue order.** `riddleQueueFor()` in
+  [src/data/gameData.js](src/data/gameData.js) groups the pool by round, then rotates each
+  round-block by the player's ordinal in the roster. All 51 queues are distinct, and the
+  rotation spreads the *opening* prize evenly — 5 or 6 players on each of the 10 motive clues —
+  so no clue can end up sitting with a single player who never taps ASK.
+- **The reward comes with a shareable code.** A solve that only feeds one phone does nothing
+  for the room. The solve screen puts the code in 30px mono with a Copy button and tells the
+  player to read it out.
+- **Nothing is gated on being good at riddles.** Wrong answers cost nothing, "Another riddle"
+  redeals the same prize, and after three misses the shape of the word is shown. Anyone who
+  cannot crack one can still receive every clue by trading.
+
+The host keeps an override: the clue manifest on the Host Guide's **Deck** tab lists every
+code, so a stalled round can be unblocked by simply reading one out.
 
 ---
 
@@ -50,8 +94,8 @@ The public shape of the case is simple: ten prime suspects, each with their own 
 | 0 | The Incident | Public story of the night, victim, venue, first blind vote |
 | 1 | Accusations | Ten witness claims pointing at the prime suspects |
 | 2 | Motives | Why each prime suspect could plausibly want Armaan dead |
-| 3 | Evidence | Single-drink poisoning, atomizer swap, blind spot, forged invoice, access trace |
-| 4 | Revelations | Monday scapegoat plan, stolen drink ritual, missing formula page, forged ledgers |
+| 3 | Evidence | Single-drink poisoning, atomizer swap, blind spot, forged invoice, access trace, and the Monday binder's bare index of initials |
+| 4 | Revelations | The binder paid off as intent (Armaan's own margin note), stolen drink ritual, missing formula page, forged ledgers |
 | 5 | Finale | Admin override proof and burner-thread reveal showing cross-group collusion |
 | 6 | The Reveal | Public screen names the killer team; killers themselves get the confession. Both screens open **How it happened** — the beat-by-beat reconstruction of the murder, the motive, the five jobs, and what proved each of them |
 
@@ -109,8 +153,8 @@ This case is designed to feel big without becoming impossible.
 
 - Round 1 points suspicion inward at each suspect's own group.
 - Round 2 makes all ten prime suspects look individually dangerous.
-- Round 3 proves it was one altered drink, not a batch poisoning.
-- Round 4 reveals Armaan's Monday scapegoat plan and starts linking suspects together.
+- Round 3 proves it was one altered drink, not a batch poisoning, and shows that a scapegoat list exists.
+- Round 4 proves Armaan meant to use it, and starts linking suspects together.
 - Round 5 makes the cross-group conspiracy explicit through the admin trace and burner thread.
 - By Round 6 the room should be able to name the full team, not just the mastermind.
 

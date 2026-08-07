@@ -40,7 +40,7 @@ The poison is aconitine, hidden in a replacement orange-oil atomizer used only t
 The trick is not just the toxin. The trick is that the conspiracy splits the method into distinct jobs so no single group looks complete on its own:
 
 - Roddy knows the botanical carrier.
-- Kiyaah knows the drink ritual and controls the one-serve finish.
+- Kiyaah knows the drink ritual and controls the one-serve finish. She is also the one who physically swaps the atomizer during the blackout — over a service apron and Oindrilla's revived staff QR, so that the entry log names a staffer who had already gone home rather than the woman who had legitimately been behind that bar all night. She never needed the access. She needed the record.
 - Oindrilla creates the 94-second blind spot and cloned QR access.
 - Victoria lays down paperwork that points suspicion sideways.
 - Sneha keeps the room thinking in separate clusters rather than as one network.
@@ -78,6 +78,8 @@ These five are meant to remain genuinely dangerous-looking deep into the game:
 
 They are not filler. The twist works because the room can make a coherent single-killer case against any of them before Round 5.
 
+Two of them are wrong in different ways, and the distinction matters when the host is asked. **Tara is framed**: Victoria manufactured a supplier invoice specifically to run the swapped atomizer through Tara's customs vendor. **Tanvi is used**: the annotated floor plan really is hers, in her own fineliner, and *DO NOT BLOCK BAR DURING REEL* and *HOLD CAKE UNTIL ORANGE* really are stage directions for a cake reveal. Nobody planted them. Sneha arrived at 7:05 PM with the seating plan Armaan wanted rearranged, saw that the party planner had already worked out on paper the exact second the whole room would turn its back on the private bar, and built the timing of the murder on top of it. The conspiracy did not have to engineer a blind spot in the crowd. It was handed one.
+
 ---
 
 ## The Hidden Twist
@@ -109,7 +111,7 @@ That is the emotional payoff of the case.
 | Sneha | Monday binder, upstairs-booth argument, financial motive |
 | Tara | crate, customs seal, back-bar access |
 | Kiyaah | private bar, ritual service, victim-only drink |
-| Victoria | study documents, forged paper trail, inventory logs |
+| Victoria | back-office documents, forged paper trail, inventory logs |
 | Roddy | botanical case, toxicology knowledge, method language |
 | Oindrilla | admin access, reboot trace, camera blind spot |
 | Tanvi | room choreography, sightlines, event planning notes |
@@ -163,10 +165,10 @@ Accusations reinforce the false assumption that each suspect's own group may be 
 Motive files make all ten prime suspects individually dangerous.
 
 ### Round 3
-Evidence proves the poisoning lived in one finished drink, not the bottle or food supply.
+Evidence proves the poisoning lived in one finished drink, not the bottle or food supply. It also puts the Monday binder's *index page* in the room — the bare list of initials against fall-guy headings. That is deliberate: Round 3 shows the room that a scapegoat list exists without yet proving what Armaan meant to do with it.
 
 ### Round 4
-Revelations expose the Monday scapegoat plan and show that Armaan was targeting multiple people at once.
+Revelations pay the binder off. The audit packet carries Armaan's own margin note — *if the room turns, give them the planner* — and turns a list into intent, showing he was targeting multiple people across different circles at once.
 
 ### Round 5
 The admin override trace and burner thread prove the killers coordinated across different groups.

@@ -23,7 +23,31 @@ import { CASE_META } from './gameData';
 // The note is onboarding, not chrome. By Round 02 the room has been through two
 // rounds of the app and a permanent explainer would just be furniture, so the
 // notes clear themselves — rounds 00 and 01 only.
+//
+// What survives past that is the tooltip layer (data/tooltips.js), which is
+// asked for rather than pinned, and so never expires.
 export const BRIEF_HIDDEN_FROM_ROUND = 2;
+
+/**
+ * What each of the seven rounds is for, indexed by round number.
+ *
+ * Titles are not here — those come from `ROUNDS` in data/gameData.js, which is
+ * what the chrome rail already reads. This is only the sentence underneath.
+ *
+ * One copy, two readers: the Guide prints the whole list (HelpView), and the
+ * round tooltip in the chrome rail prints the current line (data/tooltips.js).
+ * They were two hardcoded lists before, which is a rewording waiting to make
+ * the app contradict its own rulebook mid-game.
+ */
+export const ROUND_GUIDE = [
+  'Read the incident report and get to know the room.',
+  'You are dealt your accusation card — what your character witnessed. Read it out.',
+  'The riddle lock opens. Solve riddles, and trade codes, for motive files.',
+  'Forensic reports and witness statements join the riddle pool.',
+  'The major turns. The last clues enter the pool — keep solving and trading.',
+  'Final discussion and debate before the reveal. No new clues arrive.',
+  'The truth comes out. Final votes and resolution.',
+];
 
 /**
  * The Evidence screen's five stacks.
@@ -80,9 +104,13 @@ export const SCREEN_GUIDE = {
   intel: {
     kicker: 'Evidence Board',
     title: 'Evidence',
-    brief: 'Five stacks of paper. Tap one to read it, or punch a code from a printed card into the decoder.',
+    // The brief is the Round 00–01 note, and ASK is not on screen in either of
+    // those rounds (ASK_OPENS_AT, data/gameData.js) — so it points at the button
+    // that *is* down there. The detail is the Guide, read in every round, so it
+    // explains both and says when the second one turns up.
+    brief: 'Five stacks of paper. Tap one to read it, or punch a code somebody reads out into CODE, bottom right.',
     detail:
-      "Your case, sorted into stacks: accusations, motives, evidence, revelations, and the official case files. Tap a stack to read it. A stack greyed out with a round number on it has not opened yet. Use the CODE button to enter codes from printed cards — the clue lands in its own stack. Your own accusation card, and the confession if you ever get one, stay pinned on the front page.",
+      "Your case, sorted into stacks: accusations, motives, evidence, revelations, and the official case files. Tap a stack to read it. A stack greyed out with a round number on it has not opened yet. CODE sits bottom right: it is where you type in a code somebody else has given you. From Round 02 a second button, ASK, appears beside it — it deals you a riddle, and solving it unseals a new clue plus a code you can give to anyone. Your own accusation card, and the confession if you ever get one, stay pinned on the front page.",
   },
 
   chat: {

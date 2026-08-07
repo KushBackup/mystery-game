@@ -1,5 +1,7 @@
 import React from 'react';
 import { CASE_META, CASE_TIMELINE } from '../../data/gameData';
+import { TOOLTIPS } from '../../data/tooltips';
+import { InfoTip } from '../ui/InfoTip';
 
 /**
  * The night, as this character lived it (DESIGN_LANGUAGE.md §9, "Timeline").
@@ -50,7 +52,12 @@ export const TimelineView = ({ myCharacter }) => {
     <div className="space-y-6">
       {/* Where and when */}
       <div className="er-card">
-        <p className="er-mono er-mono--wide er-mono--bone">{myCharacter.name}</p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="er-mono er-mono--wide er-mono--bone min-w-0">{myCharacter.name}</p>
+          {/* What the red marks mean, and that this is the account the room
+              will interrogate — neither is visible from the thread (§6.13). */}
+          <InfoTip tip={TOOLTIPS.myTimeline} />
+        </div>
         <p className="font-body text-[15px] leading-[1.55] text-dim mt-3">
           Your movements on the night of the incident.
         </p>
@@ -109,7 +116,10 @@ export const TimelineView = ({ myCharacter }) => {
       {/* The incident, as the room knows it */}
       {canSeeMurderTimeline && (
         <section className="er-card er-card--signal">
-          <p className="er-mono er-mono--hot er-mono--wide">Key events · the incident</p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="er-mono er-mono--hot er-mono--wide min-w-0">Key events · the incident</p>
+            <InfoTip tip={TOOLTIPS.publicTimeline} />
+          </div>
           <div className="er-rule mt-3 mb-4" />
 
           <ul className="space-y-3">

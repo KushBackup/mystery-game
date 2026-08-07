@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { CHARACTERS, isMurderer } from '../../data/gameData';
 import { VoteResultsModal } from '../modals/VoteResultsModal';
 import { Numeral } from '../ui/Numeral';
+import { InfoTip } from '../ui/InfoTip';
 import { SearchField } from '../ui/SearchField';
+import { TOOLTIPS } from '../../data/tooltips';
 
 /**
  * The ballot (DESIGN_LANGUAGE.md §9, "Vote").
@@ -72,10 +74,17 @@ export const VotingView = ({
       {/* State */}
       <div className={`er-card ${isVotingOpen ? 'er-card--signal' : ''}`}>
         <div className="flex items-center justify-between gap-3">
-          <p className={`er-mono er-mono--wide ${isVotingOpen ? 'er-mono--hot' : ''}`}>
-            {isVotingOpen ? 'Ballot open' : 'Ballot closed'}
-          </p>
-          <span className="er-mono er-mono--dim">Round {String(currentRound).padStart(2, '0')}</span>
+          <div className="flex items-center gap-2 min-w-0">
+            <p className={`er-mono er-mono--wide ${isVotingOpen ? 'er-mono--hot' : ''}`}>
+              {isVotingOpen ? 'Ballot open' : 'Ballot closed'}
+            </p>
+            {/* Who opens it, and that a vote is changeable — the line below
+                says one of those and only while the ballot is open (§6.13). */}
+            <InfoTip tip={TOOLTIPS.ballot} />
+          </div>
+          <span className="er-mono er-mono--dim shrink-0">
+            Round {String(currentRound).padStart(2, '0')}
+          </span>
         </div>
 
         <p className="font-body text-[15px] leading-[1.55] text-dim mt-3">
@@ -102,7 +111,12 @@ export const VotingView = ({
             {/* Ticks as the room votes — this is the one number on the screen
                 that moves while the player is looking at it (§7). */}
             <Numeral as="p" value={totalVotes} pad={2} className="er-stat__num" />
-            <p className="er-stat__label">Votes cast</p>
+            {/* "Tally withheld" opposite reads as a rebuff without this — the
+                numbers are hidden from the whole room, not from this player. */}
+            <p className="er-stat__label flex items-center gap-2">
+              Votes cast
+              <InfoTip tip={TOOLTIPS.tally} />
+            </p>
           </div>
 
           {voteResultsVisible ? (

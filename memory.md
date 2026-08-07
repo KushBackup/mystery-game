@@ -37,8 +37,14 @@
 - **Killer reveal (spoiler):** Five killers, led by Sneha Ganesh. The full team is Sneha Ganesh, Kiyaah Rose Raghuwanshi, Victoria Vance, Roddy Faustus, and Oindrilla Chatterjee.
 - **Murder method:** aconitine hidden in the orange-oil finishing spray for Armaan's private signature drink, the Last Light.
 - **Round structure:** 7 rounds (0–6) with codes unlocked progressively (accusation → motive → evidence → revelation → confession).
-- **Special clue `THE_TRUTH`:** valid only for the five killer characters — gates the final confession reveal.
+- **Special clue `KEYSTONE`:** the confession, written for the five killer characters — gates the final confession reveal. (Was `THE_TRUTH` until 2026-08-07.)
+- **Clue codes are deliberately meaningless single words (2026-08-07):** never a login code, never descriptive of the clue, never guessable from the roster. The motive codes used to *be* the ten prime suspects' login codes, which let anyone who heard a Round 2 code log in as a killer and read "Classified · Killer" off the Identity screen. `gameData.js` now asserts the two namespaces stay disjoint in dev.
 - **User decision (2026-08-06):** treat all 51 questionnaire rows as intentional cast members, even the noisy ones; do not drop joke entries unless the user explicitly removes them.
+- **Three canon rulings settled by the 2026-08-07 story audit**, none of them derivable from a single clue:
+  1. **Kiyaah carried the cloned staff QR herself**, over a borrowed service apron. She never needed it to reach the private bar — she had run it since 7:40 PM. The pass exists so the *access log* names a staffer who had already clocked out. Anjul's 10:09 apron sighting is her coming back out.
+  2. **Tara is framed; Tanvi is used.** Different things. Victoria manufactured the invoice to run the twin atomizer through Tara's vendor. Nobody planted the floor plan — it is genuinely Tanvi's, written for a cake reveal, and Sneha simply built the murder's timing on top of a blind spot the party planner had already drawn.
+  3. **The four Raghuwanshi/Raghuvanshi guests are not related.** Coincidence of the real guest list; no clue depends on a family link. Same for the three S.G.s (Sneha Ganesh, Shubham Goyal, Savvy Grover) — the ambiguity is real and is resolved by *job*, not by initials.
+- **Codes, login codes and riddle answers are one namespace (2026-08-07).** `echo`, `cloud` and `compass` were riddle answers *and* codes until this date. When adding any word a player can type, check it against all three lists — the dev-only assertion at the bottom of `gameData.js` now covers all three.
 
 ## Infrastructure
 
@@ -76,6 +82,12 @@
   Anything that tells a player where a file is must say "Evidence → Case files".
 - **Caveat is out; annotations are Special Elite (decided 2026-08-05).** The user asked to remove Caveat because it was hard to read, and named the typewriter face as the replacement they wanted. So the app is now **four families, five roles** — `--font-note` and `--font-typewriter` both hold Special Elite, kept as separate tokens because they're separate roles. Notes are distinguished by tilt, sentence case and accent colour, not by face. Sizes came *down* ~4px from the Caveat originals ([DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §3.3) — do not read that as a general "notes got smaller" preference, it is a metric fact about Special Elite being 24% wider per character.
 - **Dead branch worth knowing about:** `CaseFilesSection`'s handwritten photo caption only renders for `file.type === 'IMAGE'`, and all six case files are `type: 'REPORT'` with no `caption` field. The branch has never rendered. Left in place — it's presumably for image exhibits the user may still add.
+- **Clue codes are earned in-app, not printed (decided 2026-08-07).** The user replaced the three printed clue stacks with a **riddle lock**: an ASK button beside the decoder on Evidence deals a general riddle (100 of them in [src/data/riddles.js](src/data/riddles.js), *nothing to do with the case*), and a correct one-word answer unseals the next clue in that player's queue **plus its code, shown for sharing**. Four things the brief was explicit about, and which the design turns on:
+  1. **The reward must be a code you can give away**, not just a clue — one solve should be able to unseal that clue on fifty other phones.
+  2. **A "high dopamine" payoff.** Hence the §7.2 signature moment: expanding rings, paper flecks, a `SOLVED` stamp, a three-bell fanfare and a haptic triplet. This is the loudest thing in the app after the murderer reveal, and that is intentional.
+  3. Answers are **one word, typed** — never multi-word, because the typing happens standing up in a loud room.
+  4. **It replaces printing everywhere**, not just in the app: host script, host guide, run sheet and print pack all had their "hand out the cards" steps removed. The only paper left is the 51 login cards.
+  The per-player queue order (`riddleQueueFor`) is stable-but-different on purpose — if every phone paid out the same clue, codes would be worth nothing and the room would have no reason to talk. [CLUE_CODES.md](CLUE_CODES.md) is now the **host's stall-breaker**, not a packing list.
 - **Slides must stay inside Round 0 knowledge.** The user's brief was "the introductory information they need to understand the murder" — so the vape is fair game (it is in the public incident report) but the toxin, the cancer, the SEBI inquiry and the staging are the paid-off reveals of rounds 3–5 and must not appear.
 
 ## Update protocol

@@ -1,5 +1,6 @@
 import React from 'react';
-import { SCREEN_GUIDE } from '../../data/screenGuide';
+import { SCREEN_GUIDE, ROUND_GUIDE } from '../../data/screenGuide';
+import { ROUNDS as ROUND_DEFS } from '../../data/gameData';
 
 /**
  * The player's guide (DESIGN_LANGUAGE.md §9, "Guide").
@@ -20,15 +21,11 @@ const SCREENS = ['dashboard', 'story', 'intel', 'chat', 'votes', 'dossier'].map(
   (id) => [SCREEN_GUIDE[id].title, SCREEN_GUIDE[id].detail]
 );
 
-const ROUNDS = [
-  ['The Incident', 'Read the incident report and get to know the room.'],
-  ['Accusations', 'You receive your accusation card — what you witnessed.'],
-  ['Motives', 'Enter motive codes to learn why suspects had reason to act.'],
-  ['Evidence', 'Forensic reports and witness statements are released.'],
-  ['Revelations', 'The major turns. Enter revelation codes.'],
-  ['Finale', 'Final discussion and debate before the reveal.'],
-  ['The Reveal', 'The truth comes out. Final votes and resolution.'],
-];
+// Titles from the round definitions the chrome rail already reads, bodies from
+// the shared guide copy — neither is retyped here. The round tooltip in the
+// header prints the same line for the live round (data/tooltips.js), so the
+// rulebook and the rail can no longer describe a round differently.
+const ROUNDS = ROUND_DEFS.map((round, i) => [round.title, ROUND_GUIDE[i]]);
 
 const TIPS = [
   'Read everything. Every clue, file and profile matters — small details crack the case.',
@@ -42,7 +39,8 @@ const TIPS = [
 const NOTES = [
   'Some clues are locked until later rounds. A code entered too early will not open.',
   'Keep your device with you for the whole game.',
-  'Keep the physical code cards you are handed.',
+  'A code is worth nothing kept to yourself and everything given away — the room only wins together.',
+  'Riddles have nothing to do with the case. Do not read them as clues.',
   'Everything syncs in real time. What the host releases, everyone sees.',
 ];
 
@@ -77,6 +75,11 @@ export const HelpView = () => {
           <li>The tile grid is your board. Tap any tile to open that section.</li>
           <li>The close button, top right, always returns you to the board.</li>
           <li>The round number sits in the top rail. Content unlocks as it climbs.</li>
+          <li>
+            Anywhere you see a small <span className="text-signal-lift">?</span> mark, tap it —
+            it explains the thing beside it. The one next to the round number tells you what
+            to be doing right now.
+          </li>
         </ul>
       </Section>
 
@@ -91,20 +94,37 @@ export const HelpView = () => {
         </dl>
       </Section>
 
-      <Section index={3} label="Entering codes">
+      <Section index={3} label="Winning a clue: the riddle lock">
         <ul className="er-list">
           <li>Open the Evidence screen.</li>
-          <li>Tap the CODE button, bottom right.</li>
-          <li>Type the code from your printed card — case does not matter.</li>
-          <li>Tap UNSEAL.</li>
+          <li>Tap ASK, bottom right. It appears in Round 02 — before then there is
+              nothing for it to unseal, so the corner is CODE alone.</li>
+          <li>You get a riddle. It has nothing to do with the murder — it is just a riddle.</li>
+          <li>Type the one-word answer. Wrong answers cost you nothing, and after three
+              misses you are shown the shape of the word.</li>
+          <li>Get it right and a new clue unseals on your board — along with its code.</li>
         </ul>
         <p className="font-body text-[15px] leading-[1.55] text-dim mt-4">
-          Motive codes open from Round 2, revelation codes from Round 4. A code entered
-          before its round will be refused — wait, then try again.
+          No two people are working down the same list, so the clue you win is probably
+          one nobody else has yet. That is the whole point of the code you are given
+          with it.
         </p>
       </Section>
 
-      <Section index={4} label="How voting works">
+      <Section index={4} label="Spending a code">
+        <ul className="er-list">
+          <li>Read your code out, or drop it into comms.</li>
+          <li>Anyone else opens Evidence and taps CODE, bottom right.</li>
+          <li>They type it in — case does not matter — and tap UNSEAL.</li>
+          <li>The same clue lands on their board too.</li>
+        </ul>
+        <p className="font-body text-[15px] leading-[1.55] text-dim mt-4">
+          Motive codes open from Round 2, evidence from Round 3, revelations from Round 4.
+          A code entered before its round will be refused — wait, then try again.
+        </p>
+      </Section>
+
+      <Section index={5} label="How voting works">
         <ul className="er-list">
           <li>Wait for the host to open the ballot.</li>
           <li>Open Vote — you will see the full guest list on record.</li>
@@ -117,7 +137,7 @@ export const HelpView = () => {
         </p>
       </Section>
 
-      <Section index={5} label="The seven rounds">
+      <Section index={6} label="The seven rounds">
         <ol className="space-y-3">
           {ROUNDS.map(([title, body], i) => (
             <li key={title} className="flex gap-4">
@@ -138,7 +158,7 @@ export const HelpView = () => {
         </p>
       </Section>
 
-      <Section index={6} label="Detective tips">
+      <Section index={7} label="Detective tips">
         <ul className="er-list">
           {TIPS.map((tip) => (
             <li key={tip}>{tip}</li>
@@ -146,7 +166,7 @@ export const HelpView = () => {
         </ul>
       </Section>
 
-      <Section index={7} label="Worth knowing">
+      <Section index={8} label="Worth knowing">
         <ul className="er-list">
           {NOTES.map((note) => (
             <li key={note}>{note}</li>
@@ -154,7 +174,7 @@ export const HelpView = () => {
         </ul>
       </Section>
 
-      <div className="er-card er-card--signal er-enter er-stagger text-center" style={{ '--i': 8 }}>
+      <div className="er-card er-card--signal er-enter er-stagger text-center" style={{ '--i': 9 }}>
         <p className="er-mono er-mono--hot er-mono--wide">Ready</p>
         <p className="er-title text-[24px] mt-3">Trust your instincts</p>
         <p className="font-note text-[17px] text-signal-lift mt-3">

@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Fingerprint } from '../icons/IconComponents';
 import { DoodleCoffeeStain } from '../ui/Doodles';
 import { RedactedLines } from '../ui/RedactedLines';
+import { InfoTip } from '../ui/InfoTip';
+import { TOOLTIPS } from '../../data/tooltips';
 
 /**
  * The player's own file (DESIGN_LANGUAGE.md §9, "Identity").
@@ -10,6 +12,9 @@ import { RedactedLines } from '../ui/RedactedLines';
  * bar (§6.7) the player taps to wipe open — a state change turned into a
  * moment, instead of text that simply sits there.
  */
+/** Same uneven rhythm as RedactedLines' default, extended for a longer note. */
+const KILLER_REDACT_WIDTHS = ['96%', '72%', '88%', '61%', '91%', '68%', '83%'];
+
 export const DashboardView = ({ myCharacter }) => {
   const [secretOpen, setSecretOpen] = useState(false);
 
@@ -23,8 +28,14 @@ export const DashboardView = ({ myCharacter }) => {
       <article className="er-bone er-pin er-rotR relative p-5 sm:p-7">
         <DoodleCoffeeStain />
 
-        {/* Header pattern: mono label in signal-deep, then a 2px ink rule. */}
-        <p className="er-bone-label">Subject File · 8821-B</p>
+        {/* Header pattern: mono label in signal-deep, then a 2px ink rule.
+            The tooltip rides the header rather than the Confidential Note it
+            mostly talks about: that row already carries a label and a "Tap to
+            unseal" hint, and a third element wraps it at 360px. */}
+        <div className="flex items-center justify-between gap-3">
+          <p className="er-bone-label min-w-0">Subject File · 8821-B</p>
+          <InfoTip tip={TOOLTIPS.identity} tone="bone" />
+        </div>
         <div className="er-bone-rule mt-2 mb-6" />
 
         {/* Identity block */}
@@ -97,18 +108,23 @@ export const DashboardView = ({ myCharacter }) => {
           >
             {/* The note rises in as the bars clear rather than sitting fully
                 formed behind them. */}
+            {/* A killer's note addresses the player directly — it has to tell
+                them, in words, that they did it — so it is not set as a quoted
+                confession the way every other guest's secret is. */}
             <span
               className={`block font-note text-[18px] sm:text-[20px] leading-[1.35] text-ink ${
                 secretOpen ? 'er-enter' : 'opacity-0'
               }`}
               style={secretOpen ? { animationDelay: '180ms' } : undefined}
             >
-              “{myCharacter.secret}”
+              {isMurderer ? myCharacter.secret : `“${myCharacter.secret}”`}
             </span>
 
             {/* Ragged marks, not one slab — see RedactedLines for why a
-                paragraph needs a different form from a line. */}
-            <RedactedLines open={secretOpen} />
+                paragraph needs a different form from a line. The killers' note
+                runs longer, so it takes more marks to stay a redacted page
+                rather than four bars stranded above blank paper. */}
+            <RedactedLines open={secretOpen} widths={isMurderer ? KILLER_REDACT_WIDTHS : undefined} />
           </button>
         </section>
 
