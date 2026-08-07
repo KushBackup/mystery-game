@@ -57,6 +57,32 @@ The accusation only says witnesses saw what looked like Armaan's back-bar keycar
 - Forged invoice clue in [src/data/gameData.js](src/data/gameData.js)
 - Victoria motive/revelation trail in [src/data/gameData.js](src/data/gameData.js)
 
+### 3a. The floor plan is in Tanvi's handwriting. Isn't she part of it?
+
+**Short answer before Round 5:**
+The handwriting is real. Ask what the notes were *for* before asking who they served.
+
+**Canonical answer after Round 5:**
+No. The plan is genuinely Tanvi's, in her own fineliner, and DO NOT BLOCK BAR DURING REEL and HOLD CAKE UNTIL ORANGE are stage directions for a cake reveal, not instructions to a conspiracy. Nobody planted it. Sneha arrived at 7:05 PM with the seating plan Armaan wanted rearranged, saw that the party planner had already worked out on paper the exact second the room would turn its back on the private bar, and set the reboot to that second.
+
+If a sharp table objects that the invoice was entered at 5:14 PM — before Sneha ever saw the plan — reward the catch: the plan was always "tonight, during the reel." Tanvi's notes did not create the blind spot; they told the killers exactly which ninety-four seconds were safe, in an innocent's handwriting.
+
+**Canon support:**
+- Floor plan clue and `CASE_SOLUTION.misdirection` in [src/data/gameData.js](src/data/gameData.js)
+- Sneha and Tanvi timelines in [src/data/gameData.js](src/data/gameData.js)
+
+### 3b. Who opened Tara's crate — and who moved it next to the private bar?
+
+**Short answer before Round 5:**
+Ask who benefits from a sealed gift being unsealed early. Then ask who was entitled enough to do it without needing a reason.
+
+**Canonical answer after Round 5:**
+Armaan. He had staff open the gift crate early and stage the private-reserve bottles beside the bar for the Last Light moment — the display was the point of the gift, and he never intended to honor the seal. That is why the customs seal was broken before Tara touched it (Fabiola), why the crate sat reopened after he swore it would stay sealed (Khyati), and why it ended the night beside the private bar (Yukta). Nobody in the conspiracy touched it. Victoria's forged invoice was built hours earlier; the crate theatrics were a mess Armaan made on his own, which the frame borrowed for free.
+
+**Canon support:**
+- Tara, Fabiola, Khyati and Yukta timelines in [src/data/gameData.js](src/data/gameData.js)
+- Supplier Invoice Mismatch clue and `CASE_SOLUTION.misdirection` in [src/data/gameData.js](src/data/gameData.js)
+
 ### 4. How was the forged invoice entered at 5:14 PM if Victoria arrived later?
 
 **Short answer before Round 5:**
@@ -112,6 +138,44 @@ No relationship is established anywhere in the case. Treat it as a coincidence o
 **Canonical answer after Round 5:**
 No. Kiyaah Rose Raghuwanshi, Vinod Raghuwanshi, Meera Victoria Raghuwanshi and Meenal Raghuvanshi share a name and nothing else. No family link exists in the case and no clue depends on one. If a table builds a theory on it, let them enjoy it, then point out that the conspiracy aligns people by job, not by blood.
 
+### 6d. Half the room saw Oindrilla at the console. Why bother with a cloned credential?
+
+**Short answer before Round 5:**
+Separate what she was *seen* doing from what the log says was *done*. They are not the same question.
+
+**Canonical answer after Round 5:**
+Because the log, not the sighting, was the danger. Being seen at the console is survivable: she built the venue's systems, the reel had just frozen, and a systems lead rebooting a frozen reel is the most natural picture in the room — cause reads as response. But the session that forced the reboot also revived the retired staff QR that put Kiyaah's bar entry into the log under a departed staffer's name, and that session could never carry Oindrilla's own login. The clone kept her name off the QR, and the QR kept Kiyaah's name off the bar. Same trick, both women: legitimately present, logged as somebody else.
+
+**Canon support:**
+- Admin Override Trace and Service QR Access Trace clues in [src/data/gameData.js](src/data/gameData.js)
+- Lakshmi, Dinesh, Nanu and Vaidehi timelines in [src/data/gameData.js](src/data/gameData.js)
+
+### 6e. Why did the killers care that the Monday folder stayed upstairs?
+
+**Short answer before Round 5:**
+Ask what was scheduled to happen to that folder on Monday — and what happens to that schedule if Armaan dies on Saturday.
+
+**Canonical answer after Round 5:**
+Two reasons, both cold. First, confirmation: the folder still sitting in the upstairs booth meant the scapegoat script had not yet gone to Meridien's lawyers — kill Armaan that night and the handoff died with him. That is why the burner thread's first line is "monday folder stays upstairs. we finish it tonight." Second, misdirection: left where the police would find it, the binder scatters motive across five sets of initials — S.G., T.S., V.V., O.C., T.V. — only three of them belonging to killers. Destroying it would have protected two innocents and narrowed the field. Leaving it widened it.
+
+**Canon support:**
+- Burner Group Transcript and Monday Binder Index in [src/data/gameData.js](src/data/gameData.js)
+- `CASE_SOLUTION` sequence (the 9:50 PM beat) in [src/data/gameData.js](src/data/gameData.js)
+
+### 6f. How did five people from five different circles find each other in two days — and why did nobody warn Armaan?
+
+**Short answer before Round 5:**
+Ask what Sneha's actual job was for the last decade. Then ask what each of the five was holding the week of the party.
+
+**Canonical answer after Round 5:**
+Sneha's job was making Armaan's thefts look clean in the numbers, so she knew every wound in the room — she had priced each one. The binder told her who else was already written into the fall: Victoria's initials on the shell ledgers, Oindrilla's on the inventory breach. She recruited them with proof that Armaan had already chosen them. Roddy and Kiyaah were not in the binder, which is exactly why she wanted them — she had packaged both of their stolen programs into the buyout story herself, so she knew what he had taken and what each could still do.
+
+Nobody warned Armaan because every recruit was holding fresh, provable evidence that he was about to destroy them; warning him meant handing back the knife he was already sharpening. And two days was enough because nothing needed inventing — the formula was Roddy's, the ritual Kiyaah's, the admin path Oindrilla's, forging is Victoria's trade. The only fabrications were one invoice and one label.
+
+**Canon support:**
+- "How the Five Found Each Other" in [STORY.md](STORY.md)
+- Killer motives and `CASE_SOLUTION.why` in [src/data/gameData.js](src/data/gameData.js)
+
 ### 7. Why doesn't the burner thread simply list all five names?
 
 **Short answer before Round 5:**
@@ -127,6 +191,30 @@ Because the room does not begin with certainty about who matters. The game wants
 
 **Canonical answer after Round 5:**
 The 10 prime suspects are where the clue deck concentrates suspicion, but the ballot remains open to the whole room so players can make bad theories before the evidence teaches them to focus.
+
+### 9. Who was Roddy talking to when Valerie heard him say "dose"?
+
+**Short answer before Round 5:**
+Nobody — and that is worth noticing.
+
+**Canonical answer after Round 5:**
+Nobody. Valerie caught him muttering to himself on his way to the prep corridor, running the arithmetic one last time — small enough to hide under the oil, large enough to stop a heart. Roddy talks to himself the way other people check their pockets. It is the one unguarded slip he makes all night.
+
+### 10. Who said "orange, not bottle" near the bar at 10:04?
+
+**Short answer before Round 5:**
+Ask who was giving instructions at that bar in that minute.
+
+**Canonical answer after Round 5:**
+Kiyaah, walking staff through the Last Light garnish sequence: the finish comes from the orange mister, not from the bottle. To the staff it was a service instruction. Set beside the burner thread's "orange is cleaner than bottle," it reads as what it was — the method, said out loud, dressed as bar craft.
+
+### 11. Anna was seen at a display cabinet and at the gift table in the same minute. Which is it?
+
+**Short answer before Round 5:**
+Check the geography before calling it a contradiction.
+
+**Canonical answer after Round 5:**
+Both — they are the same corner. The display cabinets stand along the record wall directly above the gift table, which is where the collector bottles Anna handled were shown. Aayushi and Chayne describe one sighting from two angles. Anna stays exactly where her own account puts her; what keeps her suspicious is that she was checking a replica while everyone else watched a dead screen.
 
 ---
 

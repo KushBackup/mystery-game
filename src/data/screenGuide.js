@@ -75,7 +75,7 @@ export const SCREEN_GUIDE = {
   // on the board for the first time knows where to start.
   hub: {
     briefLabel: 'Start here',
-    brief: 'Every tile is a screen. Start with your Identity, then read the Guide.',
+    brief: 'This is the main app, you can explore the screens in any order. The first thing to do is read the story and your own identity. Dont tell anyone if you are the murderer! Go through all the Guest profiles and try to deduce who did it. Go ahead, find them in the crowd and interogate them!',
   },
 
   // No brief: the host is running the game, not learning it.

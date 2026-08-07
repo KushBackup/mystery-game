@@ -426,6 +426,18 @@ export const HOST_FAST_ANSWERS = [
       'Witnesses only saw what looked like Armaan’s back-bar keycard on Tara. Victoria’s forged invoice was designed to piggyback on Tara’s legitimate display-world access and frame her as service-adjacent.',
   },
   {
+    question: 'The floor plan is in Tanvi’s handwriting. Isn’t she part of it?',
+    before: 'The handwriting is real. Ask what the notes were for before asking who they served.',
+    after:
+      'No. The plan is genuinely Tanvi’s, written for a cake reveal — nobody planted it. Sneha saw it at 7:05 PM while handling the seating rearrangement and set the reboot to the second it predicted. If a table catches that the invoice predates 7:05, reward it: the plan was always “tonight, during the reel.” Tanvi’s notes only told the killers which ninety-four seconds were safe, in an innocent’s handwriting.',
+  },
+  {
+    question: 'Who opened Tara’s crate — and who moved it next to the private bar?',
+    before: 'Ask who was entitled enough to unseal a gift early without needing a reason.',
+    after:
+      'Armaan. He had staff open the gift crate early and stage the private-reserve bottles beside the bar for the Last Light moment — he never intended to honor the seal. That is the broken customs seal, the reopened crate, and the crate ending the night beside the bar, all in one move. Nobody in the conspiracy touched it; the frame borrowed a mess he made himself.',
+  },
+  {
     question: 'How was the forged invoice entered at 5:14 PM if Victoria arrived later?',
     before: 'The important question is whether the document had to be made on-site at all.',
     after:
@@ -442,6 +454,24 @@ export const HOST_FAST_ANSWERS = [
     before: 'Ask what the QR was for. It is not an access problem — it is a log problem.',
     after:
       'Kiyaah did, over a borrowed service apron. She never needed the pass to get in; she needed the entry log to name a staffer who had already clocked out instead of naming her. Oindrilla revived a retired QR for exactly one pass in and one pass out. Anjul saw the apron come back down the service stair at 10:09 and clocked that the face under it was not staff.',
+  },
+  {
+    question: 'Half the room saw Oindrilla at the console. Why bother with a cloned credential?',
+    before: 'Separate what she was seen doing from what the log says was done. Not the same question.',
+    after:
+      'The log, not the sighting, was the danger. A systems lead rebooting a frozen reel is the most natural picture in the room — cause reads as response. But the same session revived the retired staff QR that logged Kiyaah’s bar entry under a departed staffer’s name, and that session could never carry Oindrilla’s own login. The clone kept her name off the QR; the QR kept Kiyaah’s name off the bar. Same trick, both women: legitimately present, logged as somebody else.',
+  },
+  {
+    question: 'Why did the killers care that the Monday folder stayed upstairs?',
+    before: 'Ask what was scheduled to happen to that folder on Monday if Armaan lived.',
+    after:
+      'Two reasons. Confirmation: the folder still upstairs meant the scapegoat script had not gone to Meridien’s lawyers yet — kill him tonight and the handoff dies with him, which is the burner thread’s first line. Misdirection: found by police, the binder scatters motive across five sets of initials, only three of them killers’. Destroying it would have narrowed the field; leaving it widened it.',
+  },
+  {
+    question: 'How did five circles find each other in two days — and why did nobody warn Armaan?',
+    before: 'Ask what Sneha’s actual job was, and what each of the five was holding that week.',
+    after:
+      'Sneha spent years making Armaan’s thefts look clean in the numbers, so she knew every wound in the room — she had priced each one. The binder named Victoria and Oindrilla as fellow scapegoats; she recruited them with proof. Roddy and Kiyaah were outside the binder, which is why she wanted them — she had packaged their stolen programs into the buyout story herself. Nobody warned him because each recruit held fresh proof he was about to destroy them. Two days sufficed because nothing needed inventing: the formula, ritual, admin path and forging skill already existed. Only an invoice and a label were fabricated.',
   },
   {
     question: 'S.G. could be Sneha Ganesh, Shubham Goyal or Savvy Grover. Which one?',
@@ -466,6 +496,24 @@ export const HOST_FAST_ANSWERS = [
     before: 'Because the room does not begin with certainty about who matters.',
     after:
       'The 10 prime suspects are where the clue deck concentrates suspicion, but the ballot stays open to the whole room so players can make bad theories before the evidence teaches them to focus.',
+  },
+  {
+    question: 'Who was Roddy talking to when Valerie heard him say “dose”?',
+    before: 'Nobody — and that is worth noticing.',
+    after:
+      'Nobody. Valerie caught him muttering to himself on his way to the prep corridor, running the arithmetic one last time — small enough to hide under the oil, large enough to stop a heart. It is the one unguarded slip he makes all night.',
+  },
+  {
+    question: 'Who said “orange, not bottle” near the bar at 10:04?',
+    before: 'Ask who was giving instructions at that bar in that minute.',
+    after:
+      'Kiyaah, walking staff through the Last Light garnish sequence: the finish comes from the orange mister, not the bottle. To staff it was a service instruction. Set beside the burner thread’s “orange is cleaner than bottle,” it is the method said out loud, dressed as bar craft.',
+  },
+  {
+    question: 'Anna was seen at a display cabinet and at the gift table in the same minute. Which is it?',
+    before: 'Check the geography before calling it a contradiction.',
+    after:
+      'Both — same corner. The display cabinets stand along the record wall directly above the gift table, where the collector bottles Anna handled were shown. Aayushi and Chayne describe one sighting from two angles. What keeps her suspicious is that she was checking a replica while everyone else watched a dead screen.',
   },
 ];
 

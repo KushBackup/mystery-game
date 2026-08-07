@@ -1023,7 +1023,12 @@ button.er-redact:not(.er-redact--open) { cursor: pointer; }
 }
 
 /* ============================================================
-   17. THE ASK CUE (§7.1)
+   17. THE KNOCK CUES (§7.1)
+   Two controls in this app arrive when nobody is looking at
+   them, and both use the same hop: ASK on Evidence, and VIEW
+   TALLY on Vote. Everything below is written about ASK because
+   it came first; the tally variant states only where it differs.
+
    ASK is not on screen until Round 02 (ASK_OPENS_AT in
    data/gameData.js — before then the riddle lock has nothing to
    pay out). So the round it does appear, it appears mid-game,
@@ -1062,6 +1067,32 @@ button.er-redact:not(.er-redact--open) { cursor: pointer; }
    duration is duplicated in JS. */
 .er-summon {
   animation: erSummon 1.15s var(--ease-land) 1.05s 3;
+}
+
+/* The tally cue — VIEW TALLY, the round the host releases the
+   numbers (views/VotingView.jsx). Same knock, two differences,
+   both of them consequences of the trigger being a *recurring*
+   event rather than a once-ever one:
+
+   Two hops, not three. ASK arrives once per device in the whole
+   evening, so it can afford the larger budget. A tally is
+   released up to six times, and a cue that recurs has to cost
+   less each time or it accumulates into the pulse §7.1 forbids.
+
+   It is tied to an unread state, not to a ledger of one. The
+   knock plays whenever the button mounts still unopened — so a
+   player who walks away from a flagged tally is nudged again
+   when they come back — and it stops for good the moment they
+   open it, because the state it is announcing is gone. What
+   never repeats is the knock *for a tally already read*.
+
+   The 520ms delay clears the screen's own entrance (0.42s,
+   `.view-container`) rather than a button landing; unlike ASK
+   this button has no entrance animation of its own, so it needs
+   no wrapper and no `animationend` bookkeeping — removing the
+   class when the tally is read is what ends it. */
+.er-summon-tally {
+  animation: erSummon 1.15s var(--ease-land) 520ms 2;
 }
 
 /* ============================================================
@@ -1112,8 +1143,11 @@ button.er-redact:not(.er-redact--open) { cursor: pointer; }
   .er-burst,
   .er-fleck { display: none; }
 
-  /* The ASK cue (§17) needs no override and must not get one: its last keyframe
-     is the button's resting state, so a single collapsed iteration lands it
-     exactly there — and `animationend` still fires, so App.jsx still retires it.
-     A cue that never ends would leave the button owing an animation forever. */
+  /* Both knock cues (§17) need no override and must not get one: their last
+     keyframe is the button's resting state, so a single collapsed iteration
+     lands it exactly there — and `animationend` still fires, so App.jsx still
+     retires the ASK one. A cue that never ends would leave the button owing an
+     animation forever. Neither carries information the static page lacks: ASK is
+     labelled, and the tally button keeps its signal border and its
+     "Just released" tag until the tally is opened. */
 }

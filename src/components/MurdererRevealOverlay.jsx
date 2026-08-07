@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { CaseSolution } from './CaseSolution';
+import { RevealDeck } from './RevealDeck';
 
 /**
  * The one time red owns the screen (DESIGN_LANGUAGE.md §2.2, §7).
@@ -8,18 +8,31 @@ import { CaseSolution } from './CaseSolution';
  * precisely what makes it land here. Type is bone and ink on that fill — pure
  * white only on the small tag, per §2.2.
  *
+ * **This is the first screen every player gets when the host reveals** — killers
+ * included, since 2026-08-07. Nothing precedes it and nothing renders over it:
+ * the room has to be told *who* before it is told anything else.
+ *
  * Naming the killers is only half of what the room wants at that moment; the
- * other half is *how*. That lives on [CaseSolution](CaseSolution.jsx), reached
- * from the control below and swapped in for this screen rather than layered over
- * it — a second full-bleed red layer behind the reveal would spend the one
- * sanctioned alarm twice, and the reconstruction is a document, so it is ink and
+ * other half is *how*. That lives on [RevealDeck](RevealDeck.jsx) — the 22-slide
+ * reconstruction — reached from the control below and swapped in for this screen
+ * rather than layered over it: a second full-bleed red layer behind the reveal
+ * would spend the one sanctioned alarm twice, and the reconstruction is ink and
  * paper. The control only arrives once the reveal has finished landing (stage 4):
  * a button appearing under a name that is still animating turns the moment into
  * a prompt.
+ *
+ * `onContinue` is passed only to the five killers, who have the confession and
+ * [OutroSplash](OutroSplash.jsx) waiting behind this screen; it swaps the control
+ * from `How it happened` to `Continue`. Everyone else ends here, so for them the
+ * screen is terminal and the control opens the deck.
  */
-export const MurdererRevealOverlay = ({ murderer, killers = murderer ? [murderer] : [] }) => {
+export const MurdererRevealOverlay = ({
+  murderer,
+  killers = murderer ? [murderer] : [],
+  onContinue = null,
+}) => {
   const [stage, setStage] = useState(0);
-  const [showSolution, setShowSolution] = useState(false);
+  const [showDeck, setShowDeck] = useState(false);
   const revealedKillers = killers.filter(Boolean);
   const leadKiller = revealedKillers[0] ?? null;
   const accomplices = revealedKillers.slice(1);
@@ -42,8 +55,8 @@ export const MurdererRevealOverlay = ({ murderer, killers = murderer ? [murderer
 
   // Returning lands back on a fully-staged reveal — the timers have long since
   // fired, so nothing replays and the name is simply there.
-  if (showSolution) {
-    return <CaseSolution onBack={() => setShowSolution(false)} backLabel="The verdict" />;
+  if (showDeck) {
+    return <RevealDeck onClose={() => setShowDeck(false)} closeLabel="The verdict" />;
   }
 
   return (
@@ -151,13 +164,18 @@ export const MurdererRevealOverlay = ({ murderer, killers = murderer ? [murderer
             stage >= 4 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'
           }`}
         >
+          {/* One control, never two: the alarm screen carries a single thing you
+              can touch, and which one it is depends on what is behind it. The
+              room ends here, so theirs opens the reconstruction. The killers have
+              their own curtain waiting, so theirs steps forward to it — and the
+              deck is offered again from there. */}
           <button
             type="button"
-            onClick={() => setShowSolution(true)}
+            onClick={onContinue ?? (() => setShowDeck(true))}
             disabled={stage < 4}
             className="er-touch inline-flex items-center justify-center gap-2 min-h-[44px] px-6 bg-bone text-ink font-mono text-[11px] font-medium uppercase tracking-[0.24em]"
           >
-            How it happened <span aria-hidden="true">→</span>
+            {onContinue ? 'Continue' : 'How it happened'} <span aria-hidden="true">→</span>
           </button>
         </div>
       </div>

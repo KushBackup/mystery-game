@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { CaseSolution } from './CaseSolution';
+import { RevealDeck } from './RevealDeck';
 
 /**
  * The curtain. This is the last thing 51 people look at, so it is the one screen
@@ -10,20 +10,20 @@ import { CaseSolution } from './CaseSolution';
  * It also carries the reconstruction, because this is the *killers'* terminal
  * screen: App.jsx routes everyone else to the reveal overlay and sends the five
  * of them straight here, so without this control they would be the only players
- * in the room who could not open [CaseSolution](CaseSolution.jsx). It sits below
+ * in the room who could not open [RevealDeck](RevealDeck.jsx). It sits below
  * the thank-you and above the credits — offered, never in the way of the curtain.
  */
 export const OutroSplash = ({ playerName }) => {
   const [fadeIn, setFadeIn] = useState(false);
-  const [showSolution, setShowSolution] = useState(false);
+  const [showDeck, setShowDeck] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setFadeIn(true), 100);
     return () => clearTimeout(t);
   }, []);
 
-  if (showSolution) {
-    return <CaseSolution onBack={() => setShowSolution(false)} backLabel="Close" />;
+  if (showDeck) {
+    return <RevealDeck onClose={() => setShowDeck(false)} closeLabel="Close" />;
   }
 
   // Each line rises as the one before it settles. Written as a helper rather
@@ -61,7 +61,7 @@ export const OutroSplash = ({ playerName }) => {
         <div className={`mt-10 ${staged('delay-700')}`}>
           <button
             type="button"
-            onClick={() => setShowSolution(true)}
+            onClick={() => setShowDeck(true)}
             className="er-touch er-mono er-mono--hot w-full h-12 flex items-center justify-center gap-2 bg-ink-raised border border-signal hover:bg-signal hover:text-white"
           >
             How it happened

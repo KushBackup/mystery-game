@@ -144,7 +144,7 @@ const ROSTER = [
     secret: 'You are one of the five people who killed Armaan Khanna, and you are the one who took the room\'s eyes off him. Deny it calmly. Your other secret: four international trips with a coworker you could not stand taught you how convincingly you can perform affection.',
     neverDo: 'Lose because I was slow.',
     motive: "Oindrilla built Velvet Ember's event dashboard, QR access flow, and loyalty-data layer. Armaan reused her tools to watch employees, scrub stock movement, and stage scarcity. When a warehouse discrepancy surfaced, he started drafting a memo that blamed the entire breach on her admin credentials.",
-    timeline: '7:15 PM - Arrived early to test the tribute reel and guest check-in scanner.\n9:57 PM - In the sound booth when the birthday montage began.\n10:08 PM - Logged an unexplained reboot from the event-admin terminal.\n10:13 PM - Back in the crowd before anyone finished complaining that the music had glitched.',
+    timeline: '7:15 PM - Arrived early to test the tribute reel and guest check-in scanner.\n9:57 PM - Let herself back into the sound booth two minutes into the birthday montage.\n10:08 PM - Logged an unexplained reboot from the event-admin terminal.\n10:13 PM - Back in the crowd before anyone finished complaining that the music had glitched.',
     code: 'AMBER',
   }),
   suspect({
@@ -1165,10 +1165,13 @@ export const CONFESSION_CLUE = {
 };
 
 /**
- * THE ANSWER KEY. Read by [CaseSolution.jsx](../components/CaseSolution.jsx) only,
- * and that screen is unreachable until the host sets `revealedToMurderer` — so this
- * is the one block in this file allowed to say plainly what the clue ladder spends
- * seven rounds proving. Nothing here may leak into a round-gated surface.
+ * THE ANSWER KEY. Read by [RevealDeck.jsx](../components/RevealDeck.jsx) only — the
+ * 22-slide reconstruction, whose slides 09, 21 and 22 render `jobs`, `proof` and
+ * `verdict` from here directly rather than restating them, so those three can never
+ * drift from this block. That screen is unreachable until the host sets
+ * `revealedToMurderer`, so this is the one block in this file allowed to say plainly
+ * what the clue ladder spends seven rounds proving. Nothing here may leak into a
+ * round-gated surface.
  *
  * It is a restatement of [STORY.md](../../STORY.md), not a second canon: every beat
  * below is already established by a clue, a case file or a character timeline. If the
@@ -1212,7 +1215,7 @@ export const CASE_SOLUTION = {
       group: 'Amber',
       job: 'The blind spot',
       detail:
-        'The 10:08 PM projector reboot came from an admin credential cloned off her own build environment and re-authenticated from an offline side console only she had configured. The same session tree briefly re-enabled a retired staff QR — one pass in, one pass out.',
+        'The 10:08 PM projector reboot came from an admin credential cloned off her own build environment and re-authenticated from an offline side console only she had configured. The same session tree briefly re-enabled a retired staff QR — one pass in, one pass out. The clone was the point: the session that staged the blackout and revived the QR carried no name, while the woman half the room saw at the console was just the systems lead rebooting a frozen reel.',
     },
     {
       name: 'Victoria Vance',
@@ -1243,7 +1246,7 @@ export const CASE_SOLUTION = {
     },
     {
       time: '9:50 PM',
-      body: 'Sneha argues with Armaan in the upstairs booth over the red folder marked MONDAY. She leaves composed. The folder stays upstairs, which is the only part of that conversation that mattered.',
+      body: 'Sneha argues with Armaan in the upstairs booth over the red folder marked MONDAY. She leaves composed. The folder stays upstairs, which is the only part of that conversation that mattered: it had not gone to Meridien\'s lawyers yet, so killing him tonight killed the handoff too — and found by the police afterwards, the binder scatters motive across five sets of initials, only three of them belonging to killers.',
     },
     {
       time: '9:55 PM',
@@ -1304,7 +1307,7 @@ export const CASE_SOLUTION = {
   misdirection: [
     'Ten people here had a real, provable reason to want Armaan dead. Five of them were innocent: Tara Singhania, Tanvi Vartak, Rishi Raj Rahul, Vinod Raghuwanshi and Anna Russo. A coherent single-killer case could be built against any of them, and most of the room built one.',
     'The killers sat in five separate circles — Thimble, Oracle, Forgery, Hemlock and Amber — so no single table ever looked complete. Every Round 1 accusation pointed at a suspect\'s own people covering for them, and that theory can never close on a five-way alignment.',
-    'Tara was framed, not involved. The forged invoice was built to piggyback on access to the display and customs world that was entirely legitimate, so that the swapped atomizer would look like it arrived through her.',
+    'Tara was framed, not involved. The forged invoice was built to piggyback on access to the display and customs world that was entirely legitimate, so that the swapped atomizer would look like it arrived through her. Even the crate helped, and nobody in the conspiracy touched it: Armaan had staff open her sealed gift early and stage the private-reserve bottles beside the bar, breaking the customs seal Tara was liable for — a mess he made himself, which the frame borrowed for free.',
     'Tanvi was not framed and not involved — she was used. The annotated floor plan really is hers, in her own fineliner, written for a cake reveal: DO NOT BLOCK BAR DURING REEL and HOLD CAKE UNTIL ORANGE are stage directions, not instructions. Sneha arrived at 7:05 with the seating plan Armaan wanted rearranged, which is where she learned that Tanvi had already worked out, on paper, the exact second the whole room would turn its back on the private bar. The conspiracy did not have to engineer a blind spot in the crowd. The party planner had drawn them one.',
     'The blackout was meant to be found. It is the obvious opportunity window, and it pulled the room toward the ninety-four seconds instead of the fifteen minutes before them, when the poison was already in the building and the paperwork was already six hours old.',
   ],
@@ -1518,8 +1521,25 @@ export const getWitnesses = () => {
   return CHARACTERS.filter((character) => !character.isSuspect && character.role !== 'MURDERER');
 };
 
+/**
+ * The killer team, **mastermind first**.
+ *
+ * Membership is still `role === 'MURDERER'` — that stays the single source of
+ * truth — but the order comes from KILLER_IDS, which is written mastermind-first.
+ * Roster order is not: it put Oindrilla at index 0, and the reveal overlay labels
+ * `killers[0]` MASTERMIND, so the one screen that names the conspiracy was
+ * crediting the wrong person for it and contradicting slide 09 of the deck a few
+ * taps later. Anyone flagged MURDERER but absent from KILLER_IDS still appears,
+ * after the named five, rather than dropping out of the reveal entirely.
+ */
 export const getKillers = () => {
-  return CHARACTERS.filter((character) => character.role === 'MURDERER');
+  const rank = (id) => {
+    const index = KILLER_IDS.indexOf(id);
+    return index < 0 ? KILLER_IDS.length : index;
+  };
+  return CHARACTERS.filter((character) => character.role === 'MURDERER').sort(
+    (a, b) => rank(a.id) - rank(b.id)
+  );
 };
 
 export const isMurderer = (characterId) => {

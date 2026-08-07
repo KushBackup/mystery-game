@@ -221,7 +221,12 @@ export default function GridMenu({ onNavigate, currentRound = 0, isVotingOpen = 
           <div className="er-rule" />
           <div className="flex items-center justify-between pt-3">
             <span className="er-mono">Case {CASE_META.caseId}</span>
-            <span className="er-mono">{CASE_META.playerCount} Guests · {CASE_META.killerCount} Killers</span>
+            {/* Guest count only. The killer count used to sit here and it is a
+                spoiler on the most-visited screen in the game: knowing the
+                conspiracy is five-handed is the deduction Round 5 is built to
+                deliver. It stays host-side (HostPanel, HostReferenceView) and on
+                the killers' own Timeline. */}
+            <span className="er-mono">{CASE_META.playerCount} Guests</span>
           </div>
         </div>
       </div>

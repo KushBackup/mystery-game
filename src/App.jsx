@@ -125,7 +125,13 @@ export default function App() {
   const [revealedToMurderer, setRevealedToMurderer] = useState(false); // Round 6 reveal
   const [revealedClues, setRevealedClues] = useState([]); // Host-revealed clues
   const [gameEnded, setGameEnded] = useState(false); // Game ended flag
-  
+  // Killers only: whether this device has stepped past the public reveal. The
+  // host's reveal sets `gameEnded` in the same write, so without this the five
+  // of them would drop straight onto the outro and never see the screen naming
+  // them — see the routing note above OutroSplash below. Deliberately local and
+  // not persisted: a killer who reloads should get the announcement again.
+  const [revealStepped, setRevealStepped] = useState(false);
+
   // Local UI State
   const [inputCode, setInputCode] = useState("");
   const [feedback, setFeedback] = useState(null);
@@ -470,14 +476,27 @@ export default function App() {
     return <CaseHold />;
   }
 
-  // Public killer reveal — terminal screen for all non-host players except
-  // the killers themselves (they fall through to the confession/outro path).
-  // Must come before the gameEnded check so it wins over OutroSplash for everyone else.
-  if (revealedToMurderer && !isHostUser && !isMurderer(currentUser)) {
-    return <MurdererRevealOverlay killers={getKillers()} />;
+  // Public killer reveal — the first thing EVERY player sees the moment the host
+  // reveals, killers included. It must come before the gameEnded check: the host's
+  // reveal writes `revealedToMurderer` and `gameEnded` in one go, so whichever of
+  // these two branches is first is the screen the room actually gets.
+  //
+  // The killers used to be excluded here and dropped straight onto the outro,
+  // which meant the five people the room is being told about were the only ones
+  // who never saw it named. Now they see it too and step past it to their own
+  // curtain; everyone else ends on this screen, which is why only the killers are
+  // given a way forward.
+  if (revealedToMurderer && !isHostUser && !(isMurderer(currentUser) && revealStepped)) {
+    return (
+      <MurdererRevealOverlay
+        killers={getKillers()}
+        onContinue={isMurderer(currentUser) ? () => setRevealStepped(true) : null}
+      />
+    );
   }
 
-  // Show outro splash when game ends (but not for host)
+  // Show outro splash when game ends (but not for host). In practice this is the
+  // killers' terminal screen — everyone else is held on the reveal above.
   if (gameEnded && !isHostUser) {
     return <OutroSplash playerName={myCharacter?.name || 'Player'} />;
   }

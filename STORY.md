@@ -66,6 +66,22 @@ Owns the systems layer: projector reboot, offline admin path, retired staff QR r
 
 ---
 
+## How the Five Found Each Other
+
+Sneha's job, for years, was making Armaan's thefts look clean in the numbers. She knew every wound in the room because she had priced each one.
+
+When she learned about the Monday binder two days before the party, it told her who else was already written into the fall: Victoria's initials on the shell ledgers, Oindrilla's on the inventory breach. She recruited them with the one thing that made warning Armaan impossible — proof that he had already chosen them.
+
+Roddy and Kiyaah were not in the binder, and that is exactly why she wanted them. Armaan had written Roddy off as an outsider and assumed the ritual and the grief sessions still kept Kiyaah quiet. Sneha had packaged both of their stolen programs into the buyout story herself — the botanical line, the tasting ritual — so she knew precisely what he had taken from each of them and what each of them could still do.
+
+Nobody warned Armaan because every recruit was holding fresh, provable evidence that he was about to destroy them. Warning him meant handing back the knife he was already sharpening.
+
+Two days was enough because the plan needed almost nothing invented. The formula was Roddy's own, the ritual Kiyaah's own, the admin path Oindrilla's own, and forging is Victoria's trade. The only fabrications were one supplier invoice and one label on a twin atomizer.
+
+The timing was never negotiable either. The binder was due at Meridien's lawyers on Monday; Sneha's 9:50 PM argument confirmed the folder had not left the upstairs booth. Kill him that night and the handoff died with him — while the binder itself, found by the police, would scatter motive across five sets of initials, only three of them belonging to killers. Destroying it would have protected two innocents and narrowed the field. Leaving it widened it.
+
+---
+
 ## The Five Innocent Prime Suspects
 
 These five are meant to remain genuinely dangerous-looking deep into the game:
@@ -78,7 +94,7 @@ These five are meant to remain genuinely dangerous-looking deep into the game:
 
 They are not filler. The twist works because the room can make a coherent single-killer case against any of them before Round 5.
 
-Two of them are wrong in different ways, and the distinction matters when the host is asked. **Tara is framed**: Victoria manufactured a supplier invoice specifically to run the swapped atomizer through Tara's customs vendor. **Tanvi is used**: the annotated floor plan really is hers, in her own fineliner, and *DO NOT BLOCK BAR DURING REEL* and *HOLD CAKE UNTIL ORANGE* really are stage directions for a cake reveal. Nobody planted them. Sneha arrived at 7:05 PM with the seating plan Armaan wanted rearranged, saw that the party planner had already worked out on paper the exact second the whole room would turn its back on the private bar, and built the timing of the murder on top of it. The conspiracy did not have to engineer a blind spot in the crowd. It was handed one.
+Two of them are wrong in different ways, and the distinction matters when the host is asked. **Tara is framed**: Victoria manufactured a supplier invoice specifically to run the swapped atomizer through Tara's customs vendor. The crate theatrics that made the frame stick were Armaan's own doing, not the conspiracy's: he had staff open her sealed gift crate early and stage the private-reserve bottles beside the bar for the Last Light moment — the display was the point of the gift, and he never intended to honor the seal. That is why the customs seal was broken before Tara touched it, why the crate sat reopened after he swore it would stay sealed, and why it ended the night beside the murder scene. **Tanvi is used**: the annotated floor plan really is hers, in her own fineliner, and *DO NOT BLOCK BAR DURING REEL* and *HOLD CAKE UNTIL ORANGE* really are stage directions for a cake reveal. Nobody planted them. Sneha arrived at 7:05 PM with the seating plan Armaan wanted rearranged, saw that the party planner had already worked out on paper the exact second the whole room would turn its back on the private bar, and built the timing of the murder on top of it. The conspiracy did not have to engineer a blind spot in the crowd. It was handed one.
 
 ---
 
@@ -176,7 +192,7 @@ The admin override trace and burner thread prove the killers coordinated across 
 ### Round 6
 The reveal names the killer team publicly. The killers themselves get the confession instead of the public overlay.
 
-Both of those screens then open **How it happened** — the full reconstruction, so every one of the 51 players gets the answer rather than just the names. It restates this file: the motive, the five jobs, the night beat by beat with the hidden actions filled in, why the misdirection held, and which clue proved what. It lives in `CASE_SOLUTION` in [src/data/gameData.js](src/data/gameData.js) and is rendered by [src/components/CaseSolution.jsx](src/components/CaseSolution.jsx). **It is a restatement of this bible, not a second canon — if the story changes here, change it there too**, and check the beat times still agree with `CASE_TIMELINE`.
+Both of those screens then open **How it happened** — the full reconstruction as a **22-slide deck**, so every one of the 51 players gets the answer rather than just the names. It restates this file: the motive, the five jobs, the night beat by beat with the hidden actions filled in, why the misdirection held, and which clue proved what. The answer key lives in `CASE_SOLUTION` in [src/data/gameData.js](src/data/gameData.js), the slides in [src/data/revealDeck.js](src/data/revealDeck.js), and [src/components/RevealDeck.jsx](src/components/RevealDeck.jsx) renders them; [reveal-deck/index.html](reveal-deck/index.html) is the same 22 slides for a projector. **All of it is a restatement of this bible, not a second canon — if the story changes here, change it there too**, and check the beat times still agree with `CASE_TIMELINE`.
 
 ---
 

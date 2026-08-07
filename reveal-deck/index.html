@@ -1,0 +1,1567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Velvet Ember — How It Happened</title>
+
+<!-- ===========================================================
+     FONTS — the deck voice from DESIGN_LANGUAGE.md §3.1.
+     Big Shoulders Display .... display / headlines / numerals
+     Newsreader ............... narrative body + pull quotes
+     IBM Plex Mono ............ every label, tag, chrome element
+
+     This is the DECK voice, not the app voice. The app uses
+     Special Elite / Courier Prime because a phone should feel
+     like a prop inside the fiction; a projected 1920x1080
+     reconstruction is editorial, so it takes the deck's three.
+     Loaded as separate <link>s so one failure can't kill the rest.
+     =========================================================== -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,300;1,6..72,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ===========================================================
+   1. THEME TOKENS — "EVIDENCE ROOM"
+   Copied verbatim from pitch-deck/index.html, which
+   DESIGN_LANGUAGE.md names as the source of truth. Do not
+   add a hue here: differentiate by changing the SURFACE
+   (ink -> bone), never by adding a colour.
+
+     ink is the world.  bone is paper.  RED is the only hot
+     accent and never fills a large area.  AMBER is reserved
+     exclusively for numerals and data.
+   =========================================================== */
+:root{
+  --ink:#0C0D0F;          /* canvas */
+  --ink-2:#141518;        /* raised panel */
+  --ink-3:#1C1E22;        /* panel hover / table stripe */
+  --bone:#EDE7DA;         /* paper + primary text on ink */
+  --bone-2:#D8D0BF;       /* aged paper */
+  --red:#E03127;          /* THE accent — tags, rules, emphasis */
+  --red-deep:#8E1811;     /* accent on bone surfaces */
+  --amber:#D8A33C;        /* numerals and data ONLY */
+  --line:rgba(237,231,218,.16);   /* hairline on ink */
+  --line-2:rgba(237,231,218,.08); /* faint hairline on ink */
+  --line-b:rgba(12,13,15,.22);    /* hairline on bone */
+  --dim:rgba(237,231,218,.62);    /* secondary text on ink */
+  --dim-2:rgba(237,231,218,.42);  /* tertiary text on ink */
+
+  --f-disp:'Big Shoulders Display','Big Shoulders',Impact,sans-serif;
+  --f-read:'Newsreader',Georgia,serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,monospace;
+
+  --ease:cubic-bezier(.16,1,.3,1);
+  --land:cubic-bezier(.34,1.4,.5,1);
+  --stage-bg:#000;
+  --slide-bg:var(--ink);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+
+/* ===========================================================
+   2. FIXED 16:9 STAGE — viewport-base.css, in full.
+   Slides are authored at 1920x1080 and the whole stage is
+   scaled by one transform. Never reflow slide content.
+   =========================================================== */
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--stage-bg,#000)}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:var(--stage-bg,#000)}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;
+  transform-origin:0 0;background:var(--slide-bg,#fff)}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;display:block;
+  visibility:hidden;opacity:0;pointer-events:none;background:var(--slide-bg,#fff)}
+.slide.active,.slide.visible{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+img,video,canvas,svg{max-width:100%;max-height:100%}
+.deck-controls{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:1000}
+@media print{
+  html,body{width:1920px;height:auto;overflow:visible;background:#fff}
+  .deck-viewport{position:static;overflow:visible;background:#fff}
+  .deck-stage{position:static;width:auto;height:auto;transform:none!important;background:none}
+  .slide{position:relative;display:block!important;visibility:visible!important;opacity:1!important;
+    pointer-events:auto!important;width:1920px;height:1080px;break-after:page;page-break-after:always}
+  .slide:last-child{break-after:auto;page-break-after:auto}
+  .deck-controls{display:none!important}
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.2s!important}
+}
+
+/* ===========================================================
+   3. ATMOSPHERE — halftone grain, lamp pool, vignette.
+   Depth comes from paper and hairlines; this is the room the
+   board is photographed in, not a UI effect.
+   =========================================================== */
+.dots{position:absolute;inset:0;pointer-events:none;opacity:.42;
+  background-image:radial-gradient(circle,rgba(237,231,218,.10) 1px,transparent 1.4px);
+  background-size:14px 14px}
+.lamp{position:absolute;left:-200px;top:-380px;width:1500px;height:1500px;pointer-events:none;
+  background:radial-gradient(circle,rgba(216,163,60,.11),rgba(216,163,60,.03) 42%,transparent 66%)}
+.lamp.r{left:auto;right:-320px;top:auto;bottom:-520px;
+  background:radial-gradient(circle,rgba(224,49,39,.08),transparent 62%)}
+.vig{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 320px 80px rgba(0,0,0,.8)}
+
+/* ===========================================================
+   4. CHROME — top/bottom rails + corner metadata.
+   The hairline under the chrome is not optional: it is what
+   makes chrome read as chrome instead of as floating text.
+   =========================================================== */
+.railT{position:absolute;top:112px;left:96px;right:96px;height:1px;background:var(--line)}
+.railB{position:absolute;bottom:106px;left:96px;right:96px;height:1px;background:var(--line)}
+.mono{font-family:var(--f-mono);letter-spacing:.24em;text-transform:uppercase;font-size:17px;font-weight:500}
+.chrome{position:absolute;color:var(--dim-2)}
+.c-tl{top:64px;left:96px;color:var(--bone)}
+.c-tr{top:64px;right:96px;color:var(--red)}
+.c-bl{bottom:56px;left:96px}
+.c-br{bottom:56px;right:96px;color:var(--dim-2)}
+
+/* ===========================================================
+   5. HEADLINE BLOCK + CONTENT REGION
+   .head sits at y=156. .pad is the safe content box:
+   96px side margins, y 306 -> 932 (626px of usable height).
+   =========================================================== */
+.head{position:absolute;left:96px;right:96px;top:156px}
+.kick{font-family:var(--f-mono);font-size:17px;font-weight:500;letter-spacing:.28em;
+  text-transform:uppercase;color:var(--red);margin-bottom:16px}
+h2{font-family:var(--f-disp);font-weight:800;font-size:74px;line-height:.94;
+  color:var(--bone);text-transform:uppercase;letter-spacing:-.01em}
+h2 .hot{color:var(--red)}
+.dek{margin-top:18px;font-family:var(--f-read);font-weight:300;font-size:26px;line-height:1.5;
+  color:var(--dim);max-width:1240px}
+.dek em{font-style:italic;color:var(--bone)}
+.pad{position:absolute;left:96px;right:96px;top:306px;bottom:148px}
+.pad-hi{top:270px}
+.pad-lo{top:376px}
+.pad-lower{top:412px}
+/* Centres in-flow content inside the safe box. Most slides here run shorter
+   than 626px, and a fixed top edge parks the shortfall as one dark band above
+   the footer rail — which reads as a hole rather than as margin. Absolutely
+   positioned children are out of flow and unaffected. */
+.pad--mid{display:flex;flex-direction:column;justify-content:center}
+
+/* ===========================================================
+   6. COMPONENT VOCABULARY — the DESIGN_LANGUAGE.md §6 parts.
+   tag / card / bone card / em-dash list / stat / table /
+   pinned card / fill-in blank / red thread.
+   =========================================================== */
+
+/* §6.1 tag — the smallest atomic accent */
+.tag{display:inline-block;background:var(--red);color:#fff;padding:8px 16px 6px;
+  font-family:var(--f-mono);font-size:15px;font-weight:500;letter-spacing:.24em;text-transform:uppercase}
+.tag.ghost{background:transparent;border:1px solid var(--red);color:var(--red)}
+.tag.bone{background:var(--bone);color:var(--ink)}
+.tag.amber{background:transparent;border:1px solid var(--amber);color:var(--amber)}
+
+/* §6.2 card on ink — the 3px top border is the state channel */
+.card{background:var(--ink-2);border:1px solid var(--line);padding:28px 28px 26px;position:relative}
+.card.t-red{border-top:3px solid var(--red)}
+.card.t-amber{border-top:3px solid var(--amber)}
+.card.t-bone{border-top:3px solid var(--bone-2)}
+.card h3{font-family:var(--f-disp);font-weight:700;font-size:33px;line-height:1.02;
+  text-transform:uppercase;color:var(--bone);letter-spacing:.005em;margin-bottom:14px}
+.card h3.sm{font-size:28px}
+.card h3 .n{color:var(--red);margin-right:10px}
+.card p{font-family:var(--f-read);font-weight:300;font-size:21px;line-height:1.52;color:var(--dim)}
+.card p.sm{font-size:19px;line-height:1.5}
+.card p+p{margin-top:12px}
+.card .lbl{font-family:var(--f-mono);font-size:14px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--dim-2);margin-bottom:12px}
+.card .lbl .hot{color:var(--red)}
+.card em{font-style:italic;color:var(--bone)}
+.card strong{font-weight:400;color:var(--bone)}
+
+/* §6.3 bone card — the "document" surface. Bone means evidence. */
+.card.bone{background:var(--bone);border:1px solid var(--line-b);color:var(--ink)}
+.card.bone h3{color:var(--ink)}
+.card.bone p{color:#4A453C}
+.card.bone .lbl{color:var(--red-deep)}
+.card.bone .lbl .hot{color:var(--red-deep)}
+.card.bone em,.card.bone strong{color:var(--ink)}
+/* the signature of the form: a 2px solid ink rule under the label */
+.card.bone .lbl.ruled{border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:18px}
+.paper{box-shadow:0 34px 76px rgba(0,0,0,.6)}
+
+/* §6.5 em-dash list — never a disc, never a chevron */
+.list{list-style:none}
+.list li{position:relative;padding-left:30px;font-family:var(--f-read);font-weight:300;
+  font-size:21px;line-height:1.5;color:var(--dim);margin-bottom:11px}
+.list li:last-child{margin-bottom:0}
+.list li::before{content:"—";position:absolute;left:0;top:0;font-family:var(--f-mono);
+  font-size:17px;color:var(--red)}
+.list li b{font-weight:400;color:var(--bone)}
+.list.sm li{font-size:19px;line-height:1.46;margin-bottom:9px}
+.card.bone .list li{color:#4A453C}
+.card.bone .list li b{color:var(--ink)}
+.card.bone .list li::before{color:var(--red-deep)}
+
+/* §6.6 stat — amber numeral over a mono label, hairline above */
+.stat .n{font-family:var(--f-disp);font-weight:700;font-size:78px;line-height:.86;color:var(--amber);
+  font-variant-numeric:tabular-nums}
+.stat .n small{font-size:30px;color:var(--dim);font-weight:500}
+.stat .l{font-family:var(--f-mono);font-size:14px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--dim-2);margin-top:10px}
+.statrow{display:flex;border-top:1px solid var(--line)}
+.statrow .stat{padding:24px 44px 0 0;margin-right:44px;border-right:1px solid var(--line-2)}
+.statrow .stat:last-child{border-right:0;margin-right:0;padding-right:0}
+
+/* evidence-log table */
+.tbl{width:100%;border-collapse:collapse;font-family:var(--f-read);font-weight:300}
+.tbl th{font-family:var(--f-mono);font-size:14px;font-weight:500;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--red);text-align:left;padding:0 18px 14px 0;
+  border-bottom:1px solid var(--line)}
+.tbl td{font-size:20px;line-height:1.4;color:var(--dim);padding:14px 18px 14px 0;
+  border-bottom:1px solid var(--line-2);vertical-align:top}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.k{font-family:var(--f-mono);font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--bone)}
+.tbl td b{font-weight:400;color:var(--bone)}
+
+/* §6.4 pinned bone card — paper is the one thing that casts a shadow */
+.pin{background:var(--bone);color:var(--ink);box-shadow:0 34px 76px rgba(0,0,0,.66);
+  padding:34px 30px 28px;position:relative}
+.pin::before{content:"";position:absolute;top:-12px;left:50%;transform:translateX(-50%);
+  width:24px;height:24px;border-radius:50%;background:var(--red);
+  box-shadow:0 6px 10px rgba(0,0,0,.6),inset 0 -4px 6px rgba(0,0,0,.32)}
+.pin .ph{font-family:var(--f-mono);font-size:14px;line-height:1.45;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--red-deep);padding-bottom:14px;margin-bottom:18px;
+  border-bottom:2px solid var(--ink)}
+.pin .q{font-family:var(--f-read);font-style:italic;font-weight:300;font-size:27px;line-height:1.4}
+.pin .q.sm{font-size:23px;line-height:1.42}
+.pin .b{font-family:var(--f-read);font-weight:300;font-size:21px;line-height:1.5;color:#4A453C}
+.pin .b b{font-weight:400;color:var(--ink)}
+.pin .a{margin-top:20px;padding-top:16px;border-top:1px dashed rgba(12,13,15,.35);
+  font-family:var(--f-mono);font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:#5A544A}
+
+/* §6.9 fill-in blank — marks something deliberately unknown */
+.fill{display:inline-block;min-width:110px;padding:2px 12px;background:rgba(224,49,39,.12);
+  border-bottom:2px dashed var(--red);font-family:var(--f-mono);font-size:15px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--red)}
+
+/* §6.8 red thread — the connective device, one per slide at most */
+.thread{position:absolute;inset:0;pointer-events:none}
+.thread path{stroke-dasharray:2600;stroke-dashoffset:2600;
+  transition:stroke-dashoffset 2.1s var(--ease) .35s}
+.slide.visible .thread path{stroke-dashoffset:0}
+
+/* grids */
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:26px}
+.g2.w{grid-template-columns:1.32fr 1fr}
+.g2.n{grid-template-columns:1fr 1.32fr}
+.g2.eq{align-items:stretch}
+.g2.eq .strip{align-items:center}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.h100{height:100%}
+
+/* ===========================================================
+   6b. THIS DECK'S TWO ADDITIONS
+   Both are the same system, not new idioms.
+   =========================================================== */
+
+/* BEAT LEDGER — the reconstruction spine. It is RevealDeck.jsx's
+   two-tier treatment: beats nobody on the floor could have seen
+   carry the red marker AND the bone weight AND an "unseen" tag,
+   so the key never depends on separating red from grey alone. */
+.beats{position:relative}
+.beats::before{content:"";position:absolute;left:209px;top:16px;bottom:16px;width:2px;
+  background:linear-gradient(180deg,rgba(224,49,39,.5),rgba(224,49,39,.12))}
+.beat{display:grid;grid-template-columns:190px 40px 1fr;align-items:start;padding:16px 0}
+.beat+.beat{border-top:1px solid var(--line-2)}
+.beat .bt{font-family:var(--f-disp);font-weight:700;font-size:36px;line-height:1;color:var(--amber);
+  text-align:right;padding-right:26px;letter-spacing:.005em;font-variant-numeric:tabular-nums}
+.beat .bm{position:relative;height:34px}
+.beat .bm::before{content:"";position:absolute;left:50%;top:10px;transform:translateX(-50%);
+  width:11px;height:11px;border-radius:50%;background:var(--dim-2);box-shadow:0 0 0 6px var(--ink)}
+.beat.hid .bm::before{width:19px;height:19px;top:6px;background:var(--red)}
+.beat .bb{font-family:var(--f-read);font-weight:300;font-size:20px;line-height:1.5;color:var(--dim);
+  max-width:1030px;padding-top:3px}
+.beat.hid .bb{color:var(--bone)}
+.beat .bb b{font-weight:400;color:var(--bone)}
+.beat .bb em{font-style:italic;color:var(--bone)}
+/* the static half of the two-tier cue — §6.1 tag at label scale */
+.unseen{display:inline-block;background:var(--red);color:#fff;font-family:var(--f-mono);font-size:12px;
+  font-weight:500;letter-spacing:.2em;text-transform:uppercase;padding:4px 9px 3px;
+  margin-right:13px;vertical-align:3px}
+.key{display:flex;gap:40px;align-items:center;font-family:var(--f-mono);font-size:14px;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--dim-2)}
+.key i{display:inline-block;width:11px;height:11px;border-radius:50%;background:var(--dim-2);
+  margin-right:13px;vertical-align:1px}
+.key i.h{width:19px;height:19px;background:var(--red);vertical-align:-3px}
+
+/* BEAT LEDGER + SIDE NOTE. Both halves stay in flow so .pad--mid can centre
+   them together; an absolutely positioned note would stay pinned to the pad's
+   top edge while the ledger moved out from under it. */
+.split{display:flex;gap:44px;align-items:flex-start}
+.split>.beats{flex:1;min-width:0}
+.split>.side{width:378px;flex:none}
+
+/* FINDING STRIP — one sentence of paper. A bone card carrying a
+   single line, for the takeaway that a slide is actually about. */
+.strip{background:var(--bone);color:var(--ink);padding:22px 30px 24px;display:flex;
+  align-items:baseline;gap:28px;box-shadow:0 24px 56px rgba(0,0,0,.5)}
+.strip .sl{font-family:var(--f-mono);font-size:14px;font-weight:500;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--red-deep);white-space:nowrap;padding-top:5px}
+.strip .sp{font-family:var(--f-read);font-weight:300;font-size:23px;line-height:1.44;color:#4A453C}
+.strip .sp b{font-weight:400;color:var(--ink)}
+.strip.aged{background:var(--bone-2)}
+
+/* ===========================================================
+   7. COVER + CHAPTER DIVIDER LAYOUTS
+   =========================================================== */
+.cover-h{font-family:var(--f-disp);font-weight:800;font-size:176px;line-height:.82;
+  color:var(--bone);text-transform:uppercase;letter-spacing:-.012em}
+.cover-h .hot{color:var(--red);position:relative;display:inline-block}
+.cover-h .hot::after{content:"";position:absolute;left:0;right:0;bottom:14px;height:8px;
+  background:var(--red);opacity:.28}
+
+.div-no{font-family:var(--f-disp);font-weight:800;font-size:300px;line-height:.8;
+  color:transparent;-webkit-text-stroke:2px rgba(237,231,218,.14);position:absolute;
+  right:96px;top:150px}
+.div-t{font-family:var(--f-disp);font-weight:800;font-size:150px;line-height:.88;
+  color:var(--bone);text-transform:uppercase;letter-spacing:-.012em}
+.div-t .hot{color:var(--red)}
+.div-rule{width:180px;height:3px;background:var(--red);margin:36px 0 30px}
+.div-list{font-family:var(--f-mono);font-size:19px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--dim-2);line-height:2.1}
+/* fixed lead column so the separators stack, even though "5:14 PM" and
+   "10:08 PM" are different widths in a proportional-tracked mono */
+.div-list b{color:var(--bone);font-weight:500;display:inline-block;min-width:148px}
+
+/* ===========================================================
+   8. TIMELINE RAIL — the public record, read left to right
+   =========================================================== */
+.rail{position:relative;padding-top:56px;display:grid;grid-template-columns:repeat(8,1fr);gap:20px}
+.rail::before{content:"";position:absolute;top:22px;left:0;right:0;height:2px;background:var(--red);opacity:.5}
+.rail .stop{position:relative}
+.rail .stop::before{content:"";position:absolute;top:-42px;left:0;width:15px;height:15px;
+  border-radius:50%;background:var(--red);box-shadow:0 0 0 5px var(--ink)}
+.rail .yr{font-family:var(--f-mono);font-size:15px;letter-spacing:.1em;color:var(--amber);margin-bottom:10px}
+.rail .tt{font-family:var(--f-disp);font-weight:700;font-size:24px;line-height:1.04;
+  text-transform:uppercase;color:var(--bone);margin-bottom:9px}
+.rail .td{font-family:var(--f-read);font-weight:300;font-size:17px;line-height:1.42;color:var(--dim-2)}
+.rail .stop.now::before{background:var(--amber);width:19px;height:19px;top:-44px}
+.rail .stop.now .tt{color:var(--amber)}
+
+/* ===========================================================
+   9. ANIMATION — one orchestrated load per slide, staggered.
+   Never a fade on opacity alone; every property is named.
+   =========================================================== */
+.reveal{opacity:0;transform:translateY(26px);
+  transition:opacity .85s var(--ease),transform .85s var(--ease)}
+.slide.visible .reveal{opacity:1;transform:none}
+.slide.visible .r1{transition-delay:.06s}  .slide.visible .r2{transition-delay:.15s}
+.slide.visible .r3{transition-delay:.24s}  .slide.visible .r4{transition-delay:.33s}
+.slide.visible .r5{transition-delay:.42s}  .slide.visible .r6{transition-delay:.51s}
+.slide.visible .r7{transition-delay:.60s}  .slide.visible .r8{transition-delay:.69s}
+.slide.visible .r9{transition-delay:.78s}  .slide.visible .r10{transition-delay:.87s}
+
+/* paper lands with the overshoot and keeps a slight rotation */
+.drop{opacity:0;transform:rotate(6deg) translateY(-38px);
+  transition:opacity 1s var(--land),transform 1s var(--land)}
+.slide.visible .drop{opacity:1;transform:rotate(1.6deg) translateY(0)}
+.drop.l{transform:rotate(-6deg) translateY(-38px)}
+.slide.visible .drop.l{transform:rotate(-1.4deg) translateY(0)}
+.drop.flat{transform:rotate(0) translateY(-30px)}
+.slide.visible .drop.flat{transform:rotate(0) translateY(0)}
+
+/* Reduced motion, part two. The block in §2 is viewport-base.css verbatim: it
+   zeroes animation *durations* and clamps transition durations, but it says
+   nothing about transition-delay — so an 0.87s r10 stagger still cascaded the
+   slide in over a full second, past the 400ms legibility budget. Measured with
+   getComputedStyle at 450ms, not eyeballed. Reduced motion means the slide is
+   already finished when it appears. */
+@media (prefers-reduced-motion:reduce){
+  .slide.visible .reveal,
+  .slide.visible .drop,
+  .slide.visible .thread path{transition-delay:0s!important}
+}
+
+/* ===========================================================
+   10. DECK CHROME — progress bar, nav hint, edit affordance.
+   All of this lives OUTSIDE the 1920x1080 stage. Slide numbers
+   live INSIDE the stage (.c-br) so they survive PDF export.
+   =========================================================== */
+.prog{position:fixed;left:0;top:0;height:3px;background:var(--red);z-index:1200;
+  transition:width .4s var(--ease);box-shadow:0 0 12px rgba(224,49,39,.6)}
+.hint{position:fixed;left:50%;transform:translateX(-50%);bottom:14px;z-index:1200;
+  font-family:var(--f-mono);font-size:12px;letter-spacing:.2em;color:rgba(237,231,218,.3);
+  transition:opacity .6s ease;pointer-events:none}
+.hint.gone{opacity:0}
+.edit-hotzone{position:fixed;top:0;left:0;width:80px;height:80px;z-index:10000;cursor:pointer}
+.edit-toggle{position:fixed;top:16px;left:16px;z-index:10001;width:46px;height:46px;
+  border-radius:50%;border:1px solid rgba(237,231,218,.28);background:rgba(12,13,15,.9);
+  color:var(--bone);font-size:18px;cursor:pointer;opacity:0;pointer-events:none;
+  transition:opacity .3s ease}
+.edit-toggle.show,.edit-toggle.active{opacity:1;pointer-events:auto}
+.edit-toggle.active{background:var(--red);border-color:var(--red);color:#fff}
+.edit-bar{position:fixed;top:16px;left:74px;z-index:10001;display:none;gap:8px}
+.edit-bar.on{display:flex}
+.edit-bar button{font-family:var(--f-mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+  background:rgba(12,13,15,.9);color:var(--bone);border:1px solid rgba(237,231,218,.28);
+  padding:11px 15px;cursor:pointer}
+.edit-bar button:hover{border-color:var(--red);color:var(--red)}
+[contenteditable="true"]{outline:1px dashed rgba(224,49,39,.8);outline-offset:3px;cursor:text}
+</style>
+</head>
+<body>
+
+<div class="prog" id="prog"></div>
+
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+<!-- ============================================================
+     01 — COVER
+     ============================================================ -->
+<section class="slide active visible">
+  <div class="lamp"></div><div class="dots"></div>
+  <!-- the thread is routed clear of the stat row: it must read as a line pinned
+       across the board, not as a rule struck through the labels -->
+  <svg class="thread" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+    <path d="M1230 1060 C 1400 940, 1420 800, 1560 700 S 1780 520, 1824 300" fill="none" stroke="#E03127" stroke-width="2.5" opacity=".5"/>
+    <path d="M1420 1060 C 1560 960, 1620 860, 1700 760 S 1810 660, 1866 620" fill="none" stroke="#E03127" stroke-width="1.5" opacity=".26"/>
+  </svg>
+  <div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">● Case Closed</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">01</div>
+
+  <div style="position:absolute;left:96px;top:206px;width:1080px">
+    <span class="tag reveal r1">The answer</span>
+    <h1 class="cover-h reveal r2" style="margin-top:30px">How It<br><span class="hot">Happened</span></h1>
+    <p class="reveal r3" style="margin-top:38px;font-family:var(--f-read);font-weight:300;font-size:30px;line-height:1.5;color:var(--dim);max-width:900px">
+      Armaan Khanna was killed at his own birthday party in front of fifty-one people.
+      <em style="font-style:italic;color:var(--bone)">Here is exactly how, in plain words.</em></p>
+  </div>
+
+  <div class="statrow reveal r4" style="position:absolute;left:96px;bottom:172px">
+    <div class="stat"><div class="n">51</div><div class="l">Guests in the room</div></div>
+    <div class="stat"><div class="n">05</div><div class="l">People killed him</div></div>
+    <div class="stat"><div class="n">94</div><div class="l">Seconds of darkness</div></div>
+    <div class="stat"><div class="n">01</div><div class="l">Poisoned glass</div></div>
+  </div>
+
+  <div class="pin drop" style="position:absolute;right:112px;top:262px;width:490px">
+    <div class="ph">Exhibit — the Monday folder</div>
+    <div class="q">“If the room turns, give them the planner. Nobody mourns the planner.”</div>
+    <div class="a">Armaan Khanna · his own margin note</div>
+  </div>
+</section>
+
+<!-- ============================================================
+     02 — THE SHORT ANSWER
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">Finding of fact</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">02</div>
+
+  <div class="head">
+    <div class="kick reveal r1">If you only read one slide</div>
+    <h2 class="reveal r2">The Short <span class="hot">Answer</span></h2>
+  </div>
+
+  <div class="pad pad--mid">
+    <div class="g2 w" style="gap:34px;align-items:start">
+      <div class="pin drop flat r1" style="width:100%">
+        <div class="ph">Case 8821-B — closed</div>
+        <div class="b" style="font-size:23px;line-height:1.5">
+          <b>Sneha Ganesh planned it.</b> Roddy Faustus made the poison. Kiyaah Rose Raghuwanshi
+          put it on the drink. Oindrilla Chatterjee switched off the camera. Victoria Vance made
+          sure the paperwork pointed at somebody else.
+        </div>
+        <div class="b" style="font-size:23px;line-height:1.5;margin-top:16px">
+          The poison was hidden in the orange spray used to finish Armaan's own birthday drink.
+          One glass. Nobody else touched it. Then <b>ten separate circles of friends</b> did the rest
+          of the work for them — because every table spent the night suspecting itself.
+        </div>
+        <div class="a">Signed · Inspector Ira Deshpande, Goa Police</div>
+      </div>
+
+      <div>
+        <div class="card t-red reveal r3">
+          <div class="lbl">Five killers · five different tables</div>
+          <ul class="list sm">
+            <li><b>Sneha Ganesh</b> — Thimble · the plan</li>
+            <li><b>Roddy Faustus</b> — Hemlock · the poison</li>
+            <li><b>Kiyaah Rose Raghuwanshi</b> — Oracle · the delivery</li>
+            <li><b>Oindrilla Chatterjee</b> — Amber · the blind spot</li>
+            <li><b>Victoria Vance</b> — Forgery · the false trail</li>
+          </ul>
+        </div>
+        <div class="strip reveal r4" style="margin-top:26px">
+          <div class="sl">Why it worked</div>
+          <div class="sp">No single table ever looked complete, so <b>no single theory ever closed.</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     03 — THE VICTIM
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">The victim</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">03</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Who was killed</div>
+    <h2 class="reveal r2">Armaan <span class="hot">Khanna</span></h2>
+    <p class="dek reveal r3">Founder of Velvet Ember Spirits. The most liked man in the room —
+      and about ten people standing in it had a real reason to want him gone.</p>
+  </div>
+
+  <div class="pad" style="top:408px">
+    <div class="g2" style="gap:30px">
+      <div class="card bone paper drop l" style="width:100%">
+        <div class="lbl ruled">What the room saw</div>
+        <p>Armaan built Velvet Ember in his own image: expensive, theatrical, and impossible to
+          argue with without looking joyless. He invited ten close friends to his birthday and told
+          each of them to bring their own people.</p>
+        <p>That is why there were fifty-one guests in a listening bar in Panjim, and why the room
+          arrived already split into ten little worlds that barely knew each other.</p>
+      </div>
+
+      <div class="card t-red reveal r4">
+        <div class="lbl">What he actually did</div>
+        <ul class="list">
+          <li>Took other people's work and put his own name on it.</li>
+          <li>Held back money until people stopped asking for it.</li>
+          <li>Kept every humiliation <b>private</b>, so no two victims ever compared notes.</li>
+          <li>Two days from selling the company, he wrote down <b>who he would blame</b> if the sale went wrong.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="statrow reveal r6" style="margin-top:34px">
+      <div class="stat"><div class="n">51</div><div class="l">Guests in the room</div></div>
+      <div class="stat"><div class="n">10</div><div class="l">Had a real motive</div></div>
+      <div class="stat"><div class="n">05</div><div class="l">Of those were innocent</div></div>
+      <div class="stat"><div class="n">05</div><div class="l">Of those killed him</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     04 — THE PUBLIC TIMELINE
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">Public record</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">04</div>
+
+  <div class="head">
+    <div class="kick reveal r1">8 August 2026 · For the Record, Panjim</div>
+    <h2 class="reveal r2">What The Room <span class="hot">Saw</span></h2>
+  </div>
+
+  <div class="pad pad--mid" style="top:312px">
+    <div class="rail reveal r3">
+      <div class="stop"><div class="yr">7:00 PM</div><div class="tt">Doors open</div>
+        <div class="td">Guests arrive at a late-night listening bar in Goa.</div></div>
+      <div class="stop"><div class="yr">9:55 PM</div><div class="tt">Tribute reel</div>
+        <div class="td">A birthday video starts on the screen beside the private bar.</div></div>
+      <div class="stop now"><div class="yr">10:08 PM</div><div class="tt">Lights glitch</div>
+        <div class="td">Projector and bar camera go dark for 94 seconds.</div></div>
+      <div class="stop"><div class="yr">10:12 PM</div><div class="tt">The toast</div>
+        <div class="td">Armaan raises the Last Light, his signature drink.</div></div>
+      <div class="stop"><div class="yr">10:19 PM</div><div class="tt">Hands fail</div>
+        <div class="td">He stops mid-sentence. His hands stop working.</div></div>
+      <div class="stop"><div class="yr">10:22 PM</div><div class="tt">Collapse</div>
+        <div class="td">He goes down beside the stage rail.</div></div>
+      <div class="stop"><div class="yr">10:34 PM</div><div class="tt">Death</div>
+        <div class="td">Paramedics stop resuscitation.</div></div>
+      <div class="stop"><div class="yr">10:48 PM</div><div class="tt">Sealed</div>
+        <div class="td">Police lock all fifty-one guests inside.</div></div>
+    </div>
+
+    <div class="g2 n eq" style="gap:30px;margin-top:56px">
+      <div class="card reveal r5">
+        <div class="lbl">What the room believed by round two</div>
+        <ul class="list sm">
+          <li>One of the ten close friends planned it.</li>
+          <li>Their own table probably helped cover it up.</li>
+          <li>The blackout at 10:08 was obviously the moment.</li>
+        </ul>
+      </div>
+      <div class="strip aged reveal r6">
+        <div class="sl">The trap</div>
+        <div class="sp">Every line on that timeline is <b>true</b>. It is also exactly why nobody got
+          there — it points at ninety-four seconds, and the murder was already six hours old.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     05 — DIVIDER I · THE PLAN
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="lamp r"></div><div class="dots"></div><div class="vig"></div>
+  <div class="chrome mono c-br">05</div>
+  <div class="div-no reveal r1">01</div>
+  <div style="position:absolute;left:96px;top:300px;width:1080px">
+    <div class="kick reveal r1">Part one</div>
+    <h2 class="div-t reveal r2">The <span class="hot">Plan</span></h2>
+    <div class="div-rule reveal r3"></div>
+    <div class="div-list reveal r4">
+      <div><b>Why</b> &nbsp;· &nbsp;a red folder marked Monday</div>
+      <div><b>Who</b> &nbsp;· &nbsp;five people at five different tables</div>
+      <div><b>How</b> &nbsp;· &nbsp;poison in a garnish nobody else got</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     06 — THE MOTIVE
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">Motive</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">06</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Why five people decided he had to die</div>
+    <h2 class="reveal r2">The Red Folder Marked <span class="hot">Monday</span></h2>
+    <p class="dek reveal r3">Armaan was two days from selling Velvet Ember. The folder was his plan
+      for surviving that sale: a written list of people to hand over if anything went wrong.</p>
+  </div>
+
+  <div class="pad pad--mid" style="top:418px">
+    <div class="g2 w" style="gap:32px;align-items:start">
+      <div class="card bone paper drop l" style="width:100%">
+        <div class="lbl ruled">The folder — index page · initials only</div>
+        <ul class="list">
+          <li><b>Sneha</b> — takes the fall for the rebate structure</li>
+          <li><b>Victoria</b> — takes the fall for the shell-company ledgers</li>
+          <li><b>Oindrilla</b> — takes the fall for the inventory breach</li>
+          <li><b>Tara</b> — customs paperwork, held in reserve</li>
+          <li><b>Tanvi</b> — the prototype, held in reserve</li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="pin drop reveal" style="width:100%">
+          <div class="ph">In the margin, in his handwriting</div>
+          <div class="q sm">“If the room turns, give them the planner. Nobody mourns the planner.”</div>
+          <div class="a">“The planner” = Tanvi Vartak, who was organising his party</div>
+        </div>
+        <div class="strip reveal r5" style="margin-top:28px">
+          <div class="sl">The turn</div>
+          <div class="sp">Sneha read that page. Then she stopped being the person who takes the fall.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     07 — THE BLIND SPOT IN HIS PLAN
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">Motive</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">07</div>
+
+  <div class="head">
+    <div class="kick reveal r1">His one mistake</div>
+    <h2 class="reveal r2">He Forgot <span class="hot">Two People</span></h2>
+    <p class="dek reveal r3">Neither of them was in the folder at all. They are the two who could
+      build the poison and carry it to his hand.</p>
+  </div>
+
+  <div class="pad pad--mid" style="top:412px">
+    <div class="g2 eq" style="gap:28px">
+      <div class="card t-red reveal r4">
+        <div class="lbl">Not on the list · <span class="hot">Hemlock</span></div>
+        <h3>Roddy Faustus</h3>
+        <p>Armaan had written him off as an outsider who did not matter enough to name. Roddy is
+          the one man in that room who knew how to turn a plant into a weapon. Years earlier
+          Armaan had copied a page out of his notebook and written <em>we own this now</em> on the back.</p>
+      </div>
+      <div class="card t-red reveal r5">
+        <div class="lbl">Not on the list · <span class="hot">Oracle</span></div>
+        <h3>Kiyaah Rose Raghuwanshi</h3>
+        <p>Armaan assumed the drink ritual and the grief sessions still kept her quiet. Kiyaah wrote
+          the Last Light service herself and was never fully paid for it — and hers were the only
+          hands that could touch his glass without anyone finding it strange.</p>
+      </div>
+    </div>
+
+    <div class="strip reveal r7" style="margin-top:34px">
+      <div class="sl">The whole case in one line</div>
+      <div class="sp">He spent years teaching this room to keep its humiliations private, so that no
+        two victims would ever compare notes. <b>Five of them compared notes.</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     08 — THE METHOD
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">Method</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">08</div>
+
+  <div class="head">
+    <div class="kick reveal r1">The method</div>
+    <h2 class="reveal r2">Poison In The <span class="hot">Garnish</span></h2>
+  </div>
+
+  <div class="pad pad--mid">
+    <div class="g2 eq" style="gap:30px">
+      <div class="card bone paper drop l" style="width:100%">
+        <div class="lbl ruled">What the poison was</div>
+        <p><b>Aconitine.</b> It comes from aconite — a garden plant also called monkshood. A very
+          small dose shuts down your nerves, then your heart. It works in <b>minutes, not hours</b>.</p>
+        <p>It is also bitter. So it was hidden inside bitter-orange oil, which is something that is
+          <em>supposed</em> to taste bitter and smell strong. Roddy cut one into the other himself.</p>
+      </div>
+
+      <div class="card t-red reveal r4">
+        <div class="lbl">Why the spray, and not the bottle</div>
+        <ul class="list sm">
+          <li>The bottles, the batch mixers and the cake were all <b>clean</b> — they had to be, because everybody else drank and ate from them.</li>
+          <li>Only Armaan's glass got the orange mist on top. That was written into the ritual he had taken from Kiyaah.</li>
+          <li>A spray lands on the rim, his lips and the drink at the same instant. One serving, no splash, nothing else in the room touched.</li>
+          <li>The silver mister behind the bar was swapped for an <b>identical twin</b>, same label: EMBER ORANGE.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="statrow reveal r6" style="margin-top:32px">
+      <div class="stat"><div class="n">02</div><div class="l">Sprays over the glass</div></div>
+      <div class="stat"><div class="n">01</div><div class="l">Serving, ever</div></div>
+      <div class="stat"><div class="n">07<small> min</small></div><div class="l">Toast to first symptom</div></div>
+      <div class="stat"><div class="n">00</div><div class="l">Other guests harmed</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     09 — THE FIVE JOBS
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">The team</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">09</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Five people, five jobs, nobody holding the whole thing</div>
+    <h2 class="reveal r2">Who Did <span class="hot">What</span></h2>
+  </div>
+
+  <div class="pad pad--mid" style="top:312px">
+    <div class="card t-red reveal r3">
+      <div class="lbl">The lead · <span class="hot">Thimble</span> · the plan</div>
+      <h3>Sneha Ganesh</h3>
+      <p style="max-width:1300px">She built the seating chart, the ten circles, and the belief that every table would only ever
+        protect its own. Ten people with real reasons, five of them innocent, and no reason at all for
+        anyone to test whether the killer might be sitting at five different tables at once.</p>
+    </div>
+
+    <div class="g4 reveal r4" style="margin-top:26px">
+      <div class="card">
+        <div class="lbl">Hemlock · the toxin</div>
+        <h3 class="sm">Roddy Faustus</h3>
+        <p class="sm">Aconite cut into a bitter-orange carrier. Small enough to vanish under the smell,
+          strong enough to stop a heart in minutes. The formula was his own.</p>
+      </div>
+      <div class="card">
+        <div class="lbl">Oracle · the delivery</div>
+        <h3 class="sm">Kiyaah Rose Raghuwanshi</h3>
+        <p class="sm">She wrote the Last Light ritual, so her hands on that glass looked ordinary. Her
+          own unpaid contract is the document saying the final spray goes on Armaan's glass alone.</p>
+      </div>
+      <div class="card">
+        <div class="lbl">Amber · the blind spot</div>
+        <h3 class="sm">Oindrilla Chatterjee</h3>
+        <p class="sm">The 10:08 projector reboot came from an admin login copied off her own setup.
+          The same session quietly switched a retired staff pass back on: one entry, one exit.</p>
+      </div>
+      <div class="card">
+        <div class="lbl">Forgery · the false trail</div>
+        <h3 class="sm">Victoria Vance</h3>
+        <p class="sm">At 5:14 PM, before a single guest arrived, she filed a fake supplier invoice so the
+          replacement sprayer had a paper history running through Tara's customs vendor.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     10 — DIVIDER II · THE NIGHT
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="lamp r"></div><div class="dots"></div><div class="vig"></div>
+  <div class="chrome mono c-br">10</div>
+  <div class="div-no reveal r1">02</div>
+  <div style="position:absolute;left:96px;top:262px;width:1120px">
+    <div class="kick reveal r1">Part two</div>
+    <h2 class="div-t reveal r2">The <span class="hot">Night</span></h2>
+    <div class="div-rule reveal r3"></div>
+    <div class="div-list reveal r4">
+      <div><b>5:14 PM</b> &nbsp;· &nbsp;the paperwork, before the doors open</div>
+      <div><b>7:25 PM</b> &nbsp;· &nbsp;the poison walks in as a gift</div>
+      <div><b>10:08 PM</b> &nbsp;· &nbsp;ninety-four seconds of darkness</div>
+      <div><b>10:12 PM</b> &nbsp;· &nbsp;two sprays of orange</div>
+      <div><b>10:48 PM</b> &nbsp;· &nbsp;the room is sealed with all five still in it</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:96px;bottom:150px">
+    <div class="key reveal r6">
+      <span><i class="h"></i>Red beat — nobody in the room could see this</span>
+      <span><i></i>Grey beat — guests saw this happen</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     11 — BEFORE THE DOORS OPENED
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">Beat 1 of 4</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">11</div>
+
+  <div class="head">
+    <div class="kick reveal r1">5:14 PM — 7:40 PM</div>
+    <h2 class="reveal r2">The Poison Was Already <span class="hot">In The Building</span></h2>
+  </div>
+
+  <div class="pad pad--mid">
+   <div class="split">
+    <div class="beats reveal r3">
+      <div class="beat hid">
+        <div class="bt">5:14 PM</div><div class="bm"></div>
+        <div class="bb"><span class="unseen">Unseen</span>Doors are still shut. Victoria files a fake
+          supplier invoice into the private bar's stock list from off-site. On paper, the bar now owns
+          a <b>replacement orange sprayer</b>, bought through Tara Singhania's customs vendor.</div>
+      </div>
+      <div class="beat hid">
+        <div class="bt">7:25 PM</div><div class="bm"></div>
+        <div class="bb"><span class="unseen">Unseen</span>Roddy arrives carrying a gift box of rare
+          botanicals. It never reaches the gift table. The <b>poisoned sprayer is inside it</b> — already
+          filled, already labelled EMBER ORANGE, an exact twin of the one behind the bar.</div>
+      </div>
+      <div class="beat">
+        <div class="bt">7:40 PM</div><div class="bm"></div>
+        <div class="bb">Kiyaah comes in through the service entrance to inspect the private bar —
+          at Armaan's own request. She confirms where the real sprayer sits, and who will be
+          working that bar during the video.</div>
+      </div>
+    </div>
+
+    <aside class="side card bone paper drop l">
+      <div class="lbl ruled">Read this twice</div>
+      <p>None of that needed the blackout.</p>
+      <p>By the time the first guest walked through the door, the poison was already in the building
+        and the paperwork was already six hours old.</p>
+      <p>The room would later spend the whole night arguing about ninety-four seconds.</p>
+    </aside>
+   </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     12 — THE ROOM TURNS AROUND
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">Beat 2 of 4</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">12</div>
+
+  <div class="head">
+    <div class="kick reveal r1">9:50 PM — 10:06 PM</div>
+    <h2 class="reveal r2">The Room Turns <span class="hot">Around</span></h2>
+  </div>
+
+  <div class="pad" style="top:308px">
+    <div class="beats reveal r3">
+      <div class="beat">
+        <div class="bt">9:50 PM</div><div class="bm"></div>
+        <div class="bb">Sneha argues with Armaan in the upstairs booth about the red folder. She comes
+          back down composed. <b>The folder stays upstairs</b> — the only part of that conversation that mattered.</div>
+      </div>
+      <div class="beat">
+        <div class="bt">9:55 PM</div><div class="bm"></div>
+        <div class="bb">The tribute video starts on the screen beside the private bar, and the whole
+          room turns to watch it.</div>
+      </div>
+      <div class="beat hid">
+        <div class="bt">10:02 PM</div><div class="bm"></div>
+        <div class="bb"><span class="unseen">Unseen</span>Roddy carries the botanical case into the prep
+          corridor and leaves a wrapped service roll on the prep counter. The poisoned twin is inside it.</div>
+      </div>
+      <div class="beat">
+        <div class="bt">10:05 PM</div><div class="bm"></div>
+        <div class="bb">Roddy walks back out onto the floor without the case he carried in. Several
+          guests notice. Nobody yet knows what was in it.</div>
+      </div>
+      <div class="beat hid">
+        <div class="bt">10:06 PM</div><div class="bm"></div>
+        <div class="bb"><span class="unseen">Unseen</span>While walking staff through the garnish
+          sequence, Kiyaah picks the wrapped roll up off the prep counter. <b>The two of them never hand
+          each other anything.</b></div>
+      </div>
+    </div>
+
+    <div class="strip aged reveal r6" style="margin-top:26px">
+      <div class="sl">Why nobody saw a handover</div>
+      <div class="sp">Because there wasn't one. Prep-room <b>linen fibres</b> on the sprayer's neck are
+        all that survives of the exchange.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     13 — THE 94 SECONDS
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="lamp r"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">Beat 3 of 4</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">13</div>
+
+  <div class="head">
+    <div class="kick reveal r1">10:08:14 PM — 10:09:53 PM</div>
+    <h2 class="reveal r2">Ninety-Four <span class="hot">Seconds</span></h2>
+    <p class="dek reveal r3">The camera over the private bar was blind for a minute and a half. That
+      was the whole window, and it was long enough.</p>
+  </div>
+
+  <div class="pad pad--mid" style="top:400px">
+   <div class="split">
+    <div class="beats reveal r4">
+      <div class="beat hid">
+        <div class="bt">10:08:14</div><div class="bm"></div>
+        <div class="bb"><span class="unseen">Unseen</span>Oindrilla forces the projector to reboot from
+          the event-admin terminal. To the floor it looks like the birthday video glitched. Five seconds
+          later the <b>private-bar camera drops too</b>.</div>
+      </div>
+      <div class="beat hid">
+        <div class="bt">10:08–10:09</div><div class="bm"></div>
+        <div class="bb"><span class="unseen">Unseen</span>Kiyaah goes in behind the private bar and
+          <b>swaps the real silver sprayer for the poisoned twin</b>. In and out inside ninety-four seconds.</div>
+      </div>
+      <div class="beat">
+        <div class="bt">10:09:53</div><div class="bm"></div>
+        <div class="bb">The feed comes back and the video resumes. The room turns around to a bar that
+          looks exactly the way it did ninety-four seconds ago.</div>
+      </div>
+    </div>
+
+    <aside class="side card bone paper drop">
+      <div class="lbl ruled">The obvious clue</div>
+      <p>The blackout was <b>meant</b> to be found.</p>
+      <p>It pulled the whole room toward ninety-four seconds, and away from the fifteen minutes
+        before them — where the murder actually was.</p>
+    </aside>
+   </div>
+
+    <div class="statrow reveal r6" style="margin-top:44px">
+      <div class="stat"><div class="n">94<small> sec</small></div><div class="l">Camera blind</div></div>
+      <div class="stat"><div class="n">05<small> sec</small></div><div class="l">Projector, then the bar camera</div></div>
+      <div class="stat"><div class="n">01</div><div class="l">Sprayer swapped</div></div>
+      <div class="stat"><div class="n">02</div><div class="l">Guests who saw it anyway</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     14 — THE LOG, NOT THE KEY
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">The clever part</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">14</div>
+
+  <div class="head">
+    <div class="kick reveal r1">The one detail most players never worked out</div>
+    <h2 class="reveal r2">She Needed The <span class="hot">Log</span>, Not The Key</h2>
+    <p class="dek reveal r3">Kiyaah had every right to be behind that bar. She had been there all
+      night. So why the borrowed apron and somebody else's pass?</p>
+  </div>
+
+  <div class="pad pad--mid" style="top:424px">
+    <div class="g2 eq" style="gap:30px">
+      <div class="card bone paper drop l" style="width:100%">
+        <div class="lbl ruled">What the door log says</div>
+        <p>One staff pass in. One staff pass out. Both inside the ninety-four seconds.</p>
+        <p>The pass belongs to a member of staff who had <b>clocked out and gone home hours earlier</b> —
+          a retired credential that Oindrilla's admin session had quietly switched back on.</p>
+      </div>
+      <div class="card t-red reveal r4">
+        <div class="lbl">What actually happened</div>
+        <p>Kiyaah pulled a service apron on over her clothes, used the borrowed pass, and swapped
+          the sprayer.</p>
+        <p>She never needed the access. <strong>She needed the record to name somebody else.</strong>
+          If that log had said her name, this case would have closed the same night.</p>
+      </div>
+    </div>
+
+    <div class="strip aged reveal r6" style="margin-top:30px">
+      <div class="sl">The mismatch</div>
+      <div class="sp">A sprayer she was entitled to touch, entered on a pass she had no reason to use.
+        <b>That is what finally caught her.</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     15 — THE WITNESSES
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <svg class="thread" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+    <path d="M470 730 C 700 830, 1180 830, 1450 730" fill="none" stroke="#E03127" stroke-width="2" opacity=".42"/>
+  </svg>
+  <div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">Witnesses</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">15</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Two guests who were in the right seat</div>
+    <h2 class="reveal r2">The Camera Was Blind.<br>The Room <span class="hot">Wasn't</span>.</h2>
+  </div>
+
+  <div class="pad pad--mid" style="top:400px">
+    <div class="g2 eq" style="gap:34px">
+      <div class="pin drop l" style="width:100%">
+        <div class="ph">Anjul · 10:09 PM, service stair</div>
+        <div class="q sm">Saw the service apron come back down the stair — and clocked that the face
+          under it did not belong to staff.</div>
+        <div class="a">Replica circle · was never a suspect</div>
+      </div>
+      <div class="pin drop" style="width:100%">
+        <div class="ph">Parinitha · side banquette, by the bar arch</div>
+        <div class="q sm">Had a clear line to the private bar the whole time the camera was down.
+          Saw the swap itself.</div>
+        <div class="a">Pixel circle · was never a suspect</div>
+      </div>
+    </div>
+
+    <div class="strip reveal r6" style="margin-top:36px">
+      <div class="sl">What they missed</div>
+      <div class="sp">Killing a camera is not the same as killing every line of sight. The conspiracy
+        planned around the lens. <b>It did not plan around the seating.</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     16 — THE MURDER
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="lamp r"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">● The murder</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">16</div>
+
+  <div class="head">
+    <div class="kick reveal r1">10:12 PM · the actual moment of death</div>
+    <h2 class="reveal r2">Two Sprays Of <span class="hot">Orange</span></h2>
+  </div>
+
+  <div class="pad" style="top:320px">
+    <div class="pin drop flat" style="width:1180px">
+      <div class="ph">The finding — what killed Armaan Khanna</div>
+      <div class="b" style="font-size:24px;line-height:1.5">
+        Armaan lifts the Last Light and Kiyaah finishes it tableside, exactly the way she wrote the
+        ritual years ago: <b>two sprays of orange oil over the top of the glass.</b>
+      </div>
+      <div class="b" style="font-size:24px;line-height:1.5;margin-top:16px">
+        That garnish is the murder. Nothing was ever dropped into the drink. The aconitine reaches
+        the rim, his lips and the surface all at once — one serving, no splash, and
+        <b>nothing else in the room touched.</b>
+      </div>
+      <div class="a">Cross-referenced with the toxicology summary and the atomizer analysis</div>
+    </div>
+
+    <aside class="card t-amber reveal r4" style="position:absolute;right:0;top:0;width:490px">
+      <div class="lbl">Why the last hands are the only hands</div>
+      <p>Aconitine works in minutes, not hours. There is no slow build, no window in which somebody
+        earlier in the evening could have done it.</p>
+      <p>Which means the last person to touch that glass is the <strong>only</strong> person who
+        could have.</p>
+    </aside>
+
+    <!-- 56px under the paper rather than pinned to the pad floor: at bottom:0 the
+         gap between the document and the stat hairline read as a hole -->
+    <div class="statrow reveal r6" style="position:absolute;left:0;right:0;top:400px">
+      <div class="stat"><div class="n">02</div><div class="l">Sprays</div></div>
+      <div class="stat"><div class="n">01</div><div class="l">Glass</div></div>
+      <div class="stat"><div class="n">07<small> min</small></div><div class="l">To first symptom</div></div>
+      <div class="stat"><div class="n">22<small> min</small></div><div class="l">Toast to death</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     17 — THE LAST TWENTY-TWO MINUTES
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">Beat 4 of 4</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">17</div>
+
+  <div class="head">
+    <div class="kick reveal r1">10:19 PM — 10:48 PM</div>
+    <h2 class="reveal r2">The Last Twenty-Two <span class="hot">Minutes</span></h2>
+  </div>
+
+  <div class="pad pad--mid" style="top:314px">
+    <div class="beats reveal r3">
+      <div class="beat">
+        <div class="bt">10:19 PM</div><div class="bm"></div>
+        <div class="bb">His hands stop working mid-sentence. Aconitine takes the nerves first and the
+          heart immediately after.</div>
+      </div>
+      <div class="beat">
+        <div class="bt">10:22 PM</div><div class="bm"></div>
+        <div class="bb">He collapses at the stage rail. <b>Roddy is kneeling beside him before the room
+          finishes screaming</b> — the one person there who already knows exactly what he is looking at.</div>
+      </div>
+      <div class="beat hid">
+        <div class="bt">10:24 PM</div><div class="bm"></div>
+        <div class="bb"><span class="unseen">Unseen</span>Victoria tells the first officer to seize the
+          bar's inventory logs. She wants her own fake invoice <b>found early, by the police</b>, before
+          anyone can ask how it got in there.</div>
+      </div>
+      <div class="beat">
+        <div class="bt">10:34 PM</div><div class="bm"></div>
+        <div class="bb">Paramedics stop resuscitation. Twenty-two minutes from the toast.</div>
+      </div>
+      <div class="beat">
+        <div class="bt">10:48 PM</div><div class="bm"></div>
+        <div class="bb">Goa Police seal the venue. Nobody has left. <b>Nobody needed to</b> — all five of
+          them are still in the room, sitting in five different circles.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     18 — DIVIDER III · WHY IT HELD
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="lamp r"></div><div class="dots"></div><div class="vig"></div>
+  <div class="chrome mono c-br">18</div>
+  <div class="div-no reveal r1">03</div>
+  <div style="position:absolute;left:96px;top:284px;width:1120px">
+    <div class="kick reveal r1">Part three</div>
+    <h2 class="div-t reveal r2">Why It <span class="hot">Held</span></h2>
+    <div class="div-rule reveal r3"></div>
+    <div class="div-list reveal r4">
+      <div><b>Ten</b> &nbsp;· &nbsp;real, provable motives in one room</div>
+      <div><b>Five</b> &nbsp;· &nbsp;innocent people who looked guilty to the end</div>
+      <div><b>Five</b> &nbsp;· &nbsp;separate circles, so no table ever looked complete</div>
+      <div><b>One</b> &nbsp;· &nbsp;very obvious blackout to stare at</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     19 — THE MISDIRECTION
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">Misdirection</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">19</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Why a room of fifty-one people could not close it</div>
+    <h2 class="reveal r2">Ten Real Motives, Five Innocent <span class="hot">People</span></h2>
+  </div>
+
+  <div class="pad pad--mid" style="top:314px">
+    <div class="g2 eq" style="gap:26px 26px">
+      <div class="card t-red reveal r3">
+        <div class="lbl"><span class="hot">01</span> &nbsp;The suspects were genuinely dangerous</div>
+        <p class="sm">Ten guests had a real, provable reason to want Armaan dead. Five of them were
+          innocent: <strong>Tara Singhania, Tanvi Vartak, Rishi Raj Rahul, Vinod Raghuwanshi</strong>
+          and <strong>Anna Russo</strong>. You could build a complete single-killer case against any
+          one of them — and most of the room did.</p>
+      </div>
+      <div class="card t-red reveal r4">
+        <div class="lbl"><span class="hot">02</span> &nbsp;The killers sat at five different tables</div>
+        <p class="sm">Thimble, Oracle, Forgery, Hemlock, Amber. No single circle ever looked complete.
+          Every accusation in Round 1 said <em>a suspect's own people are covering for them</em> — and
+          that theory can never close on a five-way alignment across the room.</p>
+      </div>
+      <div class="card t-red reveal r5">
+        <div class="lbl"><span class="hot">03</span> &nbsp;The blackout was bait</div>
+        <p class="sm">It is the obvious opportunity, so it was left to be found. It pulled everyone
+          toward ninety-four seconds instead of the fifteen minutes before them, when the poison was
+          already in the building and the paperwork was already six hours old.</p>
+      </div>
+      <div class="card t-red reveal r6">
+        <div class="lbl"><span class="hot">04</span> &nbsp;The room inherited Armaan's own habit</div>
+        <p class="sm">He had spent years making sure nobody compared notes across tables. So the room
+          kept searching inside its own circle, exactly as he had trained it to — which is the same
+          blind spot that got him killed.</p>
+      </div>
+    </div>
+
+    <div class="strip reveal r8" style="margin-top:30px">
+      <div class="sl">Worth saying plainly</div>
+      <div class="sp">Ten guilty-looking people was never a flaw in the evidence.
+        <b>It was the plan.</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     20 — FRAMED, AND USED
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">Cleared</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">20</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Two innocent people, wronged in two different ways</div>
+    <h2 class="reveal r2">Framed, And <span class="hot">Used</span></h2>
+  </div>
+
+  <div class="pad pad--mid">
+    <div class="g2 eq" style="gap:30px">
+      <div class="card bone paper drop l" style="width:100%">
+        <div class="lbl ruled">Tara Singhania — framed</div>
+        <p>Tara had nothing to do with it. Victoria built the fake invoice <em>specifically</em> so the
+          replacement sprayer would look like it had arrived through Tara's customs vendor.</p>
+        <p>Her real access — crates, customs seals, display cabinets — is what made the lie survive
+          first scrutiny. Somebody chose her, on paper, hours before the party started.</p>
+      </div>
+      <div class="card bone paper drop" style="width:100%">
+        <div class="lbl ruled">Tanvi Vartak — used</div>
+        <p>Nobody planted anything on Tanvi. The annotated floor plan really is hers, in her own
+          fineliner, and <em>DO NOT BLOCK BAR DURING REEL</em> and <em>HOLD CAKE UNTIL ORANGE</em> really
+          are stage directions for a cake reveal.</p>
+        <p>Sneha arrived at 7:05 PM with a seating plan to rearrange, saw that the party planner had
+          already worked out on paper the exact second the whole room would turn its back on the
+          private bar — and built the timing of the murder on top of it.</p>
+      </div>
+    </div>
+
+    <div class="strip aged reveal r6" style="margin-top:30px">
+      <div class="sl">The worst part</div>
+      <div class="sp">The conspiracy never had to engineer a blind spot in the crowd.
+        <b>The party planner had already drawn them one.</b></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     21 — THE EVIDENCE
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="dots"></div><div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">Evidence log</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">21</div>
+
+  <div class="head">
+    <div class="kick reveal r1">Nine pieces of paper, and what each one settled</div>
+    <h2 class="reveal r2">What Proved <span class="hot">It</span></h2>
+  </div>
+
+  <div class="pad" style="top:312px">
+    <table class="tbl reveal r3">
+      <tr><th style="width:460px">The clue</th><th>What it proved</th></tr>
+      <tr><td class="k">Toxicology Summary</td><td>The bottles, the batch mixers and the cake were clean. The poison lived in <b>one finished drink</b>.</td></tr>
+      <tr><td class="k">Atomizer Analysis</td><td>The silver mister was a <b>twin</b>, not the bar's own listed piece — and its neck carried prep-room linen fibres.</td></tr>
+      <tr><td class="k">Projector &amp; Camera Log</td><td>Ninety-four seconds of blind spot, ordered from a valid admin session. <b>An interruption, not an outage.</b></td></tr>
+      <tr><td class="k">Floor Plan &amp; Sightlines</td><td>The moment the room would turn away was predictable in advance — and the side banquette stayed in view, which is why a witness survives.</td></tr>
+      <tr><td class="k">Service QR Access Trace</td><td>One pass in, one pass out during the blackout — on a staff credential whose owner had <b>already clocked out</b>.</td></tr>
+      <tr><td class="k">Supplier Invoice Mismatch</td><td>Traced signature, wrong stock, entered remotely. Somebody built the twin a paper history <b>through Tara's vendor</b>.</td></tr>
+      <tr><td class="k">The Monday Binder Index</td><td>Armaan had already written down, by initials, <b>who would take the fall for him</b>.</td></tr>
+      <tr><td class="k">Admin Override Trace</td><td>The reboot and the revived staff pass came from <b>one session tree</b> built on Oindrilla's environment.</td></tr>
+      <tr><td class="k">Burner Group Transcript</td><td>Five guests, five sets of initials, five jobs, one unsaved thread. <b>Coordination, across circles.</b></td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ============================================================
+     22 — CLOSING
+     ============================================================ -->
+<section class="slide">
+  <div class="lamp"></div><div class="lamp r"></div><div class="dots"></div>
+  <svg class="thread" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+    <path d="M96 250 C 560 320, 900 180, 1300 300 S 1720 460, 1824 760" fill="none" stroke="#E03127" stroke-width="2.5" opacity=".45"/>
+  </svg>
+  <div class="vig"></div>
+  <div class="railT"></div><div class="railB"></div>
+  <div class="chrome mono c-tl">Velvet&nbsp;Ember · 8821-B</div>
+  <div class="chrome mono c-tr">● Case Closed</div>
+  <div class="chrome mono c-bl">Reconstruction · Full spoilers</div>
+  <div class="chrome mono c-br">22</div>
+
+  <div style="position:absolute;left:96px;top:196px;width:1120px">
+    <span class="tag reveal r1">Verdict</span>
+    <h1 class="cover-h reveal r2" style="margin-top:28px;font-size:132px;line-height:.86">
+      Five People.<br>Five Tables.<br>One <span class="hot">Glass</span>.</h1>
+    <p class="reveal r4" style="margin-top:36px;font-family:var(--f-read);font-weight:300;font-size:26px;line-height:1.52;color:var(--dim);max-width:1010px">
+      Sneha Ganesh led Kiyaah Rose Raghuwanshi, Victoria Vance, Roddy Faustus and Oindrilla
+      Chatterjee in killing Armaan Khanna with aconitine hidden in the orange spray that finished
+      his own birthday drink — while a forged invoice, a ninety-four-second blackout and ten
+      separate circles of friends kept fifty-one people looking anywhere but at the five of them.
+    </p>
+  </div>
+
+  <div class="pin drop" style="position:absolute;right:112px;top:300px;width:470px">
+    <div class="ph">Closing note</div>
+    <div class="q">“He spent years making sure nobody in this room ever compared notes. Five of them did.”</div>
+    <div class="a">Inspector Ira Deshpande · closed 8 August 2026</div>
+  </div>
+
+  <div class="reveal r6" style="position:absolute;left:96px;bottom:158px;font-family:var(--f-mono);font-size:16px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim-2)">
+    Thimble · Oracle · Forgery · Hemlock · Amber &nbsp;—&nbsp; <span style="color:var(--bone)">the five circles that were in it together</span>
+  </div>
+</section>
+
+</main>
+</div>
+
+<div class="hint" id="hint">← → or space to move · E to edit text</div>
+<div class="edit-hotzone"></div>
+<button class="edit-toggle" id="editToggle" title="Edit text">✎</button>
+<div class="edit-bar" id="editBar">
+  <button id="btnSave">Save</button>
+  <button id="btnDownload">Download HTML</button>
+  <button id="btnReset">Reset</button>
+</div>
+
+<script>
+/* ===========================================================
+   SLIDE PRESENTATION CONTROLLER
+   - Scales the fixed 1920x1080 stage to the viewport
+   - Keyboard / touch / wheel navigation
+   - Progress bar + generated slide numbers
+   =========================================================== */
+class SlidePresentation {
+  constructor(){
+    this.slides = Array.from(document.querySelectorAll('.slide'));
+    // Page numbers are generated, never hand-written — add or remove a slide
+    // and the numbering stays correct with no manual edits.
+    this.slides.forEach((s, n) => {
+      const el = s.querySelector('.c-br');
+      if (el) el.textContent = String(n + 1).padStart(2, '0');
+    });
+    this.stage   = document.getElementById('deckStage');
+    this.prog    = document.getElementById('prog');
+    this.current = 0;
+    this.setupStageScale();
+    this.setupKeyboardNav();
+    this.setupTouchNav();
+    this.setupWheelNav();
+    this.showSlide(0);
+    setTimeout(()=>document.getElementById('hint').classList.add('gone'), 6000);
+  }
+
+  /* One transform scales the whole stage. Content never reflows. */
+  setupStageScale(){
+    const scale = () => {
+      const f = Math.min(window.innerWidth/1920, window.innerHeight/1080);
+      const x = (window.innerWidth  - 1920*f)/2;
+      const y = (window.innerHeight - 1080*f)/2;
+      this.stage.style.transform = `translate(${x}px, ${y}px) scale(${f})`;
+    };
+    scale();
+    window.addEventListener('resize', scale);
+  }
+
+  setupKeyboardNav(){
+    document.addEventListener('keydown', e => {
+      if (e.target.getAttribute && e.target.getAttribute('contenteditable') === 'true') return;
+      switch(e.key){
+        case 'ArrowRight': case 'ArrowDown': case ' ': case 'PageDown':
+          e.preventDefault(); this.next(); break;
+        case 'ArrowLeft': case 'ArrowUp': case 'PageUp':
+          e.preventDefault(); this.prev(); break;
+        case 'Home': e.preventDefault(); this.showSlide(0); break;
+        case 'End':  e.preventDefault(); this.showSlide(this.slides.length-1); break;
+      }
+    });
+  }
+
+  setupTouchNav(){
+    let x0=null, y0=null;
+    document.addEventListener('touchstart', e => {
+      x0 = e.changedTouches[0].clientX; y0 = e.changedTouches[0].clientY;
+    }, {passive:true});
+    document.addEventListener('touchend', e => {
+      if (x0===null) return;
+      const dx = e.changedTouches[0].clientX - x0;
+      const dy = e.changedTouches[0].clientY - y0;
+      if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) dx < 0 ? this.next() : this.prev();
+      x0 = y0 = null;
+    }, {passive:true});
+  }
+
+  setupWheelNav(){
+    let lock = false;
+    document.addEventListener('wheel', e => {
+      if (lock) return;
+      if (Math.abs(e.deltaY) < 24) return;
+      lock = true;
+      e.deltaY > 0 ? this.next() : this.prev();
+      setTimeout(()=>lock=false, 720);
+    }, {passive:true});
+  }
+
+  next(){ this.showSlide(this.current+1); }
+  prev(){ this.showSlide(this.current-1); }
+
+  showSlide(i){
+    this.current = Math.max(0, Math.min(i, this.slides.length-1));
+    this.slides.forEach((s,n) => {
+      s.classList.toggle('active',  n === this.current);
+      s.classList.toggle('visible', n === this.current);
+    });
+    this.prog.style.width = ((this.current+1)/this.slides.length*100) + '%';
+  }
+}
+
+/* ===========================================================
+   INLINE TEXT EDITOR
+   Hover the top-left corner (or press E) to reveal the toggle.
+   Edits persist to localStorage; "Download HTML" exports a copy.
+   NOTE: the editor is constructed FIRST — it may restore saved
+   edits into the stage, and the deck must bind to the resulting
+   nodes rather than the ones it replaced.
+   =========================================================== */
+class InlineEditor {
+  constructor(){
+    this.isActive = false;
+    this.KEY = 'velvet-ember-reveal-edits-v1';
+    this.targets = 'h1,h2,h3,p,li,span,div.q,div.a,div.ph,div.b,div.lbl,div.sp,div.sl,td,th,.tt,.td,.bb,.bt,.l,.n,.div-list';
+    this.restore();
+  }
+  toggleEditMode(){
+    this.isActive = !this.isActive;
+    document.getElementById('editToggle').classList.toggle('active', this.isActive);
+    document.getElementById('editBar').classList.toggle('on', this.isActive);
+    document.querySelectorAll('.slide').forEach(sl => {
+      sl.querySelectorAll(this.targets).forEach(el => {
+        if (el.children.length === 0 || el.classList.contains('q') || el.classList.contains('b')
+            || el.classList.contains('bb') || el.classList.contains('sp'))
+          el.setAttribute('contenteditable', this.isActive ? 'true' : 'false');
+      });
+    });
+  }
+  save(){
+    const stage = document.getElementById('deckStage');
+    try { localStorage.setItem(this.KEY, stage.innerHTML); flash('Saved to this browser'); }
+    catch(e){ flash('Could not save — storage full'); }
+  }
+  restore(){
+    try {
+      const html = localStorage.getItem(this.KEY);
+      if (html) document.getElementById('deckStage').innerHTML = html;
+    } catch(e){}
+  }
+  reset(){
+    try { localStorage.removeItem(this.KEY); } catch(e){}
+    location.reload();
+  }
+  download(){
+    document.querySelectorAll('[contenteditable]').forEach(el => el.removeAttribute('contenteditable'));
+    const blob = new Blob(['<!DOCTYPE html>\n' + document.documentElement.outerHTML], {type:'text/html'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'velvet-ember-how-it-happened.html';
+    a.click();
+    if (this.isActive) this.toggleEditMode();
+  }
+}
+const editor = new InlineEditor();
+const deck   = new SlidePresentation();
+
+function flash(msg){
+  const h = document.getElementById('hint');
+  h.textContent = msg; h.classList.remove('gone');
+  setTimeout(()=>h.classList.add('gone'), 2200);
+}
+
+/* --- edit affordance: JS hover with a 400ms grace period.
+       (A CSS `~` sibling selector fails here because
+       pointer-events:none breaks the hover chain.) --- */
+const hotzone    = document.querySelector('.edit-hotzone');
+const editToggle = document.getElementById('editToggle');
+let hideTimeout = null;
+hotzone.addEventListener('mouseenter', () => { clearTimeout(hideTimeout); editToggle.classList.add('show'); });
+hotzone.addEventListener('mouseleave', () => {
+  hideTimeout = setTimeout(()=>{ if(!editor.isActive) editToggle.classList.remove('show'); }, 400);
+});
+editToggle.addEventListener('mouseenter', () => clearTimeout(hideTimeout));
+editToggle.addEventListener('mouseleave', () => {
+  hideTimeout = setTimeout(()=>{ if(!editor.isActive) editToggle.classList.remove('show'); }, 400);
+});
+editToggle.addEventListener('click', () => editor.toggleEditMode());
+hotzone.addEventListener('click',   () => { editToggle.classList.add('show'); editor.toggleEditMode(); });
+document.addEventListener('keydown', e => {
+  if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable')) {
+    editToggle.classList.add('show'); editor.toggleEditMode();
+  }
+  if (e.key === 's' && (e.ctrlKey || e.metaKey) && editor.isActive) { e.preventDefault(); editor.save(); }
+});
+document.getElementById('btnSave').addEventListener('click',     () => editor.save());
+document.getElementById('btnDownload').addEventListener('click', () => editor.download());
+document.getElementById('btnReset').addEventListener('click',    () => editor.reset());
+</script>
+</body>
+</html>

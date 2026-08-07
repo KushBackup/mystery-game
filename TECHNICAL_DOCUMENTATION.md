@@ -119,18 +119,21 @@ The old app assumed a single murderer. The current implementation generalizes th
 
 In [src/App.jsx](src/App.jsx):
 
-- non-host, non-killer players see [src/components/MurdererRevealOverlay.jsx](src/components/MurdererRevealOverlay.jsx)
-- killers skip the public overlay and land on [src/components/OutroSplash.jsx](src/components/OutroSplash.jsx), because `updateMurdererReveal` sets `gameEnded` at the same time
+- **every** non-host player sees [src/components/MurdererRevealOverlay.jsx](src/components/MurdererRevealOverlay.jsx) the moment the host reveals — killers included, *since 2026-08-07*. Nothing precedes it, and its branch sits above the `gameEnded` one because `updateMurdererReveal` writes `revealedToMurderer` and `gameEnded` in a single call, so whichever branch comes first is the screen the room gets
+- killers used to be excluded from that branch and dropped straight onto [src/components/OutroSplash.jsx](src/components/OutroSplash.jsx) — the five people the room was being told about were the only ones who never saw it named. They now get the reveal too and step past it with a `Continue` control (App owns a local `revealStepped`, deliberately unpersisted so a reload replays the announcement). Everyone else ends on the reveal, which is why only the killers are handed `onContinue`
 - only characters included in `CONFESSION_CLUE.forCharacters` receive the confession card in Round 6
-- the overlay can render either a single killer or a full killer team, with the first killer treated as the lead reveal block
+- the overlay can render either a single killer or a full killer team, with the first killer treated as the lead reveal block — so **`getKillers()` returns the team mastermind-first**, ordered by `KILLER_IDS` rather than by roster position
 
 ### The reconstruction
 
-Naming the killers is only half of the ending; [src/components/CaseSolution.jsx](src/components/CaseSolution.jsx) is the other half — the full explanation of how the murder was carried out, read by the whole room after the reveal.
+Naming the killers is only half of the ending; [src/components/RevealDeck.jsx](src/components/RevealDeck.jsx) is the other half — the full explanation of how the murder was carried out, read by the whole room after the reveal. *Since 2026-08-07 it is a 22-slide deck rather than one scrolling document (`CaseSolution.jsx`, deleted): a room that has just been told* who *does not read three screens of prose, and the deck's chapter structure paces the answer for them.*
 
 - Both terminal screens open it, which is what makes it reachable by all 51 players: the reveal overlay carries a `How it happened` control (gated to its final entrance stage), and the outro carries one for the five killers, who never see the overlay.
-- It is **swapped in for** the terminal screen rather than layered over it. Every terminal screen is `fixed inset-0` and non-scrolling; swapping lets the reconstruction scroll as a normal document and keeps its back control honest. Each host owns a local `showSolution` boolean — there is no App-level route, because these screens draw no `SCREEN_GUIDE` frame to keep in sync.
-- All copy lives in `CASE_SOLUTION` in [src/data/gameData.js](src/data/gameData.js): `verdict`, `why`, `jobs` (five, `lead: true` marks the mastermind), `sequence` (beats, `hidden: true` marks what nobody on the floor could see), `misdirection`, and `proof`. It is the answer key — unreachable until `revealedToMurderer` — and must not contradict [STORY.md](STORY.md).
+- It is **swapped in for** the terminal screen rather than layered over it, so a second full-bleed `signal` surface never sits behind the reconstruction. Each host owns a local `showDeck` boolean — there is no App-level route, because these screens draw no `SCREEN_GUIDE` frame to keep in sync.
+- **The frame is fixed and the slide scrolls between it.** Header (exit + `NN / 22`) and footer (Back / Next) are `shrink-0` on a `fixed inset-0` flex column; the slide lives in the `flex-1` scroller. So the way out is always on screen, and a slide taller than the phone scrolls rather than shrinking its type. Navigation is Back/Next, horizontal swipe (60px, and only when horizontal travel beats vertical, or a diagonal scroll would page the deck), and arrow / Page / Home / End / Escape keys.
+- **Slide data is [src/data/revealDeck.js](src/data/revealDeck.js)**, a typed block list — `paper`, `note`, `card`, `strip`, `stats`, `rail`, `beats`, `key`, `jobs`, `proof`, `circles` — each with one renderer in `BLOCKS` in the component. Emphasis is carried by two inline marks (`*bone*`, `_italic_`) resolved by `<Rich>`, so the data stays plain strings and no HTML is injected.
+- **The answer key is still `CASE_SOLUTION` in [src/data/gameData.js](src/data/gameData.js)**: `verdict`, `why`, `jobs` (five, `lead: true` marks the mastermind), `sequence` (beats, `hidden: true` marks what nobody on the floor could see), `misdirection`, and `proof`. Slides 09, 21 and 22 read `jobs`, `proof` and `verdict` from it *directly* rather than restating them, so those three cannot drift. It is unreachable until `revealedToMurderer` and must not contradict [STORY.md](STORY.md).
+- **It is the twin of [reveal-deck/index.html](reveal-deck/index.html), not an embed of it.** That deck is a fixed 1920×1080 stage scaled by one transform — right for a projector, unreadable on a phone, where the scale factor is 0.20 and its 26px body copy lands at 5px. The in-app slides reflow instead, in the app's own voice (DESIGN_LANGUAGE.md §3.1). Same 22 slides in the same order: **a story change means editing both.**
 
 ### Player-facing labels
 
@@ -326,6 +329,23 @@ Both consume the same `STORY_SLIDES` source. StoryView now reads case metadata d
 Renders `CHARACTERS` in order. The ballot used to hash-sort the roster itself; that moved to `dealt()` in the data layer (above), so the ballot, the Suspects index and every guest's file number now agree on one order instead of drifting apart. `isMurderer()` is still used here, but only to badge the killers once round 6 lands.
 
 It also carries the shared [`SearchField`](src/components/ui/SearchField.jsx) above the ballot grid, matching on name and profession. The filter only removes cards and never reorders them, so the jumbled order every player shares is preserved and the vote already recorded is unaffected by what is currently visible.
+
+#### The unread tally
+
+`voteResultsVisible` arrives from Firestore when the host taps **Show tally**, and it used to do nothing but swap a `Tally withheld` tag for a `View tally` button — on a screen almost nobody is looking at when the host taps it. `tallyUnread` is the state that turns that swap into an announcement: it drives a two-hop knock (`.er-summon-tally`, [App.css](src/App.css) §17), a `signal` border with the 3px state channel, and a "Just released" tag, and all three end on the same tap.
+
+```
+tallyUnread = voteResultsVisible && tallySeen !== currentRound
+```
+
+`tallySeen` is **the round number of the last tally this device opened**, not a boolean, which is what makes the cue re-arm every round without any explicit reset: reading Round 03's numbers says nothing about Round 04's, and the host hiding and re-showing within a round correctly counts as one release.
+
+The ledger is `localStorage['astral.tallyseen']`, read once in a **pure** state initialiser so StrictMode's double invoke agrees with itself. It has to be persisted rather than held in state because `VotingView` unmounts the moment the player closes the screen — a per-round cue kept in component state would fire again on every visit. It sits outside `SESSION_KEY` for the same reason `astral.askcue` does: it must survive a reload, a service-worker update and the host's force-sync broadcast, none of which is a reason to knock at somebody who read the tally two minutes ago.
+
+Two deliberate differences from the ASK cue (["The ASK button is round-gated, and announces itself once"](#the-ask-button-is-round-gated-and-announces-itself-once), above), both consequences of the tally being a *recurring* release rather than a once-ever arrival:
+
+- **No `animationend` bookkeeping and no wrapper element.** The button has no entrance animation of its own to bubble past, and removing the class when the tally is read is what ends the cue. The knock is a function of the state, so it replays if the player leaves a flagged tally and comes back — which is the intended behaviour, not a leak.
+- **An unreadable ledger is not treated as spent.** Private-mode Safari throws on every `localStorage` call; the ASK cue answers "already seen" there, because its alternative is a button knocking all evening. This one falls back to a module-scope `tallySeenMemory`, which still holds "once per round" for the life of the tab. Only a reload can replay it, and a reload loses considerably more than this.
 
 ### The in-app help layer
 

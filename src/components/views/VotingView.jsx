@@ -6,6 +6,52 @@ import { InfoTip } from '../ui/InfoTip';
 import { SearchField } from '../ui/SearchField';
 import { TOOLTIPS } from '../../data/tooltips';
 
+// The last round whose tally this device has actually opened.
+//
+// The host releases the numbers once per round, from a screen the player is
+// usually not looking at, and until now the only sign of it was a button quietly
+// replacing the "Tally withheld" tag. This is what lets the button know it is
+// carrying something unread, so it can knock (App.css §17) and hold a signal
+// border until somebody looks.
+//
+// Persisted rather than held in component state, because VotingView unmounts the
+// moment the player closes the screen — a per-round cue kept in state would fire
+// again on every single visit. Keyed on the round, because a release *is* a
+// per-round event: reading Round 03's tally says nothing about Round 04's.
+//
+// Deliberately outside App's SESSION_KEY, for the same reason as the ASK ledger:
+// it has to survive a reload, a service-worker update and the host's force-sync
+// broadcast, none of which is a reason to knock at somebody who read the tally
+// two minutes ago.
+const TALLY_SEEN_KEY = 'astral.tallyseen';
+
+// The fallback for private-mode Safari, where every localStorage call throws.
+// The ASK ledger treats an unreadable store as *spent*, because the alternative
+// there is a button knocking on every visit for the whole evening. This one can
+// do better: the cue is bounded by an unread state that the player clears
+// themselves, so a session-lifetime copy holds "once per round" for as long as
+// the tab lives, and only a reload can replay it.
+let tallySeenMemory = null;
+
+const tallySeenRound = () => {
+  if (tallySeenMemory !== null) return tallySeenMemory;
+  try {
+    const raw = window.localStorage.getItem(TALLY_SEEN_KEY);
+    return raw === null ? null : Number(raw);
+  } catch {
+    return null;
+  }
+};
+
+const markTallySeen = (round) => {
+  tallySeenMemory = round;
+  try {
+    window.localStorage.setItem(TALLY_SEEN_KEY, String(round));
+  } catch {
+    // Nothing to do — the in-memory copy above carries the session.
+  }
+};
+
 /**
  * The ballot (DESIGN_LANGUAGE.md §9, "Vote").
  *
@@ -51,6 +97,21 @@ export const VotingView = ({
   const hasVoted = votes[currentRound] !== undefined;
   const hasAnyVotes = Object.keys(voteCounts || {}).length > 0;
   const totalVotes = Object.values(voteCounts || {}).reduce((a, b) => a + b, 0);
+
+  // Read once, in a *pure* initialiser, so StrictMode's double invoke gets the
+  // same answer both times.
+  const [tallySeen, setTallySeen] = useState(() => tallySeenRound());
+
+  // The host has the numbers out and this device has not opened them. Drives all
+  // three channels on the button below — the knock, the signal border and the
+  // tag — and every one of them ends together when the player taps it.
+  const tallyUnread = voteResultsVisible && tallySeen !== currentRound;
+
+  const handleOpenTally = () => {
+    setShowResults(true);
+    markTallySeen(currentRound);
+    setTallySeen(currentRound);
+  };
 
   const handleVoteClick = (suspectId) => {
     if (!isVotingOpen) return;
@@ -120,12 +181,30 @@ export const VotingView = ({
           </div>
 
           {voteResultsVisible ? (
-            <button
-              onClick={() => setShowResults(true)}
-              className="er-touch px-5 py-3 bg-ink-raised border border-line text-bone font-mono text-[11px] font-medium uppercase tracking-[0.24em] hover:border-signal"
-            >
-              View tally
-            </button>
+            /* A released tally is the one thing on this screen the player has to
+               be told about: it appears while they are somewhere else, and it is
+               only up until the host takes it down. So the button knocks twice
+               (App.css §17) and then stops — but motion is never the only
+               channel (§7.1), so the tag and the 3px state rule stay put until
+               the tally is actually opened. */
+            <div className="flex flex-col items-end gap-2">
+              {tallyUnread && (
+                <span key={currentRound} className="er-tag er-swap">
+                  Just released
+                </span>
+              )}
+
+              <button
+                onClick={handleOpenTally}
+                className={`er-touch px-5 py-3 bg-ink-raised border font-mono text-[11px] font-medium uppercase tracking-[0.24em] ${
+                  tallyUnread
+                    ? 'er-summon-tally border-signal border-t-[3px] border-t-signal text-signal-lift'
+                    : 'border-line text-bone hover:border-signal'
+                }`}
+              >
+                View tally
+              </button>
+            </div>
           ) : (
             <span className="er-tag er-tag--mute">Tally withheld</span>
           )}

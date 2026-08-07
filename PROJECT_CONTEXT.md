@@ -39,7 +39,7 @@ The public shape of the case is simple: ten prime suspects, each with their own 
 5. Round 2 opens the **riddle lock** and puts the 10 motive files into its prize pool.
 6. Round 3 unlocks forensics case files, adds the 7 evidence clues to the pool, and reopens voting.
 7. Rounds 4 and 5 deliver the twist through 6 revelation clues and the late-game case files.
-8. Round 6 reveals the full killer team to the room, hands every player the full reconstruction of how the murder was done, and ends the game.
+8. Round 6 reveals the full killer team to the room, hands every player the 22-slide reconstruction of how the murder was done, and ends the game.
 
 ---
 
@@ -97,7 +97,7 @@ code, so a stalled round can be unblocked by simply reading one out.
 | 3 | Evidence | Single-drink poisoning, atomizer swap, blind spot, forged invoice, access trace, and the Monday binder's bare index of initials |
 | 4 | Revelations | The binder paid off as intent (Armaan's own margin note), stolen drink ritual, missing formula page, forged ledgers |
 | 5 | Finale | Admin override proof and burner-thread reveal showing cross-group collusion |
-| 6 | The Reveal | Public screen names the killer team; killers themselves get the confession. Both screens open **How it happened** — the beat-by-beat reconstruction of the murder, the motive, the five jobs, and what proved each of them |
+| 6 | The Reveal | Public screen names the killer team; killers themselves get the confession. Both screens open **How it happened** — the beat-by-beat reconstruction of the murder as a 22-slide deck the player pages or swipes through: the motive, the five jobs, the night in four chapters, why the misdirection held, and what proved each of them |
 
 ---
 
