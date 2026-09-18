@@ -22,7 +22,7 @@ import { CASE_SOLUTION } from './gameData';
  * ── Why this is not the projected deck in an iframe ──────────────────────────
  * That deck is a fixed 1920×1080 stage scaled by one transform, which is correct
  * for a projector and unreadable on a phone: at 390px the scale factor is 0.20,
- * so its 26px body copy lands at 5px. Fifty-one players read this on phones, so
+ * so its 26px body copy lands at 5px. Sixty-nine players read this on phones, so
  * the slides here reflow instead of scaling, and they take the *app* voice —
  * Special Elite / Courier Prime / IBM Plex Mono at the §3.2 mobile scale — per
  * the standing rule in DESIGN_LANGUAGE.md §3.1: never put the deck's fonts in
@@ -51,22 +51,23 @@ export const REVEAL_DECK = [
     tag: 'The answer',
     title: 'How It *Happened*',
     lead:
-      'Armaan Khanna was killed at his own birthday party in front of fifty-one people. _Here is exactly how, in plain words._',
+      'Dev Malhotra was killed at an office Onam party with sixty-nine colleagues in the building. _Here is exactly how, in plain words._',
     blocks: [
       {
         type: 'stats',
         items: [
-          { n: '51', label: 'Guests in the room' },
+          { n: '69', label: 'Colleagues inside' },
           { n: '05', label: 'People killed him' },
-          { n: '94', label: 'Seconds of darkness' },
-          { n: '01', label: 'Poisoned glass' },
+          { n: '34', label: 'Persons of interest' },
+          { n: '01', label: 'Poisoned tumbler' },
         ],
       },
       {
         type: 'note',
-        label: 'Exhibit — the Monday folder',
-        quote: '“If the room turns, give them the planner. Nobody mourns the planner.”',
-        source: 'Armaan Khanna · his own margin note',
+        label: 'Exhibit — the group chat',
+        quote:
+          '“nobody moves during the window except who has a reason to. everyone has a reason. that is the point.”',
+        source: '“Fantasy League ⚽” · created Wednesday, 9:12 PM',
       },
     ],
   },
@@ -80,29 +81,29 @@ export const REVEAL_DECK = [
     blocks: [
       {
         type: 'paper',
-        label: 'Case 8821-B — closed',
+        label: 'Case 2108-C — closed',
         body: [
-          '*Sneha Ganesh planned it.* Roddy Faustus made the poison. Kiyaah Rose Raghuwanshi put it on the drink. Oindrilla Chatterjee switched off the camera. Victoria Vance made sure the paperwork pointed at somebody else.',
-          "The poison was hidden in the orange spray used to finish Armaan's own birthday drink. One glass. Nobody else touched it. Then *ten separate circles of friends* did the rest of the work for them — because every table spent the night suspecting itself.",
+          '*Anurag planned it.* Kalaivani brewed the poison from the terrace hedge. Giles placed it in Dev\'s own tumbler at the coffee machine. Yao blinded the cameras and killed the paper trail. Akshat wrote the lie that pointed at somebody else.',
+          'The poison waited in the one cup nobody else in the building was allowed to touch, and Dev\'s own daily ritual carried it to him. Then *the company\'s ordinary chaos* — a repair, an outage, an alert, a courier — did the rest, because at TripleSpeed nobody looks up for any of it.',
         ],
-        source: 'Signed · Inspector Ira Deshpande, Goa Police',
+        source: 'Signed · Inspector Arjun Kale, Bengaluru City Police',
       },
       {
         type: 'card',
         tone: 'signal',
-        label: 'Five killers · five different tables',
+        label: 'Five killers · five departments',
         items: [
-          '*Sneha Ganesh* — Thimble · the plan',
-          '*Roddy Faustus* — Hemlock · the poison',
-          '*Kiyaah Rose Raghuwanshi* — Oracle · the delivery',
-          '*Oindrilla Chatterjee* — Amber · the blind spot',
-          '*Victoria Vance* — Forgery · the false trail',
+          '*Anurag* — Payments · the plan',
+          '*Kalaivani* — Support · the toxin',
+          '*Giles* — Ops · the hands',
+          '*Yao* — Engineering · the blind spot',
+          '*Akshat* — Marketing · the false trail',
         ],
       },
       {
         type: 'strip',
         label: 'Why it worked',
-        text: 'No single table ever looked complete, so *no single theory ever closed.*',
+        text: 'No single team ever looked complete, so *no team-shaped theory ever closed.*',
       },
     ],
   },
@@ -112,17 +113,17 @@ export const REVEAL_DECK = [
     id: 'victim',
     chapter: 'The victim',
     kicker: 'Who was killed',
-    title: 'Armaan *Khanna*',
+    title: 'Dev *Malhotra*',
     dek:
-      'Founder of Velvet Ember Spirits. The most liked man in the room — and about ten people standing in it had a real reason to want him gone.',
+      'Introduced to the office as “something payments.” Actually the man the founders hired to find out where the money was going.',
     blocks: [
       {
         type: 'paper',
-        label: 'What the room saw',
+        label: 'What the office saw',
         tilt: 'L',
         body: [
-          'Armaan built Velvet Ember in his own image: expensive, theatrical, and impossible to argue with without looking joyless. He invited ten close friends to his birthday and told each of them to bring their own people.',
-          'That is why there were fifty-one guests in a listening bar in Panjim, and why the room arrived already split into ten little worlds that barely knew each other.',
+          'A consultant, three weeks in. A steel tumbler engraved DM that nobody else touched. A post-lunch ritual at the third-floor machine, and a standing refusal to spend the Zomato budget on Third Wave — _“₹1,500 is for food.”_',
+          'He asked a lot of questions about money. By the second week, half the office had been on the wrong end of one.',
         ],
       },
       {
@@ -130,19 +131,19 @@ export const REVEAL_DECK = [
         tone: 'signal',
         label: 'What he actually did',
         items: [
-          "Took other people's work and put his own name on it.",
-          'Held back money until people stopped asking for it.',
-          'Kept every humiliation *private*, so no two victims ever compared notes.',
-          'Two days from selling the company, he wrote down *who he would blame* if the sale went wrong.',
+          'Engaged quietly by *both founders* for revenue assurance — the "payments consultant" line was a cover story.',
+          'Found a single leak network of *₹3.4 crore* across four channels, each disguised as one of the company\'s normal problems.',
+          'Pulled the payment provider\'s *settlement archive* on Tuesday — the one dataset nobody inside could sanitize.',
+          'Was scheduled to read *names* at Friday\'s 4 PM "toast." He died at 3:40.',
         ],
       },
       {
         type: 'stats',
         items: [
-          { n: '51', label: 'Guests in the room' },
-          { n: '10', label: 'Had a real motive' },
-          { n: '05', label: 'Of those were innocent' },
-          { n: '05', label: 'Of those killed him' },
+          { n: '21', label: 'Days on the audit' },
+          { n: '04', label: 'Leak channels found' },
+          { n: '09', label: 'Chairs at the 4 PM meeting' },
+          { n: '20', unit: 'min', label: 'Short of reading names' },
         ],
       },
     ],
@@ -152,29 +153,30 @@ export const REVEAL_DECK = [
   {
     id: 'public-record',
     chapter: 'Public record',
-    kicker: '8 August 2026 · For the Record, Panjim',
-    title: 'What The Room *Saw*',
+    kicker: '21 August 2026 · Midford KTR2, Indiranagar',
+    title: 'What The Office *Saw*',
     blocks: [
       {
         type: 'rail',
         stops: [
-          { time: '7:00 PM', title: 'Doors open', body: 'Guests arrive at a late-night listening bar in Goa.' },
-          { time: '9:55 PM', title: 'Tribute reel', body: 'A birthday video starts on the screen beside the private bar.' },
-          { time: '10:08 PM', title: 'Lights glitch', body: 'Projector and bar camera go dark for 94 seconds.', now: true },
-          { time: '10:12 PM', title: 'The toast', body: 'Armaan raises the Last Light, his signature drink.' },
-          { time: '10:19 PM', title: 'Hands fail', body: 'He stops mid-sentence. His hands stop working.' },
-          { time: '10:22 PM', title: 'Collapse', body: 'He goes down beside the stage rail.' },
-          { time: '10:34 PM', title: 'Death', body: 'Paramedics stop resuscitation.' },
-          { time: '10:48 PM', title: 'Sealed', body: 'Police lock all fifty-one guests inside.' },
+          { time: '8:12 AM', title: 'The ticket', body: 'An urgent request revives the coffee machine, dead for two weeks.' },
+          { time: '9:41 AM', title: 'The Beast lives', body: 'The technician signs it off. The floor celebrates.' },
+          { time: '11:04 AM', title: 'Outage', body: 'WiFi and cameras drop for 43 minutes. Nobody blinks.' },
+          { time: '1:00 PM', title: 'Onam', body: 'Sadhya, pookalam, games, a livestream.' },
+          { time: '2:47 PM', title: 'The alert', body: 'A payment failure pulls eleven people off the terrace and back to their desks.', now: true },
+          { time: '3:12 PM', title: 'Payasam', body: 'Dev leaves the terrace for his coffee and his slides.' },
+          { time: '3:55 PM', title: 'Found', body: 'Aarohi sees him through the Glass Room wall.' },
+          { time: '4:14 PM', title: 'Death', body: 'Paramedics stop. “Query poisoning” goes on the sheet.' },
+          { time: '4:30 PM', title: 'Sealed', body: 'Police lock all sixty-nine colleagues inside.' },
         ],
       },
       {
         type: 'card',
-        label: 'What the room believed by round two',
+        label: 'What the office believed by round two',
         items: [
-          'One of the ten close friends planned it.',
-          'Their own table probably helped cover it up.',
-          'The blackout at 10:08 was obviously the moment.',
+          'Someone followed him down after 3:12.',
+          'The co-founder alone in the cabin next door looked worst.',
+          'The person who found him — and fed a shredder ten minutes earlier — looked second worst.',
         ],
       },
       {
@@ -182,7 +184,7 @@ export const REVEAL_DECK = [
         aged: true,
         label: 'The trap',
         text:
-          'Every line on that timeline is *true*. It is also exactly why nobody got there — it points at ninety-four seconds, and the murder was already six hours old.',
+          'Every line on that timeline is *true*. It is also why nobody got there — the room stared at 3:12 to 3:55, and the murder was finished at 2:52. It had been armed since 8:12 in the morning.',
       },
     ],
   },
@@ -196,9 +198,9 @@ export const REVEAL_DECK = [
     kicker: 'Part one',
     title: 'The *Plan*',
     lines: [
-      { term: 'Why', text: 'a red folder marked Monday' },
-      { term: 'Who', text: 'five people at five different tables' },
-      { term: 'How', text: 'poison in a garnish nobody else got' },
+      { term: 'Why', text: 'a settlement archive, pulled on Tuesday' },
+      { term: 'Who', text: 'five people in five departments' },
+      { term: 'How', text: 'poison in a cup nobody else was allowed to touch' },
     ],
   },
 
@@ -207,68 +209,66 @@ export const REVEAL_DECK = [
     id: 'motive',
     chapter: 'Motive',
     kicker: 'Why five people decided he had to die',
-    title: 'The Red Folder Marked *Monday*',
+    title: 'Findings *v0.9*',
     dek:
-      'Armaan was two days from selling Velvet Ember. The folder was his plan for surviving that sale: a written list of people to hand over if anything went wrong.',
+      'Dev\'s Wednesday draft named five roles, not people. It was meant for the founders. The one person who could read everything on the Drive read it first.',
     blocks: [
       {
         type: 'paper',
-        label: 'The folder — index page · initials only',
+        label: 'The draft — five roles, initials only',
         tilt: 'L',
         items: [
-          '*Sneha* — takes the fall for the rebate structure',
-          '*Victoria* — takes the fall for the shell-company ledgers',
-          '*Oindrilla* — takes the fall for the inventory breach',
-          '*Tara* — customs paperwork, held in reserve',
-          '*Tanvi* — the prototype, held in reserve',
+          '*HoP* — settlement reserve releases, diverted to a look-alike account',
+          '*TL* — compute bought through a marked-up “cloud partner”',
+          '*OE* — a ghost vendor, ₹68 lakh, every invoice under the approval line',
+          '*CS-O* — the second signature on deliveries that never arrived',
+          '*MB* — 12% of media spend, routed through a reseller kickback',
         ],
       },
       {
         type: 'note',
         label: 'In the margin, in his handwriting',
-        quote: '“If the room turns, give them the planner. Nobody mourns the planner.”',
-        source: '“The planner” = Tanvi Vartak, who was organising his party',
+        quote: '“The Zenlyt ‘Victor onboarding’ pack is fabricated — see metadata. Whoever built it was aiming the story before I ever wrote it.”',
+        source: 'Dev Malhotra · Findings v0.9 — the note that cleared the framed man',
       },
       {
         type: 'strip',
         label: 'The turn',
-        text: 'Sneha read that page. Then she stopped being the person who takes the fall.',
+        text: 'Anurag read the archive-pull notification on Tuesday evening. By Wednesday at 9:12 PM there was a group chat.',
       },
     ],
   },
 
   // ══ 07 ═══════════════════════════════════════════════════════════════════
   {
-    id: 'forgot-two',
+    id: 'recruiter',
     chapter: 'Motive',
-    kicker: 'His one mistake',
-    title: 'He Forgot *Two People*',
+    kicker: 'How a conspiracy formed in one evening',
+    title: 'The Draft Was The *Recruiter*',
     dek:
-      'Neither of them was in the folder at all. They are the two who could build the poison and carry it to his hand.',
+      'Nobody had to be persuaded to fear Dev. They had to be persuaded the other four were equally exposed — and the document did that by itself.',
     blocks: [
       {
         type: 'card',
         tone: 'signal',
-        label: 'Not on the list · Hemlock',
-        title: 'Roddy Faustus',
+        label: 'Why nobody warned him',
         body: [
-          'Armaan had written him off as an outsider who did not matter enough to name. Roddy is the one man in that room who knew how to turn a plant into a weapon. Years earlier Armaan had copied a page out of his notebook and written _we own this now_ on the back.',
+          'Everyone innocent thought Dev was a payments consultant. Everyone guilty was named in his draft. There was no third kind of person — the five could each read their own lane in it and verify the other four had exactly as much to lose. The recruitment pitch was the evidence itself.',
         ],
       },
       {
         type: 'card',
         tone: 'signal',
-        label: 'Not on the list · Oracle',
-        title: 'Kiyaah Rose Raghuwanshi',
+        label: 'Why murder, and not a cover-up',
         body: [
-          'Armaan assumed the drink ritual and the grief sessions still kept her quiet. Kiyaah wrote the Last Light service herself and was never fully paid for it — and hers were the only hands that could touch his glass without anyone finding it strange.',
+          'The briefing was Friday at 4 PM and the archive was already outside the building. So: kill the meeting, delete the Drive copy, and let the prepared story stand — _an external scam vendor, onboarded by a careless marketer._ It nearly worked. They did not know about the local copy, and the archive could simply be re-issued.',
         ],
       },
       {
         type: 'strip',
         label: 'The whole case in one line',
         text:
-          'He spent years teaching this room to keep its humiliations private, so that no two victims would ever compare notes. *Five of them compared notes.*',
+          'Every anomaly that day looked like a normal Tuesday at TripleSpeed. *The company\'s chaos was the murder\'s uniform.*',
       },
     ],
   },
@@ -278,35 +278,35 @@ export const REVEAL_DECK = [
     id: 'method',
     chapter: 'Method',
     kicker: 'The method',
-    title: 'Poison In The *Garnish*',
+    title: 'Poison In The *Tumbler*',
     blocks: [
       {
         type: 'paper',
         label: 'What the poison was',
         tilt: 'L',
         body: [
-          '*Aconitine.* It comes from aconite — a garden plant also called monkshood. A very small dose shuts down your nerves, then your heart. It works in *minutes, not hours*.',
-          'It is also bitter. So it was hidden inside bitter-orange oil, which is something that is _supposed_ to taste bitter and smell strong. Roddy cut one into the other himself.',
+          '*Oleandrin.* It comes from oleander — the decorative hedge screening the terrace smoking corner, ten feet from where everyone ate lunch. Concentrated, a small dose stops the heart in under an hour.',
+          'It is bitter. So it went under the most over-extracted, complained-about coffee in Indiranagar, on a floor that _permanently smells of coffee_, into a cup owned by a man who added two sugars. Bitter goes under bitter.',
         ],
       },
       {
         type: 'card',
         tone: 'signal',
-        label: 'Why the spray, and not the bottle',
+        label: 'Why the tumbler, and not the food',
         items: [
-          'The bottles, the batch mixers and the cake were all *clean* — they had to be, because everybody else drank and ate from them.',
-          "Only Armaan's glass got the orange mist on top. That was written into the ritual he had taken from Kiyaah.",
-          'A spray lands on the rim, his lips and the drink at the same instant. One serving, no splash, nothing else in the room touched.',
-          'The silver mister behind the bar was swapped for an *identical twin*, same label: EMBER ORANGE.',
+          'The sadhya was a shared buffet — *untargetable*. Dev ordered nothing on Zomato. The catering tested clean.',
+          'The only victim-specific vessel in the building was the *DM tumbler* — and nobody on earth touched Dev\'s tumbler.',
+          'The machine had to work on Friday. So its inlet valve — *shut by hand two weeks earlier* — was reopened by an urgent morning ticket. The famous 10% machine had been switched off, and then switched back on, by appointment.',
+          'Dev rinsed and staged the tumbler himself at 1:05, like every day the Beast worked. *The ritual was the weapon.*',
         ],
       },
       {
         type: 'stats',
         items: [
-          { n: '02', label: 'Sprays over the glass' },
-          { n: '01', label: 'Serving, ever' },
-          { n: '07', unit: 'min', label: 'Toast to first symptom' },
-          { n: '00', label: 'Other guests harmed' },
+          { n: '02', unit: 'wks', label: 'Valve held shut' },
+          { n: '03', label: 'Pulls on the brew counter' },
+          { n: '23', unit: 'min', label: 'Dose waited in the cup' },
+          { n: '00', label: 'Other colleagues harmed' },
         ],
       },
     ],
@@ -329,16 +329,17 @@ export const REVEAL_DECK = [
     chapter: 'Part two',
     number: '02',
     kicker: 'Part two',
-    title: 'The *Night*',
+    title: 'The *Day*',
     lines: [
-      { term: '5:14 PM', text: 'the paperwork, before the doors open' },
-      { term: '7:25 PM', text: 'the poison walks in as a gift' },
-      { term: '10:08 PM', text: 'ninety-four seconds of darkness' },
-      { term: '10:12 PM', text: 'two sprays of orange' },
-      { term: '10:48 PM', text: 'the room is sealed with all five still in it' },
+      { term: '8:12 AM', text: 'the ticket that fixes the machine' },
+      { term: '8:37 AM', text: 'one Uber, two passengers, one decanted bottle' },
+      { term: '11:04 AM', text: 'the outage that booked the afternoon' },
+      { term: '2:47 PM', text: 'a fake alert scatters the party' },
+      { term: '2:52 PM', text: 'the dose, inside the camera gap' },
+      { term: '3:15 PM', text: 'two sugars' },
     ],
     // The key for every beat ledger that follows. It lives on the divider so the
-    // four beat slides don't each have to spend a block re-explaining themselves.
+    // beat slides don't each have to spend a block re-explaining themselves.
     blocks: [{ type: 'key' }],
   },
 
@@ -346,28 +347,29 @@ export const REVEAL_DECK = [
   {
     id: 'beat-1',
     chapter: 'Beat 1 of 4',
-    kicker: '5:14 PM — 7:40 PM',
-    title: 'The Poison Was Already *In The Building*',
+    kicker: 'Tuesday evening — Wednesday midnight',
+    title: 'Planned Before The *Marigolds*',
     blocks: [
       {
         type: 'beats',
         items: [
           {
-            time: '5:14 PM',
+            time: 'Tue 6:40 PM',
             hidden: true,
             body:
-              "Doors are still shut. Victoria files a fake supplier invoice into the private bar's stock list from off-site. On paper, the bar now owns a *replacement orange sprayer*, bought through Tara Singhania's customs vendor.",
+              'Dev pulls the settlement archive from the provider portal. The portal emails the pull notification to its billing admin. *Anurag reads it the same evening* and understands exactly what Friday\'s “toast” will be.',
           },
           {
-            time: '7:25 PM',
+            time: 'Wed 9:12 PM',
             hidden: true,
             body:
-              'Roddy arrives carrying a gift box of rare botanicals. It never reaches the gift table. The *poisoned sprayer is inside it* — already filled, already labelled EMBER ORANGE, an exact twin of the one behind the bar.',
+              'A group chat named “Fantasy League ⚽” is created. Five members. *No fantasy league exists at this company.* Five roles from the draft, five people, one evening.',
           },
           {
-            time: '7:40 PM',
+            time: 'Wed 11:58 PM',
+            hidden: true,
             body:
-              "Kiyaah comes in through the service entrance to inspect the private bar — at Armaan's own request. She confirms where the real sprayer sits, and who will be working that bar during the video.",
+              'Akshat builds the fake Zenlyt onboarding pack pointing at Victor — from a year-old invoice template he requested that afternoon, _“just as a template.”_ The same night, the oleander hedge is clipped with the office\'s own secateurs.',
           },
         ],
       },
@@ -376,59 +378,57 @@ export const REVEAL_DECK = [
         label: 'Read this twice',
         tilt: 'L',
         body: [
-          'None of that needed the blackout.',
-          'By the time the first guest walked through the door, the poison was already in the building and the paperwork was already six hours old.',
-          'The room would later spend the whole night arguing about ninety-four seconds.',
+          'The murder was fully designed before a single marigold went down for the pookalam.',
+          'And nothing was ever smuggled past the gate. The poison grew on the terrace. The vessel belonged to the victim. The chaos was house style.',
         ],
       },
     ],
   },
-
   // ══ 12 ═══════════════════════════════════════════════════════════════════
   {
     id: 'beat-2',
     chapter: 'Beat 2 of 4',
-    kicker: '9:50 PM — 10:06 PM',
-    title: 'The Room Turns *Around*',
+    kicker: '8:12 AM — 1:05 PM',
+    title: 'Friday *Morning*',
     blocks: [
       {
         type: 'beats',
         items: [
           {
-            time: '9:50 PM',
+            time: '8:12 AM',
             body:
-              'Sneha argues with Armaan in the upstairs booth about the red folder. She comes back down composed. *The folder stays upstairs* — the only part of that conversation that mattered.',
+              'Giles logs ticket #4417 from his phone — urgent, _“before the party”_ — for a machine that has been dead for two weeks over four ignored tickets. The job sheet will read: *no fault found, inlet valve manually shut.*',
           },
           {
-            time: '9:55 PM',
-            body:
-              'The tribute video starts on the screen beside the private bar, and the whole room turns to watch it.',
-          },
-          {
-            time: '10:02 PM',
+            time: '8:37 AM',
             hidden: true,
             body:
-              'Roddy carries the botanical case into the prep corridor and leaves a wrapped service roll on the prep counter. The poisoned twin is inside it.',
+              'One Uber, two passengers who have never shared a ride in 214 logged trips, one four-minute stop at Giles\'s gate. *A bottle decanted from her chai flask changes bags in the car* — before the building\'s cameras are even relevant, and the flask keeps the rest.',
           },
           {
-            time: '10:05 PM',
+            time: '9:41 AM',
             body:
-              'Roddy walks back out onto the floor without the case he carried in. Several guests notice. Nobody yet knows what was in it.',
+              'The technician reopens the valve and the Beast lives. The floor celebrates in the team channel — *“THE BEAST LIVES”*, timestamped. The one man who drinks from it daily now has an appointment he doesn\'t know about.',
           },
           {
-            time: '10:06 PM',
+            time: '11:04 AM',
             hidden: true,
             body:
-              'While walking staff through the garnish sequence, Kiyaah picks the wrapped roll up off the prep counter. *The two of them never hand each other anything.*',
+              'The “WiFi outage.” The NVR reinitializes and *the whole fourteen-day array dies* — the basement arrival, and the fortnight behind it. Behind the cupboard door, one nameless admin session deletes Dev\'s draft (11:23), books a 2:45 PM camera “maintenance restart” (11:31), and re-arms dead visitor badge V-07 (11:36).',
+          },
+          {
+            time: '1:05 PM',
+            body:
+              'Dev rinses his tumbler and stages it beside the machine, exactly as he does every day the Beast works. Then he goes up and eats with everyone else. *The killers never touch him or his routine.*',
           },
         ],
       },
       {
         type: 'strip',
         aged: true,
-        label: 'Why nobody saw a handover',
+        label: 'Why nobody saw a handoff',
         text:
-          "Because there wasn't one. Prep-room *linen fibres* on the sprayer's neck are all that survives of the exchange.",
+          'Because it happened in a moving car at 8:37 — and the one camera that filmed the arrival lost its memory before noon.',
       },
     ],
   },
@@ -437,30 +437,36 @@ export const REVEAL_DECK = [
   {
     id: 'beat-3',
     chapter: 'Beat 3 of 4',
-    kicker: '10:08:14 PM — 10:09:53 PM',
-    title: 'Ninety-Four *Seconds*',
+    kicker: '2:45 PM — 3:21 PM',
+    title: 'Thirty-Six *Minutes*',
     dek:
-      'The camera over the private bar was blind for a minute and a half. That was the whole window, and it was long enough.',
+      'The cameras were blind for thirty-six minutes — on a schedule booked at 11:31 that morning. The alert made sure the blindness had company.',
     blocks: [
       {
         type: 'beats',
         items: [
           {
-            time: '10:08:14',
+            time: '2:45 PM',
             hidden: true,
             body:
-              'Oindrilla forces the projector to reboot from the event-admin terminal. To the floor it looks like the birthday video glitched. Five seconds later the *private-bar camera drops too*.',
+              'The NVR enters its “maintenance restart,” exactly as scheduled. Every floor camera and the basement go dark. *A blackout booked three hours ahead is an appointment, not an outage.*',
           },
           {
-            time: '10:08–10:09',
+            time: '2:47 PM',
             hidden: true,
             body:
-              'Kiyaah goes in behind the private bar and *swaps the real silver sprayer for the poisoned twin*. In and out inside ninety-four seconds.',
+              'Anurag fires a replayed sandbox webhook from inside the office network — a fake settlement failure. Within four minutes, *eleven people leave the terrace* with unimpeachable reasons, and the suspect list writes itself.',
           },
           {
-            time: '10:09:53',
+            time: '2:52 PM',
+            hidden: true,
             body:
-              'The feed comes back and the video resumes. The room turns around to a bar that looks exactly the way it did ninety-four seconds ago.',
+              'Giles rides the service lift on dead badge V-07, doses the staged tumbler, and runs one blank shot to confirm the machine will not fail the plan. *Utkarsh half-sees a man with a steel tumbler. Rishabh hears the hiss.*',
+          },
+          {
+            time: '3:05 PM',
+            body:
+              'Giles joins the War Room holding an HDMI story. The HDMI has been in a backpack on the terrace since 8:30 — a fact that is, for now, sitting quietly in Yash T.\'s bag.',
           },
         ],
       },
@@ -468,17 +474,17 @@ export const REVEAL_DECK = [
         type: 'paper',
         label: 'The obvious clue',
         body: [
-          'The blackout was *meant* to be found.',
-          'It pulled the whole room toward ninety-four seconds, and away from the fifteen minutes before them — where the murder actually was.',
+          'The 2:47 alert was *meant* to be found — eventually.',
+          'Its real job was to hand *eleven people* a guilty-looking reason to move — and the party\'s own errands, the couriers and prizes and printers and smokers, supplied twenty-three more. Thirty-four gaps, so that no single absence would ever stand out. The suspect pool was a design feature.',
         ],
       },
       {
         type: 'stats',
         items: [
-          { n: '94', unit: 'sec', label: 'Camera blind' },
-          { n: '05', unit: 'sec', label: 'Projector, then the bar camera' },
-          { n: '01', label: 'Sprayer swapped' },
-          { n: '02', label: 'Guests who saw it anyway' },
+          { n: '36', unit: 'min', label: 'Cameras blind' },
+          { n: '04', unit: 'min', label: 'Alert to scattered party' },
+          { n: '02', label: 'Lift rides on badge V-07' },
+          { n: '03', label: 'Witnesses anyway' },
         ],
       },
     ],
@@ -489,17 +495,17 @@ export const REVEAL_DECK = [
     id: 'the-log',
     chapter: 'The clever part',
     kicker: 'The one detail most players never worked out',
-    title: 'She Needed The *Log*, Not The Key',
+    title: 'He Needed The *Log*, Not The Lift',
     dek:
-      'Kiyaah had every right to be behind that bar. She had been there all night. So why the borrowed apron and somebody else’s pass?',
+      'Giles had every right to walk to the third floor. Ops fetches things all day. So why ride the service lift on a dead visitor\'s badge?',
     blocks: [
       {
         type: 'paper',
-        label: 'What the door log says',
+        label: 'What the lift log says',
         tilt: 'L',
         body: [
-          'One staff pass in. One staff pass out. Both inside the ninety-four seconds.',
-          "The pass belongs to a member of staff who had *clocked out and gone home hours earlier* — a retired credential that Oindrilla's admin session had quietly switched back on.",
+          'One ride up at 2:52. One ride down at 2:54. Both on *visitor badge V-07* — a badge whose visitor left the building on Tuesday, signed back into the reception tray at 11:20 that morning.',
+          'A dead badge that Yao\'s nameless admin session had quietly *switched back on* at 11:36.',
         ],
       },
       {
@@ -507,8 +513,8 @@ export const REVEAL_DECK = [
         tone: 'signal',
         label: 'What actually happened',
         body: [
-          'Kiyaah pulled a service apron on over her clothes, used the borrowed pass, and swapped the sprayer.',
-          'She never needed the access. *She needed the record to name somebody else.* If that log had said her name, this case would have closed the same night.',
+          'Giles took the service lift so the main stairwell would not carry him, and badged it with V-07 so the log would name a visitor who was not in the building. He had lifted that badge out of the reception tray himself at 9:41 that morning, signing the coffee-machine technician in.',
+          'He never needed the access. *He needed the record to name somebody else.* If that log had read his own badge, this case would have closed the same evening.',
         ],
       },
       {
@@ -516,7 +522,7 @@ export const REVEAL_DECK = [
         aged: true,
         label: 'The mismatch',
         text:
-          'A sprayer she was entitled to touch, entered on a pass she had no reason to use. *That is what finally caught her.*',
+          'A floor he was entitled to walk to, ridden on a badge he had no reason to hold. *That is what finally caught him.*',
       },
     ],
   },
@@ -525,28 +531,35 @@ export const REVEAL_DECK = [
   {
     id: 'witnesses',
     chapter: 'Witnesses',
-    kicker: 'Two guests who were in the right seat',
-    title: "The Camera Was Blind. The Room *Wasn't*.",
+    kicker: 'Three colleagues who were in the right seat',
+    title: "The Cameras Were Blind. The Floor *Wasn't*.",
     blocks: [
       {
         type: 'note',
-        label: 'Anjul · 10:09 PM, service stair',
+        label: 'Utkarsh · 2:52 PM, desk facing the lifts',
         quote:
-          'Saw the service apron come back down the stair — and clocked that the face under it did not belong to staff.',
-        source: 'Replica circle · was never a suspect',
+          'Half-saw a man at the coffee nook holding a steel tumbler — and filed it as “party cleanup.” He could not swear to the face. He has been redrawing it all evening.',
+        source: 'Engineering · was on the hotfix, four desks away',
       },
       {
         type: 'note',
-        label: 'Parinitha · side banquette, by the bar arch',
+        label: 'Rishabh · 2:52 PM, desk by the nook',
         quote:
-          'Had a clear line to the private bar the whole time the camera was down. Saw the swap itself.',
-        source: 'Pixel circle · was never a suspect',
+          'Heard the machine hiss out a pull and thought “the Beast lives.” Nobody claims that brew. The counter logged it anyway.',
+        source: 'Engineering · never looked up',
+      },
+      {
+        type: 'note',
+        label: 'Raaghav · 2:53 PM, third-floor lift lobby',
+        quote:
+          'Heard the machine finish as the lift doors opened, and saw nobody near it. One minute earlier and he walks into the murder being armed.',
+        source: 'Marketing · fetching the mascot cutout',
       },
       {
         type: 'strip',
         label: 'What they missed',
         text:
-          'Killing a camera is not the same as killing every line of sight. The conspiracy planned around the lens. *It did not plan around the seating.*',
+          'Killing the cameras is not the same as killing every ear and eyeline on a floor of headphones. The conspiracy planned around the lens. *It did not plan around the desks.*',
       },
     ],
   },
@@ -555,34 +568,34 @@ export const REVEAL_DECK = [
   {
     id: 'the-murder',
     chapter: '● The murder',
-    kicker: '10:12 PM · the actual moment of death',
-    title: 'Two Sprays Of *Orange*',
+    kicker: '3:15 PM · the actual moment',
+    title: 'Two *Sugars*',
     blocks: [
       {
         type: 'paper',
-        label: 'The finding — what killed Armaan Khanna',
+        label: 'The finding — what killed Dev Malhotra',
         body: [
-          'Armaan lifts the Last Light and Kiyaah finishes it tableside, exactly the way she wrote the ritual years ago: *two sprays of orange oil over the top of the glass.*',
-          'That garnish is the murder. Nothing was ever dropped into the drink. The aconitine reaches the rim, his lips and the surface all at once — one serving, no splash, and *nothing else in the room touched.*',
+          'At 3:15 the machine works — third pull of the day. The coffee dissolves the film of concentrate waiting below the rim of his own tumbler. He adds two sugars, carries it into the Glass Room, and shuts the door.',
+          'Nothing was ever dropped into a drink in front of anyone. Nobody followed him downstairs. *The dose had been waiting for twenty-three minutes*, and the only hands on the cup, all day, were his.',
         ],
-        source: 'Cross-referenced with the toxicology summary and the atomizer analysis',
+        source: 'Cross-referenced with the toxicology summary and the tumbler analysis',
       },
       {
         type: 'card',
         tone: 'brass',
-        label: 'Why the last hands are the only hands',
+        label: 'Why “who was near him?” was the wrong question',
         body: [
-          'Aconitine works in minutes, not hours. There is no slow build, no window in which somebody earlier in the evening could have done it.',
-          'Which means the last person to touch that glass is the *only* person who could have.',
+          'Being near Dev at 3:15 means nothing — the murder was already sitting in the cup.',
+          'Being at the coffee nook at 2:52 means *everything*. The room spent the night interrogating the wrong timestamp.',
         ],
       },
       {
         type: 'stats',
         items: [
-          { n: '02', label: 'Sprays' },
-          { n: '01', label: 'Glass' },
-          { n: '07', unit: 'min', label: 'To first symptom' },
-          { n: '22', unit: 'min', label: 'Toast to death' },
+          { n: '03', label: 'Pulls on the counter' },
+          { n: '23', unit: 'min', label: 'Dose to sip' },
+          { n: '25', unit: 'min', label: 'Sip to collapse' },
+          { n: '00', label: 'Hands laid on him' },
         ],
       },
     ],
@@ -592,36 +605,42 @@ export const REVEAL_DECK = [
   {
     id: 'beat-4',
     chapter: 'Beat 4 of 4',
-    kicker: '10:19 PM — 10:48 PM',
-    title: 'The Last Twenty-Two *Minutes*',
+    kicker: '3:12 PM — 4:30 PM',
+    title: 'The Last *Hour*',
     blocks: [
       {
         type: 'beats',
         items: [
           {
-            time: '10:19 PM',
+            time: '3:12 PM',
             body:
-              'His hands stop working mid-sentence. Aconitine takes the nerves first and the heart immediately after.',
+              'Dev tells Elias _“save me some payasam”_ and takes the stairs down. Nobody sends him. Nobody needs to.',
           },
           {
-            time: '10:22 PM',
-            body:
-              'He collapses at the stage rail. *Roddy is kneeling beside him before the room finishes screaming* — the one person there who already knows exactly what he is looking at.',
-          },
-          {
-            time: '10:24 PM',
+            time: '3:15 PM',
             hidden: true,
             body:
-              "Victoria tells the first officer to seize the bar's inventory logs. She wants her own fake invoice *found early, by the police*, before anyone can ask how it got in there.",
+              'The grinder runs. Thejas, forty feet away in headphones, hears it and thinks *“good for Dev.”* The Beast\'s legendary bitterness and the floor\'s permanent coffee smell hide everything.',
           },
           {
-            time: '10:34 PM',
-            body: 'Paramedics stop resuscitation. Twenty-two minutes from the toast.',
-          },
-          {
-            time: '10:48 PM',
+            time: '3:31 PM',
             body:
-              'Goa Police seal the venue. Nobody has left. *Nobody needed to* — all five of them are still in the room, sitting in five different circles.',
+              'Shashwat passes the Glass Room and sees Dev *“head down over his notes.”* He decides it would be rude to knock. He has been re-walking those four seconds ever since.',
+          },
+          {
+            time: '3:45 PM',
+            body:
+              'Aarohi shreds one page at the third-floor shredder — a typo\'d agenda, at Dev\'s own request from lunchtime. It will cost her the worst evening of anyone innocent in this building.',
+          },
+          {
+            time: '3:55 PM',
+            body:
+              'Aarohi comes down for the speaker and sees him through the glass. Kursheeth does CPR for eleven minutes and knows by minute two. *“Query poisoning”* is his sentence before it is the paramedic\'s.',
+          },
+          {
+            time: '4:30 PM',
+            body:
+              'Inspector Kale seals floors one to three and the terrace. Zero exits since 1 PM — the company Ubers don\'t even run until six. *All five of them are still in the building*, in five different departments.',
           },
         ],
       },
@@ -637,10 +656,10 @@ export const REVEAL_DECK = [
     kicker: 'Part three',
     title: 'Why It *Held*',
     lines: [
-      { term: 'Ten', text: 'real, provable motives in one room' },
-      { term: 'Five', text: 'innocent people who looked guilty to the end' },
-      { term: 'Five', text: 'separate circles, so no table ever looked complete' },
-      { term: 'One', text: 'very obvious blackout to stare at' },
+      { term: 'Twelve', text: 'real, provable motives in one office' },
+      { term: 'Seven', text: 'innocent people who looked guilty to the end' },
+      { term: 'Five', text: 'departments, so no team ever looked complete' },
+      { term: 'One', text: 'window everyone stared at — the wrong one' },
     ],
   },
 
@@ -648,8 +667,8 @@ export const REVEAL_DECK = [
   {
     id: 'misdirection',
     chapter: 'Misdirection',
-    kicker: 'Why a room of fifty-one people could not close it',
-    title: 'Ten Real Motives, Five Innocent *People*',
+    kicker: 'Why sixty-nine colleagues could not close it',
+    title: 'Twelve Real Motives, Seven Innocent *People*',
     blocks: [
       {
         type: 'card',
@@ -657,40 +676,40 @@ export const REVEAL_DECK = [
         index: '01',
         label: 'The suspects were genuinely dangerous',
         body: [
-          'Ten guests had a real, provable reason to want Armaan dead. Five of them were innocent: *Tara Singhania, Tanvi Vartak, Rishi Raj Rahul, Vinod Raghuwanshi* and *Anna Russo*. You could build a complete single-killer case against any one of them — and most of the room did.',
+          'Twelve people had real, provable reasons to want the report dead. Seven were innocent: *Victor, Sukhans, Aarohi, Nehal, Prerna, Adithya* and *Luke*. You could build a complete single-killer case against any one of them — and most of the room did.',
         ],
       },
       {
         type: 'card',
         tone: 'signal',
         index: '02',
-        label: 'The killers sat at five different tables',
+        label: 'The window was a trap',
         body: [
-          'Thimble, Oracle, Forgery, Hemlock, Amber. No single circle ever looked complete. Every accusation in Round 1 said _a suspect’s own people are covering for them_ — and that theory can never close on a five-way alignment across the room.',
+          'The room asked _“who was near Dev between 3:12 and 3:55?”_ all night. The murder was committed at 2:52, armed at 8:12 AM, and designed on Wednesday. The question that breaks the case is *“who needed the machine to work today?”*',
         ],
       },
       {
         type: 'card',
         tone: 'signal',
         index: '03',
-        label: 'The blackout was bait',
+        label: 'The chaos was the uniform',
         body: [
-          'It is the obvious opportunity, so it was left to be found. It pulled everyone toward ninety-four seconds instead of the fifteen minutes before them, when the poison was already in the building and the paperwork was already six hours old.',
+          'A repair ticket, a WiFi flap, a payment alert, a courier at the gate — every component of the plan was indistinguishable from a normal day at this company. Nobody looks up for weather. *They made sure it all looked like weather.*',
         ],
       },
       {
         type: 'card',
         tone: 'signal',
         index: '04',
-        label: "The room inherited Armaan's own habit",
+        label: 'The killers sat in five departments',
         body: [
-          'He had spent years making sure nobody compared notes across tables. So the room kept searching inside its own circle, exactly as he had trained it to — which is the same blind spot that got him killed.',
+          'Payments, engineering, ops, support, marketing. Every team-shaped theory died on one exonerating alibi — and between the 2:47 alert and the party\'s own errands, *thirty-four people* had window gaps, so no single absence ever stood out.',
         ],
       },
       {
         type: 'strip',
         label: 'Worth saying plainly',
-        text: 'Ten guilty-looking people was never a flaw in the evidence. *It was the plan.*',
+        text: 'Thirty-four guilty-looking people was never a flaw in the evidence. *It was the plan.*',
       },
     ],
   },
@@ -700,31 +719,31 @@ export const REVEAL_DECK = [
     id: 'cleared',
     chapter: 'Cleared',
     kicker: 'Two innocent people, wronged in two different ways',
-    title: 'Framed, And *Used*',
+    title: 'Framed, And *Suspected*',
     blocks: [
       {
         type: 'paper',
-        label: 'Tara Singhania — framed',
+        label: 'Victor — framed',
         tilt: 'L',
         body: [
-          'Tara had nothing to do with it. Victoria built the fake invoice _specifically_ so the replacement sprayer would look like it had arrived through Tara’s customs vendor.',
-          'Her real access — crates, customs seals, display cabinets — is what made the lie survive first scrutiny. Somebody chose her, on paper, hours before the party started.',
+          'Victor had nothing to do with any of it. Akshat manufactured the Zenlyt onboarding pack _specifically_ so the ghost vendor would trace to him — chosen because a year of bad ROAS (Akshat\'s own skim) had already made him look careless.',
+          'The frame died on one fact a backdated document cannot fake: *the file was created Wednesday at 11:58 PM.* His secretive phone-booth call? A client tearing into his numbers. He was too proud to say so.',
         ],
       },
       {
         type: 'paper',
-        label: 'Tanvi Vartak — used',
+        label: 'Sukhans — suspected',
         body: [
-          'Nobody planted anything on Tanvi. The annotated floor plan really is hers, in her own fineliner, and _DO NOT BLOCK BAR DURING REEL_ and _HOLD CAKE UNTIL ORANGE_ really are stage directions for a cake reveal.',
-          'Sneha arrived at 7:05 PM with a seating plan to rearrange, saw that the party planner had already worked out on paper the exact second the whole room would turn its back on the private bar — and built the timing of the murder on top of it.',
+          'He hired the victim, argued against extending the audit in front of witnesses, and spent the back half of the window alone twenty feet from the Glass Room. Every early theory went through him.',
+          'The investor call checks out — calendar, the investor, and Ishan\'s sightline through the cabin glass. And the Wednesday quote everyone repeated had a second half only Himanshu heard: _“then we burn.”_ That was Elias, agreeing to publish.',
         ],
       },
       {
         type: 'strip',
         aged: true,
-        label: 'The worst part',
+        label: 'The worst of it',
         text:
-          'The conspiracy never had to engineer a blind spot in the crowd. *The party planner had already drawn them one.*',
+          'Aarohi shredded a *typo\'d agenda*, at Dev\'s own request — and spent the evening as the room\'s second-favourite suspect for doing her job.',
       },
     ],
   },
@@ -733,7 +752,7 @@ export const REVEAL_DECK = [
   {
     id: 'evidence',
     chapter: 'Evidence log',
-    kicker: 'Nine pieces of paper, and what each one settled',
+    kicker: 'Fourteen pieces of paper, and what each one settled',
     title: 'What Proved *It*',
     // Reads CASE_SOLUTION.proof — the answer key, not a restatement of it.
     blocks: [{ type: 'proof' }],
@@ -745,7 +764,7 @@ export const REVEAL_DECK = [
     kind: 'cover',
     chapter: '● Case closed',
     tag: 'Verdict',
-    title: 'Five People. Five Tables. One *Glass*.',
+    title: 'Five People. Five Departments. One *Tumbler*.',
     // The verdict paragraph is CASE_SOLUTION.verdict, injected by RevealDeck.
     lead: null,
     blocks: [
@@ -753,13 +772,13 @@ export const REVEAL_DECK = [
         type: 'note',
         label: 'Closing note',
         quote:
-          '“He spent years making sure nobody in this room ever compared notes. Five of them did.”',
-        source: 'Inspector Ira Deshpande · closed 8 August 2026',
+          '“Nothing entered this building for the murder. It was all already here — the plant, the machine, the badge, the chaos.”',
+        source: 'Inspector Arjun Kale · closed 21 August 2026',
       },
       {
         type: 'circles',
-        text: 'Thimble · Oracle · Forgery · Hemlock · Amber',
-        note: 'the five circles that were in it together',
+        text: 'Payments · Engineering · Ops · Support · Marketing',
+        note: 'the five departments that were in it together',
       },
     ],
   },

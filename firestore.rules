@@ -15,10 +15,17 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Delete is open because the host has to be able to wipe the channel
+    // between games. It used to be `delete: if false`, which meant the Host
+    // Panel's Reset Game silently failed on the chat — clearAllMessages()
+    // swallows its own error, so the host saw a clean reset while every player
+    // still had the previous game's thread in front of them.
+    // Update stays closed: nobody edits a message once it is sent.
     match /messages/{messageId} {
       allow read: if true;
       allow create: if true;
-      allow update, delete: if false;
+      allow delete: if true;
+      allow update: if false;
     }
   }
 }

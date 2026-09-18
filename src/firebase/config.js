@@ -3,7 +3,7 @@ import {
   initializeFirestore,
   persistentLocalCache,
   persistentMultipleTabManager,
-  doc, setDoc, getDoc, updateDoc, onSnapshot, collection, query, getDocs, writeBatch,
+  doc, setDoc, getDoc, updateDoc, deleteField, onSnapshot, collection, query, getDocs, writeBatch,
   orderBy, limit
 } from 'firebase/firestore';
 import { CASE_FILES } from '../data/gameData.js';
@@ -24,7 +24,7 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firestore with IndexedDB offline persistence.
 //
-// 51 phones on shaky party wifi: the persistent cache lets the app keep
+// 69 phones on shaky office wifi: the persistent cache lets the app keep
 // rendering the last-known round, files and clues through a dropped connection
 // instead of blanking out, and replays queued writes when the link returns.
 // persistentMultipleTabManager is required because players routinely have the
@@ -156,7 +156,7 @@ export const endGame = async () => {
 //
 // Logins survive because App.jsx mirrors the session to localStorage. Do not
 // remove that without also removing this button — a reload without session
-// persistence dumps all 51 players back at the login screen mid-game.
+// persistence dumps all 69 players back at the login screen mid-game.
 export const triggerForceRefresh = async () => {
   const gameStateRef = doc(db, GAME_STATE_DOC);
   try {
@@ -239,7 +239,7 @@ export const revealCluesForRound = async (roundNumber) => {
 // --- COMMS CHANNEL ---
 
 // How many messages a client keeps in view. The channel is a party chat, not an
-// archive: 51 people over an evening will run well past this, and nobody scrolls
+// archive: 69 people over an evening will run well past this, and nobody scrolls
 // back two hours. It also bounds the unread badge — one of the hundred is the
 // read watermark, so the count can never exceed 99.
 const MESSAGE_WINDOW = 100;
@@ -279,24 +279,34 @@ export const subscribeToMessages = (callback, onError) => {
   );
 };
 
-// Clear all chat messages
+// A Firestore write batch commits at most 500 operations. The channel is not
+// windowed on the server — only the read in subscribeToMessages is — so the
+// collection holds every message the event ever sent. The last 69-player
+// evening left 265; a longer one runs past 500, and a single over-size batch is
+// rejected whole, clearing nothing.
+const BATCH_LIMIT = 450;
+
+// Clear the whole channel. Host-only, called by Reset Game.
+//
+// This throws on failure instead of logging and returning, because it has
+// already failed silently once: firestore.rules carried
+// `allow update, delete: if false` on messages, so every delete here was
+// rejected, the error was swallowed, and the host saw a clean reset while all
+// 69 players still had the previous game's thread in front of them. A reset
+// that cannot clear the chat must say so.
 export const clearAllMessages = async () => {
-  try {
-    const messagesRef = collection(db, 'messages');
-    const q = query(messagesRef);
-    const snapshot = await getDocs(q);
-    
-    // Use batch delete for better performance
+  const snapshot = await getDocs(query(collection(db, 'messages')));
+
+  for (let i = 0; i < snapshot.docs.length; i += BATCH_LIMIT) {
     const batch = writeBatch(db);
-    snapshot.docs.forEach((doc) => {
-      batch.delete(doc.ref);
+    snapshot.docs.slice(i, i + BATCH_LIMIT).forEach((docSnap) => {
+      batch.delete(docSnap.ref);
     });
-    
     await batch.commit();
-    console.log(`Cleared ${snapshot.docs.length} messages`);
-  } catch (error) {
-    console.error('Error clearing messages:', error);
   }
+
+  console.log(`Cleared ${snapshot.docs.length} messages`);
+  return snapshot.docs.length;
 };
 
 // --- PLAYER DATA (Unlocked Clues) ---
@@ -381,7 +391,6 @@ export const resetGameState = async () => {
     // Reset votes
     await setDoc(votesRef, {
       votes: {},
-      voteCounts: {},
       lastUpdated: Date.now()
     });
 
@@ -391,11 +400,14 @@ export const resetGameState = async () => {
       lastUpdated: Date.now()
     });
 
-    // Clear all chat messages
+    // Clear all chat messages. Deliberately last: if the channel refuses to
+    // clear, the round, votes and clues are already back to zero, and the
+    // rethrow below tells the host which half didn't land.
     await clearAllMessages();
 
   } catch (error) {
     console.error('Error resetting game state:', error);
+    throw error;
   }
 };
 
@@ -422,7 +434,6 @@ export const initializeVotes = async () => {
     if (!docSnap.exists()) {
       await setDoc(votesRef, {
         votes: {}, // { userId: { round: suspectId } }
-        voteCounts: {}, // { suspectId: count }
         lastUpdated: Date.now()
       });
     }
@@ -432,36 +443,34 @@ export const initializeVotes = async () => {
 };
 
 // Submit a vote
+//
+// `votes` is the only record of who voted for whom: { userId: { round: suspectId } }.
+// There is deliberately no stored tally alongside it. A flat { suspectId: count }
+// cache cannot express "this round" — it summed every round of the game into one
+// number, so by Round 7 the ballot screen was reporting seven rounds of votes as
+// though the room had just cast them. The counts are derived per round from this
+// map instead (see App.jsx).
+//
+// The write is a deep merge of one field rather than a read-then-replace of the
+// whole document: 69 phones tap the same ballot within a few seconds of the host
+// opening it, and a getDoc/setDoc pair would have each voter overwrite whatever
+// landed between their read and their write. A merge touches only this player's
+// entry, so nobody's vote is lost — and it creates the document if the host has
+// not initialised it yet. Changing a vote just overwrites this round's key.
 export const submitVote = async (userId, suspectId, currentRound) => {
   const votesRef = doc(db, VOTES_DOC);
   try {
-    const docSnap = await getDoc(votesRef);
-    const data = docSnap.exists() ? docSnap.data() : { votes: {}, voteCounts: {} };
-    
-    const votes = data.votes || {};
-    const voteCounts = data.voteCounts || {};
-    
-    // Get user's previous vote for this round (if any)
-    const userVotes = votes[userId] || {};
-    const previousVote = userVotes[currentRound];
-    
-    // Remove previous vote count
-    if (previousVote && voteCounts[previousVote]) {
-      voteCounts[previousVote] = Math.max(0, (voteCounts[previousVote] || 0) - 1);
-    }
-    
-    // Add new vote
-    userVotes[currentRound] = suspectId;
-    votes[userId] = userVotes;
-    
-    // Update vote counts
-    voteCounts[suspectId] = (voteCounts[suspectId] || 0) + 1;
-    
-    await setDoc(votesRef, {
-      votes,
-      voteCounts,
-      lastUpdated: Date.now()
-    });
+    await setDoc(
+      votesRef,
+      {
+        votes: { [userId]: { [currentRound]: suspectId } },
+        // Clears the retired cross-round cache the moment anyone votes, so a
+        // database carried over from an earlier game stops holding a stale total.
+        voteCounts: deleteField(),
+        lastUpdated: Date.now()
+      },
+      { merge: true }
+    );
   } catch (error) {
     console.error('Error submitting vote:', error);
     throw error;
@@ -475,7 +484,7 @@ export const subscribeToVotes = (callback) => {
     if (doc.exists()) {
       callback(doc.data());
     } else {
-      callback({ votes: {}, voteCounts: {} });
+      callback({ votes: {} });
     }
   });
 };

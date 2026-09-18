@@ -1,215 +1,67 @@
-# Host Print Pack
-## Velvet Ember: Birthday in Red
+# HOST_PRINT_PACK.md — Printable Host Packet (Case 2108-C · Onam in Black)
 
-This is the printable host packet for the live event.
+> **Host-only. Full spoilers.** Everything worth having on paper at the event.
+> The only *player-facing* paper is the 69 login cards — every clue travels
+> in-app. Print this packet single-sided and keep it out of the room's sight.
 
----
+## 1. Print checklist
 
-## One-Page Summary
+- [ ] 69 login cards — name + login code only ([CLUE_CODES.md](CLUE_CODES.md) has
+      the table; shuffle the print order, never print role or department)
+- [ ] This packet (suspect roster, witness map, answer key)
+- [ ] [HOST_LIVE_FACILITATION.md](HOST_LIVE_FACILITATION.md) run of show
+- [ ] [HOST_QA_BRIEFING.md](HOST_QA_BRIEFING.md) objection sheet
+- [ ] One spare phone logged in as host backup
 
-- Venue in fiction: For the Record, Panjim, Goa
-- Date in fiction: 8 August 2026
-- Victim: Armaan Khanna, founder of Velvet Ember Spirits
-- Cast: 51 players
-- Prime suspects: 10
-- Killers: 5
-- Method: aconitine hidden in the finishing spray of Armaan's personal Last Light drink
-- Core twist: the room thinks one suspect and their own circle did it; the truth is a five-person cross-group conspiracy
-- Clue delivery: **in-app riddle lock, no printed clue cards** — see below
+## 2. The suspect roster (12 primes of 34 POIs)
 
----
+| # | Name | Dept | Status | One-line lane |
+|---|---|---|---|---|
+| 1 | Anurag | Payments | **KILLER — mastermind** | Knew Tuesday; typed before the ping; staged the alert |
+| 2 | Yao | Engineering | **KILLER — blind spot** | The outage, the dead footage, the 11:31 schedule, the badge |
+| 3 | Giles | Ops | **KILLER — hands** | The ticket, the Uber, badge V-07, the 2:52 dose, the HDMI lie |
+| 4 | Kalaivani | Support | **KILLER — toxin** | The hedge, the flask, the skipped watering, the GRN signature |
+| 5 | Akshat | Marketing | **KILLER — false trail** | The reseller skim; forged the Victor pack Wed 11:58 PM |
+| 6 | Victor | Marketing | Innocent — **framed** | Phone-booth pride; the pack's metadata clears him |
+| 7 | Sukhans | Founders | Innocent | "Witch hunt" quote; verified investor call; Ishan's sightline |
+| 8 | Aarohi | Founders Office | Innocent | Printed & shredded a typo'd agenda at Dev's request; laid the Glass Room out at 3:04 (her window gap); found him |
+| 9 | Nehal | Marketing | Innocent | "The split"; escalation was real, on WhatsApp |
+| 10 | Prerna | Design | Innocent | Related-party vendor; service stairs because the lift was held |
+| 11 | Adithya | Product | Innocent | "Missed it or enabled it"; War Room throughout, vouched |
+| 12 | Luke | Support | Innocent | Comps fight; second gate run on the register's next page |
 
-## How Clues Reach Players
+The other 22 POIs (window gaps, all innocent): Vipin, Yash S., Sharad, Aditi,
+Aksharaa, Rishabh, Akshay, Kashish, Ishan, Sanad, Pragati, Raaghav, Bhuvan,
+Aarush, Tauseef, Sonia, Ishika, Thejas, Navya, Amisha, Utkarsh, Priyanshu.
 
-Players earn clues themselves. On the Evidence screen, **ASK** deals a general riddle (nothing
-to do with the case, one-word answer); solving it unseals the next clue in that player's queue
-and shows a **code**. Anyone else who types that code into **CODE** gets the same clue.
+## 3. Witness relevance map (who to nudge, and for what)
 
-**ASK appears when you advance to Round 2** — nothing in the prize pool is reachable before
-then, so for Rounds 0–1 the corner is CODE alone. Say the loop out loud in the pre-game anyway;
-the button arriving to a room that already knows what it is for is the point.
+| Lane | Witnesses → what they hold |
+|---|---|
+| Machine / tumbler | Shivam (counter + 2 of his tickets, 2 of Dev's) · Aksharaa (**can name which Operations Executive raised #4417**) · Chirag ("THE BEAST LIVES" 9:41) · Vidisha (grinder + smell) · Rishabh (2:52 hiss) · Utkarsh (man with steel tumbler) · Raaghav (pull finishing, nobody there) · Thejas (3:15 grinder) · Shashwat (3:31 last sighting) |
+| Cameras / systems | Shrey (refused help) · Priyanshu (old admin lineage) · Mohit P. ("corrupted in the failover") · Tauseef (NVR shouldn't drop) · Navalika (badge desync timing) · Vadini (11:31 screenshot) |
+| Hedge / flask / mornings | Riya (skipped watering, filled cans) · Harsha (Thu 8:52 AM b-roll) · Tushar (washed kit, Thu evening) · Jason (basement, 8:37) · Kursheeth (8:41 walk-in) · Nikitha (unopened flask) · Navya (store sightings) |
+| Vendor / forgery | Karthik (May argument) · Pranav A. (invoice template favour) · Caleb (edit-history question) · Mohit A. (11:45 PM desk lamps) · Pragati (Zenlyt folder Wed night) · Ishika (no flinch at 2:47) · Daiwik (three drafts of the May recap) · Neha (the talking points) |
+| The alert / the plan | Sagrika (pre-ping typing) · Neha (phone pocketed) · Akshay (status page green) · Raksha (Adithya's sprint) |
+| Clearing the innocent | Ishan (Sukhans pacing) · Himanshu ("then we burn") · Bhuvan (Victor's booth) · Anusha (both halves of the Luke fight) · Sonia (WhatsApp escalation) · Binil (3:20 gate run from the rail) · Vidisha (print + shred brackets) · Amisha (nine samosas) · Vipin (Prerna in the bay at 2:58) · Simran (sent her half) |
+| Discovery | Elias ("save me some payasam") · Yash T. (**the HDMI was in his bag**) · Kursheeth (CPR, "query poisoning") · Aman (the livestream) · Shobhit (slo-mo with the War Room window in frame) |
 
-Every player's queue is ordered differently, so no two people win the same thing and the room
-only assembles the full picture by trading codes out loud. Your job during rounds 2–5 is to
-keep pushing them to share.
+## 4. Answer key (fold this page)
 
-The clue manifest further down this pack is your **override**: if a round stalls because nobody
-has solved anything, read a code out and the clue enters the room immediately.
-
----
-
-## Prime Suspect Roster
-
-| Character | Group | Public lane | Actual status |
-|---|---|---|---|
-| Sneha Ganesh | THIMBLE | Monday binder, finance motive, upstairs-booth argument | Killer · mastermind |
-| Tara Singhania | CANVAS | customs crate, provenance fraud, apparent bar access | Innocent suspect |
-| Kiyaah Rose Raghuwanshi | ORACLE | private-bar ritual, victim-only drink | Killer · delivery |
-| Victoria Vance | FORGERY | back-office documents, forged paper trail, inventory logs | Killer · false trail |
-| Roddy Faustus | HEMLOCK | botanical case, toxin knowledge, prep-room path | Killer · poison |
-| Oindrilla Chatterjee | AMBER | sound-booth access, blackout, QR lane | Killer · systems |
-| Tanvi Vartak | PIXEL | sightlines, event choreography, floor plan | Innocent suspect |
-| Rishi Raj Rahul | MYTHOS | back-lane rage, buyer pressure | Innocent suspect |
-| Vinod Raghuwanshi | REGENT | private meeting, attempted exit | Innocent suspect |
-| Anna Russo | REPLICA | display swap, bottle confusion, back-hall movement | Innocent suspect |
-
----
-
-## Killer Job Matrix
-
-| Job | Character | Supporting proof |
-|---|---|---|
-| Mastermind | Sneha | Monday binder, burner thread, upstairs-booth argument |
-| Delivery | Kiyaah | ritual contract, victim-only drink, fresh mister request |
-| False trail | Victoria | forged invoice, shell-ledger trail, hand-washing, envelope |
-| Toxin | Roddy | notebook fragment, prep-room handoff path, "dose" language |
-| Blind spot | Oindrilla | admin override, cloned QR, sound-booth reboot |
-
----
-
-## Clue Deck Manifest
-
-### Round 1 · Accusations
-| Code | Target | Assigned count | What it does |
-|---|---|---:|---|
-| LANTERN | Sneha | 5 | Opens mastermind lane |
-| HARBOR | Tara | 5 | Opens customs/frame lane |
-| CADENCE | Kiyaah | 5 | Opens ritual/bar lane |
-| MARBLE | Victoria | 5 | Opens paper-trail lane |
-| COMPASS | Roddy | 5 | Opens toxin lane |
-| TANGENT | Oindrilla | 5 | Opens blackout lane |
-| SATCHEL | Tanvi | 5 | Opens choreography lane |
-| PARADE | Rishi | 5 | Opens pressure/rage lane |
-| BOULDER | Vinod | 5 | Opens power/exit lane |
-| CARNIVAL | Anna | 6 | Opens display-swap lane |
-
-### Round 2 · Motives
-| Code | Target | What it proves |
-|---|---|---|
-| PENDULUM | Sneha | Armaan planned to scapegoat her in Monday audit |
-| SAFFRON | Tara | provenance fraud pressure |
-| DRIFTWOOD | Kiyaah | stolen ritual + personal leverage |
-| GRANITE | Victoria | forged ledgers + fall-girl setup |
-| THISTLE | Roddy | stolen formula and ownership theft |
-| LATTICE | Oindrilla | system abuse and blame memo |
-| ORIGAMI | Tanvi | prototype theft and stalking threat |
-| STAMPEDE | Rishi | staffing theft and reputation sabotage |
-| OBELISK | Vinod | regulatory leverage and secret recordings |
-| MOSAIC | Anna | insurance-adjacent replica fraud |
-
-### Round 3 · Evidence
-| Code | Title | What it proves |
-|---|---|---|
-| BEACON | Toxicology Summary | One altered drink, not poisoned batch |
-| FILAMENT | Atomizer Analysis | Twin mister, aconite carrier, prep-room fibres |
-| HALOGEN | Projector and Bar-Camera Log | 94-second blind spot |
-| GABLE | Floor Plan and Sightline Notes | Tanvi's lane logic and side-banquette visibility |
-| PARCHMENT | Supplier Invoice Mismatch | Tara frame-job |
-| TURNSTILE | Service QR Access Trace | cloned QR and sound-booth session |
-| QUARRY | Monday Binder Index | Armaan's scapegoat map |
-
-### Rounds 4-5 · Revelations
-| Code | Title | What it proves |
-|---|---|---|
-| SOLSTICE | Monday Audit Packet | Sneha was Monday's planned sacrifice |
-| HOLLOW | Private Bar Program Contract | Kiyaah owned the Last Light ritual |
-| BRAMBLE | Roddy's Missing Notebook Page | Roddy had method knowledge |
-| COBALT | Victoria's Signature Sheet | Victoria was framed and framing |
-| ZEPHYR | Admin Override Trace | Oindrilla's system path enabled the blind spot |
-| CATACOMB | Burner Group Transcript | five-way coordination across groups |
-
----
-
-## Witness Relevance Map
-
-Use this when deciding whom to nudge.
-
-### Method / atomizer lane
-- Ricardo — hears request for fresh orange-oil mister
-- Swati — sees polished silver mister appear
-- Parinitha — sees Kiyaah swap the atomizers
-- Aarushi — says the bitter-orange note is not from the bottle
-- Flora — smells medicinal note under the orange peel
-- John — hears Kiyaah tell staff one drink is for Armaan only
-- Aaina — notices Kiyaah behind the private bar alone too long
-- Vidya — notices orange-oil streak on tray
-
-### Blackout / systems lane
-- Lakshmi — sees Oindrilla at the admin screen
-- Vaidehi — sees admin override flicker
-- Nanu — sees Oindrilla with admin tablet
-- Chinmay — hears the service QR beep with no staff member near it
-- Anjul — sees a staff apron come down the service stair on someone who is not staff (the other end of that QR pass)
-- Dona — is at the mic when the projector glitches
-- Dinesh — sees reboot happen from the side console
-- Mahi — notices the side bar lane stays open while the floor turns
-- Amanda — notices the people nearest the bar barely react to the blackout
-
-### Poison handoff / prep-room lane
-- Savvy — sees Roddy carrying the case toward prep-room corridor
-- Govind — sees Roddy leave the prep-room empty-handed
-- Keith — sees Roddy return without the case
-- Valerie — hears Roddy say dose in the wrong setting
-
-### Paper trail / frame-job lane
-- Ajay — sees Victoria with the envelope
-- Meera — hears Victoria and Oindrilla whisper invoice
-- Nolani — hears Victoria say shell account
-- Fabiola — hears Tara say the customs seal was already broken before she touched the crate
-- Khyati — sees Tara's crate reopened after Armaan said it would stay sealed
-- Chayne — has footage placing Anna near the gift table during the glitch
-
-### Mastermind / Monday binder lane
-- Chryselle — sees Sneha leave the upstairs booth empty handed, folder still on the table
-- Sunali — hears Sneha ask which upstairs room the red folder had been left in
-- Natasha — catches Sneha and Kiyaah ending a conversation too quickly
-
-### Symptom / collapse lane
-- Shubham — hears “orange, not bottle” near the bar
-- Fabiola — sees Armaan blink hard before the collapse
-- Mahi — notices he holds the glass like it is suddenly heavy
-- Hima — sees him set the glass down harder than intended
-- Keith — notices how fast people start talking poison
-- Nanu — counts the seconds between first physical failure and collapse
-- Ashish — mistakes it for heart trouble at first, which helps establish how non-obvious the method looked in real time
-- Kristen — reads the ritual as too rehearsed to be innocent
-
-### Red-herring lanes
-- Aayushi — sees Anna at the display cabinet right after the glitch
-- Esha — hears Tara accuse Armaan of passing fakes as provenance
-- Meenal — tries to leave with Vinod
-- Soham — hears Vinod threaten Armaan earlier in the night
-- Akash — says the loudest argument was not the one by the bar
-- Sanika — identifies the room as staged before anyone uses the word
-
----
-
-## Materials Checklist
-
-> **There are no clue cards to print.** The motive, evidence and revelation codes are won in
-> the app through the riddle lock (see below). Login cards are the only paper the players get.
-
-### Mandatory
-- 51 login cards
-- 1 host device
-- 1 printed copy of [HOST_LIVE_FACILITATION.md](HOST_LIVE_FACILITATION.md)
-- 1 printed copy of [HOST_QA_BRIEFING.md](HOST_QA_BRIEFING.md)
-- 1 printed copy of the clue manifest below — your override when a round stalls
-
-### Nice to have
-- Printed suspect roster for the host
-- Printed witness relevance map
-- Pens / markers for live tally notes
-- One spare phone logged in as host backup
-
----
-
-## Final Answer Key
-
-**The killer team:** Sneha Ganesh, Kiyaah Rose Raghuwanshi, Victoria Vance, Roddy Faustus, Oindrilla Chatterjee.
-
-**The method:** aconitine hidden in the twin orange-oil atomizer used only on Armaan's personal Last Light.
-
-**The core misdirection:** forged Tara paperwork + blackout + ten separate social circles.
-
-**The line the room should eventually reach:** this was not one suspect with loyal friends. It was five different suspects performing five different jobs.
+- **Victim:** Dev Malhotra, revenue-assurance consultant, hired by both founders
+  31 July; cover story "payments consultant"; briefing scheduled Friday 4 PM.
+- **Method:** Oleander concentrate (terrace hedge) in his personal tumbler, dosed
+  empty at 2:52 PM, dissolved by his own 3:15 coffee. Giles's share was decanted into a
+  bottle in the 8:37 Uber; the rest stayed in Kalaivani's flask, which is why she would
+  not let anyone open it. Machine repair booked 8:12 AM
+  (valve had been shut two weeks); camera gap 2:45–3:21 scheduled at 11:31 AM;
+  2:47 alert = sandbox webhook replay; service lift on dead badge V-07.
+- **The five:** Anurag (plan) · Kalaivani (toxin) · Giles (hands) · Yao (blind
+  spot) · Akshat (false trail). Chat: "Fantasy League ⚽", Wed 9:12 PM.
+- **The money:** ₹3.4 crore / 14 months — reserve diversion ("CHIMP PROCESING"),
+  cloud-partner markup, ghost vendor Zenlyt (₹68L), 12% media reseller.
+- **Cleared by:** metadata (Victor), calendar + investor + Ishan (Sukhans),
+  reconstructed "AGNEDA" page (Aarohi), WhatsApp thread (Nehal), file-access log
+  + held lift (Prerna), War Room (Adithya), register's next page (Luke).
+- **Win condition:** the room names the team of five and the tumbler-not-machine
+  method. Four of five with the method = moral victory; grant it generously.

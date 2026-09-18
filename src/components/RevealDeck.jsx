@@ -15,7 +15,7 @@ import { REVEAL_DECK, REVEAL_VERDICT } from '../data/revealDeck';
  * ── Why the slides are rebuilt rather than embedded ─────────────────────────
  * The projected deck is a fixed 1920×1080 stage scaled by a single transform.
  * That is exactly right for a projector and unusable on a phone: at 390px the
- * scale factor is 0.20, which puts its 26px body copy on screen at 5px. Fifty-one
+ * scale factor is 0.20, which puts its 26px body copy on screen at 5px. Sixty-nine
  * players read this on phones. So the slides reflow here instead of scaling, and
  * they speak in the app's voice — Special Elite / Courier Prime / IBM Plex Mono
  * at the §3.2 mobile scale — because DESIGN_LANGUAGE.md §3.1 is explicit that the

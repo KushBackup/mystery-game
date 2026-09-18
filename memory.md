@@ -31,11 +31,17 @@
 - **Brand:** Astral Project
 - **Game name:** Astral Project's Murder Mystery Experience
 - **Real-world purpose:** Social murder-mystery + networking event for 51 attendees who mostly do not know each other beforehand. The game's events are *not real*.
-- **Player count:** 51 playable guests.
-- **Live game date in fiction:** 2026-08-08, set at For the Record in Panjim, Goa.
-- **Victim (spoiler):** Armaan Khanna — fictional founder and CEO of Velvet Ember Spirits.
-- **Killer reveal (spoiler):** Five killers, led by Sneha Ganesh. The full team is Sneha Ganesh, Kiyaah Rose Raghuwanshi, Victoria Vance, Roddy Faustus, and Oindrilla Chatterjee.
-- **Murder method:** aconitine hidden in the orange-oil finishing spray for Armaan's private signature drink, the Last Light.
+- **⚠️ Two cases live in this repo (2026-08-21).** `main` carries the 51-player **Velvet Ember** case (For the Record, Panjim, 2026-08-08 — victim Armaan Khanna, five killers led by Sneha Ganesh, aconitine in the Last Light's finishing spray). The branch **`triplespeed-onam`** carries the 69-player **Onam in Black** case below. Bullets in this file about Velvet Ember apply to `main` only.
+
+### The Onam in Black case (branch `triplespeed-onam`, written 2026-08-21)
+
+- **Cast:** the real TripleSpeed roster from the user's TSV — 70 employees minus Kushagra (the host, excluded from the fiction by his instruction) = 69 playable characters, **first names only** per the user's instruction. Duplicate first names disambiguated as Yash S./Yash T., Pranav D./Pranav A., Mohit A./Mohit P. "Mohammed Sanad A" is rendered as **Sanad** (judgement call — flip to "Mohammed" if the user prefers).
+- **Setting (user-specified):** Chimp Processing Pvt Ltd, Midford KTR2, Indiranagar, Bangalore, on 21 August 2026 (Onam party 1 PM, evening party 4 PM). Building: basement parking, unused ground floor, offices on 1–3, terrace with eating + smoking areas. Coffee machine on F3 works ~10% of the time. ₹1,500 Zomato budget; free Uber before 9 AM / after 6 PM. Co-founders in fiction: Elias (CMO) and Sukhans (Director). Company goal $10M/month, about halfway.
+- **Victim (spoiler):** Dev Malhotra — fictional revenue-assurance consultant hired by the founders; killed 3 hours before naming names.
+- **Killers (spoiler):** Anurag (lead, Payments), Yao (Engineering), Giles (Ops), Kalaivani (Support), Akshat (Marketing). Method: oleander concentrate (terrace hedge) left in Dev's own tumbler at 2:52 PM inside a pre-scheduled camera gap; his 3:15 coffee dissolved it.
+- **Shape (user-specified "half suspects"):** 34 of 69 are `isSuspect` (the incident report's off-terrace POI list); 12 of those are prime suspects carrying the accusation + motive decks (the 5 killers + Victor, Sukhans, Aarohi, Nehal, Prerna, Adithya, Luke). Victor is framed via a forged vendor pack.
+- **Mechanics scaled:** 12 accusations dealt via 12 statement pods (`PODS`, 9×6 + 3×5, dev-asserted partition; no pod gets its own member's accusation), 12 motives + 8 evidence + 6 revelations in the riddle pool (26), confession stays `KEYSTONE`. 69 login codes + 39 clue codes, three-way disjoint from the 100 riddle answers (asserted).
+- **Tone rule (user-specified):** the game is played by the real office — every motive is professional (money/credit/exposure), nothing personal; quirks and secrets are office-flavoured and affectionate. The fraud, vendors, victim and inspector (Arjun Kale) are fictional.
 - **Round structure:** 7 rounds (0–6) with codes unlocked progressively (accusation → motive → evidence → revelation → confession).
 - **Special clue `KEYSTONE`:** the confession, written for the five killer characters — gates the final confession reveal. (Was `THE_TRUTH` until 2026-08-07.)
 - **Clue codes are deliberately meaningless single words (2026-08-07):** never a login code, never descriptive of the clue, never guessable from the roster. The motive codes used to *be* the ten prime suspects' login codes, which let anyone who heard a Round 2 code log in as a killer and read "Classified · Killer" off the Identity screen. `gameData.js` now asserts the two namespaces stay disjoint in dev.
@@ -52,6 +58,20 @@
   5. **Micro-canon**: Roddy's "dose" (10:04, Valerie) was muttered to himself; "orange, not bottle" (10:04, Shubham) was Kiyaah's garnish instruction to staff; the display cabinets stand over the gift table, so Aayushi's and Chayne's 10:09 Anna sightings are one sighting from two angles. Oindrilla's timeline line was also corrected to "back into the sound booth two minutes into the montage" (the reel starts 9:55; her QR entry is 9:57 per the access trace).
 - **Codes, login codes and riddle answers are one namespace (2026-08-07).** `echo`, `cloud` and `compass` were riddle answers *and* codes until this date. When adding any word a player can type, check it against all three lists — the dev-only assertion at the bottom of `gameData.js` now covers all three.
 
+### Six canon rulings from the 2026-08-21 Onam plot-hole audit
+
+Settled with the user's approval, none derivable from a single clue; all now scripted in [STORY.md](STORY.md) §8 (rulings 9–14), `CASE_SOLUTION`, [HOST_QA_BRIEFING.md](HOST_QA_BRIEFING.md) and `HOST_FAST_ANSWERS`.
+
+1. **The flask never left Kalaivani; the *dose* did.** She brewed more than one dose and decanted Giles's share into a small bottle in the 8:37 Uber. The chai flask kept the remainder and sat under the beverage table all party — so "for later" was literally true and she could not let Nikitha empty it. Before this ruling, canon had the flask itself changing hands *and* sitting at the party, in eleven separate restatements.
+2. **The 11:04 NVR wipe took the whole fourteen-day array**, not just 21 August. Load-bearing: if only Friday morning had gone, the police could watch Wednesday night's store-room footage and arrest Kalaivani before Round 1.
+3. **Badge V-07 left the reception tray at 9:41 AM**, when Giles signed the coffee-machine technician in and drew him a visitor badge. It is his only legitimate reason all day to stand over that tray, and it removes an impossible four-floors-down-three-up detour between 2:50 and 2:52.
+4. **Aarohi's window gap is a 3:04 PM Glass Room setup** — innocent, unwitnessed, on the third floor. She previously had *no* gap inside 2:45–3:25, which meant the incident report's own criterion cleared the room's second-favourite suspect.
+5. **"OE" and "CS-O" are deliberately ambiguous by title** — three Operations Executives (Giles, Aksharaa, Akshay) and four possible CS-Os (Kalaivani, Sonia, Riya, Nikitha). Kept as difficulty, not fixed. The chat lines' fingerprints close it, and **Aksharaa is the disambiguator**: she read ticket #4417 first and can name who raised it. Never make the titles unique.
+6. **Prerna's alibi was in the room with her.** Vipin and Aarush were both in the F2 edit bay when she fetched the source file at 2:58. Neither volunteers it (their own account of that hour is "rendering" a reel that finished at 2:20) and she never asks, so her clearance runs on the file-access log.
+
+Also settled the same day, smaller: the four ignored coffee tickets are **two Shivam's, two Dev's** (Shivam had been claiming all four); the 2:47 alert produced **eleven** window gaps and the party's own errands supplied the other twenty-three (the reveal decks had credited the alert with all thirty-four); Luke's 2:55 Zomato run is the gate-register entry that *does* exist; and the evidence ladder is **fourteen** documents, not thirteen — the Goods-Received Ledger Analysis had been missing from `CASE_SOLUTION.proof` and both decks.
+
+
 ## Infrastructure
 
 - **Main git branch:** `main`
@@ -63,6 +83,7 @@
 - **`gh-pages` is an orphan branch** — no common ancestor with `main` (`git merge-base` fails), because `gh-pages -d dist` publishes an unrelated history of pure build output (11 minified files, no source). Never `git merge` it; to compare, build `main` and diff the two bundles' string tables.
 - **✅ RESOLVED 2026-08-02 — `gh-pages` was ahead of `main`.** Four deploys on 2026-05-08 were built from uncommitted edits, stranding three features as compiled-only code. All three have now been ported into `src/` and rebuilt: `forceRefreshAt` host force-sync, the `HOST_SCRIPT` run sheet, and Firestore IndexedDB offline persistence. *(Correction to the earlier note here: the deployed bundle did **not** contain `localStorage` login persistence under `mg.currentUser`/`mg.isHost` — no build ever had any `localStorage` at all. Session persistence was written fresh on 2026-08-02 under the key `astral.session`, because force-sync is unsafe without it.)*
 - **⚠️ The live Firestore game is currently sitting in its terminal state** (as of 2026-08-02): `revealedToMurderer: true` and `gameEnded: true`, left over from a previous session. Any device that logs in as a player right now goes straight to the murderer-reveal overlay and cannot reach the rest of the app. Before the next event the host must press **Reset Game** in the host console. (Discovered while screenshotting the app against production — read-only, nothing was written.)
+- **⚠️ Chat cannot be cleared from the app — the rules forbid it.** [firestore.rules](firestore.rules) sets `allow update, delete: if false` on `messages/{id}`, so `clearAllMessages()` in [src/firebase/config.js](src/firebase/config.js) always fails with `permission-denied`, and its `catch` swallows the error to the console. That makes **Reset Game a partial reset**: round, votes and unlocked clues reset, the channel does not. To wipe the channel, use the admin path, which bypasses rules: `firebase firestore:delete messages --recursive --force --project murder-1bf1c` (CLI 14.26.0, logged in as astralprojectco@gmail.com). Done once on 2026-08-08 — 17 messages, verified back to 0 with a server-side `getCountFromServer`. Clients handle the wipe cleanly: `useUnreadMessages` reseeds when the watermark id falls out of the window.
 - **The live site at `/mystery-game/` has been rendering with no custom colours** since at least 2026-05-08: Tailwind v4 does not auto-load `tailwind.config.js`, and the deployed CSS contains zero `mystery-*` palette values. Fixed in `src/index.css` via `@config "../tailwind.config.js"` — **but not yet deployed as of 2026-08-02.**
 
 ## Pitch deck & explainer video (added 2026-08-01)

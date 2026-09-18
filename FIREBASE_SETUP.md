@@ -86,7 +86,8 @@ service cloud.firestore {
     match /messages/{messageId} {
       allow read: if true;
       allow create: if request.auth != null || true; // Allow all for now
-      allow update, delete: if false;
+      allow delete: if true;   // the host must be able to wipe the channel
+      allow update: if false;  // nobody edits a sent message
     }
   }
 }

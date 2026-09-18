@@ -162,7 +162,15 @@ export const HostPanel = ({
 
   const handleResetGame = async () => {
     if (window.confirm('Are you sure you want to reset the game? This will clear all progress.')) {
-      await resetGameState();
+      try {
+        await resetGameState();
+      } catch (error) {
+        // A reset that half-lands is worse than one that fails loudly: the
+        // chat wipe is the part that has historically been rejected while the
+        // host was told everything was clean.
+        console.error('Reset failed:', error);
+        window.alert(`Reset did not complete: ${error?.message || error}\n\nCheck the console — the round, votes and clues may be cleared while the chat channel is not.`);
+      }
     }
   };
 

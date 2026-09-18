@@ -43,9 +43,9 @@ export const ROUND_GUIDE = [
   'Read the incident report and get to know the room.',
   'You are dealt your accusation card — what your character witnessed. Read it out.',
   'The riddle lock opens. Solve riddles, and trade codes, for motive files.',
-  'Forensic reports and witness statements join the riddle pool.',
-  'The major turns. The last clues enter the pool — keep solving and trading.',
-  'Final discussion and debate before the reveal. No new clues arrive.',
+  'Forensic reports and building logs join the riddle pool.',
+  'The major turns. Four revelations enter the pool — keep solving and trading.',
+  'The last two revelations enter the pool, then final discussion before the reveal.',
   'The truth comes out. Final votes and resolution.',
 ];
 
@@ -96,9 +96,9 @@ export const SCREEN_GUIDE = {
   story: {
     kicker: 'The Night',
     title: 'The Story',
-    brief: 'What happened at the party, in order. Come back whenever you lose the thread.',
+    brief: 'What happened at the office today, in order. Come back whenever you lose the thread.',
     detail:
-      'The case briefing: the distillery, the birthday ritual, the collapse, and the sealed venue — everything the room knows about the night. It plays as a briefing when the game opens, and lives here afterwards.',
+      'The case briefing: the company, the consultant, the Onam party, the collapse, and the sealed building — everything the room knows about the day. It plays as a briefing when the game opens, and lives here afterwards.',
   },
 
   intel: {
@@ -134,8 +134,8 @@ export const SCREEN_GUIDE = {
   dossier: {
     kicker: 'Profiles',
     title: 'Guests',
-    brief: 'Every guest on record. Open a file to read their background — or to vote against them.',
-    detail: `All ${CASE_META.playerCount} guests. Tap anyone to open their file and read their background. Use it to work out who had access and who had motive.`,
+    brief: 'Every colleague on record. Open a file to read their background — or to vote against them.',
+    detail: `All ${CASE_META.playerCount} colleagues. Tap anyone to open their file and read their background. Use it to work out who had access and who had motive.`,
   },
 
   votes: {

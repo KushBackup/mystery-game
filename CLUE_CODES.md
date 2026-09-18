@@ -1,173 +1,132 @@
-# Mystery Game - All Clue Codes
+# CLUE_CODES.md — All Codes (Case 2108-C · Onam in Black)
 
-> Maintenance note: Update this file whenever a clue code or login code changes in [src/data/gameData.js](src/data/gameData.js).
+> **Host-only. Full spoilers.**
+> This is the host's **stall-breaker**, not a packing list — nothing here is printed
+> except the 69 login cards. Clue codes are won in-app through the riddle lock and
+> spread player-to-player. If the room stalls, feed a code to a quiet table.
+>
+> Codes are deliberately meaningless single words: never a login code, never
+> descriptive of the clue, never guessable from the roster, never a riddle answer.
+> A dev-only assertion at the bottom of [src/data/gameData.js](src/data/gameData.js)
+> enforces all three disjointness rules — extend it if you add a deck.
 
-## How these reach players
+## Counts
 
-**Nothing on this page is printed on a card any more.** Since 2026-08-07 the 23 motive,
-evidence and revelation codes are won inside the app through the **riddle lock**: a player
-taps ASK on the Evidence screen, answers a one-word general riddle, and is handed the next
-clue in their own queue *plus its code*, which they are told to share with the room. Everyone
-else types that code into CODE (the decoder). See
-[The riddle lock](TECHNICAL_DOCUMENTATION.md#the-riddle-lock).
+| Deck | Count | Round | How it arrives |
+|---|---|---|---|
+| Accusations | 12 | R1 | Auto-dealt, one per player, via the 12 statement pods |
+| Motives | 12 | R2 | Riddle pool |
+| Evidence | 8 | R3 | Riddle pool |
+| Revelations | 6 | R4 (4) + R5 (2) | Riddle pool |
+| Confession | 1 | R6 | Killers only |
+| **Total clue codes** | **39** | | |
 
-Two consequences for this file:
+## Accusations (Round 1 — auto-dealt, never in the riddle pool)
 
-- **It is now the host's override, not a packing list.** The same table renders in-app on the
-  Host Guide's **Deck** tab. If a round stalls because nobody has solved anything, read a code
-  out loud and the clue enters the room instantly.
-- **Accusation codes still are not distributed at all.** Every player is dealt one accusation
-  automatically when Round 1 opens, and they are excluded from the riddle pool.
+| Code | Target | Dealt to pod |
+|---|---|---|
+| TRIDENT | Anurag *(killer)* | A |
+| BALLAST | Yao *(killer)* | B |
+| GIRDER | Giles *(killer)* | C |
+| SUNDIAL | Kalaivani *(killer)* | D |
+| PULLEY | Akshat *(killer)* | E |
+| AWNING | Victor | F |
+| BUGLE | Sukhans | G |
+| CORNICE | Aarohi | H |
+| DORY | Nehal | I |
+| FLINT | Prerna | J |
+| GROTTO | Adithya | K |
+| PYLON | Luke | L |
 
-The riddles themselves live in [src/data/riddles.js](src/data/riddles.js) — 100 of them, none
-touching the case. They are not listed here: they are not clues, and a host reading answers off
-a sheet is not the point.
-
----
-
-## ⚠️ Why every code is a meaningless word
-
-Clue codes are **single neutral words with no relationship to the clue they open, to each
-other, or to any login code.** Three rules, each of which was broken once and cost something:
-
-1. **A clue code must never equal a login code.** Until 2026-08-07 the ten motive codes *were*
-   the ten prime suspects' login codes — `THIMBLE`, `ORACLE`, `FORGERY` and so on. Since Round 2
-   works by players shouting motive codes across the room, that handed everyone the killers'
-   credentials: log out, type `THIMBLE`, and the Identity screen reads **Classified · Killer**.
-   The case was solvable in Round 2 without a single deduction.
-2. **A clue code must not describe its clue.** `EVIDENCE_TOX` and `REVEAL_THREAD` tell a player
-   what they are about to receive, and worse, tell a player who *hears* the code shouted what
-   somebody else is holding. Codes are currency; currency should not be self-labelling.
-3. **A clue code must not be guessable.** `ACCUSE_SNEHA` is derivable from a roster. Nobody
-   guesses `CADENCE`.
-
-Words are also picked to be shoutable across a loud room: no homophones with other codes, no
-overlap with the 100 riddle answers in [src/data/riddles.js](src/data/riddles.js).
-
----
-
-## Accusation Clues (Round 1)
-
-Not distributed — every player is dealt one automatically when Round 1 opens. Codes exist only
-so the host can push one into the room manually.
+## Motives (Round 2 — riddle pool)
 
 | Code | Target |
 |---|---|
-| LANTERN | Sneha Ganesh |
-| HARBOR | Tara Singhania |
-| CADENCE | Kiyaah Rose Raghuwanshi |
-| MARBLE | Victoria Vance |
-| COMPASS | Roddy Faustus |
-| TANGENT | Oindrilla Chatterjee |
-| SATCHEL | Tanvi Vartak |
-| PARADE | Rishi Raj Rahul |
-| BOULDER | Vinod Raghuwanshi |
-| CARNIVAL | Anna Russo |
+| MERIDIAN | Anurag *(killer)* |
+| OBSIDIAN | Yao *(killer)* |
+| PLINTH | Giles *(killer)* |
+| QUASAR | Kalaivani *(killer)* |
+| RIPCORD | Akshat *(killer)* |
+| SEXTANT | Victor |
+| TANGRAM | Sukhans |
+| UKULELE | Aarohi |
+| VERTEX | Nehal |
+| WHARF | Prerna |
+| YODEL | Adithya |
+| ZENITH | Luke |
 
-## Motive Clues (Round 2)
+## Evidence (Round 3 — riddle pool)
 
-| Code | Target |
-|---|---|
-| PENDULUM | Sneha Ganesh |
-| SAFFRON | Tara Singhania |
-| DRIFTWOOD | Kiyaah Rose Raghuwanshi |
-| GRANITE | Victoria Vance |
-| THISTLE | Roddy Faustus |
-| LATTICE | Oindrilla Chatterjee |
-| ORIGAMI | Tanvi Vartak |
-| STAMPEDE | Rishi Raj Rahul |
-| OBELISK | Vinod Raghuwanshi |
-| MOSAIC | Anna Russo |
+| Code | Title | Settles |
+|---|---|---|
+| BISON | Toxicology Summary | Oleandrin, in the tumbler only; machine/food clean |
+| CALIPER | Tumbler and Coffee-Nook Analysis | Dosed while empty; the unclaimed 2:52 brew |
+| DUNE | Camera and Network Log | The camera gap was scheduled at 11:31 AM |
+| EPOCH | Badge and Lift Trace | Badge V-07's 2:52 lift rides; zero exits |
+| FURLONG | Coffee Machine Service Ticket | The valve was shut by hand; the repair was an appointment |
+| GIMLET | Vendor Dossier Mismatch | The Victor pack was created Wednesday 11:58 PM |
+| HOIST | Payment Alert Trace | The 2:47 alert was a sandbox replay from inside |
+| IBEX | Terrace Planter Survey | The oleander was harvested in-house this week |
 
-## Evidence Clues (Round 3)
-
-| Code | Title |
-|---|---|
-| BEACON | Toxicology Summary |
-| FILAMENT | Signature Drink Atomizer Analysis |
-| HALOGEN | Projector and Bar-Camera Log |
-| GABLE | Floor Plan and Sightline Notes |
-| PARCHMENT | Supplier Invoice Mismatch |
-| TURNSTILE | Service QR Access Trace |
-| QUARRY | Armaan's Monday Binder Index |
-
-## Revelation Clues (Rounds 4-5)
+## Revelations (Rounds 4–5 — riddle pool)
 
 | Code | Title | Round |
 |---|---|---|
-| SOLSTICE | Monday Audit Packet | 4 |
-| HOLLOW | Private Bar Program Contract | 4 |
-| BRAMBLE | Roddy's Missing Notebook Page | 4 |
-| COBALT | Victoria's Signature Sheet | 4 |
-| ZEPHYR | Admin Override Trace | 5 |
-| CATACOMB | Burner Group Transcript | 5 |
+| JUBILEE | Dev's Recovered Draft (the five roles; clears Victor) | 4 |
+| KESTREL | Company Uber Dashboard (the 8:37 shared ride) | 4 |
+| LOCKET | Workspace and Systems Audit (one session, three jobs) | 4 |
+| MINARET | Goods-Received Ledger Analysis (the one genuine signature) | 4 |
+| NOCTURNE | Recovered Group Chat ("Fantasy League ⚽") | 5 |
+| OMNIBUS | The Settlement Archive (the look-alike beneficiary) | 5 |
 
 ## Confession (Round 6)
-- KEYSTONE
 
-`KEYSTONE` opens the confession, which is written for the killer team defined in
-[src/data/gameData.js](src/data/gameData.js). It is not in the riddle pool and is never handed
-out — treat it as host-only.
-
----
-
-## Login Codes (51 guests)
-
-### Prime suspects and killers
-| Code | Character | Role |
-|---|---|---|
-| THIMBLE | Sneha Ganesh | Killer |
-| ORACLE | Kiyaah Rose Raghuwanshi | Killer |
-| FORGERY | Victoria Vance | Killer |
-| HEMLOCK | Roddy Faustus | Killer |
-| AMBER | Oindrilla Chatterjee | Killer |
-| CANVAS | Tara Singhania | Prime suspect |
-| PIXEL | Tanvi Vartak | Prime suspect |
-| MYTHOS | Rishi Raj Rahul | Prime suspect |
-| REGENT | Vinod Raghuwanshi | Prime suspect |
-| REPLICA | Anna Russo | Prime suspect |
-
-### Witnesses
-| Code | Character |
+| Code | For |
 |---|---|
-| CIPHER | Yukta |
-| VACUUM | Shubham Goyal |
-| ADELE | Lakshmi Godbole |
-| HOUND | Ricardo Gauco |
-| ECHO | Fabiola Dsouza |
-| ESPRESSO | Govind Mukundan |
-| SHERLOCK | Ajay Jain |
-| CLOUD | Mahi B |
-| RABBIT | John V |
-| SOAPSTONE | Swati |
-| ORDER | Chinmay Nema |
-| PSYCHIC | Natasha |
-| WHISKER | Savvy Grover |
-| PHANTOM | Dinesh Verma |
-| HEX | Valerie Anithra Pereira |
-| POOL | Chayne Lobo |
-| BLOOM | Flora Florentine |
-| ROSS | Keith Murdoch |
-| ROBIN | Soham Vaidya |
-| BLUEPRINT | Hima |
-| VERSE | Vaidehi Bharadwaj |
-| COSMOS | Ashish Khurana |
-| OBSERVER | Chryselle Pinto |
-| JATT | Akash Jain |
-| NOMAD | Aayushi Gandhi |
-| ROUGE | Esha Singh |
-| INK | Parinitha Konanur |
-| FICTION | Sunali Panda |
-| GOSSIP | Meera Victoria Raghuwanshi |
-| BENDER | Dona G |
-| RHYTHM | Nanu |
-| ALCHEMY | Aarushi |
-| SUMMIT | Meenal Raghuvanshi |
-| ENIGMA | Amanda T |
-| GHOST | Nolani Noget |
-| SPARKLE | Vidya |
-| TAROT | Khyati Adesara |
-| SUDOKU | Sanika Malvi |
-| VOYAGER | Kristen Alfonso |
-| ROADIE | Anjul Mishra |
-| TREKKER | Aaina Singh |
+| KEYSTONE | The five killers only (`forCharacters`) |
+
+## Login codes (the 69 printed cards)
+
+One word per card. **These never overlap the clue codes or the 100 riddle answers.**
+
+| Player | Code | | Player | Code | | Player | Code |
+|---|---|---|---|---|---|---|---|
+| Anurag | MOSAIC | | Vipin | PRISM | | Elias | OBOE |
+| Yao | TUNDRA | | Yash S. | QUARTZ | | Caleb | PLAZA |
+| Giles | PARSEC | | Sharad | RAVINE | | Shobhit | RUNE |
+| Kalaivani | COBALT | | Aditi | SADDLE | | Kshitij | SEQUIN |
+| Akshat | FRESCO | | Aksharaa | UMBER | | Navalika | TOGGLE |
+| Victor | GAZEBO | | Rishabh | WALNUT | | Pranav D. | VECTOR |
+| Sukhans | HELIX | | Akshay | XENON | | Aman | WICKET |
+| Aarohi | INGOT | | Kashish | YONDER | | Simran | YURT |
+| Nehal | KAYAK | | Ishan | ZIPPER | | Karthik | ZEBRA |
+| Prerna | LAGOON | | Sanad | ANVIL | | Shrey | ABACUS |
+| Adithya | NIMBUS | | Pragati | BOBBIN | | Dilip | BANJO |
+| Luke | OTTER | | Raaghav | CRAYON | | Abhinav | CANOE |
+| | | | Bhuvan | DYNAMO | | Daiwik | DOMINO |
+| | | | Aarush | FALCON | | Binil | EASEL |
+| | | | Tauseef | GARLAND | | Raksha | FJORD |
+| | | | Sonia | HAMMOCK | | Yash T. | GECKO |
+| | | | Ishika | IGLOO | | Shivam | HAZEL |
+| | | | Thejas | JAVELIN | | Bharatpreet | IVORY |
+| | | | Navya | KIOSK | | Vidisha | JIGSAW |
+| | | | Amisha | LEMUR | | Himanshu | KOALA |
+| | | | Utkarsh | MAGNET | | Mohit A. | LLAMA |
+| | | | Priyanshu | NEBULA | | Tushar | MAROON |
+| | | | | | | Riya | NUGGET |
+| | | | | | | Jason | ORBIT |
+| | | | | | | Nikitha | PICCOLO |
+| | | | | | | Pranav A. | QUIVER |
+| | | | | | | Harsha | RIVET |
+| | | | | | | Neha | SONNET |
+| | | | | | | Chirag | TROMBONE |
+| | | | | | | Shashwat | URCHIN |
+| | | | | | | Anusha | VELCRO |
+| | | | | | | Kursheeth | WIGWAM |
+| | | | | | | Mohit P. | ZIRCON |
+| | | | | | | Sagrika | CARAVAN |
+| | | | | | | Vadini | EMBLEM |
+
+Column 1 = the five killers then the seven innocent prime suspects; column 2 = the
+other 22 persons of interest; column 3 = the 35 witnesses. **Do not print this
+table** — print only name + code per card, and shuffle the print order.

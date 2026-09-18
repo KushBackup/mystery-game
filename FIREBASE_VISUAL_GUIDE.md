@@ -272,8 +272,14 @@ UPDATE message
     │
 DELETE message
     │
-    └──────────────►  allow delete: if false; ─► ❌ DENY
+    └──────────────►  allow delete: if true;  ──► ✅ ALLOW
 ```
+
+`delete` is open on purpose: the host clears the channel between games via
+`clearAllMessages()` (Reset Game), and with no Firebase Auth there is no way to
+scope that permission to the host. With `delete: if false` the batch was
+rejected and the error swallowed, so a reset looked clean to the host while
+every player still had the old thread.
 
 ---
 

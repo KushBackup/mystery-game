@@ -1,5 +1,5 @@
 /**
- * The Round 0 briefing — the night, as the room knows it.
+ * The Round 0 briefing — the day, as the office knows it at 4:30 PM.
  *
  * One source of truth for two surfaces:
  *   components/StoryIntro.jsx  — the fullscreen typed slideshow that takes over
@@ -7,19 +7,23 @@
  *   components/views/StoryView.jsx — the same beats as a readable case document,
  *                                reachable from the board at any point
  *
- * ⚠️ SPOILER DISCIPLINE. This is what a guest standing inside For the Record at
- * 10:48 PM could tell you, and nothing more. Everything here is drawn from
- * STORY.md's prologue and the Incident Report (`f_incident` in gameData.js),
- * both of which are public at Round 0. It must NOT reach forward into the
- * rounds that pay off later:
+ * ⚠️ SPOILER DISCIPLINE. This is what a staff member standing in the sealed
+ * office at 4:30 PM could tell you, and nothing more. Everything here is drawn
+ * from STORY.md's public record and the Incident Report (`f_incident` in
+ * gameData.js), both of which are public at Round 0. It must NOT reach forward
+ * into the rounds that pay off later:
  *
- *   Round 3  cause of death — aconitine, delivered through the finishing spray
- *   Round 4  the buyout packet, the stolen bar program, the forged paper trail
- *   Round 5+ the admin trace, the burner thread, the five-person conspiracy
+ *   Round 3  cause of death — oleandrin, the dosed tumbler, the scheduled
+ *            camera gap, badge V-07, the forged vendor pack, the staged alert
+ *   Round 4  what Dev was really hired to do, the ₹3.4 crore skim, his draft,
+ *            the shared Uber
+ *   Round 5+ the group chat, the settlement archive, the five-person conspiracy
  *
- * The signature drink is mentioned because the whole room watched him raise it.
- * That the finishing spray was the delivery path is Round 3's reveal, not this
- * screen's. If you add a slide, check it against that list first.
+ * The coffee machine and Dev's ritual are mentioned because the whole floor
+ * lived with both — the repair was a running joke by 10 AM. That the tumbler
+ * was the delivery path is Round 3's reveal, not this screen's. "Query
+ * poisoning" is public: the paramedic said it in front of the room. If you add
+ * a slide, check it against that list first.
  *
  * Each slide is: a mono kicker (never typed — it labels the slide), a typewriter
  * heading, and one to three body lines. Heading and lines are typed as a single
@@ -41,65 +45,65 @@ export const STORY_TYPE_MS = 22;
 export const STORY_SLIDES = [
   {
     id: 'venue',
-    kicker: 'Panjim, Goa · 8 August 2026',
-    heading: 'For the Record',
+    kicker: 'Indiranagar, Bangalore · 21 August 2026',
+    heading: 'Midford KTR2',
     lines: [
-      'A late-night listening bar in Panjim, hired out for one expensive birthday and one room full of grudges.',
-      'Ten of Armaan Khanna\'s oldest friends were told to bring four people each. One circle brought five.',
+      'Three floors of TripleSpeed, a terrace with a hedge, and a nameplate that still says Chimp Processing Pvt Ltd.',
+      'Today was supposed to be Onam. It got as far as the payasam.',
     ],
   },
   {
-    id: 'occasion',
-    kicker: 'The Occasion',
-    heading: 'Birthday Night',
+    id: 'company',
+    kicker: 'The Company',
+    heading: 'TripleSpeed',
     lines: [
-      'Velvet Ember is on the edge of a buyout, and Armaan wanted to toast himself before the lawyers arrived.',
-      `All ${CASE_META.playerCount} of you are here because he liked the way you made the room look.`,
+      'Chasing ten million dollars a month, and past the halfway mark.',
+      'A place where the WiFi flaps, the ads overspend, the vendors scam, and nobody looks up. Remember that part.',
     ],
   },
   {
     id: 'victim',
     kicker: 'The Victim',
-    heading: 'Armaan Khanna',
+    heading: 'Dev Malhotra',
     lines: [
-      'Founder and CEO of Velvet Ember Spirits. Charming in public, predatory in private.',
-      'He borrowed talent, buried credit, and made enemies faster than the liquor aged.',
+      'A consultant, three weeks in — "something payments," people said.',
+      'What he actually did was ask questions about money. Half this office had been on the wrong end of one.',
     ],
   },
   {
     id: 'ritual',
-    kicker: '10:12 PM',
-    heading: 'The Last Light',
+    kicker: 'The Machine',
+    heading: 'The Beast',
     lines: [
-      'Armaan insisted on his signature ritual: one glass, one clear cube, one orange mist over the top.',
-      'He lifted it toward the room and thanked everyone for making him impossible to ignore.',
+      'The third-floor coffee machine: dead for two weeks, four ignored tickets — fixed this morning, by urgent request.',
+      'Dev was the only person who drank from it daily. Everyone knew his ritual.',
+    ],
+  },
+  {
+    id: 'party',
+    kicker: '1:00 PM',
+    heading: 'Onam',
+    lines: [
+      'Sadhya on the terrace, pookalam, games, a livestream.',
+      'At 2:47 a payment alert pulled a dozen people off the terrace and back to their desks. At this company, that is just weather.',
     ],
   },
   {
     id: 'collapse',
-    kicker: '10:22 PM',
-    heading: 'The Collapse',
+    kicker: '3:55 PM',
+    heading: 'The Glass Room',
     lines: [
-      'Seven minutes later his grip failed. Three after that, his knees. By then the room understood this was not drunkenness.',
-      'He hit the copper rail on the way down. At 10:34 the paramedics stopped trying.',
+      'Dev left the party at 3:12 — "save me some payasam" — for his coffee and his slides.',
+      'At 3:55 he was found behind the glass. The paramedic wrote two words: query poisoning.',
     ],
   },
   {
     id: 'sealed',
-    kicker: '10:48 PM',
+    kicker: '4:30 PM',
     heading: 'Sealed',
     lines: [
-      'Inspector Ira Deshpande locked the gates and the excise officers froze the bar inventory where it stood.',
-      `“All ${CASE_META.playerCount} of you are giving statements before anyone touches the street.”`,
-    ],
-  },
-  {
-    id: 'room',
-    kicker: 'The Room',
-    heading: 'Ten Circles',
-    lines: [
-      'Armaan built the room in clusters: ten direct invitees at the center, everyone else orbiting them.',
-      'Most of you had a reason to hate him. One of those reasons became a plan.',
+      'Inspector Arjun Kale locked floors one to three and the terrace. Nobody has left this building since 1 PM.',
+      `Thirty-four of the ${CASE_META.playerCount} of you cannot be placed on the terrace when it mattered.`,
     ],
   },
   {
@@ -108,7 +112,7 @@ export const STORY_SLIDES = [
     heading: 'Break The Story',
     lines: [
       'Seven rounds. Solve a riddle to unseal evidence, then trade its code around the room.',
-      'Talk, lie, accuse, vote. The room only wins if it names what really happened.',
+      'Talk, lie, accuse, vote. The office only wins if it names what really happened.',
     ],
     // Handwriting closes the briefing, the way it closes the board (§3.1 —
     // in-fiction margin notes). Shown only once the slide has finished typing.

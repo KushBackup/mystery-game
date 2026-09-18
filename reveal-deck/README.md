@@ -1,6 +1,6 @@
 # Reveal deck — "How It Happened"
 
-A 22-slide reconstruction of the Velvet Ember murder, in plain language, for **players after the reveal**. Full spoilers throughout.
+A 22-slide reconstruction of the Onam in Black murder (Case 2108-C), in plain language, for **players after the reveal**. Full spoilers throughout.
 
 Open [index.html](index.html) in any browser. There is no build step, no npm install, and no network dependency except the three Google Fonts.
 
@@ -33,28 +33,28 @@ start reveal-deck\index.html
 
 | # | Slide | |
 |---|---|---|
-| 01 | How It Happened | cover · 51 guests / 5 killers / 94 seconds / 1 glass |
+| 01 | How It Happened | cover · 69 colleagues / 5 killers / 34 POIs / 1 tumbler |
 | 02 | The Short Answer | the whole case in two paragraphs |
-| 03 | Armaan Khanna | the victim, and what he actually did to people |
-| 04 | What The Room Saw | the public timeline — and why it is a trap |
+| 03 | Dev Malhotra | the victim, and what he was actually hired to do |
+| 04 | What The Office Saw | the public timeline — and why it is a trap |
 | **05** | **Part one — The Plan** | *divider* |
-| 06 | The Red Folder Marked Monday | the motive |
-| 07 | He Forgot Two People | Roddy and Kiyaah were not on his list |
-| 08 | Poison In The Garnish | what aconitine is, and why the spray |
+| 06 | Findings v0.9 | the draft with five roles — the motive |
+| 07 | The Draft Was The Recruiter | how five people aligned in one evening |
+| 08 | Poison In The Tumbler | what oleandrin is, and why the coffee machine |
 | 09 | Who Did What | the five jobs |
-| **10** | **Part two — The Night** | *divider · carries the red/grey beat key* |
-| 11 | The Poison Was Already In The Building | 5:14 – 7:40 PM |
-| 12 | The Room Turns Around | 9:50 – 10:06 PM |
-| 13 | Ninety-Four Seconds | 10:08:14 – 10:09:53 PM |
-| 14 | She Needed The Log, Not The Key | the cleverest part of the murder |
-| 15 | The Camera Was Blind. The Room Wasn't. | Anjul and Parinitha |
-| 16 | Two Sprays Of Orange | 10:12 PM — the murder itself |
-| 17 | The Last Twenty-Two Minutes | 10:19 – 10:48 PM |
+| **10** | **Part two — The Day** | *divider · carries the red/grey beat key* |
+| 11 | Planned Before The Marigolds | Tuesday evening – Wednesday midnight |
+| 12 | Friday Morning | 8:12 AM – 1:05 PM |
+| 13 | Thirty-Six Minutes | 2:45 – 3:21 PM — the camera gap and the dose |
+| 14 | He Needed The Log, Not The Lift | badge V-07 — the cleverest part |
+| 15 | The Cameras Were Blind. The Floor Wasn't. | Utkarsh, Rishabh and Raaghav |
+| 16 | Two Sugars | 3:15 PM — the murder itself |
+| 17 | The Last Hour | 3:12 – 4:30 PM |
 | **18** | **Part three — Why It Held** | *divider* |
-| 19 | Ten Real Motives, Five Innocent People | the misdirection |
-| 20 | Framed, And Used | Tara vs. Tanvi — two different wrongs |
-| 21 | What Proved It | the nine clues and what each settled |
-| 22 | Five People. Five Tables. One Glass. | the verdict |
+| 19 | Twelve Real Motives, Seven Innocent People | the misdirection |
+| 20 | Framed, And Suspected | Victor vs. Sukhans — two different wrongs |
+| 21 | What Proved It | the thirteen clues, in two compact tables |
+| 22 | Five People. Five Departments. One Tumbler. | the verdict |
 
 ## Where the content comes from
 

@@ -5,7 +5,7 @@ import { Search, X } from '../icons/IconComponents';
  * The filter field (DESIGN_LANGUAGE.md §6, "Search").
  *
  * Used on any screen long enough that scanning it by eye is the slow path —
- * the ballot (51 names) and the suspect index. It is an interface control, so
+ * the ballot (69 names) and the suspect index. It is an interface control, so
  * it sits on ink with a hairline border and takes the signal border on focus,
  * exactly like the chat composer; no new hue, no rounded corners, no icon
  * colour of its own.

@@ -1,7 +1,7 @@
 # Astral Project's Murder Mystery Experience
 ## Technical Documentation
 
-> Maintenance note: Update this file whenever the architecture, data model, shared state, or screen behavior changes. This is the implementation overview for the current 51-player Goa venue case.
+> Maintenance note: Update this file whenever the architecture, data model, shared state, or screen behavior changes. This is the implementation overview for the current 69-player office case (Onam in Black, 2108-C).
 
 ---
 
@@ -10,9 +10,9 @@
 **Application type:** Interactive multiplayer web-based murder mystery PWA  
 **Framework:** React 19 + Vite 7  
 **State model:** React local state + Firebase Firestore realtime sync  
-**Current case scale:** 51 playable guests, 10 prime suspects, 5 killers, 6 case files, 34 clue codes
+**Current case scale:** 69 playable colleagues, 34 suspects (12 prime), 5 killers, 6 case files, 39 clue codes
 
-The app remains structurally the same as the earlier versions: one host advances the room through seven rounds while players decode clues, chat, vote, and inspect guest profiles. The major implementation change in this version is narrative scale. The data layer now supports a 51-player cast and a multi-killer reveal instead of a single murderer.
+The app remains structurally the same as the earlier versions: one host advances the room through seven rounds while players decode clues, chat, vote, and inspect guest profiles. The major implementation change in this version is narrative scale. The data layer now supports a 69-player cast and a multi-killer reveal instead of a single murderer.
 
 As of 2026-08-07, clue codes are no longer distributed on printed cards. They are earned in-app through the **riddle lock** — see [The riddle lock](#the-riddle-lock) below.
 
@@ -24,23 +24,23 @@ As of 2026-08-07, clue codes are no longer distributed on printed cards. They ar
 Owns the live case definition:
 
 - `CASE_META` — case ID, title, venue, victim, inspector, player count, suspect count, killer count
-- `CHARACTERS` — 51 playable guests with `role`, `profession`, `bio`, `quirk`, `secret`, `neverDo`, `motive`, `timeline`, and `code`
+- `CHARACTERS` — 69 playable colleagues with `role`, `profession`, `bio`, `quirk`, `secret`, `neverDo`, `motive`, `timeline`, and `code`
 - `CASE_TIMELINE` — public incident beats used by the Timeline screen
-- `ACCUSATION_CLUES` — 10 accusation narratives with `assignedTo` arrays covering all 51 players exactly once
-- `MOTIVE_CLUES` — 10 prime-suspect motive files
-- `EVIDENCE_CLUES` — 7 round-3 evidence items
+- `PODS` — the 12 statement pods; `ACCUSATION_CLUES` — 12 accusation narratives whose `assignedTo` arrays cover all 69 players exactly once (a dev assertion enforces the partition, and that no pod holds its own accusation's target)
+- `MOTIVE_CLUES` — 12 prime-suspect motive files
+- `EVIDENCE_CLUES` — 8 round-3 evidence items
 - `REVELATION_CLUES` — 6 round-4/5 twist items
 - `CONFESSION_CLUE` — final reveal text, gated by `forCharacters`
 - `CASE_FILES` — 6 host-unlocked reports shown under Evidence → Case files
 
 #### Display order (`dealt()`)
 
-Source order in the file is authorial: the five conspirators are written first, and the per-suspect clue decks follow the same sequence. That leaked — Sneha sat at the top of the roster, the ballot, the accusation stack and the motive stack before a single clue was decoded.
+Source order in the file is authorial: the five conspirators are written first, and the per-suspect clue decks follow the same sequence. Rendered raw that would leak — the mastermind would sit at the top of the roster, the ballot, the accusation stack and the motive stack before a single clue was decoded (the previous case shipped that way briefly).
 
 `dealt(list, { salt, isHot, safeTop, group })` re-orders a deck at module load and the exported constants (`CHARACTERS`, `ACCUSATION_CLUES`, `MOTIVE_CLUES`, `EVIDENCE_CLUES`, `REVELATION_CLUES`) are the dealt versions — every consumer inherits the jumble, so there is no per-screen shuffling to keep in sync. The raw literals stay in the file as `ROSTER`, `ACCUSATION_DECK`, `MOTIVE_DECK`, `EVIDENCE_DECK`, `REVELATION_DECK`.
 
 - **Stable, not random.** The order comes from a hash of each entry's `id`, so every player on every device and every reload sees the same sequence. "The third one" in chat keeps meaning the same person, and a guest's file number never changes mid-game.
-- **`salt` must be mixed, not concatenated.** `acc_sneha` and `mot_sneha` differ by a fixed same-length prefix, so a concatenated salt shifts every hash in a deck by one constant and leaves the relative order untouched — the accusation and motive stacks would deal out identically. `seeded()` XORs the two hashes and avalanches the result.
+- **`salt` must be mixed, not concatenated.** `acc_anurag` and `mot_anurag` differ by a fixed same-length prefix, so a concatenated salt shifts every hash in a deck by one constant and leaves the relative order untouched — the accusation and motive stacks would deal out identically. `seeded()` XORs the two hashes and avalanches the result.
 - **`isHot` + `safeTop`** keep conspirators out of the opening slots (the first screenful of Suspects, the first row of the ballot grid, the top of the round-1 and round-2 stacks). Evicted entries re-enter at a hashed slot below the clean zone, not at a fixed midpoint, so they don't band up. Eviction re-checks after every move: removing an entry slides the rest up, which can push a hot entry above the line.
 - **`group`** is a primary sort key that survives the jumble. `REVELATION_CLUES` groups on `roundReq` so the Round 5 twist pair stays behind the Round 4 documents.
 - `CASE_FILES` is deliberately **not** dealt — it names no suspect and is already ordered by unlock round.
@@ -78,22 +78,22 @@ Owns the structured host-only reference content rendered in-app from the host co
 
 ## Cast Model
 
-Each playable guest is a plain object with this shape:
+Each playable colleague is a plain object with this shape:
 
 ```javascript
 {
-  id: 'char_sneha',
-  name: 'Sneha Ganesh',
+  id: 'char_anurag',
+  name: 'Anurag',
   role: 'MURDERER' | 'SUSPECT' | 'WITNESS',
-  profession: 'Strategy consultant and fashion-label founder',
-  group: 'THIMBLE',
+  profession: 'Head of Payments',
+  group: 'PAYMENTS',            // department label, shown host-side
   bio: 'Short public profile',
   quirk: 'Conversation hook',
   secret: 'Private identity note',
   neverDo: 'Public red line',
   motive: 'Narrative motive paragraph',
   timeline: 'Public/private movement log',
-  code: 'THIMBLE',
+  code: 'MOSAIC',               // login code — never a clue code or riddle answer
   isSuspect: true | false,
 }
 ```
@@ -101,7 +101,7 @@ Each playable guest is a plain object with this shape:
 Important behavioral rules:
 
 - `role === 'MURDERER'` is now plural in practice. There are 5 killers.
-- `isSuspect` marks the 10 prime suspects the room is expected to focus on first.
+- `isSuspect` marks the 34 persons of interest (the incident report's off-terrace list). The clue decks concentrate on 12 of them — the prime suspects — which is a narrative tier, not a schema field: primes are simply the targets of `ACCUSATION_CLUES`/`MOTIVE_CLUES`.
 - Witnesses remain voteable in the UI today because the ballot still shows the whole room; the case design relies on clue structure, not hard vote filtering.
 
 ---
@@ -128,7 +128,7 @@ In [src/App.jsx](src/App.jsx):
 
 Naming the killers is only half of the ending; [src/components/RevealDeck.jsx](src/components/RevealDeck.jsx) is the other half — the full explanation of how the murder was carried out, read by the whole room after the reveal. *Since 2026-08-07 it is a 22-slide deck rather than one scrolling document (`CaseSolution.jsx`, deleted): a room that has just been told* who *does not read three screens of prose, and the deck's chapter structure paces the answer for them.*
 
-- Both terminal screens open it, which is what makes it reachable by all 51 players: the reveal overlay carries a `How it happened` control (gated to its final entrance stage), and the outro carries one for the five killers, who never see the overlay.
+- Both terminal screens open it, which is what makes it reachable by all 69 players: the reveal overlay carries a `How it happened` control (gated to its final entrance stage), and the outro carries one for the five killers, who never see the overlay.
 - It is **swapped in for** the terminal screen rather than layered over it, so a second full-bleed `signal` surface never sits behind the reconstruction. Each host owns a local `showDeck` boolean — there is no App-level route, because these screens draw no `SCREEN_GUIDE` frame to keep in sync.
 - **The frame is fixed and the slide scrolls between it.** Header (exit + `NN / 22`) and footer (Back / Next) are `shrink-0` on a `fixed inset-0` flex column; the slide lives in the `flex-1` scroller. So the way out is always on screen, and a slide taller than the phone scrolls rather than shrinking its type. Navigation is Back/Next, horizontal swipe (60px, and only when horizontal travel beats vertical, or a diagonal scroll would page the deck), and arrow / Page / Home / End / Escape keys.
 - **Slide data is [src/data/revealDeck.js](src/data/revealDeck.js)**, a typed block list — `paper`, `note`, `card`, `strip`, `stats`, `rail`, `beats`, `key`, `jobs`, `proof`, `circles` — each with one renderer in `BLOCKS` in the component. Emphasis is carried by two inline marks (`*bone*`, `_italic_`) resolved by `<Rich>`, so the data stays plain strings and no HTML is injected.
@@ -144,7 +144,7 @@ Naming the killers is only half of the ending; [src/components/RevealDeck.jsx](s
 A tag alone was not enough: `Classified · Killer` reads as a redaction stamp, and killers were
 reaching Round 1 unsure whether they had actually done it. The five murderers' `secret` strings
 in [gameData.js](src/data/gameData.js) now open by telling the player outright that they killed
-Armaan and what their part in it was, so the Confidential Note is the briefing rather than one
+the victim and what their part in it was, so the Confidential Note is the briefing rather than one
 more piece of flavour. Two presentation consequences in
 [DashboardView.jsx](src/components/views/DashboardView.jsx): a killer's note is **not** wrapped
 in quotation marks (it addresses the player, it is not a line the character says), and it is
@@ -159,15 +159,15 @@ The clue engine itself is unchanged. The case is still data-driven.
 
 ### Categories
 
-- `ACCUSATION` — 10 cards, automatically available in Round 1
-- `MOTIVE` — 10 codes, Round 2
-- `EVIDENCE` / `FORENSICS` / `CCTV` — 7 round-3 items sharing the same Evidence stack
+- `ACCUSATION` — 12 cards, automatically available in Round 1
+- `MOTIVE` — 12 codes, Round 2
+- `EVIDENCE` / `FORENSICS` / `CCTV` — 8 round-3 items sharing the same Evidence stack
 - `REVELATION` — 6 round-4/5 items
 - `CONFESSION` — 1 final gated clue
 
 ### Code namespaces
 
-`character.code` (51 login codes) and `clue.code` (34 clue codes) are read by two different
+`character.code` (69 login codes) and `clue.code` (39 clue codes) are read by two different
 inputs — [CharacterSelect.jsx](src/components/CharacterSelect.jsx) via `validateLoginCode`, and
 the decoder via `handleCodeSubmit` in [App.jsx](src/App.jsx) — but they share one keyspace in
 practice, because a player can type anything into either field. **The two sets must stay
@@ -205,7 +205,7 @@ The player's own accusation appears **twice** on purpose: pinned on the hub unde
 
 ### Assignment integrity
 
-This version intentionally preserves 10 accusation narratives instead of scaling to 51 unique accusation cards. Coverage is achieved by distributing those 10 cards across all 51 players via the `assignedTo` arrays.
+This version intentionally uses 12 accusation narratives instead of scaling to 69 unique accusation cards. Coverage is achieved by distributing those 12 cards across all 69 players via the `PODS` partition — nine pods of six and three of five — and a dev assertion verifies both the partition and that no pod is dealt the accusation naming its own member.
 
 ---
 
@@ -266,17 +266,17 @@ The two halves are deliberately opposite to every other deck in the project:
   back in circulation.
 - **Rewards are dealt stably** (`riddleQueueFor(characterId)`), grouped by `roundReq` first and
   then **rotated** within each round-block by the player's ordinal in `RIDDLE_ORDINAL` — their
-  position, 0 to 50, in a stable shuffle of the roster. Stable so a reload cannot reshuffle the
-  queue under a player mid-game; per-player so 51 devices do not all pay out the same clue and
+  position, 0 to 68, in a stable shuffle of the roster. Stable so a reload cannot reshuffle the
+  queue under a player mid-game; per-player so 69 devices do not all pay out the same clue and
   leave the room with nothing to trade.
 
   It rotates rather than hash-sorts because only the **first** reward really matters — most
-  players solve one or two riddles all evening — and a hash sort does not spread it. The old
-  sort gave `PENDULUM` to 7 players and `OBELISK` to 8 while `LATTICE` (a killer's motive) was
-  the opening prize for exactly 1 of 51. Rotating by a raw hash is no better: `hash % 10`
-  inherits the hash's bias in its low bits and measured worse (12 and 1). An ordinal is what
-  makes the modulo uniform. Measured now: **5 or 6 players on each of the 10 motive clues**,
-  51 distinct queues across 51 players.
+  players solve one or two riddles all evening — and a hash sort does not spread it (measured on
+  the previous case: one killer-relevant motive was the opening prize for exactly 1 of 51
+  players while another code opened for 8). Rotating by a raw hash is no better: `hash % 12`
+  inherits the hash's bias in its low bits. An ordinal is what makes the modulo uniform.
+  Measured now: **5 or 6 players on each of the 12 motive clues**, 69 distinct queues across
+  69 players.
 
 Accusations and the confession are **not** in the pool — the first is dealt automatically at
 Round 1, the second belongs to the killers.
@@ -318,7 +318,7 @@ Two tiles react to game state. **VOTE** fills with `signal` while `isVotingOpen`
 
 One query, defined once in [`config.js`](src/firebase/config.js) as `subscribeToMessages` and shared by both consumers — the thread and the hub's badge. Firestore serves identical queries off a single listen stream, so this is one watch on the wire, and neither surface can end up with a different idea of what "the channel" is.
 
-The query is **`orderBy('createdAt','desc').limit(100)`, reversed client-side**. It used to be `asc` with the same limit, which returns the *oldest* hundred: once the room passed a hundred messages the thread would have frozen on the backlog and every message after it been invisible. With 51 players over an evening that was a certainty, not an edge case. `MESSAGE_WINDOW = 100` also bounds the unread count at 99, since one of the hundred is always the read watermark.
+The query is **`orderBy('createdAt','desc').limit(100)`, reversed client-side**. It used to be `asc` with the same limit, which returns the *oldest* hundred: once the room passed a hundred messages the thread would have frozen on the backlog and every message after it been invisible. With 69 players over an evening that was a certainty, not an edge case. `MESSAGE_WINDOW = 100` also bounds the unread count at 99, since one of the hundred is always the read watermark.
 
 #### The unread badge
 
@@ -338,7 +338,7 @@ Every publish goes through a bail-out that returns the previous object when noth
 **The jog budget is per board visit, held in GridMenu.** `JOG_BUDGET = 3` distinct new messages, adjusted during render (the pattern App.jsx uses for `seenTab`) rather than from an effect, which `react-hooks/set-state-in-effect` rejects. The wrapper is keyed on a nonce because CSS keyframes only run once per mount, and the badge rides *inside* that wrapper so both move as one unit — a badge pinned to a corner the icon has rocked away from is worse than no motion at all.
 
 ### DossierView / GuestProfileModal
-The roster surface is now framed as **Guests**, not **Suspects**, because only 10 of the 51 players are prime suspects.
+The roster surface is now framed as **Guests**, not **Suspects**, because suspect status is case knowledge: 34 of the 69 players are persons of interest, and nothing player-facing may say which.
 
 **`isSuspect` must never reach a player-facing surface.** Neither the roster row nor the guest file says whether a guest is a prime suspect or a witness — working that out from the clue deck *is* the game, so labelling it hands players the answer for free. The only standings shown are ones the room already knows: `You`, `Deceased` (roster) and `Guest on record` / `Known victim` (modal). `getSuspects()` / `getWitnesses()` / `CASE_META.primeSuspectCount` are host-only and are read solely by [`hostReference.js`](src/data/hostReference.js) and [`HostReferenceView`](src/components/views/HostReferenceView.jsx). A player's *own* role is different — [`DashboardView`](src/components/views/DashboardView.jsx) may tag `myCharacter` as killer or victim, because that is self-knowledge.
 
@@ -354,6 +354,12 @@ Both consume the same `STORY_SLIDES` source. StoryView now reads case metadata d
 Renders `CHARACTERS` in order. The ballot used to hash-sort the roster itself; that moved to `dealt()` in the data layer (above), so the ballot, the Suspects index and every guest's file number now agree on one order instead of drifting apart. `isMurderer()` is still used here, but only to badge the killers once round 6 lands.
 
 It also carries the shared [`SearchField`](src/components/ui/SearchField.jsx) above the ballot grid, matching on name and profession. The filter only removes cards and never reorders them, so the jumbled order every player shares is preserved and the vote already recorded is unaffected by what is currently visible.
+
+#### The tally is derived, not stored
+
+`voteCounts` — `{ suspectId: count }` — is a `useMemo` in [App.jsx](src/App.jsx) over the `votes` map for `currentRound`, not a field read from Firestore. It used to be a stored counter that `submitVote` incremented, and that counter had no notion of a round: every round added to it and nothing ever cleared it, so the ballot's **Votes cast** figure was the sum of every vote the database had ever seen. A game inheriting a database from a previous event opened on a total nobody in the room had cast. Deriving it from `votes`, which is already keyed by round, makes it correct and self-clearing when the host advances.
+
+`submitVote` writes with `setDoc(…, { merge: true })` on the single nested path `votes.<userId>.<round>` rather than reading the document and writing it back whole. With 69 phones tapping the same ballot in the seconds after the host opens it, a read-then-replace has each voter overwrite whatever landed between their own read and write — now that the tally is derived from `votes`, a lost vote is a visibly wrong number rather than just a stale cache. The merge also creates the document if the host never initialised it, and it carries `voteCounts: deleteField()` so the retired counter is dropped from any database carried over from an earlier game.
 
 #### The unread tally
 
@@ -402,7 +408,7 @@ They share the aged-bone surface, the caret and the note voice — the body rule
 The shared Firestore shape is unchanged from the previous architecture:
 
 - `gameState/current` stores round, voting state, unlocked files, reveal state, and end-state flags
-- `gameState/votes` stores votes and aggregated counts
+- `gameState/votes` stores **only** `votes` — `{ userId: { round: suspectId } }`. There is deliberately no stored tally beside it (see [The tally is derived, not stored](#the-tally-is-derived-not-stored))
 - player clue ownership is still tracked under unlocked clue maps
 
 This rewrite did **not** require a schema migration. It is primarily a content/data-model expansion.
@@ -420,11 +426,12 @@ npm run build
 
 Additional integrity check run during implementation:
 
-- 51 characters present
-- 5 killers present
-- 10 prime suspects present
-- 10 accusation cards present
-- all 51 players assigned exactly one accusation
+- 69 characters present, unique ids/names/login codes
+- 5 killers present, mastermind first in `getKillers()`
+- 34 suspects present; 12 prime-suspect targets across the accusation and motive decks
+- 12 accusation cards present; all 69 players assigned exactly one via `PODS`
+- 39 clue codes disjoint from the 69 login codes and the 100 riddle answers (plus alternates)
+- riddle-queue opener histogram: 5–6 players per motive code
 
 ---
 

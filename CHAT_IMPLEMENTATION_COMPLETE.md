@@ -189,7 +189,18 @@ Driven by [`useUnreadMessages`](src/hooks/useUnreadMessages.js) from [App.jsx](s
 **Current Setup (Test Mode):**
 - ✅ Anyone can read messages
 - ✅ Anyone can create messages
-- ❌ No one can delete/edit messages
+- ✅ Anyone can **delete** a message — the host has to be able to wipe the
+  channel between games, and there is no Firebase Auth to scope that to them
+- ❌ No one can edit a message once it is sent
+
+**Delete must stay open.** It used to be `allow update, delete: if false`, which
+made the Host Panel's Reset Game silently lie: `clearAllMessages()` catches its
+own error, so the host saw a clean reset while all 69 players still had the
+previous game's thread in front of them. If you tighten this rule, re-test Reset
+Game against a channel that actually has messages in it — the failure is
+invisible from the host's side. See [firestore.rules](firestore.rules), which is
+the canonical copy of these rules; the snippets in this file and in
+[FIREBASE_SETUP.md](FIREBASE_SETUP.md) restate it.
 
 **Recommended for Production:**
 ```javascript
@@ -197,13 +208,28 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /messages/{messageId} {
-      allow read: if request.time < timestamp.date(2026, 3, 1);
+      allow read: if true;
       allow create: if request.resource.data.message.size() < 500;
-      allow update, delete: if false;
+      allow delete: if true;   // host wipe between games
+      allow update: if false;
     }
   }
 }
 ```
+
+**Wiping the channel out-of-band.** The CLI goes through admin credentials, so
+it bypasses the rules entirely and works even if delete is closed:
+
+```powershell
+firebase firestore:delete messages --recursive --force --project murder-1bf1c
+```
+
+Connected clients empty out live via `onSnapshot`. A phone that is *offline*
+keeps its cached thread until it reconnects — the persistent local cache is
+serving it — so follow a wipe with the host's Force Refresh if any device looks
+stuck. The unread badge needs no attention: a watermark whose message no longer
+exists falls back to seeding on the newest and reporting zero (see
+[useUnreadMessages.js](src/hooks/useUnreadMessages.js)).
 
 ---
 

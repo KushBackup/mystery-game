@@ -32,7 +32,7 @@ import { useUnreadMessages } from './hooks/useUnreadMessages';
 // Session is persisted so a reload — whether the host's force-sync broadcast, a
 // service-worker update, or a player accidentally swiping the tab away — drops
 // them back where they were instead of at the login screen. Mid-event, making
-// 51 people re-enter their printed codes is not a recoverable situation.
+// 69 people re-enter their printed codes is not a recoverable situation.
 const SESSION_KEY = 'astral.session';
 
 // Every screen wears the same three-part frame (DESIGN_LANGUAGE.md §4.2):
@@ -120,7 +120,6 @@ export default function App() {
   const [isVotingOpen, setIsVotingOpen] = useState(false);
   const [unlockedClues, setUnlockedClues] = useState([]);
   const [votes, setVotes] = useState({}); // { userId: { round: suspectId } }
-  const [voteCounts, setVoteCounts] = useState({}); // { suspectId: count }
   const [unlockedFiles, setUnlockedFiles] = useState(['f_incident']); // Files unlocked by host
   const [voteResultsVisible, setVoteResultsVisible] = useState(false); // Host controls this
   const [revealedToMurderer, setRevealedToMurderer] = useState(false); // Round 6 reveal
@@ -167,7 +166,7 @@ export default function App() {
   //
   // Deliberately NOT persisted. The briefing plays on every login and every
   // reload for as long as the game is still in Round 0, which is what a room of
-  // 51 people arriving at different times needs; once the host advances, it never
+  // 69 people arriving at different times needs; once the host advances, it never
   // interrupts anyone again. A logout resets it to 'pending' so the next player on
   // a shared device gets it too.
   const [briefingState, setBriefingState] = useState('pending');
@@ -197,6 +196,24 @@ export default function App() {
 
   const currentRoundData = ROUNDS[currentRound] || ROUNDS[ROUNDS.length - 1];
 
+  // The ballot tally for the round the room is actually in — { suspectId: count }.
+  //
+  // Derived from `votes` rather than read from the database, because a tally is a
+  // per-round fact and the stored one wasn't: it was a single flat counter that
+  // every round added to and none ever cleared, so a fresh game inheriting an old
+  // database, or simply a game that had reached the later rounds, would announce
+  // a total nobody in the room had cast. `votes` is keyed { userId: { round: … } },
+  // so counting one round out of it is both correct and self-clearing when the
+  // host advances.
+  const voteCounts = useMemo(() => {
+    const counts = {};
+    Object.values(votes).forEach((byRound) => {
+      const pick = byRound?.[currentRound];
+      if (pick) counts[pick] = (counts[pick] || 0) + 1;
+    });
+    return counts;
+  }, [votes, currentRound]);
+
   // Get the accusation card assigned to this player (for Round 1+)
   const myAccusation = useMemo(() => {
     if (!currentUser || currentRound < 1) return null;
@@ -212,7 +229,6 @@ export default function App() {
       CONFESSION_CLUE.forCharacters?.includes(currentUser)
     );
   }, [currentUser, revealedToMurderer, currentRound]);
-  // 51 people arriving at different times needs; once the host advances, it never
 
   // --- FIREBASE SYNC ---
   
@@ -286,7 +302,6 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = subscribeToVotes((voteData) => {
       setVotes(voteData.votes || {});
-      setVoteCounts(voteData.voteCounts || {});
     });
 
     return () => unsubscribe();
@@ -674,7 +689,6 @@ export default function App() {
         {activeTab === 'chat' && (
           <ChatView
             myCharacter={myCharacter}
-            voteCounts={voteCounts}
             currentRound={currentRound}
             note={screen}
           />

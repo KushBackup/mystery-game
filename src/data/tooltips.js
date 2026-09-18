@@ -1,4 +1,4 @@
-import { ROUNDS } from './gameData';
+import { CASE_META, ROUNDS } from './gameData';
 import { ROUND_GUIDE } from './screenGuide';
 
 /**
@@ -85,7 +85,7 @@ export const TOOLTIPS = {
   // --- Guests -------------------------------------------------------------
   guests: {
     label: 'Guest files',
-    body: 'Everyone at the party, in one order that is the same on all 51 phones. The number beside a name is their file number — call that out instead of spelling it. Nothing here says who is a suspect.',
+    body: `Everyone in the building, in one order that is the same on all ${CASE_META.playerCount} phones. The number beside a name is their file number — call that out instead of spelling it. Nothing here says who is a suspect.`,
   },
 
   // --- Vote ---------------------------------------------------------------
@@ -96,7 +96,7 @@ export const TOOLTIPS = {
 
   tally: {
     label: 'The tally',
-    body: 'Counts move live as the room votes, but the host decides when the numbers go public. Withheld means they are hidden from everybody, not just from you.',
+    body: 'This round only — the count starts again each time the host opens the ballot. Numbers move live as the room votes, but the host decides when they go public. Withheld means they are hidden from everybody, not just from you.',
   },
 };
 
