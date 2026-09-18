@@ -292,6 +292,16 @@ The per-round countdown, under the round numeral on the chrome rail and on the h
 
 **Its urgency is §7.1's only sanctioned repeat, and it is still one-shots.** See §7.1.
 
+### 6.6d The starting gun
+
+*Added 2026-09-19.* The ten-second countdown on the standby screen — the second countdown in the app and, unlike the round clock, the only thing on the screen it lives on. Implemented as `.er-standby__count` (App.css §13d) / [`StandbyScreen`](src/components/StandbyScreen.jsx).
+
+**Brass, not mono — the exact inverse of §6.6c, and for the same reason.** The round clock takes the chrome voice because the round numeral one line above has already spent the brass. Here there is no competing figure and nothing else on the screen at all, so this *is* the numeral: `.er-num`, 88px on a phone and 112px above 640px. An instrument beside a number takes mono; a number on its own takes brass.
+
+**The waiting state is one sentence and nothing else.** No tiles, no controls, no progress bar, no "connecting…" — the whole reason the screen exists is that an app with nothing in it yet reads as broken, and a screen that gives a player something to poke at reintroduces exactly that. Case number, one line, one sentence of body copy.
+
+**It is one countdown and one curtain, both borrowed.** §13d adds no keyframes: the per-second beat is §13c's `erClockPush` and the exit is §1's `erLeave`, held longer because a whole screen handing over to the game is not a card dismissing. See §7.1 — this is the second member of the sanctioned-countdown class, not a new one.
+
 ### 6.7 Redaction bar
 
 Solid `signal` block covering text, wiping open via `scaleX` from a left transform-origin over ~0.9s.
@@ -467,6 +477,8 @@ Every rule above says *add motion*. This one says where not to, and it matters m
 
 **The one thing allowed to repeat is a countdown, and it repeats as one-shots** (`.er-clock`, App.css §13c). The rule above reserves the infinite pulse for "a genuine sustained alarm", and a round running out is the first thing in this game that actually is one: it escalates, it is about to change what the room can do, and — the part that earns it — **it ends by itself**. Even so, nothing here is `infinite`. React keys the digits on the whole second, so each second remounts them and plays exactly one pop: a 1.07 tick through the last minute, a 1.25 push through the last ten seconds, and one final push at zero. Sixty beats, then ten louder ones, then it stops because there is nothing left to count. The distinction from `.er-alarm` is the one that matters — an alarm pulses until somebody fixes something, and this stops on its own at a known instant. Motion is not the only channel here either: the digits turn `signal` a full minute before the pop matters, and the label reads "Time up" at zero, both of which survive `prefers-reduced-motion` untouched.
 
+*Added 2026-09-19: there are now two countdowns, and the second one borrowed everything.* The standby screen's starting gun (§6.6d, App.css §13d) counts ten seconds down to the room being let in, and it passes the same test for the same reason — it escalates, it changes what the room can do, and it ends by itself, harder than the round clock does, because the screen it lives on is gone afterwards. It is written identically: React keys the numeral on the second, each second remounts it and plays exactly one `erClockPush`, ten beats and done. It adds **no keyframe of its own** — the beat is the round clock's push and the exit is §1's `erLeave` — which is the rule this section cares about more than the count. Under reduced motion the number is still counting; only the punctuation is lost.
+
 *The three knocks share one idea, and `erJog` is the only one allowed its own keyframe.* `erSummon` remains the app's "notice this" hop; nothing may add a fourth vocabulary.
 
 ### 7.2 Signature moments
@@ -569,6 +581,7 @@ Migrate one view at a time; both palettes can coexist while you do.
 | Screen | File | What changes |
 |---|---|---|
 | Login | [CharacterSelect.jsx](src/components/CharacterSelect.jsx) | Already close. Retag `CONFIDENTIAL` as a filled `signal` tag; code input becomes a fill-in blank |
+| Standby | [StandbyScreen.jsx](src/components/StandbyScreen.jsx) | *Added 2026-09-19.* What a player looks at between logging in and the host pressing Start. Deliberately the emptiest screen in the app — case kicker, one line, one sentence — and then the §6.6d countdown, the one place a brass numeral owns a whole screen. Same ink/lamp/vignette masthead as the splash, so arriving on it reads as the app still holding rather than as a dead end |
 | Briefing | [StoryIntro.jsx](src/components/StoryIntro.jsx) | *Added 2026-08-05.* Ink only, no paper, no lamp. In-fiction voices, typed (§6.10b). Slide rail = the round rail; slide counter is the only brass |
 | Story | [StoryView.jsx](src/components/views/StoryView.jsx) | *Added 2026-08-05.* The same beats as one long bone document — sections split by `line-bone` hairlines, `On record` stamp, no rotation (a 900px page rotated 1.2° reads as broken, not as pinned) |
 | Grid hub | [GridMenu.jsx](src/components/GridMenu.jsx) | Already the strongest screen. Keep pins and rotation; swap tile colours to `bone`/`bone-aged`, VOTE to `signal`, EXIT to `ink-hover`. *Updated 2026-08-05:* six destinations in a 3×2 board, then GUIDE and EXIT as full-width strips — both are utilities rather than places in the fiction, and an odd tile count would otherwise leave a hole in the board. *Updated 2026-08-07:* the **Comms** tile reports the channel rather than describing it — an `.er-badge` count on its icon (§6.1), the sub-label swapping `Encrypted` → `N Unread`, and up to three jogs of the icon per board visit (§7.1, `.er-jog`). All three clear together the moment the player opens Comms. Nothing else on the board reacts to state except VOTE |

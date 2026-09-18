@@ -396,7 +396,7 @@ They share the aged-bone surface, the caret and the note voice — the body rule
 `roundTip(currentRound)` is the one generated tip. It sits in the chrome rail and on the board masthead, so "what should I be doing right now?" is answerable from every screen in the game, and it is built from `ROUNDS` + `ROUND_GUIDE` so it cannot disagree with the Guide.
 
 ### HostPanel / HostReferenceView
-- [src/components/HostPanel.jsx](src/components/HostPanel.jsx) remains the live console for round control, the round clock, voting, file release, and reveal actions.
+- [src/components/HostPanel.jsx](src/components/HostPanel.jsx) remains the live console for the game start, round control, the round clock, voting, file release, and reveal actions.
 - It now also acts as the entry point for a dedicated in-app host guide screen via [src/components/views/HostReferenceView.jsx](src/components/views/HostReferenceView.jsx).
 - The guide stays inside the host route rather than becoming a separate App-level tab: HostPanel owns a local `referenceOpen` state and swaps the screen in place, which avoids building a second host navigation path into [src/App.jsx](src/App.jsx).
 - The host guide is a UI mirror of the external host docs: facilitation flow, witness map, clue manifest, materials, and objection handling in one place during the event.
@@ -468,11 +468,101 @@ snapshot.
 
 ---
 
+## The standby gate
+
+*Added 2026-09-19.* Players arrive over twenty minutes and log in as they come.
+Before this, every one of them dropped straight onto the board — six tiles, an
+empty evidence screen and a chat channel nobody had posted in — which reads as a
+broken app rather than as an event that has not begun. The gate holds them on one
+screen until the host presses **Start game**, and then lets the whole room in
+together on a ten-second countdown.
+
+### Files
+
+| File | Role |
+|---|---|
+| [src/lib/gameStart.js](src/lib/gameStart.js) | The model — storage shape, the three phases, `countdownSeconds`, `roundClockStartsAt`, `skipCountdown` |
+| [src/components/StandbyScreen.jsx](src/components/StandbyScreen.jsx) | The screen — the waiting line, the countdown, and the curtain |
+| [src/App.css](src/App.css) §13d | The per-second beat and the exit. Adds **no keyframes**: it reuses §13c's `erClockPush` and §1's `erLeave` |
+| [src/App.jsx](src/App.jsx) | The gate (`startGate`) and the route |
+| [src/components/HostPanel.jsx](src/components/HostPanel.jsx) | The only surface that writes a start |
+
+### It is an instant, not a flag
+
+`gameStartedAt` is an epoch millisecond on the host's clock — the same decision
+as `roundTimerEndsAt` above, for the same reason. A boolean plus a locally-run
+ten-second timer would restart the countdown on every phone that joined late,
+reloaded, or woke from sleep, so a player logging in during Round 3 would be made
+to watch a starting gun fire three rounds after the race began. An absolute
+instant is simply already past for them, and `startPhase()` reads `live`.
+
+That is also what makes the host's escape hatch trivial rather than a broadcast
+of its own: `skipCountdown()` is just a start instant far enough in the past that
+no device has any countdown left to run.
+
+### The gate is three states, not a boolean
+
+`startGate` in App.jsx is `'pending' | 'held' | 'released'`, adjusted during
+render beside the briefing's decision and for the same reason — an effect would
+paint a frame of the wrong screen first, and setting state in one is what
+`react-hooks/set-state-in-effect` rejects. `'pending'` exists so a device that
+boots *after* the room is open resolves straight to `'released'` and never shows
+a frame of a countdown it isn't owed. It is not a one-way latch: a `'released'`
+gate re-arms when `gameStartedAt` returns to 0, which is the host's **Back to
+waiting** undo.
+
+`StandbyScreen` is mounted `key={gameStartedAt}`, so "not started" → "started" is
+a remount rather than a prop change. That is what makes it re-read the wall clock
+at that moment instead of measuring the countdown against whenever this player
+happened to log in — without it, a device handed an already-past start would
+flash a countdown before its first tick corrected it.
+
+### Start is one write, and it starts the clock too
+
+`startGame(startedAt, timer)` writes `gameStartedAt` and all four
+`roundTimer*` fields together, for the reason `updateCurrentRound` takes its
+timer as a parameter: the curtain lifting and the round beginning are one event
+in the room, and if the second write failed the room would be let in against a
+clock that never started.
+
+The clock is armed to begin at the **end** of the countdown
+(`roundClockStartsAt()`), not at the press, so the first round does not spend its
+first ten seconds behind a curtain nobody can play through. `remainingMs` clamps
+to the round's own duration, so for those ten seconds every phone simply reads a
+full round and then starts moving.
+
+### The escape hatch does two things because there are two failure modes
+
+**Push start to everyone** rewrites the start instant into the past *and* bumps
+`forceRefreshAt`. The rewrite fixes a phone that took the start late and would
+otherwise replay the countdown; the reload fixes a phone whose snapshot listener
+died and would never have seen the first write either. It deliberately does not
+touch the round clock — by the time a host reaches for this the clock is running,
+and restarting it would hand the room ten extra minutes nobody asked for.
+
+### The curtain hands over on `animationend`, with a timer behind it
+
+The event is the primary path because `prefers-reduced-motion` collapses the fade
+to nothing and it still fires, so a player is let in immediately rather than
+staring at a screen that finished fading 600ms ago. A 1200ms `setTimeout` races
+it, because the failure mode of the event alone is a player sitting behind a
+fully transparent curtain with no way past it for the rest of the evening.
+Releasing twice is a no-op.
+
+### Migrating a live game
+
+The backfill in `initializeGameState` is the mirror image of the round clock's:
+a game already past Round 0 is treated as **started, long ago** (`gameStartedAt:
+1`), because dropping a waiting screen onto a room mid-evening is the one thing
+this feature must never do. Only a game still sitting on Round 0 gets the gate.
+
+---
+
 ## Firebase State
 
 The shared Firestore shape is unchanged from the previous architecture:
 
-- `gameState/current` stores round, the round clock, voting state, unlocked files, reveal state, and end-state flags
+- `gameState/current` stores round, the starting gun, the round clock, voting state, unlocked files, reveal state, and end-state flags
 - `gameState/votes` stores **only** `votes` — `{ userId: { round: suspectId } }`. There is deliberately no stored tally beside it (see [The tally is derived, not stored](#the-tally-is-derived-not-stored))
 - player clue ownership is still tracked under unlocked clue maps
 

@@ -23,10 +23,12 @@ import { SplashScreen } from './components/SplashScreen';
 import { StoryIntro } from './components/StoryIntro';
 import { OutroSplash } from './components/OutroSplash';
 import { MurdererRevealOverlay } from './components/MurdererRevealOverlay';
+import { StandbyScreen } from './components/StandbyScreen';
 import { ROUNDS, CHARACTERS, CLUE_DB, stackKeyForClue, getAssignedAccusation, CONFESSION_CLUE, getKillers, isMurderer, nextRiddleReward, ASK_OPENS_AT } from './data/gameData';
 import { SCREEN_GUIDE, EVIDENCE_STACKS } from './data/screenGuide';
 import { TOOLTIPS } from './data/tooltips';
 import { IDLE_TIMER, readTimer } from './lib/roundTimer';
+import { NOT_STARTED, readStartedAt, startPhase } from './lib/gameStart';
 import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue } from './firebase/config';
 import { useUnreadMessages } from './hooks/useUnreadMessages';
 
@@ -130,6 +132,11 @@ export default function App() {
   // the host starts it, Firestore broadcasts it, and every device reads the same
   // end instant off the same document rather than running a countdown of its own.
   const [roundTimer, setRoundTimer] = useState(IDLE_TIMER);
+  // When the host fired the starting gun, on the host's clock — 0 until they do
+  // (lib/gameStart.js). Every player who logs in before that is held on the
+  // standby screen, and the ten seconds after it are the countdown the whole
+  // room watches together.
+  const [gameStartedAt, setGameStartedAt] = useState(NOT_STARTED);
   // Killers only: whether this device has stepped past the public reveal. The
   // host's reveal sets `gameEnded` in the same write, so without this the five
   // of them would drop straight onto the outro and never see the screen naming
@@ -179,6 +186,18 @@ export default function App() {
   // Re-opened from the Story screen. Separate from the state above so replaying it
   // in Round 5 can't be confused with the Round 0 takeover.
   const [briefingReplay, setBriefingReplay] = useState(false);
+
+  // The standby gate (components/StandbyScreen.jsx).
+  //   'pending'  → the start isn't known yet, so it isn't decided
+  //   'held'     → the standby screen owns the device
+  //   'released' → this player is in the game
+  //
+  // Deliberately NOT persisted, and deliberately three states rather than a
+  // boolean. A player who logs in after the room has already been let in must
+  // never see a starting gun fire — resolving 'pending' straight to 'released'
+  // for them is what avoids a frame of it. A logout resets it so the next player
+  // on a shared device is gated the same way this one was.
+  const [startGate, setStartGate] = useState('pending');
 
   // Last force-refresh timestamp this device has already acted on. A ref, not
   // state: it must survive re-renders without causing one, and comparing
@@ -256,6 +275,7 @@ export default function App() {
       setRevealedClues(gameState.revealedClues || []);
       setGameEnded(gameState.gameEnded || false);
       setRoundTimer(readTimer(gameState));
+      setGameStartedAt(readStartedAt(gameState));
 
       // Host force-sync. The first snapshot only records the current value —
       // reloading on it would put every device in a boot loop. Only a value
@@ -475,6 +495,21 @@ export default function App() {
     setBriefingState(currentRound === 0 ? 'open' : 'done');
   }
 
+  // The standby gate, decided the same way and for the same reasons. A device
+  // that joins once the room is already open resolves straight to 'released', so
+  // the countdown never plays to somebody it isn't counting for.
+  //
+  // The second branch is the host pulling the room back to the waiting screen
+  // mid-event — the undo for a mis-tapped Start. It has to re-arm a gate that is
+  // already open, which is why this is not simply a one-way latch.
+  if (currentUser && !isHostUser && stateSettled) {
+    if (startGate === 'pending') {
+      setStartGate(startPhase(gameStartedAt) === 'live' ? 'released' : 'held');
+    } else if (startGate === 'released' && gameStartedAt === NOT_STARTED) {
+      setStartGate('held');
+    }
+  }
+
   // Leaving the Evidence screen closes whichever stack was open, so reopening it
   // lands on the hub rather than wherever the player happened to be three screens
   // ago. Adjusted during render for the same reason as the briefing above — an
@@ -532,6 +567,25 @@ export default function App() {
     return <OutroSplash playerName={myCharacter?.name || 'Player'} />;
   }
 
+  // Standby — the host hasn't started the room yet, so there is nothing to let a
+  // player into. Below the terminal screens for the same reason the briefing is:
+  // a finished game must not be able to send anybody back to a waiting screen.
+  // Above the briefing, because the run of show is arrive → wait → start → story,
+  // and the whole point of the gate is that the room gets the briefing together.
+  //
+  // Keyed on the start instant: going from "not started" to "started" is a scene
+  // change, and the key is what makes the screen re-read the clock at that moment
+  // rather than measuring the countdown against whenever this player logged in.
+  if (!isHostUser && startGate === 'held') {
+    return (
+      <StandbyScreen
+        key={gameStartedAt}
+        startedAt={gameStartedAt}
+        onRelease={() => setStartGate('released')}
+      />
+    );
+  }
+
   // The briefing. Below the terminal screens, so no game state can route a device
   // around them, and above the board, because at Round 0 the story is the first
   // thing a player should be given — before they have any idea what the tiles are
@@ -565,6 +619,9 @@ export default function App() {
         // Undecide the briefing: the next player to log in on this device is a
         // different person, and if the game is still in Round 0 they need it.
         setBriefingState('pending');
+        // Same for the standby gate — a device handed to somebody new before the
+        // host has started must hold them, not inherit this player's release.
+        setStartGate('pending');
       } else {
         setActiveTab(tabId);
       }
@@ -662,6 +719,8 @@ export default function App() {
             unlockedFiles={unlockedFiles}
             revealedClues={revealedClues}
             roundTimer={roundTimer}
+            gameStartedAt={gameStartedAt}
+            setGameStartedAt={setGameStartedAt}
             setRoundTimer={setRoundTimer}
             setCurrentRound={setCurrentRound}
             setIsVotingOpen={setIsVotingOpen}

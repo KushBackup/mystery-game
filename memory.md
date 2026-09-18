@@ -117,6 +117,16 @@ Also settled the same day, smaller: the four ignored coffee tickets are **two Sh
   The per-player queue order (`riddleQueueFor`) is stable-but-different on purpose — if every phone paid out the same clue, codes would be worth nothing and the room would have no reason to talk. [CLUE_CODES.md](CLUE_CODES.md) is now the **host's stall-breaker**, not a packing list.
 - **Slides must stay inside Round 0 knowledge.** The user's brief was "the introductory information they need to understand the murder" — so the vape is fair game (it is in the public incident report) but the toxin, the cancer, the SEBI inquiry and the staging are the paid-off reveals of rounds 3–5 and must not appear.
 
+## Conventions the user has confirmed (continued)
+
+- **The game does not begin at login — it begins when the host presses Start (decided 2026-09-19).** The user asked for a waiting screen because 69 people log in over twenty minutes and an app with no evidence in it yet reads as broken. Four things the brief was explicit about:
+  1. The screen is **simple** — "waiting for the host to start the game" and nothing else. No tiles, no progress bar, nothing to poke at.
+  2. Start is a **host console button**, and it starts *all* timers — so `startGame` writes `gameStartedAt` and all four `roundTimer*` fields in one update.
+  3. The screen fades after a **10-second countdown**, so the room is let in together rather than trickling in.
+  4. There must be a way to **force-sync the start state** "in case someone's game glitches and they need to move on" — that is **Push start to everyone**, which rewrites the start into the past *and* bumps `forceRefreshAt`, because the two failure modes (a phone that took the start late, a phone whose listener died) need different fixes.
+  Claude added **Back to waiting** unasked, as the undo for a mis-tapped Start — the alternative was Reset Game, which also wipes the round, votes, clues and chat.
+- **`gameStartedAt` is an absolute instant, never a boolean.** Same reasoning as `roundTimerEndsAt`: a late joiner, a reload or a phone waking from sleep must be *let in*, not shown a starting gun that fired three rounds ago.
+
 ## Update protocol
 
 When the user shares a fact that fits the "What belongs here" criteria above, append a bullet under the most appropriate section (or create a new section). Keep it tight — one line per fact when possible.

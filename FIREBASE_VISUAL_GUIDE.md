@@ -319,6 +319,7 @@ every player still had the old thread.
         ├── revealedClues: []                 ← clues pushed to everyone
         ├── gameEnded: false
         ├── forceRefreshAt: 0                 ← host force-sync broadcast
+        ├── gameStartedAt: 0                  ← the starting gun: epoch ms the host pressed Start
         ├── roundTimerEndsAt: 0               ← round clock: epoch ms it runs out
         ├── roundTimerRemainingMs: 0          ← round clock: what is left, while held
         ├── roundTimerDurationMs: 1800000     ← round clock: the length it is armed with
@@ -333,6 +334,35 @@ newer one. That is what makes the button re-triggerable and what stops the
 first snapshot after page load from causing a reload loop. `0` means never
 fired. `resetGameState()` also bumps it, so a reset lands every device on the
 clean state.
+
+**`gameStartedAt`** is the starting gun ([src/lib/gameStart.js](src/lib/gameStart.js)),
+and like `roundTimerEndsAt` below it is an absolute instant on the *host's*
+clock rather than a flag. `0` means the host has not started the room, and every
+player who has logged in is held on the standby screen
+([src/components/StandbyScreen.jsx](src/components/StandbyScreen.jsx)). A
+non-zero value opens the room ten seconds after that instant — so a device that
+joins, reloads or wakes up after those ten seconds reads the start as already
+past and is simply let in, with no countdown. Three phases, all derived and none
+of them stored:
+
+| Phase | `gameStartedAt` | What the device shows |
+|---|---|---|
+| Standby | `0` | "Waiting for the host to start the game" |
+| Counting | set, within 10s | The countdown |
+| Live | set, more than 10s ago | The game |
+
+Only the host writes it, through three calls in
+[src/firebase/config.js](src/firebase/config.js): `startGame(startedAt, timer)`
+(which also writes all four `roundTimer*` fields in the same update, armed to
+begin as the countdown clears), `pushGameStart()` (rewrites it into the past
+*and* bumps `forceRefreshAt` — the two failure modes it fixes are different),
+and `holdGameAtStandby()` (back to `0`, the undo for a mis-tapped Start).
+`resetGameState()` clears it to `0`, so the next room is held at the door too.
+
+**Migrating a live game:** `initializeGameState` backfills a doc that predates
+the field as `1` — "started, long ago" — whenever `currentRound > 0`, so
+deploying this mid-event cannot drop a waiting screen onto a room that is already
+playing. Only a game still sitting on Round 0 backfills to `0`.
 
 **The four `roundTimer*` fields** are the round clock ([src/lib/roundTimer.js](src/lib/roundTimer.js)).
 Only the host writes them; every player's device reads them and runs the

@@ -152,7 +152,7 @@ export const HOST_MATERIALS = {
     '69 login cards',
     '1 host device logged in and synced',
     'Round 3 and Round 4 case-file unlock buttons checked before players arrive',
-    'A decision on whether rounds are timed — the round clock is off until you start it',
+    'A decision on the round length — Start game arms the clock at whatever the Round clock section is set to',
   ],
   helpful: [
     'Printed suspect roster',
@@ -166,10 +166,11 @@ export const HOST_ROUND_GUIDE = {
   pregame: {
     objective: 'Get every player into the app and into the fiction before the room starts free-form theorizing.',
     actions: [
-      'Check login issues immediately.',
+      'Check login issues immediately. Everyone who logs in waits on one screen until you press Start game — nobody can wander into an empty app.',
       'Describe the ASK → code → CODE loop out loud. The button itself does not appear until Round 2, so this is telling, not showing.',
       'Point players toward Identity and Story before any social chaos starts.',
-      'If you are running to the clock, say so once — then start it as you announce each round. The default is 30 minutes and the room sees it under the round number.',
+      'Set the round length before you start. Start game counts the room down from ten and starts the clock as the countdown clears — the default is 30 minutes and the room sees it under the round number.',
+      'If a phone is still on the waiting screen once the room is in, use Push start to everyone. It drops that device straight into the game and reloads every phone; logins survive.',
     ],
     emphasize: [
       'Phones are case files, not props.',
@@ -185,7 +186,7 @@ export const HOST_ROUND_GUIDE = {
       'People skipping Story or the Incident Report',
       'Teams becoming socially closed too early',
     ],
-    advanceWhen: 'Everyone is logged in and the room understands that evidence is earned with ASK and spread with CODE.',
+    advanceWhen: 'Everyone is logged in, the room understands that evidence is earned with ASK and spread with CODE, and you are ready to press Start game.',
   },
   0: {
     objective: 'Orient the room, then force a bad first vote before certainty exists.',

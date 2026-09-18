@@ -12,9 +12,14 @@
 - [ ] [HOST_LIVE_FACILITATION.md](HOST_LIVE_FACILITATION.md) run of show
 - [ ] [HOST_QA_BRIEFING.md](HOST_QA_BRIEFING.md) objection sheet
 - [ ] One spare phone logged in as host backup
-- [ ] Decide the round length before the room arrives — the console's **Round
-      clock** is off until you start it, and the default is 30 minutes
+- [ ] Decide the round length before the room arrives — **Start game** arms the
+      clock at whatever the console's **Round clock** section is showing, and the
+      default is 30 minutes
       ([HOST_LIVE_FACILITATION.md](HOST_LIVE_FACILITATION.md) § The round clock)
+- [ ] Know the two Game start recovery buttons by name: **Push start to everyone**
+      (a phone stuck on the waiting screen) and **Back to waiting** (you pressed
+      Start too early)
+      ([HOST_LIVE_FACILITATION.md](HOST_LIVE_FACILITATION.md) § Start game)
 
 ## 2. The suspect roster (12 primes of 34 POIs)
 

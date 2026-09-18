@@ -8,6 +8,7 @@ import {
 } from 'firebase/firestore';
 import { CASE_FILES } from '../data/gameData.js';
 import { IDLE_TIMER, writeTimer } from '../lib/roundTimer.js';
+import { NOT_STARTED, skipCountdown, writeStartedAt } from '../lib/gameStart.js';
 
 // Firebase project configuration
 const firebaseConfig = {
@@ -56,6 +57,9 @@ export const initializeGameState = async () => {
         revealedClues: [], // Host-revealed clues
         gameEnded: false, // Track if game has ended
         forceRefreshAt: 0, // Timestamp of the host's last force-sync broadcast
+        // Not started: every player who logs in waits on the standby screen
+        // until the host presses Start. See lib/gameStart.js.
+        ...writeStartedAt(NOT_STARTED),
         // The round clock, stopped. Four flat fields rather than a nested map —
         // see lib/roundTimer.js for the shape and why it is stored this way.
         ...writeTimer(IDLE_TIMER),
@@ -64,7 +68,7 @@ export const initializeGameState = async () => {
     } else {
       // Ensure new fields exist in existing game state
       const data = docSnap.data();
-      if (!data.unlockedFiles || !('voteResultsVisible' in data) || !('revealedToMurderer' in data) || !data.revealedClues || !('gameEnded' in data) || !('forceRefreshAt' in data) || !('roundTimerEndsAt' in data)) {
+      if (!data.unlockedFiles || !('voteResultsVisible' in data) || !('revealedToMurderer' in data) || !data.revealedClues || !('gameEnded' in data) || !('forceRefreshAt' in data) || !('roundTimerEndsAt' in data) || !('gameStartedAt' in data)) {
         await updateDoc(gameStateRef, {
           unlockedFiles: data.unlockedFiles || ['f_incident'],
           voteResultsVisible: data.voteResultsVisible ?? false,
@@ -72,6 +76,13 @@ export const initializeGameState = async () => {
           revealedClues: data.revealedClues || [],
           gameEnded: data.gameEnded ?? false,
           forceRefreshAt: data.forceRefreshAt ?? 0,
+          // The mirror image of the round-clock backfill below. Backfilling a
+          // game that is already past Round 0 as "not started" would drop the
+          // standby screen onto a room mid-evening, so a game with a round on
+          // the board is treated as started — and started long enough ago that
+          // nobody is shown a countdown. Only a game still sitting on Round 0
+          // gets the gate, which is where it belongs.
+          gameStartedAt: data.gameStartedAt ?? ((data.currentRound ?? 0) > 0 ? 1 : NOT_STARTED),
           // Migrating a live game mid-event must not start a clock nobody asked
           // for, so the backfill is the stopped timer and the host starts it.
           roundTimerEndsAt: data.roundTimerEndsAt ?? IDLE_TIMER.endsAt,
@@ -122,6 +133,77 @@ export const updateRoundTimer = async (timer) => {
     });
   } catch (error) {
     console.error('Error updating round timer:', error);
+  }
+};
+
+// Fire the starting gun, and start the round's clock with it.
+//
+// One write, not two, for exactly the reason updateCurrentRound takes its timer
+// as a parameter: the standby screen clearing and the clock beginning are one
+// event in the room, and if the second write failed the room would be let in
+// against a clock that never started. The caller builds both values (see
+// HostPanel.jsx) so the console can show them the instant it taps.
+//
+// Host-only by convention rather than by rule — firestore.rules is open and the
+// host is the trust boundary (see the header there). Nothing on a player's
+// phone writes a start; every device reads this one.
+export const startGame = async (startedAt, timer = null) => {
+  const gameStateRef = doc(db, GAME_STATE_DOC);
+  try {
+    await updateDoc(gameStateRef, {
+      ...writeStartedAt(startedAt),
+      ...(timer ? writeTimer(timer) : {}),
+      lastUpdated: Date.now()
+    });
+  } catch (error) {
+    console.error('Error starting game:', error);
+  }
+};
+
+// Push the start through to every device, countdown and all.
+//
+// The escape hatch for the one minute of the evening where a wedged phone is
+// most visible: the room has been let in and somebody is still looking at
+// standby. Two things happen, and both are needed, because the two failure
+// modes are different. The start instant is rewritten far enough into the past
+// that no device has a countdown left to run (lib/gameStart.js), which fixes a
+// phone that took the start late and would otherwise replay it. And
+// forceRefreshAt is bumped, which fixes the phone whose snapshot listener died
+// and would never have seen the first write either — a reload is the only thing
+// that reaches that one.
+//
+// Deliberately does NOT touch the round clock. By the time a host reaches for
+// this the clock is running, and restarting it at full length would hand the
+// room ten extra minutes nobody asked for.
+export const pushGameStart = async (startedAt = skipCountdown()) => {
+  const gameStateRef = doc(db, GAME_STATE_DOC);
+  try {
+    await updateDoc(gameStateRef, {
+      ...writeStartedAt(startedAt),
+      forceRefreshAt: Date.now(),
+      lastUpdated: Date.now()
+    });
+  } catch (error) {
+    console.error('Error pushing game start:', error);
+  }
+};
+
+// Put the room back on the standby screen.
+//
+// The undo for a mis-tapped Start. Without it the only way back is Reset Game,
+// which also clears the round, the votes, every unlocked clue and the chat
+// channel — a wildly disproportionate price for one wrong tap, and one the host
+// would be paying in front of 69 people. The round clock is left exactly as it
+// is: stopping it is a separate decision with its own control three inches away.
+export const holdGameAtStandby = async () => {
+  const gameStateRef = doc(db, GAME_STATE_DOC);
+  try {
+    await updateDoc(gameStateRef, {
+      ...writeStartedAt(NOT_STARTED),
+      lastUpdated: Date.now()
+    });
+  } catch (error) {
+    console.error('Error holding game at standby:', error);
   }
 };
 
@@ -417,6 +499,9 @@ export const resetGameState = async () => {
       revealedToMurderer: false,
       revealedClues: [],
       gameEnded: false,
+      // Back to standby. A reset is the host setting up for the next room, and
+      // the next room should be held at the door exactly like this one was.
+      ...writeStartedAt(NOT_STARTED),
       // Stopped, and armed at the default length — a new game's Round 0 is the
       // briefing, which nobody should walk into against a running clock.
       ...writeTimer(IDLE_TIMER),

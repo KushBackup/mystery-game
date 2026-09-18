@@ -856,6 +856,44 @@ button.er-redact:not(.er-redact--open) { cursor: pointer; }
 }
 
 /* ============================================================
+   13d. THE STARTING GUN (§7.1)
+   The ten-second countdown on the standby screen — the second
+   countdown in the app, and deliberately not a second
+   vocabulary. See components/StandbyScreen.jsx, lib/gameStart.js.
+
+   It adds no keyframes. The per-second beat is 13c's `erClockPush`
+   — the same push the round clock spends on its last ten seconds,
+   which is exactly what this is — and the exit is §1's `erLeave`.
+   §7.1 allows a countdown to repeat because it ends by itself, and
+   this one ends harder than the round clock does: ten beats, and
+   then the screen it lives on is gone.
+
+   Motion is not the only channel here either. The number is the
+   whole message, and it is still counting under reduced motion —
+   only the punctuation is lost.
+   ============================================================ */
+
+/* `inline-block` because a bare inline box cannot be scaled, and
+   a centred origin because — unlike the console's clock — this
+   figure is centred on the screen with nothing beside it to walk
+   away from. */
+.er-standby__count {
+  display: inline-block;
+  transform-origin: center center;
+  animation: erClockPush 0.62s var(--ease-land);
+}
+
+/* The curtain. Longer than `.er-leave`'s 220ms because this is a
+   whole screen handing over to the game rather than a card
+   dismissing, and it is the last thing between a player and the
+   evening — but it is the same keyframe, so it is still the app's
+   one exit gesture. `forwards` matters: the screen must stay gone
+   for the frame between `animationend` and React unmounting it. */
+.er-standby--leaving {
+  animation: erLeave 0.6s var(--ease-enter) forwards;
+}
+
+/* ============================================================
    14. SCREEN NOTE (§6.10)
    The onboarding note pinned to the top of each screen through
    rounds 00–01. Composes on .er-bone (it is paper), and adds
@@ -1363,6 +1401,14 @@ button.er-redact:not(.er-redact--open) { cursor: pointer; }
      meaning anyway — the digits turn signal a full minute out, the label reads
      "Time up" at zero, and the number itself is still counting. Only the pop is
      gone, and the pop was punctuation. */
+
+  /* The starting gun (§13d) needs no override for its countdown — same reason
+     as §13c, `erClockPush` ends at scale(1). Its exit needs none either, and
+     the reason matters more: `erLeave` ends at opacity 0 with `forwards`, so a
+     collapsed duration lands the curtain exactly where it belongs — gone — and
+     `animationend` still fires, which is what hands the player into the game.
+     A fade tied to a wall-clock timer instead would have stranded them on a
+     finished screen for the rest of the nominal 600ms. */
 
   /* Both knock cues (§17) need no override and must not get one: their last
      keyframe is the button's resting state, so a single collapsed iteration

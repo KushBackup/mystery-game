@@ -10,7 +10,8 @@
 
 | Phase | Time | What happens |
 |---|---|---|
-| Pre-game | ~5 min | 69 logins, the ASK→code→CODE loop explained out loud |
+| Pre-game | ~5 min | 69 logins onto the waiting screen, the ASK→code→CODE loop explained out loud |
+| **Start game** | 10 sec | You press it. The room counts down together and lands on Round 0 |
 | Round 0 | 10–15 min | Briefing plays, Incident Report, blind first vote |
 | Round 1 | ~15 min | 12 accusations auto-dealt via statement pods |
 | Round 2 | 15–20 min | Riddle lock opens; 12 motive files in the pool |
@@ -33,9 +34,27 @@ at 3:15. The mastermind order matters at the reveal: **Anurag first.**
 ### Pre-game
 - Nothing to distribute except login cards. Repeat "share your codes" until it's a
   catchphrase.
+- **Everyone who logs in sits on a waiting screen until you start the game.** So
+  let people arrive and log in at whatever pace they arrive at — there is nothing
+  for anyone to wander into early, and nothing to police.
 - Tell the ASK loop now; the button arrives at Round 2 to a room that expects it.
-- Decide whether you are running to the clock. If you are, say so once: "every
-  round is on a timer, you'll see it under the round number."
+- Set the round length before you start — Start game arms the clock at whatever
+  the Round clock section is showing. If you are running to the clock, say so
+  once: "every round is on a timer, you'll see it under the round number."
+
+### Start game
+- Console → **Game start** → **Start game**. Say the line, then press it. Every
+  waiting phone counts down from **10** and opens together on the Round 0
+  briefing, and the Round 0 clock starts as the countdown clears.
+- **Latecomers need nothing from you.** Anyone who logs in after you have started
+  is let straight in with no countdown — the app knows the gun already fired.
+- **One phone still on the waiting screen?** → **Push start to everyone**. It
+  drops that device straight into the game and reloads every phone in the room.
+  Logins survive, the round clock is untouched, and it is over in a blink. This is
+  the one recovery button worth knowing by heart.
+- **Pressed it too early?** → **Back to waiting**. Everyone returns to the waiting
+  screen until you press Start again. It does *not* stop the round clock — do that
+  separately if you meant to.
 
 ### The round clock
 - Console → **Round clock**. **Start** it as you announce each round; the
@@ -46,6 +65,8 @@ at 3:15. The mastermind order matters at the reveal: **Anurag first.**
   there and then.
 - **Pause** holds the room (a speech, a photo, a fire alarm); **Resume** gives
   back exactly what was left.
+- **Start game starts it for you**, armed at whatever length is selected — so on a
+  normal night you never touch Start here at all.
 - Advancing the round restarts a running clock at full length, so **Round + is
   the only control you need** once it is going. A clock you never started stays
   off, and the rounds look exactly as they did without it.

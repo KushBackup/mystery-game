@@ -95,6 +95,33 @@ code, so a stalled round can be unblocked by simply reading one out.
 
 ---
 
+## Starting the room
+
+*Added 2026-09-19.* The game does not begin when a player logs in. It begins when
+the host presses **Start game**.
+
+69 people arrive over twenty minutes and log in as they come. Everyone who does
+lands on a single waiting screen — *"Waiting for the host to start the game"* —
+and stays there. There is nothing to tap and nothing to get wrong, which is the
+point: an empty board with no evidence on it and a chat channel nobody has posted
+in reads as a broken app rather than as an evening that has not started.
+
+| Control | Where | What it does |
+|---|---|---|
+| Start game | Host console → **Game start** | Counts every waiting phone down from **10**, opens the room together, and starts the Round 0 clock as the countdown clears |
+| Push start to everyone | Host console → **Game start** | The escape hatch. Drops anyone still waiting straight into the game with no countdown, and reloads every device. Logins survive; the round clock is untouched |
+| Back to waiting | Host console → **Game start** | The undo for a mis-tapped Start. Everyone returns to the waiting screen until Start is pressed again |
+
+Two things follow from the start being stored as a moment in time rather than as
+a switch. **A late arrival never sees the countdown** — the gun fired before they
+logged in, so they are simply let in. And **the round clock is armed to begin as
+the countdown clears**, not at the press, so the first round does not spend its
+first ten seconds behind a curtain nobody can play through.
+
+Reset Game puts the room back on the waiting screen, ready for the next sitting.
+
+---
+
 ## The round clock
 
 Rounds are advanced by the host, not by the app — that has not changed, and no
