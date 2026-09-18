@@ -319,6 +319,10 @@ every player still had the old thread.
         ├── revealedClues: []                 ← clues pushed to everyone
         ├── gameEnded: false
         ├── forceRefreshAt: 0                 ← host force-sync broadcast
+        ├── roundTimerEndsAt: 0               ← round clock: epoch ms it runs out
+        ├── roundTimerRemainingMs: 0          ← round clock: what is left, while held
+        ├── roundTimerDurationMs: 1800000     ← round clock: the length it is armed with
+        ├── roundTimerRound: 0                ← the round this clock belongs to
         └── lastUpdated: 1705968000000
 ```
 
@@ -329,6 +333,30 @@ newer one. That is what makes the button re-triggerable and what stops the
 first snapshot after page load from causing a reload loop. `0` means never
 fired. `resetGameState()` also bumps it, so a reset lands every device on the
 clean state.
+
+**The four `roundTimer*` fields** are the round clock ([src/lib/roundTimer.js](src/lib/roundTimer.js)).
+Only the host writes them; every player's device reads them and runs the
+countdown locally. They encode four states between them:
+
+| State | `roundTimerEndsAt` | `roundTimerRemainingMs` |
+|---|---|---|
+| Stopped (armed, not started) | `0` | `0` |
+| Running | epoch ms it ends | `0` |
+| Held (paused) | `0` | what is left |
+| Expired | epoch ms, now past | `0` |
+
+`roundTimerEndsAt` is an absolute instant on the *host's* clock, not a duration,
+so a phone that joins late, reloads or wakes from sleep lands on the correct
+remaining time instead of restarting the countdown from the top. Expiry is never
+written: it is a reading every device takes for itself, because 69 devices
+noticing the same instant must not become 69 writes.
+
+Four flat fields rather than one nested `roundTimer` map, because `updateDoc`
+merges fields but replaces maps — a nested object would have to be written whole
+by every call that touches the round, and one stale copy would silently undo a
+start. `updateCurrentRound(round, timer)` writes the round and its clock in a
+single update for the same reason: an advance that arrived one snapshot ahead of
+its timer would show the new round holding the old round's countdown.
 
 `initializeGameState()` back-fills any of these fields that are missing from an
 existing document, so an in-progress game picks up new fields without a manual

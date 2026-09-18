@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { ScreenBrief } from './ui/ScreenBrief';
 import { Numeral } from './ui/Numeral';
 import { InfoTip } from './ui/InfoTip';
+import { RoundClock } from './ui/RoundClock';
+import { IDLE_TIMER, isIdle } from '../lib/roundTimer';
 import { CASE_META } from '../data/gameData';
 import { roundTip } from '../data/tooltips';
 
@@ -94,6 +96,7 @@ const JOG_BUDGET = 3;
 export default function GridMenu({
   onNavigate,
   currentRound = 0,
+  roundTimer = IDLE_TIMER,
   isVotingOpen = false,
   note,
   unreadCount = 0,
@@ -198,11 +201,18 @@ export default function GridMenu({
             <span className="er-mono er-mono--wide er-mono--bone">Astral Project</span>
             {/* The board is where a player lands after every screen, so the
                 round tooltip is repeated here rather than living only in the
-                chrome rail — this is the one surface that has no rail. */}
-            <div className="flex items-baseline gap-2">
-              <span className="er-mono">Round</span>
-              <Numeral value={currentRound} pad={2} className="er-num text-xl" />
-              <InfoTip tip={roundTip(currentRound)} className="self-center" />
+                chrome rail — this is the one surface that has no rail. The
+                clock is repeated for exactly the same reason: this is where a
+                player stands between screens, which is where "how long have I
+                got?" actually gets asked. It draws nothing until the host
+                starts one, so an untimed round leaves this row as it was. */}
+            <div>
+              <div className="flex items-baseline justify-end gap-2">
+                <span className="er-mono">Round</span>
+                <Numeral value={currentRound} pad={2} className="er-num text-xl" />
+                <InfoTip tip={roundTip(currentRound, !isIdle(roundTimer))} className="self-center" />
+              </div>
+              <RoundClock timer={roundTimer} className="justify-end mt-1.5" />
             </div>
           </div>
           <div className="er-rule mt-3" />

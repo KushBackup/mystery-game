@@ -396,10 +396,75 @@ They share the aged-bone surface, the caret and the note voice — the body rule
 `roundTip(currentRound)` is the one generated tip. It sits in the chrome rail and on the board masthead, so "what should I be doing right now?" is answerable from every screen in the game, and it is built from `ROUNDS` + `ROUND_GUIDE` so it cannot disagree with the Guide.
 
 ### HostPanel / HostReferenceView
-- [src/components/HostPanel.jsx](src/components/HostPanel.jsx) remains the live console for round control, voting, file release, and reveal actions.
+- [src/components/HostPanel.jsx](src/components/HostPanel.jsx) remains the live console for round control, the round clock, voting, file release, and reveal actions.
 - It now also acts as the entry point for a dedicated in-app host guide screen via [src/components/views/HostReferenceView.jsx](src/components/views/HostReferenceView.jsx).
 - The guide stays inside the host route rather than becoming a separate App-level tab: HostPanel owns a local `referenceOpen` state and swaps the screen in place, which avoids building a second host navigation path into [src/App.jsx](src/App.jsx).
 - The host guide is a UI mirror of the external host docs: facilitation flow, witness map, clue manifest, materials, and objection handling in one place during the event.
+
+---
+
+## The round clock
+
+The host used to move the room on by feel alone. The clock gives the other 69
+people the same information: one countdown per round, started by the host,
+broadcast through `gameState/current` beside the round itself.
+
+### Files
+
+| File | Role |
+|---|---|
+| [src/lib/roundTimer.js](src/lib/roundTimer.js) | The model — storage shape, the four states, `remainingMs`, `clockPhase`, `formatClock`, and every transition as a pure function |
+| [src/hooks/useRoundClock.js](src/hooks/useRoundClock.js) | The tick. Polls `Date.now()` every 250ms, only while a clock is running |
+| [src/components/ui/RoundClock.jsx](src/components/ui/RoundClock.jsx) | The display — the rail variant for players, the console variant for the host |
+| [src/App.css](src/App.css) §13c | Type, state colour, and the two urgency keyframes |
+| [src/components/HostPanel.jsx](src/components/HostPanel.jsx) | The only surface that writes one |
+
+### It is an end instant, not a duration
+
+`roundTimerEndsAt` is an epoch millisecond on the host's clock and every device
+subtracts its own `Date.now()`. Broadcasting "26 minutes remaining" and counting
+down locally would be immune to clock skew but wrong for the case that actually
+happens at an event: a phone joining late, reloading, or waking from sleep gets
+the same snapshot everyone got at the start of the round and would restart its
+countdown from the top. The cost — a device with a wrong clock reads the clock
+wrong — is bounded by `remainingMs` clamping to the round's own duration, so the
+worst a slow phone can show is a countdown that starts late, never 48 minutes of
+a 30 minute round.
+
+### Nothing writes when it expires
+
+`done` is a phase every device computes for itself, not a stored flag. The clock
+running out changes no game state: the host still decides when the round ends,
+and 69 devices noticing the same instant must not become 69 writes.
+
+### The clock belongs to a round
+
+`timerForRound()` states the rule once: **advancing the round restarts a running
+clock at full length and leaves a stopped one stopped.** Skipping ahead is the
+host saying "this round starts now", and a host who never started a clock must
+not have one appear on 69 phones because they pressed `+`. The round and its
+clock go out in one `updateCurrentRound(round, timer)` write, so the two can
+never arrive a snapshot apart.
+
+### The last minute is the app's only repeating motion
+
+[DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §7.1 reserves the infinite pulse for a
+genuine sustained alarm, and a round running out is the first thing in the game
+that is one. It is still written as one-shots: React keys the digits on the
+whole second, so each second remounts them and plays exactly one pop — a 1.07
+tick in the last minute, a 1.25 push in the last ten seconds — and the sequence
+ends when the countdown does. Nothing is `infinite`, and the colour change and
+the "Time up" label carry the state on their own under `prefers-reduced-motion`.
+
+### Player surfaces
+
+The clock renders under the round numeral on the chrome rail
+([Header.jsx](src/components/layout/Header.jsx), sharing the round rail's row) and
+on the hub's masthead ([GridMenu.jsx](src/components/GridMenu.jsx)) — the two
+places that already answer "where are we?". **An idle clock renders nothing**, so
+a round the host chooses not to time looks exactly as it did before the feature
+existed, and no device shows a dead `30:00` while it waits for its first
+snapshot.
 
 ---
 
@@ -407,7 +472,7 @@ They share the aged-bone surface, the caret and the note voice — the body rule
 
 The shared Firestore shape is unchanged from the previous architecture:
 
-- `gameState/current` stores round, voting state, unlocked files, reveal state, and end-state flags
+- `gameState/current` stores round, the round clock, voting state, unlocked files, reveal state, and end-state flags
 - `gameState/votes` stores **only** `votes` — `{ userId: { round: suspectId } }`. There is deliberately no stored tally beside it (see [The tally is derived, not stored](#the-tally-is-derived-not-stored))
 - player clue ownership is still tracked under unlocked clue maps
 

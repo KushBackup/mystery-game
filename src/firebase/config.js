@@ -7,6 +7,7 @@ import {
   orderBy, limit
 } from 'firebase/firestore';
 import { CASE_FILES } from '../data/gameData.js';
+import { IDLE_TIMER, writeTimer } from '../lib/roundTimer.js';
 
 // Firebase project configuration
 const firebaseConfig = {
@@ -55,12 +56,15 @@ export const initializeGameState = async () => {
         revealedClues: [], // Host-revealed clues
         gameEnded: false, // Track if game has ended
         forceRefreshAt: 0, // Timestamp of the host's last force-sync broadcast
+        // The round clock, stopped. Four flat fields rather than a nested map —
+        // see lib/roundTimer.js for the shape and why it is stored this way.
+        ...writeTimer(IDLE_TIMER),
         lastUpdated: Date.now()
       });
     } else {
       // Ensure new fields exist in existing game state
       const data = docSnap.data();
-      if (!data.unlockedFiles || !('voteResultsVisible' in data) || !('revealedToMurderer' in data) || !data.revealedClues || !('gameEnded' in data) || !('forceRefreshAt' in data)) {
+      if (!data.unlockedFiles || !('voteResultsVisible' in data) || !('revealedToMurderer' in data) || !data.revealedClues || !('gameEnded' in data) || !('forceRefreshAt' in data) || !('roundTimerEndsAt' in data)) {
         await updateDoc(gameStateRef, {
           unlockedFiles: data.unlockedFiles || ['f_incident'],
           voteResultsVisible: data.voteResultsVisible ?? false,
@@ -68,6 +72,12 @@ export const initializeGameState = async () => {
           revealedClues: data.revealedClues || [],
           gameEnded: data.gameEnded ?? false,
           forceRefreshAt: data.forceRefreshAt ?? 0,
+          // Migrating a live game mid-event must not start a clock nobody asked
+          // for, so the backfill is the stopped timer and the host starts it.
+          roundTimerEndsAt: data.roundTimerEndsAt ?? IDLE_TIMER.endsAt,
+          roundTimerRemainingMs: data.roundTimerRemainingMs ?? IDLE_TIMER.remainingMs,
+          roundTimerDurationMs: data.roundTimerDurationMs ?? IDLE_TIMER.durationMs,
+          roundTimerRound: data.roundTimerRound ?? (data.currentRound ?? 0),
           lastUpdated: Date.now()
         });
       }
@@ -77,16 +87,41 @@ export const initializeGameState = async () => {
   }
 };
 
-// Update current round
-export const updateCurrentRound = async (round) => {
+// Update current round, and the round's clock with it.
+//
+// One write, not two, and that is the whole reason `timer` is a parameter here
+// rather than a second call the console makes afterwards. The clock belongs to a
+// round (lib/roundTimer.js), so an advance that arrived on 69 phones one snapshot
+// ahead of its timer would show every player the new round still holding the old
+// round's countdown — and if the second write failed, permanently.
+export const updateCurrentRound = async (round, timer = null) => {
   const gameStateRef = doc(db, GAME_STATE_DOC);
   try {
     await updateDoc(gameStateRef, {
       currentRound: round,
+      ...(timer ? writeTimer(timer) : {}),
       lastUpdated: Date.now()
     });
   } catch (error) {
     console.error('Error updating round:', error);
+  }
+};
+
+// Start, pause, resume, re-arm or stop the round clock.
+//
+// Host-only by convention rather than by rule — firestore.rules is open, and the
+// host is the trust boundary (see the header there). Nothing on a player's phone
+// calls this: every device reads the clock and none of them writes one, which is
+// what stops 69 countdowns disagreeing about when the round ends.
+export const updateRoundTimer = async (timer) => {
+  const gameStateRef = doc(db, GAME_STATE_DOC);
+  try {
+    await updateDoc(gameStateRef, {
+      ...writeTimer(timer),
+      lastUpdated: Date.now()
+    });
+  } catch (error) {
+    console.error('Error updating round timer:', error);
   }
 };
 
@@ -382,6 +417,9 @@ export const resetGameState = async () => {
       revealedToMurderer: false,
       revealedClues: [],
       gameEnded: false,
+      // Stopped, and armed at the default length — a new game's Round 0 is the
+      // briefing, which nobody should walk into against a running clock.
+      ...writeTimer(IDLE_TIMER),
       // A reset bumps this too: every device reloads onto the clean state
       // rather than sitting on stale round/clue data from the previous game.
       forceRefreshAt: Date.now(),

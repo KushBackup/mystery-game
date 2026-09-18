@@ -2,7 +2,9 @@ import React from 'react';
 import { X } from '../icons/IconComponents';
 import { Numeral } from '../ui/Numeral';
 import { RoundRail } from '../ui/RoundRail';
+import { RoundClock } from '../ui/RoundClock';
 import { InfoTip } from '../ui/InfoTip';
+import { IDLE_TIMER, isIdle } from '../../lib/roundTimer';
 import { ROUNDS } from '../../data/gameData';
 import { roundTip } from '../../data/tooltips';
 
@@ -19,11 +21,22 @@ import { roundTip } from '../../data/tooltips';
  *   2. the round's title crossfades in under the masthead (`er-swap` on a key)
  *   3. the rail fills the new segment, 120ms behind the numeral (RoundRail)
  *
+ * The round clock shares the rail's own row rather than the 64px row above it.
+ * That row is already carrying a masthead, a round title, a state label, a
+ * number, a tooltip and a 44px close target, and on a 390px phone the clock is
+ * what would push the round title into an ellipsis. Sharing a row with the rail
+ * also puts the two halves of "where are we in this game" — which round, and how
+ * much of it is left — on the same line.
+ *
  * Height is `--chrome-h` (index.css); ChatView pins itself to the same value.
  */
 export const Header = ({
   currentRound,
   currentRoundData,
+  // Defaulted so the rail renders the same with or without a clock — an idle
+  // timer draws nothing at all (RoundClock), which is also what the host's
+  // untimed rounds look like.
+  roundTimer = IDLE_TIMER,
   isVotingOpen,
   onClose,
   // Where this X actually goes. It is not always the board — from an open Evidence
@@ -61,7 +74,7 @@ export const Header = ({
             <div className="text-right">
               <div className="flex items-center justify-end gap-1.5">
                 <span className="er-mono">Round</span>
-                <InfoTip tip={roundTip(currentRound)} />
+                <InfoTip tip={roundTip(currentRound, !isIdle(roundTimer))} />
               </div>
               <Numeral
                 as="div"
@@ -83,7 +96,17 @@ export const Header = ({
           </div>
         </div>
 
-        <RoundRail currentRound={currentRound} total={ROUNDS.length} className="pb-2.5" />
+        {/* Fixed height, not padding, and that is load-bearing: `--chrome-h`
+            (index.css) is a single literal that ChatView pins its fixed panel
+            to, and the clock is 14px of type next to a 2px rail. Sized by its
+            contents this row would be 12px taller whenever a clock is running
+            and 12px shorter whenever one isn't — so the Comms screen would slide
+            under the rail exactly when the host started the clock. h-6 is the
+            taller of the two states, always, whether or not a clock is on. */}
+        <div className="flex items-center gap-3 h-6">
+          <RoundRail currentRound={currentRound} total={ROUNDS.length} className="flex-1" />
+          <RoundClock timer={roundTimer} className="shrink-0" />
+        </div>
       </div>
     </header>
   );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   updateCurrentRound,
+  updateRoundTimer,
   updateVotingStatus,
   updateVoteResultsVisibility,
   updateMurdererReveal,
@@ -12,8 +13,21 @@ import {
   endGame
 } from '../firebase/config';
 import { CASE_FILES, CASE_META, CLUE_DB, HOST_SCRIPT } from '../data/gameData';
+import {
+  IDLE_TIMER,
+  TIMER_PRESETS,
+  clearTimer,
+  isPaused,
+  isRunning,
+  pauseTimer,
+  resumeTimer,
+  setTimerDuration,
+  startTimer,
+  timerForRound,
+} from '../lib/roundTimer';
 import { HostReferenceView } from './views/HostReferenceView';
 import { Numeral } from './ui/Numeral';
+import { RoundClock } from './ui/RoundClock';
 import { ChevronRight } from './icons/IconComponents';
 
 /**
@@ -93,6 +107,8 @@ export const HostPanel = ({
   revealedToMurderer = false,
   unlockedFiles = [],
   revealedClues = [],
+  roundTimer = IDLE_TIMER,
+  setRoundTimer,
   setCurrentRound,
   setIsVotingOpen,
   setVoteResultsVisible,
@@ -128,10 +144,43 @@ export const HostPanel = ({
   // Optimistic UI: update local state instantly so the host sees feedback the
   // moment they tap, then fire-and-forget the Firestore write. The onSnapshot
   // subscription in App.jsx confirms the same value a moment later (no flicker).
+  //
+  // The clock moves with the round, in the same write (see updateCurrentRound in
+  // firebase/config.js). A running clock restarts at full length for the new
+  // round — skipping ahead is the host saying "this round starts now" — and a
+  // stopped one stays stopped. lib/roundTimer.js owns that decision so the rule
+  // is stated once rather than in every control that can change the round.
   const handleRoundChange = (newRound) => {
+    const nextTimer = timerForRound(roundTimer, newRound);
     setCurrentRound(newRound);
-    updateCurrentRound(newRound);
+    setRoundTimer?.(nextTimer);
+    updateCurrentRound(newRound, nextTimer);
   };
+
+  // Every clock control is the same two lines: show it here, send it everywhere.
+  const commitTimer = (nextTimer) => {
+    setRoundTimer?.(nextTimer);
+    updateRoundTimer(nextTimer);
+  };
+
+  // One button, three jobs — start a stopped clock, hold a running one, let a
+  // held one go. Three separate controls would put two dead buttons on the
+  // screen at all times, and this is a console read at arm's length in a dark
+  // room while somebody is talking to you.
+  const handleTimerToggle = () => {
+    if (isRunning(roundTimer)) return commitTimer(pauseTimer(roundTimer));
+    if (isPaused(roundTimer)) return commitTimer(resumeTimer(roundTimer));
+    return commitTimer(startTimer(roundTimer, currentRound));
+  };
+
+  const handleTimerReset = () => commitTimer(clearTimer(roundTimer, currentRound));
+
+  // Tapping a length on a running clock restarts it there and then, which is
+  // what makes the 1 min and 10 sec presets useful: they are how the host tests
+  // the countdown, and how they can put a real squeeze on a round that has run
+  // long without waiting for the next advance.
+  const handleTimerPreset = (ms) =>
+    commitTimer(setTimerDuration(roundTimer, ms, currentRound));
 
   const handleToggleVoting = () => {
     const next = !isVotingOpen;
@@ -216,6 +265,12 @@ export const HostPanel = ({
       done: ids.length > 0 && ids.every(id => unlockedFiles.includes(id)),
     };
   });
+
+  // The clock's state in one word, for the section's meta line. Derived rather
+  // than stored for the same reason the reading of "done" is (lib/roundTimer.js):
+  // nothing writes when a countdown runs out.
+  const timerIdle = !isRunning(roundTimer) && !isPaused(roundTimer);
+  const timerState = isRunning(roundTimer) ? 'Running' : isPaused(roundTimer) ? 'Held' : 'Stopped';
 
   // Group clues by round (the confession is handled separately).
   const cluesByRound = {
@@ -369,6 +424,48 @@ export const HostPanel = ({
           </div>
         </Section>
       </div>
+
+      {/* Round clock — the only control in here that writes to all 69 screens
+          continuously rather than once. Sits directly under the round control
+          because the two are one action in practice: advance, then start. */}
+      <Section label="Round clock" meta={timerState}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <RoundClock timer={roundTimer} variant="console" showIdle />
+
+          <div className="flex gap-3 sm:shrink-0 sm:w-[19rem]">
+            <Control active={isRunning(roundTimer)} onClick={handleTimerToggle}>
+              {isRunning(roundTimer) ? 'Pause' : isPaused(roundTimer) ? 'Resume' : 'Start'}
+            </Control>
+            <Control disabled={timerIdle} onClick={handleTimerReset}>
+              Reset
+            </Control>
+          </div>
+        </div>
+
+        <div className="er-rule my-4" />
+
+        <p className="er-mono er-mono--dim">Round length</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
+          {TIMER_PRESETS.map((preset) => (
+            <Control
+              key={preset.id}
+              active={roundTimer.durationMs === preset.ms}
+              onClick={() => handleTimerPreset(preset.ms)}
+            >
+              {preset.label}
+            </Control>
+          ))}
+        </div>
+
+        {/* Body voice, not mono. Three sentences of 11px uppercase at 0.18em
+            tracking is a wall on a phone, and this is the one paragraph in the
+            console a host reads rather than scans. */}
+        <p className="font-body text-[15px] leading-[1.55] text-dim mt-4">
+          Every player sees this under the round number. Advancing the round restarts a
+          running clock and leaves a stopped one stopped, so an untimed round stays
+          untimed. Choosing a length while it runs restarts it there and then.
+        </p>
+      </Section>
 
       {/* Case files */}
       <Section label="Release case files" meta={`${unlockedFiles.length} out`}>

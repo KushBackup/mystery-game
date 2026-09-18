@@ -152,6 +152,7 @@ export const HOST_MATERIALS = {
     '69 login cards',
     '1 host device logged in and synced',
     'Round 3 and Round 4 case-file unlock buttons checked before players arrive',
+    'A decision on whether rounds are timed — the round clock is off until you start it',
   ],
   helpful: [
     'Printed suspect roster',
@@ -168,6 +169,7 @@ export const HOST_ROUND_GUIDE = {
       'Check login issues immediately.',
       'Describe the ASK → code → CODE loop out loud. The button itself does not appear until Round 2, so this is telling, not showing.',
       'Point players toward Identity and Story before any social chaos starts.',
+      'If you are running to the clock, say so once — then start it as you announce each round. The default is 30 minutes and the room sees it under the round number.',
     ],
     emphasize: [
       'Phones are case files, not props.',

@@ -26,6 +26,7 @@ import { MurdererRevealOverlay } from './components/MurdererRevealOverlay';
 import { ROUNDS, CHARACTERS, CLUE_DB, stackKeyForClue, getAssignedAccusation, CONFESSION_CLUE, getKillers, isMurderer, nextRiddleReward, ASK_OPENS_AT } from './data/gameData';
 import { SCREEN_GUIDE, EVIDENCE_STACKS } from './data/screenGuide';
 import { TOOLTIPS } from './data/tooltips';
+import { IDLE_TIMER, readTimer } from './lib/roundTimer';
 import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue } from './firebase/config';
 import { useUnreadMessages } from './hooks/useUnreadMessages';
 
@@ -125,6 +126,10 @@ export default function App() {
   const [revealedToMurderer, setRevealedToMurderer] = useState(false); // Round 6 reveal
   const [revealedClues, setRevealedClues] = useState([]); // Host-revealed clues
   const [gameEnded, setGameEnded] = useState(false); // Game ended flag
+  // The round clock (lib/roundTimer.js). Game state like everything else above —
+  // the host starts it, Firestore broadcasts it, and every device reads the same
+  // end instant off the same document rather than running a countdown of its own.
+  const [roundTimer, setRoundTimer] = useState(IDLE_TIMER);
   // Killers only: whether this device has stepped past the public reveal. The
   // host's reveal sets `gameEnded` in the same write, so without this the five
   // of them would drop straight onto the outro and never see the screen naming
@@ -250,6 +255,7 @@ export default function App() {
       setRevealedToMurderer(gameState.revealedToMurderer || false);
       setRevealedClues(gameState.revealedClues || []);
       setGameEnded(gameState.gameEnded || false);
+      setRoundTimer(readTimer(gameState));
 
       // Host force-sync. The first snapshot only records the current value —
       // reloading on it would put every device in a boot loop. Only a value
@@ -569,6 +575,7 @@ export default function App() {
         <GridMenu
           onNavigate={handleNavigate}
           currentRound={currentRound}
+          roundTimer={roundTimer}
           isVotingOpen={isVotingOpen}
           note={SCREEN_GUIDE.hub}
           unreadCount={unread.count}
@@ -622,6 +629,7 @@ export default function App() {
       <Header
         currentRound={currentRound}
         currentRoundData={currentRoundData}
+        roundTimer={roundTimer}
         isVotingOpen={isVotingOpen}
         onClose={closeScreen}
         closeLabel={inEvidenceStack ? 'Close and return to the evidence board' : undefined}
@@ -653,6 +661,8 @@ export default function App() {
             revealedToMurderer={revealedToMurderer}
             unlockedFiles={unlockedFiles}
             revealedClues={revealedClues}
+            roundTimer={roundTimer}
+            setRoundTimer={setRoundTimer}
             setCurrentRound={setCurrentRound}
             setIsVotingOpen={setIsVotingOpen}
             setVoteResultsVisible={setVoteResultsVisible}

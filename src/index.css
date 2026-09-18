@@ -81,13 +81,19 @@ html {
 }
 
 :root {
-  /* Total height of the chrome rail: 64px of content + the 2px round rail +
-     10px of breathing room + the 1px hairline.
+  /* Total height of the chrome rail: 64px of content + the 24px rail row +
+     the 1px hairline.
      ChatView is the one fixed-position view and it pins itself directly under
      the rail, so this has to be a single value both can read — as two literals
      they drift the moment the header gains a row, which is exactly what
-     happened when the rail was added. */
-  --chrome-h: 77px;
+     happened when the rail was added.
+     The rail row is a *fixed* 24px (h-6 in Header.jsx) rather than a 2px rail
+     plus padding, because it now also carries the round clock — 14px of type
+     that is there only while the host is running one. Sized by its contents the
+     rail would be 77px tall with the clock off and 89px with it on, and the
+     Comms screen would slide under the header the moment the host pressed
+     Start. One height, both states. */
+  --chrome-h: 89px;
 }
 
 body {

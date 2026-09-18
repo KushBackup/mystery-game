@@ -109,15 +109,24 @@ export const TOOLTIPS = {
  * the game, and the copy is the same `ROUND_GUIDE` line the Guide prints for
  * that round — the tooltip and the rulebook cannot disagree.
  */
-export const roundTip = (currentRound) => {
+// `timed` is whether a round clock is on screen beside this mark. It changes the
+// closing sentence for the same reason evidenceTools and evidenceCode are two
+// entries rather than one: a tooltip that explains a countdown the player cannot
+// see sends them hunting for it, and one that says only "the host decides" while
+// a countdown is visibly running looks like the app contradicting itself.
+export const roundTip = (currentRound, timed = false) => {
   const index = Math.min(Math.max(currentRound, 0), ROUNDS.length - 1);
   const round = ROUNDS[index];
   const isLast = index === ROUNDS.length - 1;
 
+  const closing = timed
+    ? 'The countdown beside this is what is left of the round — the host can still move the case on early.'
+    : isLast
+      ? ''
+      : 'The host decides when the case moves on.';
+
   return {
     label: `Round ${pad2(round.id)} · ${round.title}`,
-    body: isLast
-      ? ROUND_GUIDE[index]
-      : `${ROUND_GUIDE[index]} The host decides when the case moves on.`,
+    body: [ROUND_GUIDE[index], closing].filter(Boolean).join(' '),
   };
 };

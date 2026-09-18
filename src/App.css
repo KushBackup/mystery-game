@@ -725,6 +725,137 @@ button.er-redact:not(.er-redact--open) { cursor: pointer; }
 }
 
 /* ============================================================
+   13c. ROUND CLOCK (§6.6c, §7.1)
+   The per-round countdown, under the round numeral on the
+   chrome rail and on the board's rail on the hub.
+   See components/ui/RoundClock.jsx and lib/roundTimer.js.
+
+   Mono, not brass. Brass is for numerals only (§2.1) and the
+   round figure one line above has already spent it; two brass
+   numbers stacked in a 64px rail read as one two-line number.
+   A clock is an instrument rather than a count, so it takes the
+   chrome voice and spends its colour on state instead — bone
+   for the body of the round, signal for the last minute.
+
+   On §7.1 and the one thing in this app that repeats. The rule
+   reserves the infinite pulse for "a genuine sustained alarm",
+   and a round running out is the first thing in the game that
+   actually is one: it escalates, it is about to change what the
+   room can do, and — the part that matters — it ends by itself.
+   So the urgency is still written as one-shots. Each second
+   remounts the digits (React keys them on the second, see
+   RoundClock.jsx) and plays exactly one pop. Sixty of those in
+   the last minute, ten louder ones in the last ten seconds, and
+   then it stops, because the clock has reached zero and there
+   is nothing left to count. Nothing here is `infinite`, and
+   nothing here outlives the round.
+
+   Motion is not the only channel (§7.1): the digits turn signal
+   a full minute before the pop matters, the label is words, and
+   under reduced motion both of those survive untouched.
+   ============================================================ */
+
+/* The tick — the last minute. Small enough to sit under a
+   conversation: the player should catch it in peripheral vision
+   on the rail they are not looking at, not be interrupted by it. */
+@keyframes erClockTick {
+  0%   { transform: scale(1); }
+  26%  { transform: scale(1.07); }
+  100% { transform: scale(1); }
+}
+
+/* The push — the last ten seconds. Same idea, three times the
+   travel, with a hair of undershoot on the way back so it reads
+   as a beat rather than as a bounce. This is the "size in and
+   out" the clock exists to deliver, and ten of them is the
+   whole budget. */
+@keyframes erClockPush {
+  0%   { transform: scale(1); }
+  22%  { transform: scale(1.24); }
+  58%  { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+.er-clock {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.er-clock__label {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 10px;
+  line-height: 1.3;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--color-dim-2);
+}
+
+/* `inline-block` because a bare inline box cannot be scaled —
+   the pop would silently do nothing. Tabular figures for the
+   same reason every other number in the app has them: a clock
+   whose digits change width jitters the rail once a second. */
+.er-clock__digits {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  color: var(--color-bone);
+}
+
+/* Paused recedes rather than alarms — the room is being held,
+   not hurried. */
+.er-clock--paused .er-clock__label,
+.er-clock--paused .er-clock__digits { color: var(--color-dim); }
+
+/* The state channel, one minute out. Small red text on ink, so
+   signal-lift rather than signal (§2.1 — it is the AA-safe one). */
+.er-clock--soon .er-clock__label,
+.er-clock--final .er-clock__label,
+.er-clock--done .er-clock__label,
+.er-clock--soon .er-clock__digits,
+.er-clock--final .er-clock__digits,
+.er-clock--done .er-clock__digits { color: var(--color-signal-lift); }
+
+.er-clock--soon .er-clock__digits  { animation: erClockTick 0.52s var(--ease-land); }
+.er-clock--final .er-clock__digits { animation: erClockPush 0.62s var(--ease-land); }
+
+/* Zero gets exactly one push, because the element remounts once
+   when the phase changes and never again. The end of a countdown
+   is the one moment in it that is genuinely an event. */
+.er-clock--done .er-clock__digits  { animation: erClockPush 0.62s var(--ease-land); }
+
+/* The host's copy (components/HostPanel.jsx), where the clock is
+   the control rather than a status line beside one. Same object,
+   read across a room instead of at arm's length. */
+.er-clock--console {
+  display: block;
+}
+
+/* Stacked, not inline. At 46px the digits are four times the label's cap
+   height, and an 11px mono label sharing their baseline reads as a subscript
+   that fell off the number rather than as the thing naming it. */
+.er-clock--console .er-clock__label {
+  display: block;
+  margin-bottom: 7px;
+}
+
+.er-clock--console .er-clock__digits {
+  font-size: 46px;
+  letter-spacing: 0.01em;
+  /* Left, not centre: the console's clock is flush with the
+     section edge, and a centred origin walks the digits sideways
+     against the hairline once a second. */
+  transform-origin: left center;
+}
+
+/* ============================================================
    14. SCREEN NOTE (§6.10)
    The onboarding note pinned to the top of each screen through
    rounds 00–01. Composes on .er-bone (it is paper), and adds
@@ -1225,6 +1356,13 @@ button.er-redact:not(.er-redact--open) { cursor: pointer; }
      code the player came here to read. */
   .er-burst,
   .er-fleck { display: none; }
+
+  /* The round clock (§13c) needs no override either, for the same reason: both
+     of its keyframes end at scale(1), so a collapsed duration lands the digits
+     exactly where they belong. What survives is everything that was carrying the
+     meaning anyway — the digits turn signal a full minute out, the label reads
+     "Time up" at zero, and the number itself is still counting. Only the pop is
+     gone, and the pop was punctuation. */
 
   /* Both knock cues (§17) need no override and must not get one: their last
      keyframe is the button's resting state, so a single collapsed iteration

@@ -32,7 +32,7 @@ The public shape of the case: 34 colleagues cannot be continuously placed on the
 
 1. Players log in as one of 69 colleague identities (their own first names).
 2. Round 0 opens with the fullscreen typed briefing and the Incident Report.
-3. The host opens a blind first vote before the room has enough evidence.
+3. The host opens a blind first vote before the room has enough evidence. From here on the host can put a countdown on each round (30 minutes by default) — every player sees it under the round number.
 4. Round 1 automatically gives every player one accusation card on the Evidence screen — the witness claim their statement pod was handed (12 claims across 12 pods).
 5. Round 2 opens the **riddle lock** and puts the 12 motive files into its prize pool.
 6. Round 3 unlocks forensics case files, adds the 8 evidence clues to the pool, and reopens voting.
@@ -92,6 +92,30 @@ code, so a stalled round can be unblocked by simply reading one out.
 | 4 | Revelations | Dev's surviving draft (five roles, Victor cleared), the Uber dashboard's shared ride, the one nameless admin session, the one genuine GRN signature |
 | 5 | Finale | The "Fantasy League ⚽" group chat and the settlement archive — cross-department coordination made explicit |
 | 6 | The Reveal | Public screen names the killer team; killers themselves get the confession. Both screens open **How it happened** — the 22-slide reconstruction |
+
+---
+
+## The round clock
+
+Rounds are advanced by the host, not by the app — that has not changed, and no
+countdown ever moves the case on by itself. What the clock adds is that the other
+69 people can see how long the round has left.
+
+| Control | Where | What it does |
+|---|---|---|
+| Start / Pause / Resume | Host console → **Round clock** | One button; starts a stopped clock for the current round, holds a running one, releases a held one |
+| Reset | Host console → **Round clock** | Back to stopped, armed at the chosen length |
+| 30 min · 15 min · 1 min · 10 sec | Host console → **Round clock** | Arms that length. On a *running* clock it restarts there and then — which is how the host squeezes a round that has run long, and how the bottom two get used at all |
+| Round − / + | Host console → **Round** | Still skips freely. A running clock restarts at full length for the new round; a stopped one stays stopped |
+
+Players see the countdown under the round number — on the chrome rail of every
+screen, and on the board between screens. **30 minutes is the default.** Through
+the last minute the digits turn red and tick once a second; through the last ten
+seconds the tick becomes a push; at zero they read **Time up** and stop. Nothing
+locks, nothing submits, nothing advances: the room is being told to hurry, and
+the host is still the one who moves the case on.
+
+A round the host never starts a clock for shows no clock at all.
 
 ---
 

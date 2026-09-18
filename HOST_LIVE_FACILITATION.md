@@ -34,6 +34,23 @@ at 3:15. The mastermind order matters at the reveal: **Anurag first.**
 - Nothing to distribute except login cards. Repeat "share your codes" until it's a
   catchphrase.
 - Tell the ASK loop now; the button arrives at Round 2 to a room that expects it.
+- Decide whether you are running to the clock. If you are, say so once: "every
+  round is on a timer, you'll see it under the round number."
+
+### The round clock
+- Console → **Round clock**. **Start** it as you announce each round; the
+  countdown appears on all 69 phones under the round number.
+- The default is 30 minutes. **15 min** tightens the middle rounds; **1 min** and
+  **10 sec** are for testing it before the room arrives — and for the last squeeze
+  on a round that has overrun, since tapping a length while it runs restarts it
+  there and then.
+- **Pause** holds the room (a speech, a photo, a fire alarm); **Resume** gives
+  back exactly what was left.
+- Advancing the round restarts a running clock at full length, so **Round + is
+  the only control you need** once it is going. A clock you never started stays
+  off, and the rounds look exactly as they did without it.
+- It never advances the round, closes a ballot or locks anything. At zero it
+  reads **Time up** and waits for you — the deadline is social, not mechanical.
 
 ### Round 0 — The Incident
 - Let the typed briefing play. Don't talk over it.
@@ -95,5 +112,7 @@ at 3:15. The mastermind order matters at the reveal: **Anurag first.**
   it holds to the room.
 - **Too fast:** withhold Round 4 files for ten minutes and run a mid-game vote
   with tally shown.
+- **Round overrunning:** tap **1 min** on the clock while it is running. Every
+  phone drops to sixty seconds and starts ticking red — cheaper than shouting.
 - **Killer outed early by accident:** remind the room the win condition is the
   full team of five plus the method, not one name.

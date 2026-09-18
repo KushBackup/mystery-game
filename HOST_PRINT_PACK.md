@@ -12,6 +12,9 @@
 - [ ] [HOST_LIVE_FACILITATION.md](HOST_LIVE_FACILITATION.md) run of show
 - [ ] [HOST_QA_BRIEFING.md](HOST_QA_BRIEFING.md) objection sheet
 - [ ] One spare phone logged in as host backup
+- [ ] Decide the round length before the room arrives — the console's **Round
+      clock** is off until you start it, and the default is 30 minutes
+      ([HOST_LIVE_FACILITATION.md](HOST_LIVE_FACILITATION.md) § The round clock)
 
 ## 2. The suspect roster (12 primes of 34 POIs)
 

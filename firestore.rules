@@ -5,7 +5,7 @@ rules_version = '2';
 // the trust boundary, not the database. Anyone who can load the app can write.
 //
 // Collections used by the app (see src/firebase/config.js):
-//   gameState/current      - round, voting flags, unlocked files, revealed clues
+//   gameState/current      - round, round clock, voting flags, unlocked files, revealed clues
 //   gameState/votes        - per-player vote records and aggregate counts
 //   gameState/playerData   - per-player unlocked clue list
 //   messages/{id}          - chat messages
