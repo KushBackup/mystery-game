@@ -1,235 +1,161 @@
-# HOST_QA_BRIEFING.md — Objection Sheet (Case 2108-C · Onam in Black)
+# HOST_QA_BRIEFING.md - Objection Sheet (Case 2609-G - Greenr: Last Seating)
 
-> **Host-only. Full spoilers.** The room will attack the story's physics. Every
-> likely objection below has a scripted answer, in two registers: what to say
-> **before the reveal** (a nudge that doesn't leak) and **after** (the full truth).
-> The same material lives in-app under Host Guide → Questions
-> ([src/data/hostReference.js](src/data/hostReference.js), `HOST_FAST_ANSWERS`) —
-> this file adds the longer reasoning for objections that turn into arguments.
+> **Host-only. Full spoilers.** Use the short in-app answers first
+> (`HOST_FAST_ANSWERS` in `src/data/hostReference.js`). This is the longer
+> backup for genuine logic questions after players have read the reconstruction.
 
 ---
 
 ## The method
 
-### "Dev rinsed his own tumbler. How was it poisoned?"
-**Before:** The rinse is the point — ask when the cup was last *unattended*.
-**After:** He rinsed and staged it at 1:05 PM, his ritual on any day the machine
-worked, then spent two hours on the terrace. Giles dosed the empty cup at 2:52,
-inside the scheduled camera gap. The 3:15 pour dissolved the film. The tox report
-says exactly this: residue *below the coffee line*, machine and sachets clean.
+### "How was one person poisoned in a room full of drinks?"
+**Before:** Ask what belonged only to Rehan.
 
-### "Someone else could have drunk it."
-**Before:** Whose cup was it? What happened to people who touched it?
-**After:** Nobody touched the DM tumbler — that was office law, and the killers
-knew it; it is *why* the tumbler was chosen. The machine itself was never dosed,
-precisely so no second victim was possible. The conspiracy's one hard rule appears
-in the confession: nobody else gets hurt.
+**After:** The communal tonic, bar ice, garnishes and batch syrup all test clean.
+Rehan rinsed his black steel bottle at 5:47 PM, left it empty on the upstairs tea
+shelf, then refilled it himself at 6:08 PM from the self-serve decanter that Pujah
+had filled before the crash. Manasi painted poison inside the empty bottle. Nobody
+had to serve or follow Rehan after that.
 
-### "Would he really not taste oleander?"
-**Before:** What is the Beast's coffee famous for? What did Dev add to it?
-**After:** Oleandrin is bitter — under the most over-extracted coffee in the
-building, plus two sugars, on a floor that permanently smells of burnt coffee.
-The office's oldest joke ("punishment with crema") is the murder's cover. If a
-chemist in the room pushes on dose/onset realism: it is concentrated extract, the
-collapse window is ~25–40 minutes, and this is a party game — smile and move on.
+### "Why did nobody else get sick?"
+**Before:** The room was never the target.
 
-### "How would a support exec know how to make the concentrate?"
-**Before:** Check her file. People are more than their queue.
-**After:** Kalaivani has a chemistry degree (it surfaces once a year at the quiz —
-it's in her profile), tends the terrace planters daily, and oleander's toxicity is
-common knowledge in Bangalore. The extraction is kitchen-grade, done at home over
-two evenings — the two evenings she uncharacteristically left the queue early.
+**After:** The dose was only in Rehan's bottle. The self-serve decanter held the
+same clean communal tonic as the courtyard carafes; it did not contain poison. The
+bar reconciliation and toxicology are deliberately redundant on this point.
 
-### "Why not just poison him at the party? Everyone was eating."
-**Before:** What, exactly, could you dose at a buffet?
-**After:** The sadhya was shared — untargetable without mass casualties, which the
-conspiracy explicitly refused. Dev ordered nothing on Zomato. The only
-victim-specific vessel in the building was his tumbler, and the only reliable way
-to reach it was his own ritual. Hence the machine repair: the ritual only runs on
-days the Beast works.
+### "Would he not taste yellow oleander?"
+**Before:** Ask what the recovered chat means by "bitter under bitter."
 
-### "The machine works 10% of the time. The whole plan hinged on a lottery."
-**Before:** Read the job sheet again. What did the technician actually find?
-**After:** "No fault found — inlet valve had been manually shut." The machine's
-recent two-week death was engineered by Giles precisely so its resurrection could
-be *booked* for the right morning. And the 2:52 blank shot (brew counter, pull #2
-of 3) was Giles confirming function two hours before it mattered. The 10% legend
-is about the machine's moods; Friday was not left to its moods.
+**After:** The extract was concentrated, placed as a thin dried film inside a
+private bottle, then diluted by a strong kokum tonic when Rehan refilled it. The
+forensic result establishes a concentrated cardiac-glycoside exposure; it is not a
+claim that oleander is tasteless. The killers relied on a familiar drink, a brief
+window and Rehan drinking while focused on the closing file.
 
-## The window
+### "How could he collapse only ten minutes after refilling?"
+**Before:** The body was found ten minutes later; that is not necessarily the
+exact second of collapse.
 
-### "Who was near Dev when he drank? That's the killer."
-**Before:** Is it? When did the poison actually enter the cup?
-**After:** This is the designed trap. Proximity at 3:15 is meaningless — the dose
-had been waiting since 2:52, and the *plan* since Wednesday. The room that asks
-"who needed the machine to work today?" instead of "who was on the floor at 3:15?"
-is the room that solves it.
+**After:** The field screen identifies a highly concentrated cardiac-glycoside
+exposure and an arrhythmic collapse within minutes of first ingestion. Rehan could
+have taken his first drink immediately after 6:08, become incapacitated unseen in
+the library, and been found at 6:18. There is no second dose and no hidden visitor.
 
-### "The killers are all alibied for the window. That's impossible."
-**Before:** Which window?
-**After:** That is the finding, not a hole. Kalaivani's work ended at 8:37 AM.
-Yao's ran on a schedule set at 11:31 AM. Akshat's was done Wednesday night.
-Anurag's was a webhook. Only Giles moved during the window — inside a camera gap,
-on a dead badge, with an HDMI story. Five jobs, one exposure of ninety seconds.
+### "Why choose a bottle instead of the tonic?"
+**Before:** Ask what shared poison would risk.
 
-### "Why did the 2:47 alert fool the engineers?"
-**Before:** What did the alert look like, byte for byte?
-**After:** It *was* a real alert — a byte-identical replay of a sandbox test
-webhook, fired from inside the office network. The real alerts were its template.
-The tells were procedural, not technical: the provider status page stayed green
-(Akshay saw it and said nothing mid-incident), and the provider later confirmed no
-failure occurred. At a company where payment alerts are weather, nobody checks the
-sky twice.
+**After:** A shared batch would create multiple casualties and immediate attention.
+Rehan's bottle was private, predictable, briefly unattended and refilled by Rehan
+himself. It was the only reliable victim-specific vessel in the room.
 
-### "Badge V-07 — why would Giles bother? Ops walks everywhere."
-**Before:** It is not an access problem. It is a log problem.
-**After:** The service-lift log is the only movement record that survives a camera
-gap. V-07 makes that record name a visitor who left on Tuesday. He was entitled to
-the floor; he could not be entitled to the *timestamp*. A floor he could walk to,
-ridden on a badge he had no reason to hold — that mismatch convicts him.
-If someone asks *when he picked it up*: 9:41 AM, at ground-floor reception, signing
-the coffee-machine technician in and drawing him a badge from the same tray. It is
-the one moment all day that Giles standing over the visitor tray looks like his job.
+## The window and route
 
-### "The HDMI was on the terrace. Why would Giles invent a disprovable errand?"
-**Before:** Reward whoever catches this. It is the plan's one genuine mistake.
-**After:** Improvisation under pressure. He needed a floor-3-shaped reason the
-moment the alert hit and reached for the most ops-natural errand in the building.
-He did not know Yash T. had packed the spare HDMI at 8:30. Real plans have one bad
-ad-lib; the room should find it and feel clever, because it is the thread that
-unravels his afternoon.
+### "The cameras were off. How can a corridor clip exist to delete?"
+**Before:** Separate the live feed from local recording.
+
+**After:** Arun's scheduled sync blanked the live courtyard and mezzanine feeds and
+knocked the network down. The mezzanine system still kept a local rolling buffer.
+At 6:09 PM Arun manually deleted the one buffered corridor clip. The sync created
+the public blind spot; the deletion removed the technical trace that could have
+shown Manasi using the route.
+
+### "How did Manasi reach the bottle without crossing the room?"
+**Before:** Who noticed the missing key?
+
+**After:** She used the pantry service stair. Anjul notices its key absent just
+before the crash and returned wet beside the pantry side sink at 6:20. Saanvi sees
+Manasi at the herb-walk end of that stair with the brown dropper at 6:00. This is a
+service route, not a secret tunnel: it is ordinary access made useful by the staged
+crash.
+
+### "Why was the service key wet?"
+**Before:** Put the key beside the dropper, not beside the rain.
+
+**After:** Manasi returns it beside the side sink after rinsing the dropper at
+6:16. The wet key does not prove poison on its own. Together with the matching
+sink-trap residue and Saanvi's sighting, it closes the route without asking the
+room to infer magic from a damp key.
+
+### "Why did the killers already have poison and a frame before the signing?"
+**Before:** The plan began when Rehan's review became a foreseeable threat, not at
+his 12:14 PM message.
+
+**After:** Rehan had been retained for pre-close diligence since 2 September. On
+18 September, Jack saw the first close-review queries, created the three-person
+chat and showed the other two that their lanes would fall together. That night,
+Manasi harvested and reduced the oleander while Jack drafted the Nilisha frame.
+Rehan's 12:14 PM final warning confirmed that the contingency had to be used that
+night; Jack refreshed the frame at 5:22 with Balesh's welcome-board language.
 
 ## The people
 
-### "Sukhans hired Dev. Hiring your own auditor and killing him makes no sense — so why does he look so guilty?"
-**Before:** Both halves of that sentence are worth keeping.
-**After:** Correct on both counts — he is innocent, and he was *designed* to
-absorb suspicion (the killers did not frame him; his own choices did: the "witch
-hunt" argument, the solo call next to the Glass Room). The clearance is threefold:
-calendar, the investor's confirmation, Ishan's sightline. And the full Wednesday
-quote ends with Elias saying "then we burn" — the founders had already agreed to
-publish. Only Himanshu heard that part.
+### "What did Jack actually do if he never touched the bottle?"
+**Before:** A plan is an act.
 
-### "Aarohi found the body, printed for him, shredded something. Come on."
-**Before:** What did she print, and on whose instruction did she shred?
-**After:** A typo'd agenda ("AGNEDA"), printed 12:40, shredded 3:45 at Dev's own
-lunchtime request after he fixed the file — the corrected version is on his
-laptop and the shredded page was partially reconstructed. She is also the only
-prime suspect whose window gap is pure diligence: at 3:04 she went down alone to
-lay the Glass Room out for four o'clock and came straight back up, with Dev still
-on the terrace and nobody to see her either way. That errand is why she is on the
-POI list at all. Her real burden was knowing the 4 PM meeting's true nature and
-keeping it confidential. Discretion, doing its worst possible job for her.
+**After:** Jack read the corrections first, activated the group, prepared the
+Nilisha frame, inserted late pages into the signing folder, invented the signature
+panic and kept Anushka and Anmoll at the long table while Manasi used the service
+stair. The paper trail, staging and misdirection all lead to him.
 
-### "Aarohi was at the third-floor shredder at 3:45 and Vidisha was at her desk. How did neither of them see a body?"
-**Before:** Ask what half of the Glass Room wall is frosted, and how high a desk is.
-**After:** Shashwat's 3:31 sighting was through the clear upper half, at seated
-height — Dev was still at the table, head down. By 3:40 he had tried to stand,
-knocked the tumbler, and gone down on the floor *behind the frosted lower half*,
-which is the only part of that wall you cannot see through. From the shredder and
-from Vidisha's desk, an empty-looking room with the door shut on a party afternoon
-is not worth a second look. Aarohi sees him at 3:55 because she opens the door.
+### "Is Arun's role just technical coincidence?"
+**Before:** Compare the run sheet to the system audit.
 
-### "Victor won't say who his call was with. Guilty."
-**Before:** Pride and guilt look identical through frosted glass.
-**After:** The call was a client tearing into his ROAS — the very numbers
-Akshat's skim had been poisoning for a year. He was too proud to repeat it. Call
-records verify. Meanwhile the file that "proves" he onboarded Zenlyt was created
-Wednesday 11:58 PM — the one fact a backdated forgery cannot fake is its own
-birthday.
+**After:** The 5:58 sync was absent from Yonella's master run sheet, scheduled at
+4:46 from Arun's authenticated tablet profile and paired with the deleted buffered
+clip. Elton independently hears the reel loop. The guest-stack trace starts on the
+AV subnet, not Saima's system. Arun did not merely benefit from a failure; he
+created and shaped it.
 
-### "Kalaivani served payasam in front of forty people. Best alibi in the building."
-**Before:** For the afternoon, yes. Ask about her week.
-**After:** Her contribution predates the party entirely. Convicted by mornings:
-skipped watering over pre-filled cans (Riya), Thursday-morning hedge cuts on
-Harsha's b-roll, the washed kit returned Thursday evening (Tushar), the torn
-pruning-log page, the never-opened flask (Nikitha), and one shared Uber with a
-four-minute stop that the company's own free-ride perk logged forever.
+### "Why is Manasi, rather than any bartender, tied to the poison?"
+**Before:** Follow the route and the money together.
 
-### "Wait — if the flask sat under the beverage table all afternoon, how did Giles have the poison?"
-**Before:** Two different objects. Ask what she poured, and what she kept.
-**After:** She brewed more than one dose. In the 8:37 Uber she decanted Giles's
-share into a small bottle; the chai flask kept the remainder and went to the party
-with her. That is why "for later" was true when she told Nikitha, and why she could
-not let anyone empty it — the flask was still evidence at 2:30 PM. The bottle is
-the handoff; the flask is the leftover. If a table catches this, they have found
-the sharpest thing in her file: not that she carried poison, but that she was still
-carrying it while serving payasam.
+**After:** Manasi arrived with the brown bitters case, Saanvi saw her with the
+dropper at the service stair, the dropper was rinsed in the pantry sink, and its
+residue matches the bottle and hedge. The delivery manifest independently ties
+Manasi to the beverage fraud that Rehan was about to expose. Access plus physical
+evidence plus motive is the answer.
 
-### "Why didn't anybody warn Dev?"
-**Before:** Who knew enough to warn him — and what did they all have in common?
-**After:** The cover story worked on the innocent ("payments consultant") and the
-draft named everyone guilty. The five could each verify the other four were
-equally exposed — the recruitment pitch was the document itself. There was no
-third kind of person in the building.
+### "Why did nobody warn Rehan?"
+**Before:** The three were all exposed by the same packet.
 
-### "Five people in one day? Conspiracies take time."
-**Before:** What did each of the five already have on hand?
-**After:** Nothing needed inventing. The poison grew on the terrace; the vessel
-belonged to the victim; the admin lineage, the badge system, the sandbox webhook,
-the invoice templates all existed. Only two artifacts were fabricated — the vendor
-pack and a service ticket — and both were house specialities of their authors.
-Recruitment took one evening because the draft did the vetting. Precisely: exactly
-one document was forged (the vendor pack) and exactly one fault was manufactured
-(the coffee machine's shut valve). The service ticket itself was a real ticket about
-a real dead machine — that is what made it invisible.
+**After:** Rehan's corrections linked their separate fraud lanes. Each killer knew
+the others faced the same immediate disaster, but the innocent people only knew the
+room was tense. The group chat demonstrates coordination after the fact; it is not
+being used as a substitute for opportunity or physical proof.
 
-## The aftermath
+## The red herrings
 
-### "Killing Dev couldn't kill the data. The plan was stupid."
-**Before:** The plan wasn't to erase history. Ask what Friday 4 PM would have done.
-**After:** The plan bought silence, not safety — kill the meeting, delete the
-Drive copy, let the prepared story stand (external scammer, careless marketer),
-wind the skim down. It nearly worked: without the local copy and the re-issued
-archive, the police inherit a dead consultant and a plausible closed loop. The
-killers' error was believing a pull was a one-time read. Say it plainly at the
-reveal: the archive was always going to survive; they only ever bought weeks.
+### "Nilisha really inflated numbers. Why is she innocent?"
+**Before:** A true weakness makes the strongest frame.
 
-### "Why is the suspect list exactly half the office?"
-**Before:** Read the incident report's criterion out loud.
-**After:** Anyone not continuously placeable on the terrace between 2:45 and 3:25
-PM — 34 of 69. That breadth is engineered: the 2:47 alert manufactured a dozen
-legitimate absences, and party logistics (couriers, prizes, chips, printers,
-smokers behind the hedge) supplied the rest. A suspect pool too wide to brute-force
-is what forces the room to reason about *roles* instead of alibis.
+the day of the dinner. Jack used a true vanity problem to make a false murder story
+**After:** Her metrics inflation is real. The sponsor approvals blaming her are
+not: their base file begins the night before, their 5:22 refresh uses a historically
+wrong footer and Balesh's welcome-board line, and their email chain is synthetic.
+Jack used a true vanity problem to make a false murder story feel ready-made.
 
-### "The initials in the chat could be anyone."
-**Before:** Roles before names. Which jobs in this office are HoP, TL, OE, CS-O, MB?
-**After:** They are role initials from Dev's draft, not name initials: Head of
-Payments, Technical Lead, Operations Executive, Customer Support & Ops, Media
-Buyer. Each chat line contains its author's fingerprint — the archive line (HoP),
-the camera schedule (TL), the machine ticket (OE), the hedge and flask (CS-O), the
-vendor file (MB). The mapping is the endgame working as intended.
+### "Why are Saima and Umair innocent if their system failed?"
+**Before:** Distinguish the failure's victim from its author.
 
-### "Only Friday morning's footage burned. Why not just watch Wednesday night's tape?"
-**Before:** Read the camera log again. How much did the NVR actually lose?
-**After:** All of it. The NVR held fourteen days and the 11:04 reinitialization took
-the whole array, not a date range — the morning *and* the fortnight behind it. That
-is why the hedge cutting, the secateurs going back into the store, and the two desk
-lamps burning at 11:58 PM all rest on colleagues' memories instead of video. If it
-had only lost Friday, this case closes before Round 1 — which is the honest reason
-the array had to die whole, and a fair thing to say out loud after the reveal.
+**After:** Their logs show fallout. The initiating reboot comes from the AV subnet,
+under Arun's scheduled sync. Their rush to the network cabinet is exactly what the
+killers expected and needed: it makes them look implicated while drawing attention
+away from the service stair.
 
-### "Which Operations Executive? Three people have that title."
-**Before:** Correct, and well spotted. The initials give you a shortlist, not a name.
-**After:** Giles, Aksharaa and Akshay are all Operations Executives; Kalaivani,
-Sonia, Riya and Nikitha could all answer to Customer Support & Ops. The initials are
-designed to stop there. What closes them is each chat line's fingerprint: the OE
-line is about the coffee-machine ticket, so the OE is whoever raised #4417 — and
-Aksharaa read that ticket before anyone else and can name him. The CS-O line is
-about the hedge and the flask, which is one person's garden and one person's flask.
-Never hand the room the name; hand them Aksharaa.
+### "Why are the founders still suspects?"
+**Before:** Their fear is real; the method is not theirs.
 
-### "How is toxicology, handwriting analysis and phone forensics all back the same evening?"
-**Before:** Read the letterheads. Half of it says PRELIMINARY.
-**After:** It is a field screen and a fast-moving first night, and the game is the
-evening of the murder — that compression is the format, not the fiction. Say so
-plainly and cheerfully; a room that is arguing about lab turnaround has stopped
-arguing about the murder, which is the only real cost.
+**After:** Anushka's dilution panic and Anmoll's undisclosed bridge use of launch
+float both gave them reason to dread the signing. Jack exploited that panic by
+keeping them at the table. Neither has the bottle route, AV control or frame trail.
 
-### "The duplicate first names are a trick, right?"
-**Before:** No — say so plainly before a table wastes twenty minutes.
-**After:** Two Yashes, two Pranavs, two Mohits are a roster fact. No clue depends
-on confusing them, and the app disambiguates (Yash S./Yash T., Pranav D./
-Pranav A., Mohit A./Mohit P.). The only initials that matter are the draft's role
-initials.
+## Investigation timing
+
+### "How do forensic and device results arrive that fast?"
+**Before:** Read the report labels: they are preliminary screens and venue logs.
+
+**After:** The evening supplies immediate scene evidence, existing event-system
+logs and preliminary field results. Fuller laboratory confirmation happens later;
+the game compresses the first-night investigation so the room can solve the case.
+The deductions do not depend on an implausibly complete final lab report.

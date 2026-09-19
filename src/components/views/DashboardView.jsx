@@ -22,6 +22,7 @@ export const DashboardView = ({ myCharacter }) => {
 
   const isMurderer = myCharacter.role === 'MURDERER';
   const isVictim = myCharacter.role === 'VICTIM';
+  const isWalkIn = myCharacter.role === 'BYSTANDER';
 
   return (
     <div className="er-land">
@@ -60,10 +61,10 @@ export const DashboardView = ({ myCharacter }) => {
 
         {/* Role callout. Never a second hue — the surface and the label change,
             not the colour (§2.2). */}
-        {(isMurderer || isVictim) && (
+        {(isMurderer || isVictim || isWalkIn) && (
           <div className="mt-6">
             <span className={`er-tag ${isVictim ? 'er-tag--mute' : 'er-tag--onbone'}`}>
-              {isMurderer ? 'Classified · Killer' : 'Deceased · Victim'}
+              {isMurderer ? 'Classified · Killer' : isVictim ? 'Deceased · Victim' : 'Walk-in · Non-case witness'}
             </span>
           </div>
         )}
@@ -75,11 +76,25 @@ export const DashboardView = ({ myCharacter }) => {
           <p className="er-bone-body mt-3">{myCharacter.bio}</p>
         </section>
 
-        {/* Secret — sealed behind a redaction bar until tapped. This is the
-            screen's whole interaction, so it gets the press feedback: `er-press`
-            rather than `er-touch`, because er-touch's shift to ink-hover would
-            punch a dark rectangle into the middle of the document. */}
-        <section className="mt-7">
+        {isWalkIn ? (
+          <section className="mt-7">
+            <p className="er-bone-label">Walk-in statement</p>
+            <div className="mt-2" style={{ borderTop: '1px solid var(--color-line-bone)' }} />
+            <p className="er-bone-body mt-3">
+              You arrived after the case began. You can inspect every public file, share evidence,
+              solve riddles and vote, but you have no assigned role in the incident.
+            </p>
+            <p className="font-note text-[18px] sm:text-[20px] leading-[1.35] text-ink mt-5 -rotate-1 origin-left">
+              “{myCharacter.traits?.join(' · ') || 'No traits filed.'}”
+            </p>
+            {myCharacter.confession && (
+              <p className="font-note text-[18px] sm:text-[20px] leading-[1.35] text-ink mt-4 -rotate-1 origin-left">
+                “{myCharacter.confession}”
+              </p>
+            )}
+          </section>
+        ) : (
+          <section className="mt-7">
           <div className="flex items-baseline justify-between gap-3">
             <p className="er-bone-label">Confidential Note</p>
             <span
@@ -126,7 +141,8 @@ export const DashboardView = ({ myCharacter }) => {
                 rather than four bars stranded above blank paper. */}
             <RedactedLines open={secretOpen} widths={isMurderer ? KILLER_REDACT_WIDTHS : undefined} />
           </button>
-        </section>
+          </section>
+        )}
 
         {/* Footer stamps */}
         <div className="mt-8 pt-4 flex items-end justify-between gap-3" style={{ borderTop: '1px solid var(--color-line-bone)' }}>

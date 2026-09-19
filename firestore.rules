@@ -15,6 +15,22 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // Walk-in registration is host-authorized by one-time passes in the UI.
+    // This project has no Firebase Auth, so these rules cannot distinguish a
+    // host from a participant; do not present the contact collection as secure
+    // against a determined client until authentication is added.
+    match /walkInPasses/{passId} {
+      allow read, write: if true;
+    }
+
+    match /bystanders/{bystanderId} {
+      allow read, write: if true;
+    }
+
+    match /walkInContacts/{bystanderId} {
+      allow read, write: if true;
+    }
+
     // Delete is open because the host has to be able to wipe the channel
     // between games. It used to be `delete: if false`, which meant the Host
     // Panel's Reset Game silently failed on the chat — clearAllMessages()

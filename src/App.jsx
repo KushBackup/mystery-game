@@ -24,19 +24,32 @@ import { StoryIntro } from './components/StoryIntro';
 import { OutroSplash } from './components/OutroSplash';
 import { MurdererRevealOverlay } from './components/MurdererRevealOverlay';
 import { StandbyScreen } from './components/StandbyScreen';
-import { ROUNDS, CHARACTERS, CLUE_DB, stackKeyForClue, getAssignedAccusation, CONFESSION_CLUE, getKillers, isMurderer, nextRiddleReward, ASK_OPENS_AT } from './data/gameData';
+import { ROUNDS, CHARACTERS, CLUE_DB, stackKeyForClue, getAssignedAccusation, getWalkInAccusation, CONFESSION_CLUE, getKillers, isMurderer, nextRiddleReward, nextWalkInRiddleReward, ASK_OPENS_AT } from './data/gameData';
 import { SCREEN_GUIDE, EVIDENCE_STACKS } from './data/screenGuide';
 import { TOOLTIPS } from './data/tooltips';
 import { IDLE_TIMER, readTimer } from './lib/roundTimer';
 import { NOT_STARTED, readStartedAt, startPhase } from './lib/gameStart';
-import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue } from './firebase/config';
+import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue, subscribeToWalkIns, subscribeToWalkInPasses } from './firebase/config';
 import { useUnreadMessages } from './hooks/useUnreadMessages';
+import { useVotingPhase } from './hooks/useVotingPhase';
 
 // Session is persisted so a reload — whether the host's force-sync broadcast, a
 // service-worker update, or a player accidentally swiping the tab away — drops
 // them back where they were instead of at the login screen. Mid-event, making
 // 69 people re-enter their printed codes is not a recoverable situation.
 const SESSION_KEY = 'astral.session';
+const HOST_ROUTE = '/host';
+
+// `/host` is the host's separate entry point. It must disregard a player session
+// on a shared device, otherwise the persisted player lands straight on standby
+// and has no way to reach the console. `route` is how public/404.html restores a
+// direct GitHub Pages request for `/mystery-game/host` into this SPA.
+const hostRouteRequested = () => {
+  const recoveredRoute = new URLSearchParams(window.location.search).get('route');
+  const pathname = (recoveredRoute || window.location.pathname).replace(/\/+$/, '');
+  const basePath = import.meta.env.BASE_URL.replace(/\/+$/, '');
+  return pathname === HOST_ROUTE || pathname === `${basePath}${HOST_ROUTE}`;
+};
 
 // Every screen wears the same three-part frame (DESIGN_LANGUAGE.md §4.2):
 // chrome → hairline → kicker + title → content → hairline → footer. The kicker
@@ -54,6 +67,18 @@ const SELF_FRAMED_VIEWS = new Set(['chat']);
 // network a player must still reach the app, late and wrong, rather than sit on a
 // holding screen forever.
 const STATE_SETTLE_MS = 1500;
+
+const walkInGuest = (walkIn) => ({
+  ...walkIn,
+  role: 'BYSTANDER',
+  isSuspect: false,
+  group: 'WALK-INS',
+  bio: `A late arrival who joined the Greenr signing dinner while the investigation was already underway.`,
+  quirk: walkIn.hiddenTalent || 'No detail filed.',
+  secret: walkIn.confession || 'No additional statement filed.',
+  timeline: '',
+  code: walkIn.loginCode,
+});
 
 // A single beat while that first snapshot lands. Same masthead as the splash, so
 // a reload reads as the app still booting rather than as a blank screen.
@@ -113,18 +138,21 @@ const spendAskCue = () => {
 export default function App() {
   // Global State
   const [splashComplete, setSplashComplete] = useState(false);
-  const [currentUser, setCurrentUser] = useState(() => readSession().currentUser);
+  const [hostPortal] = useState(() => hostRouteRequested());
+  const [currentUser, setCurrentUser] = useState(() =>
+    hostPortal ? null : readSession().currentUser
+  );
   // null = show grid menu. A restored host session lands straight on the host
   // interface, mirroring what handleLogin does at login time.
-  const [activeTab, setActiveTab] = useState(() => (readSession().isHost ? 'host' : null));
+  const [activeTab, setActiveTab] = useState(() =>
+    hostPortal ? null : readSession().isHost ? 'host' : null
+  );
   
   // Game State (Synced with Firebase)
   const [currentRound, setCurrentRound] = useState(0);
-  const [isVotingOpen, setIsVotingOpen] = useState(false);
   const [unlockedClues, setUnlockedClues] = useState([]);
   const [votes, setVotes] = useState({}); // { userId: { round: suspectId } }
   const [unlockedFiles, setUnlockedFiles] = useState(['f_incident']); // Files unlocked by host
-  const [voteResultsVisible, setVoteResultsVisible] = useState(false); // Host controls this
   const [revealedToMurderer, setRevealedToMurderer] = useState(false); // Round 6 reveal
   const [revealedClues, setRevealedClues] = useState([]); // Host-revealed clues
   const [gameEnded, setGameEnded] = useState(false); // Game ended flag
@@ -137,6 +165,8 @@ export default function App() {
   // standby screen, and the ten seconds after it are the countdown the whole
   // room watches together.
   const [gameStartedAt, setGameStartedAt] = useState(NOT_STARTED);
+  const [walkIns, setWalkIns] = useState([]);
+  const [walkInPasses, setWalkInPasses] = useState([]);
   // Killers only: whether this device has stepped past the public reveal. The
   // host's reveal sets `gameEnded` in the same write, so without this the five
   // of them would drop straight onto the outro and never see the screen naming
@@ -165,7 +195,7 @@ export default function App() {
   // stack's name, and this component owns the screen frame for every view (§4.2).
   const [evidenceStack, setEvidenceStack] = useState(null);
   const [selectedGuest, setSelectedGuest] = useState(null);
-  const [isHost, setIsHost] = useState(() => readSession().isHost);
+  const [isHost, setIsHost] = useState(() => hostPortal ? false : readSession().isHost);
 
   // True once the real game state is known — the first Firestore snapshot, or the
   // STATE_SETTLE_MS backstop, whichever comes first.
@@ -205,9 +235,22 @@ export default function App() {
   // loop on every page load.
   const lastForceRefreshRef = useRef(null);
 
-  const myCharacter = useMemo(() =>
-    CHARACTERS.find(c => c.id === currentUser),
-  [currentUser]);
+  const activeWalkIns = useMemo(
+    () => walkIns.filter((walkIn) => walkIn.active),
+    [walkIns]
+  );
+
+  const allGuests = useMemo(
+    () => [...CHARACTERS, ...activeWalkIns.map(walkInGuest)],
+    [activeWalkIns]
+  );
+
+  const myCharacter = useMemo(
+    () => allGuests.find((guest) => guest.id === currentUser),
+    [allGuests, currentUser]
+  );
+
+  const isWalkIn = myCharacter?.role === 'BYSTANDER';
 
   // What the Comms tile on the board is carrying. Lives here rather than in
   // GridMenu because the hub unmounts on every navigation, and an unread count
@@ -219,6 +262,8 @@ export default function App() {
   const unread = useUnreadMessages(currentUser, activeTab === 'chat');
 
   const currentRoundData = ROUNDS[currentRound] || ROUNDS[ROUNDS.length - 1];
+  const voting = useVotingPhase(roundTimer, currentRound);
+  const isVotingOpen = voting.phase === 'open';
 
   // The ballot tally for the round the room is actually in — { suspectId: count }.
   //
@@ -231,18 +276,34 @@ export default function App() {
   // host advances.
   const voteCounts = useMemo(() => {
     const counts = {};
-    Object.values(votes).forEach((byRound) => {
+    const activeVoterIds = new Set(allGuests.map((guest) => guest.id));
+    Object.entries(votes).forEach(([voterId, byRound]) => {
+      if (!activeVoterIds.has(voterId)) return;
       const pick = byRound?.[currentRound];
       if (pick) counts[pick] = (counts[pick] || 0) + 1;
     });
     return counts;
-  }, [votes, currentRound]);
+  }, [votes, currentRound, allGuests]);
+
+  // The final ballot is public. Keep the voter identity beside the candidate
+  // rather than reconstructing it in the tally component, which only knows the
+  // canonical roster and not late walk-ins.
+  const voteDetails = useMemo(() => {
+    const guestsById = new Map(allGuests.map((guest) => [guest.id, guest]));
+    return Object.entries(votes).flatMap(([voterId, byRound]) => {
+      const suspectId = byRound?.[currentRound];
+      const voter = guestsById.get(voterId);
+      return suspectId && voter
+        ? [{ voterId, voterName: voter.name, suspectId }]
+        : [];
+    });
+  }, [votes, currentRound, allGuests]);
 
   // Get the accusation card assigned to this player (for Round 1+)
   const myAccusation = useMemo(() => {
     if (!currentUser || currentRound < 1) return null;
-    return getAssignedAccusation(currentUser);
-  }, [currentUser, currentRound]);
+    return isWalkIn ? getWalkInAccusation(currentUser) : getAssignedAccusation(currentUser);
+  }, [currentUser, currentRound, isWalkIn]);
 
   // Check if player should see the confession (murderer in Round 6)
   const shouldShowConfession = useMemo(() => {
@@ -263,14 +324,48 @@ export default function App() {
     initializePlayerData();
   }, []);
 
+  // One live stream for the dynamic directory. The initial snapshot hydrates
+  // silently; later changes are room events and get one local toast per device.
+  const walkInSnapshotSeen = useRef(false);
+  const walkInStateById = useRef(new Map());
+  useEffect(() => {
+    const unsubscribe = subscribeToWalkIns((incoming, changes) => {
+      const previous = walkInStateById.current;
+      const next = new Map(incoming.map((walkIn) => [walkIn.id, walkIn]));
+
+      if (walkInSnapshotSeen.current) {
+        const event = changes.reduce((latest, change) => {
+          const before = previous.get(change.doc.id);
+          const after = change.doc.data();
+          if (change.type === 'added' && after.active) return { type: 'success', msg: `WALK-IN ADDED: ${after.name}` };
+          if (change.type === 'modified' && before?.active && !after.active) return { type: 'info', msg: `WALK-IN DEPARTED: ${after.name}` };
+          if (change.type === 'modified' && !before?.active && after.active) return { type: 'success', msg: `WALK-IN ADDED: ${after.name}` };
+          return latest;
+        }, null);
+        if (event) {
+          setFeedback(event);
+          setTimeout(() => setFeedback(null), 3000);
+        }
+      }
+
+      walkInSnapshotSeen.current = true;
+      walkInStateById.current = next;
+      setWalkIns(incoming);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeToWalkInPasses(setWalkInPasses);
+    return () => unsubscribe();
+  }, []);
+
   // Subscribe to real-time game state changes
   useEffect(() => {
     const unsubscribe = subscribeToGameState((gameState) => {
       setStateSettled(true);
       setCurrentRound(gameState.currentRound || 0);
-      setIsVotingOpen(gameState.isVotingOpen || false);
       setUnlockedFiles(gameState.unlockedFiles || ['f_incident']);
-      setVoteResultsVisible(gameState.voteResultsVisible || false);
       setRevealedToMurderer(gameState.revealedToMurderer || false);
       setRevealedClues(gameState.revealedClues || []);
       setGameEnded(gameState.gameEnded || false);
@@ -299,6 +394,12 @@ export default function App() {
     const timer = setTimeout(() => setStateSettled(true), STATE_SETTLE_MS);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (hostPortal && new URLSearchParams(window.location.search).get('route') === HOST_ROUTE) {
+      window.history.replaceState(null, '', `${import.meta.env.BASE_URL}host`);
+    }
+  }, [hostPortal]);
 
   // Mirror the session to localStorage so a reload restores it.
   useEffect(() => {
@@ -347,7 +448,14 @@ export default function App() {
 
   // --- ACTIONS ---
 
-  const handleLogin = (id, isHostLogin = false) => {
+  const handleLogin = (id, isHostLogin = false, walkIn = null) => {
+    if (walkIn) {
+      setWalkIns((current) =>
+        current.some((entry) => entry.id === walkIn.id)
+          ? current
+          : [...current, { ...walkIn, active: true }]
+      );
+    }
     setCurrentUser(id);
     setIsHost(isHostLogin);
     if (isHostLogin) {
@@ -406,13 +514,13 @@ export default function App() {
   const riddleReward = useMemo(
     () =>
       currentUser
-        ? nextRiddleReward(currentUser, currentRound, [
+        ? (isWalkIn ? nextWalkInRiddleReward : nextRiddleReward)(currentUser, currentRound, [
             ...unlockedClues,
             ...revealedClues,
             ...pendingUnlocks,
           ])
         : null,
-    [currentUser, currentRound, unlockedClues, revealedClues, pendingUnlocks]
+    [currentUser, currentRound, unlockedClues, revealedClues, pendingUnlocks, isWalkIn]
   );
 
   // ASK stays off the screen until the lock has something to pay out — Round 02
@@ -528,8 +636,8 @@ export default function App() {
   // Login gate comes FIRST. The terminal screens below never return, so if they
   // are checked ahead of this the host can't reach CharacterSelect to enter the
   // host code once the game is in its end state — the device is stuck.
-  if (!currentUser) {
-    return <CharacterSelect onSelectCharacter={handleLogin} />;
+  if (!currentUser || (!isHostUser && !myCharacter)) {
+    return <CharacterSelect onSelectCharacter={handleLogin} hostOnly={hostPortal} />;
   }
 
   // Every screen from here down is chosen from game state, so a player must not
@@ -606,6 +714,46 @@ export default function App() {
         onExit={() => setBriefingState('done')}
         exitLabel="Skip"
         finalLabel="Begin"
+      />
+    );
+  }
+
+  // The ballot and its result are takeovers, not a tile a player has to notice
+  // in time. Both phases are derived from the shared round-clock end instant,
+  // so a reload or a late wake-up arrives at the same screen as the room.
+  if (!isHostUser && voting.phase === 'open') {
+    return (
+      <div className="min-h-screen bg-ink text-bone relative er-grain overflow-x-clip">
+        <div className="er-lamp" aria-hidden="true" />
+        <main className="relative z-10 max-w-2xl mx-auto px-4 py-8 pb-14">
+          <p className="er-mono er-mono--hot er-mono--wide">Round {String(currentRound).padStart(2, '0')} ballot</p>
+          <h1 className="er-title mt-2">Cast Your Vote</h1>
+          <p className="font-body text-[15px] leading-[1.55] text-dim mt-4 mb-6">
+            The round is complete. Choose the person you think is responsible before the ballot closes.
+          </p>
+          <VotingView
+            currentUser={currentUser}
+            isVotingOpen={true}
+            currentRound={currentRound}
+            votes={votes[currentUser] || {}}
+            votingMsLeft={voting.msLeft}
+            onVote={submitVote}
+          />
+        </main>
+        <FeedbackToast feedback={feedback} />
+      </div>
+    );
+  }
+
+  if (!isHostUser && voting.phase === 'results') {
+    return (
+      <VoteResultsModal
+        isOpen
+        onClose={() => {}}
+        voteCounts={voteCounts}
+        voterDetails={voteDetails}
+        currentRound={currentRound}
+        locked
       />
     );
   }
@@ -713,8 +861,7 @@ export default function App() {
           <HostPanel
             isOpen={true}
             currentRound={currentRound}
-            isVotingOpen={isVotingOpen}
-            voteResultsVisible={voteResultsVisible}
+            votingPhase={voting.phase}
             revealedToMurderer={revealedToMurderer}
             unlockedFiles={unlockedFiles}
             revealedClues={revealedClues}
@@ -723,12 +870,13 @@ export default function App() {
             setGameStartedAt={setGameStartedAt}
             setRoundTimer={setRoundTimer}
             setCurrentRound={setCurrentRound}
-            setIsVotingOpen={setIsVotingOpen}
-            setVoteResultsVisible={setVoteResultsVisible}
             setRevealedToMurderer={setRevealedToMurderer}
             setUnlockedFiles={setUnlockedFiles}
             setRevealedClues={setRevealedClues}
             setGameEnded={setGameEnded}
+            walkIns={walkIns}
+            walkInPasses={walkInPasses}
+            onFeedback={setFeedback}
             onClose={() => setActiveTab(null)}
           />
         )}
@@ -770,6 +918,7 @@ export default function App() {
         {activeTab === 'dossier' && (
           <DossierView
             currentUser={currentUser}
+            guests={allGuests}
             onSelectGuest={setSelectedGuest}
           />
         )}
@@ -780,9 +929,8 @@ export default function App() {
             isVotingOpen={isVotingOpen}
             currentRound={currentRound}
             votes={votes[currentUser] || {}}
-            voteCounts={voteCounts}
+            votingMsLeft={voting.msLeft}
             onVote={submitVote}
-            voteResultsVisible={voteResultsVisible}
           />
         )}
 

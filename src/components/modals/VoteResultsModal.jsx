@@ -8,7 +8,14 @@ import { Numeral } from '../ui/Numeral';
  * the display face; the bars are the one signal element on the screen. No
  * gradients, no second hue, no rounded corners.
  */
-export const VoteResultsModal = ({ isOpen, onClose, voteCounts }) => {
+export const VoteResultsModal = ({
+  isOpen,
+  onClose,
+  voteCounts,
+  voterDetails = [],
+  currentRound,
+  locked = false,
+}) => {
   // Hooks run before any early return — `isOpen` gates the render, not the hook.
   const voteResults = useMemo(() => {
     const results = CHARACTERS.map((char) => ({
@@ -16,6 +23,9 @@ export const VoteResultsModal = ({ isOpen, onClose, voteCounts }) => {
       name: char.name,
       profession: char.profession,
       votes: voteCounts?.[char.id] || 0,
+      voters: voterDetails
+        .filter((vote) => vote.suspectId === char.id)
+        .map((vote) => vote.voterName),
     })).filter((char) => char.votes > 0);
 
     results.sort((a, b) => b.votes - a.votes);
@@ -26,7 +36,7 @@ export const VoteResultsModal = ({ isOpen, onClose, voteCounts }) => {
       ...result,
       percentage: maxVotes > 0 ? (result.votes / maxVotes) * 100 : 0,
     }));
-  }, [voteCounts]);
+  }, [voteCounts, voterDetails]);
 
   // The bars grow from zero when the tally opens. This is the one place in the
   // app where a load-time animation is right rather than noise: the host
@@ -72,23 +82,27 @@ export const VoteResultsModal = ({ isOpen, onClose, voteCounts }) => {
       aria-modal="true"
       aria-label="Vote tally"
       onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (!locked && e.target === e.currentTarget) onClose();
       }}
     >
       <div className="er-land w-full max-w-xl max-h-[88vh] flex flex-col bg-ink border border-line">
         {/* Chrome */}
         <div className="px-4 pt-4 pb-3 border-b border-line flex items-start justify-between gap-3">
           <div>
-            <p className="er-mono er-mono--hot er-mono--wide">Live tally</p>
+            <p className="er-mono er-mono--hot er-mono--wide">
+              {locked ? `Round ${String(currentRound).padStart(2, '0')} complete` : 'Live tally'}
+            </p>
             <h2 className="er-title text-[26px] mt-2">Vote Results</h2>
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Close tally"
-            className="er-touch flex items-center justify-center w-11 h-11 border border-line text-bone hover:border-signal hover:text-signal-lift shrink-0"
-          >
-            <X size={20} />
-          </button>
+          {!locked && (
+            <button
+              onClick={onClose}
+              aria-label="Close tally"
+              className="er-touch flex items-center justify-center w-11 h-11 border border-line text-bone hover:border-signal hover:text-signal-lift shrink-0"
+            >
+              <X size={20} />
+            </button>
+          )}
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
@@ -143,13 +157,22 @@ export const VoteResultsModal = ({ isOpen, onClose, voteCounts }) => {
                 <p className="er-mono er-mono--dim mt-2 tabular-nums">
                   {totalVotes > 0 ? Math.round((result.votes / totalVotes) * 100) : 0}% of the room
                 </p>
+
+                <div className="mt-3 pt-3 border-t border-line-faint">
+                  <p className="er-mono er-mono--dim">Voted by</p>
+                  <p className="font-body text-[14px] leading-[1.45] text-bone mt-1.5">
+                    {result.voters.join(', ')}
+                  </p>
+                </div>
               </div>
             ))
           )}
         </div>
 
         <div className="px-4 py-3 border-t border-line">
-          <p className="er-mono text-center">Updates live as votes are cast</p>
+          <p className="er-mono text-center">
+            {locked ? 'Awaiting the host to start the next round' : 'Updates live as votes are cast'}
+          </p>
         </div>
       </div>
     </div>

@@ -1,121 +1,87 @@
-/**
- * The Round 0 briefing — the day, as the office knows it at 4:30 PM.
- *
- * One source of truth for two surfaces:
- *   components/StoryIntro.jsx  — the fullscreen typed slideshow that takes over
- *                                the screen while the game is still in Round 0
- *   components/views/StoryView.jsx — the same beats as a readable case document,
- *                                reachable from the board at any point
- *
- * ⚠️ SPOILER DISCIPLINE. This is what a staff member standing in the sealed
- * office at 4:30 PM could tell you, and nothing more. Everything here is drawn
- * from STORY.md's public record and the Incident Report (`f_incident` in
- * gameData.js), both of which are public at Round 0. It must NOT reach forward
- * into the rounds that pay off later:
- *
- *   Round 3  cause of death — oleandrin, the dosed tumbler, the scheduled
- *            camera gap, badge V-07, the forged vendor pack, the staged alert
- *   Round 4  what Dev was really hired to do, the ₹3.4 crore skim, his draft,
- *            the shared Uber
- *   Round 5+ the group chat, the settlement archive, the five-person conspiracy
- *
- * The coffee machine and Dev's ritual are mentioned because the whole floor
- * lived with both — the repair was a running joke by 10 AM. That the tumbler
- * was the delivery path is Round 3's reveal, not this screen's. "Query
- * poisoning" is public: the paramedic said it in front of the room. If you add
- * a slide, check it against that list first.
- *
- * Each slide is: a mono kicker (never typed — it labels the slide), a typewriter
- * heading, and one to three body lines. Heading and lines are typed as a single
- * stream, so the pacing carries across the whole slide rather than restarting
- * per paragraph. Keep a slide under ~200 characters: past that the typing
- * outstays its welcome and the block stops fitting a 375px phone without
- * scrolling, which the slideshow deliberately cannot do.
- */
-
 import { CASE_META } from './gameData';
 
-// Base milliseconds per character. Punctuation adds its own hold on top (see
-// hooks/useTypewriter.js), so the felt rhythm is slower than this number: at 22
-// the measured cost of a ~150-character slide is about 4.3 seconds, of which
-// roughly a quarter is punctuation. A tap fills the slide instantly, so this is a
-// pace, never a wait.
+/**
+ * The Round 0 briefing - public facts only.
+ *
+ * This is what the room can know before the investigation starts. It must not
+ * reveal the delivery path, the AV schedule, the frame on Nilisha or how many
+ * people acted together.
+ */
+
 export const STORY_TYPE_MS = 22;
 
 export const STORY_SLIDES = [
   {
     id: 'venue',
-    kicker: 'Indiranagar, Bangalore · 21 August 2026',
-    heading: 'Midford KTR2',
+    kicker: 'Assagao, Goa · 19 September 2026',
+    heading: 'Greenr',
     lines: [
-      'Three floors of TripleSpeed, a terrace with a hedge, and a nameplate that still says Chimp Processing Pvt Ltd.',
-      'Today was supposed to be Onam. It got as far as the payasam.',
+      'A sunset signing dinner, a room full of people with too much invested, and rain starting to pin the exits shut.',
+      'Tonight was supposed to end with a closing. It got as far as the welcome line.',
     ],
   },
   {
-    id: 'company',
-    kicker: 'The Company',
-    heading: 'TripleSpeed',
+    id: 'deal',
+    kicker: 'The Night',
+    heading: 'Tonight Was The Closing',
     lines: [
-      'Chasing ten million dollars a month, and past the halfway mark.',
-      'A place where the WiFi flaps, the ads overspend, the vendors scam, and nobody looks up. Remember that part.',
+      'Twenty-six founders, collaborators and advisers gathered to sign off on a Greenr launch vehicle before dinner.',
+      'Instead, the room got diligence, panic and police tape.',
     ],
   },
   {
     id: 'victim',
     kicker: 'The Victim',
-    heading: 'Dev Malhotra',
+    heading: 'Rehan Vora',
     lines: [
-      'A consultant, three weeks in — "something payments," people said.',
-      'What he actually did was ask questions about money. Half this office had been on the wrong end of one.',
+      'An independent diligence partner brought in to bless the numbers before sunset.',
+      'He spent the day asking pointed questions about money, paper and who exactly was getting paid twice.',
     ],
   },
   {
     id: 'ritual',
-    kicker: 'The Machine',
-    heading: 'The Beast',
+    kicker: 'The Habit',
+    heading: 'The Black Bottle',
     lines: [
-      'The third-floor coffee machine: dead for two weeks, four ignored tickets — fixed this morning, by urgent request.',
-      'Dev was the only person who drank from it daily. Everyone knew his ritual.',
+      'Rehan carried one black steel bottle everywhere and kept refilling it from the self-serve decanter at the upstairs tea shelf.',
+      'Everybody noticed the bottle. Nobody thought it mattered until after he fell.',
     ],
   },
   {
-    id: 'party',
-    kicker: '1:00 PM',
-    heading: 'Onam',
+    id: 'crash',
+    kicker: '5:58 PM',
+    heading: 'The Glitch',
     lines: [
-      'Sadhya on the terrace, pookalam, games, a livestream.',
-      'At 2:47 a payment alert pulled a dozen people off the terrace and back to their desks. At this company, that is just weather.',
+      'The launch reel stuttered, the guest Wi-Fi died and the card reader went with it.',
+      'In a room like this, that looks like inconvenience. Tonight, it may be the whole murder.',
     ],
   },
   {
     id: 'collapse',
-    kicker: '3:55 PM',
-    heading: 'The Glass Room',
+    kicker: '6:18 PM',
+    heading: 'The Library',
     lines: [
-      'Dev left the party at 3:12 — "save me some payasam" — for his coffee and his slides.',
-      'At 3:55 he was found behind the glass. The paramedic wrote two words: query poisoning.',
+      'He was found upstairs before the welcome line ever began.',
+      'By 6:31, the room had heard the two words nobody wanted: likely poisoning.',
     ],
   },
   {
     id: 'sealed',
-    kicker: '4:30 PM',
-    heading: 'Sealed',
+    kicker: '6:40 PM',
+    heading: 'No One Left',
     lines: [
-      'Inspector Arjun Kale locked floors one to three and the terrace. Nobody has left this building since 1 PM.',
-      `Thirty-four of the ${CASE_META.playerCount} of you cannot be placed on the terrace when it mattered.`,
+      'Rain locked the side gate, valet held the lane, and police sealed Greenr with all twenty-six of you still inside.',
+      `Several of the ${CASE_META.playerCount} of you cannot be continuously placed in public view when it mattered.`,
     ],
   },
   {
     id: 'brief',
     kicker: 'Your Job',
-    heading: 'Break The Story',
+    heading: 'Break The Closing',
     lines: [
-      'Seven rounds. Solve a riddle to unseal evidence, then trade its code around the room.',
-      'Talk, lie, accuse, vote. The office only wins if it names what really happened.',
+      'Seven rounds. Solve riddles to unseal evidence, then trade the codes across the room.',
+      'Talk, accuse, lie if you must. This only closes if the room finds the right answer and the right method.',
     ],
-    // Handwriting closes the briefing, the way it closes the board (§3.1 —
-    // in-fiction margin notes). Shown only once the slide has finished typing.
-    note: 'Trust no one.',
+    note: 'Trust the neatest story last.',
   },
 ];

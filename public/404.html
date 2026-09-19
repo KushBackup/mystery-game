@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting...</title>
+    <script>
+      (function () {
+        var base = '/mystery-game/';
+        var path = window.location.pathname;
+        if (path.indexOf(base) === 0) {
+          var route = '/' + path.slice(base.length).replace(/^\/+/, '');
+          window.location.replace(base + '?route=' + encodeURIComponent(route) + window.location.hash);
+          return;
+        }
+        window.location.replace('/');
+      }());
+    </script>
+  </head>
+  <body></body>
+</html>

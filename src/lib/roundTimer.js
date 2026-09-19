@@ -34,6 +34,11 @@
 // shape the run sheet in data/gameData.js already describes.
 export const DEFAULT_ROUND_MS = 30 * 60 * 1000;
 
+// Every completed round is followed by a fixed five-minute ballot. The ballot
+// shares the round clock's absolute end instant, so no device needs to write a
+// second timer when the round reaches zero.
+export const VOTING_DURATION_MS = 5 * 60 * 1000;
+
 // What the host can arm the clock with. The bottom two are deliberately absurd
 // for a real round — they exist so the host can prove the thing works, and
 // rehearse the last-ten-seconds moment, without sitting through half an hour.
@@ -121,6 +126,18 @@ export const clockPhase = (timer, now = Date.now()) => {
   if (left <= CLOCK_FINAL_MS) return 'final';
   if (left <= CLOCK_SOON_MS) return 'soon';
   return 'running';
+};
+
+/**
+ * The automatic ballot phase for a round.
+ *
+ * A ballot only belongs to the round that armed the clock. Advancing the room
+ * immediately points at the new timer, which drops the old tally and starts
+ * the next investigation period without any separate cleanup write.
+ */
+export const votingPhase = (timer, currentRound, now = Date.now()) => {
+  if (!isRunning(timer) || timer.round !== currentRound || now < timer.endsAt) return 'idle';
+  return now < timer.endsAt + VOTING_DURATION_MS ? 'open' : 'results';
 };
 
 /**

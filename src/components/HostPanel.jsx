@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import {
   updateCurrentRound,
   updateRoundTimer,
-  updateVotingStatus,
-  updateVoteResultsVisibility,
   updateMurdererReveal,
   unlockFilesForRound,
   revealClues,
@@ -13,7 +11,7 @@ import {
   startGame,
   pushGameStart,
   holdGameAtStandby,
-  endGame
+  endGame,
 } from '../firebase/config';
 import { CASE_FILES, CASE_META, CLUE_DB, HOST_SCRIPT } from '../data/gameData';
 import {
@@ -35,6 +33,7 @@ import {
   skipCountdown,
 } from '../lib/gameStart';
 import { HostReferenceView } from './views/HostReferenceView';
+import { WalkInManagementView } from './views/WalkInManagementView';
 import { Numeral } from './ui/Numeral';
 import { RoundClock } from './ui/RoundClock';
 import { ChevronRight } from './icons/IconComponents';
@@ -111,8 +110,7 @@ const Section = ({ label, meta, children }) => (
 export const HostPanel = ({
   isOpen,
   currentRound,
-  isVotingOpen,
-  voteResultsVisible = false,
+  votingPhase = 'idle',
   revealedToMurderer = false,
   unlockedFiles = [],
   revealedClues = [],
@@ -121,16 +119,18 @@ export const HostPanel = ({
   setGameStartedAt,
   setRoundTimer,
   setCurrentRound,
-  setIsVotingOpen,
-  setVoteResultsVisible,
   setRevealedToMurderer,
   setUnlockedFiles,
   setRevealedClues,
   setGameEnded,
+  walkIns = [],
+  walkInPasses = [],
+  onFeedback,
 }) => {
   const [expandedRound, setExpandedRound] = useState(null);
   const [scriptOpen, setScriptOpen] = useState(true);
   const [referenceOpen, setReferenceOpen] = useState(false);
+  const [walkInOpen, setWalkInOpen] = useState(false);
 
   // The run sheet follows the live round, but the host can tab away to read
   // ahead. Only an explicit tap sets an override, and advancing the round
@@ -152,6 +152,17 @@ export const HostPanel = ({
     return <HostReferenceView currentRound={currentRound} onBack={() => setReferenceOpen(false)} />;
   }
 
+  if (walkInOpen) {
+    return (
+      <WalkInManagementView
+        walkIns={walkIns}
+        walkInPasses={walkInPasses}
+        onFeedback={onFeedback}
+        onBack={() => setWalkInOpen(false)}
+      />
+    );
+  }
+
   // Optimistic UI: update local state instantly so the host sees feedback the
   // moment they tap, then fire-and-forget the Firestore write. The onSnapshot
   // subscription in App.jsx confirms the same value a moment later (no flicker).
@@ -162,6 +173,7 @@ export const HostPanel = ({
   // stopped one stays stopped. lib/roundTimer.js owns that decision so the rule
   // is stated once rather than in every control that can change the round.
   const handleRoundChange = (newRound) => {
+    if (votingPhase !== 'results' || newRound !== currentRound + 1) return;
     const nextTimer = timerForRound(roundTimer, newRound);
     setCurrentRound(newRound);
     setRoundTimer?.(nextTimer);
@@ -244,18 +256,6 @@ export const HostPanel = ({
     holdGameAtStandby();
   };
 
-  const handleToggleVoting = () => {
-    const next = !isVotingOpen;
-    setIsVotingOpen(next);
-    updateVotingStatus(next);
-  };
-
-  const handleToggleVoteResults = () => {
-    const next = !voteResultsVisible;
-    setVoteResultsVisible(next);
-    updateVoteResultsVisibility(next);
-  };
-
   const handleRevealMurderer = () => {
     if (revealedToMurderer) return;
     if (window.confirm(`Reveal the killers to the full room? ${CASE_META.playerCount - CASE_META.killerCount} players will see the public reveal. This ends the game and cannot be undone except by Reset Game.`)) {
@@ -332,7 +332,14 @@ export const HostPanel = ({
   // than stored for the same reason the reading of "done" is (lib/roundTimer.js):
   // nothing writes when a countdown runs out.
   const timerIdle = !isRunning(roundTimer) && !isPaused(roundTimer);
-  const timerState = isRunning(roundTimer) ? 'Running' : isPaused(roundTimer) ? 'Held' : 'Stopped';
+  const timerState = votingPhase === 'open'
+    ? 'Ballot open'
+    : votingPhase === 'results'
+      ? 'Results'
+      : isRunning(roundTimer) ? 'Running' : isPaused(roundTimer) ? 'Held' : 'Stopped';
+  const timerControlsLocked = votingPhase !== 'idle';
+  const canStartNextRound = currentRound < 6 && votingPhase === 'results';
+  const activeWalkIns = walkIns.filter((walkIn) => walkIn.active);
 
   // Group clues by round (the confession is handled separately).
   const cluesByRound = {
@@ -377,6 +384,15 @@ export const HostPanel = ({
           </Control>
         </div>
       </section>
+
+      <Section label="Walk-ins" meta={`${activeWalkIns.length} active`}>
+        <Control onClick={() => setWalkInOpen(true)}>
+          Open walk-in register
+        </Control>
+        <p className="font-body text-[15px] leading-[1.55] text-dim mt-4">
+          Issue a simple registration word, see every person who registers, and keep each walk-in's simple login word on one host-only screen.
+        </p>
+      </Section>
 
       {/* Run sheet */}
       <section className="er-card p-0">
@@ -487,37 +503,26 @@ export const HostPanel = ({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Round control */}
         <Section label="Round" meta="Live on every device">
-          <div className="flex items-center justify-between gap-4">
-            <button
-              onClick={() => handleRoundChange(Math.max(0, currentRound - 1))}
-              aria-label="Previous round"
-              className="er-touch w-14 h-14 flex items-center justify-center bg-ink-raised border border-line text-bone text-2xl hover:border-signal"
-            >
-              −
-            </button>
-
+          <div className="flex flex-col items-center gap-4">
             <Numeral value={currentRound} pad={2} className="er-num text-[56px] leading-none" />
-
-            <button
-              onClick={() => handleRoundChange(Math.min(6, currentRound + 1))}
-              aria-label="Next round"
-              className="er-touch w-14 h-14 flex items-center justify-center bg-ink-raised border border-line text-bone text-2xl hover:border-signal"
+            <Control
+              disabled={!canStartNextRound}
+              onClick={() => handleRoundChange(currentRound + 1)}
             >
-              +
-            </button>
+              {currentRound >= 6 ? 'Final round' : `Start round ${String(currentRound + 1).padStart(2, '0')}`}
+            </Control>
           </div>
         </Section>
 
         {/* Voting */}
-        <Section label="Ballot" meta={isVotingOpen ? 'Open' : 'Closed'}>
-          <div className="space-y-3">
-            <Control active={isVotingOpen} onClick={handleToggleVoting}>
-              {isVotingOpen ? 'Close ballot' : 'Open ballot'}
-            </Control>
-            <Control active={voteResultsVisible} onClick={handleToggleVoteResults}>
-              {voteResultsVisible ? 'Hide tally' : 'Show tally'}
-            </Control>
-          </div>
+        <Section
+          label="Ballot"
+          meta={votingPhase === 'open' ? 'Open' : votingPhase === 'results' ? 'Results out' : 'Automatic'}
+        >
+          <p className="font-body text-[15px] leading-[1.55] text-dim">
+            When the round clock reaches zero, every player receives a five-minute ballot.
+            The final tally and every vote are announced automatically when that window ends.
+          </p>
         </Section>
       </div>
 
@@ -529,10 +534,10 @@ export const HostPanel = ({
           <RoundClock timer={roundTimer} variant="console" showIdle />
 
           <div className="flex gap-3 sm:shrink-0 sm:w-[19rem]">
-            <Control active={isRunning(roundTimer)} onClick={handleTimerToggle}>
+            <Control active={isRunning(roundTimer)} disabled={timerControlsLocked} onClick={handleTimerToggle}>
               {isRunning(roundTimer) ? 'Pause' : isPaused(roundTimer) ? 'Resume' : 'Start'}
             </Control>
-            <Control disabled={timerIdle} onClick={handleTimerReset}>
+            <Control disabled={timerIdle || timerControlsLocked} onClick={handleTimerReset}>
               Reset
             </Control>
           </div>
@@ -546,6 +551,7 @@ export const HostPanel = ({
             <Control
               key={preset.id}
               active={roundTimer.durationMs === preset.ms}
+              disabled={timerControlsLocked}
               onClick={() => handleTimerPreset(preset.ms)}
             >
               {preset.label}

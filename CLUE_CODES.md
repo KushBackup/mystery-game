@@ -1,132 +1,110 @@
-# CLUE_CODES.md — All Codes (Case 2108-C · Onam in Black)
+# CLUE_CODES.md - All Codes (Case 2609-G · Greenr: Last Seating)
 
-> **Host-only. Full spoilers.**
-> This is the host's **stall-breaker**, not a packing list — nothing here is printed
-> except the 69 login cards. Clue codes are won in-app through the riddle lock and
-> spread player-to-player. If the room stalls, feed a code to a quiet table.
->
-> Codes are deliberately meaningless single words: never a login code, never
-> descriptive of the clue, never guessable from the roster, never a riddle answer.
-> A dev-only assertion at the bottom of [src/data/gameData.js](src/data/gameData.js)
-> enforces all three disjointness rules — extend it if you add a deck.
+> **Host-only. Full spoilers.**  
+> This is the host's stall-breaker, not a packing list. Nothing here is printed
+> except the 26 login cards. Clue codes are won in-app through the riddle lock
+> and spread player-to-player.
 
 ## Counts
 
 | Deck | Count | Round | How it arrives |
 |---|---|---|---|
-| Accusations | 12 | R1 | Auto-dealt, one per player, via the 12 statement pods |
-| Motives | 12 | R2 | Riddle pool |
+| Accusations | 10 | R1 | Auto-dealt, one per player, via the 10 statement pods |
+| Motives | 10 | R2 | Riddle pool |
 | Evidence | 8 | R3 | Riddle pool |
 | Revelations | 6 | R4 (4) + R5 (2) | Riddle pool |
 | Confession | 1 | R6 | Killers only |
-| **Total clue codes** | **39** | | |
+| **Total clue codes** | **35** | | |
 
-## Accusations (Round 1 — auto-dealt, never in the riddle pool)
+## Accusations (Round 1 - auto-dealt, never in the riddle pool)
 
 | Code | Target | Dealt to pod |
 |---|---|---|
-| TRIDENT | Anurag *(killer)* | A |
-| BALLAST | Yao *(killer)* | B |
-| GIRDER | Giles *(killer)* | C |
-| SUNDIAL | Kalaivani *(killer)* | D |
-| PULLEY | Akshat *(killer)* | E |
-| AWNING | Victor | F |
-| BUGLE | Sukhans | G |
-| CORNICE | Aarohi | H |
-| DORY | Nehal | I |
-| FLINT | Prerna | J |
-| GROTTO | Adithya | K |
-| PYLON | Luke | L |
+| ALIDADE | Jack *(killer)* | A |
+| BRIAR | Arun *(killer)* | B |
+| COPPER | Manasi *(killer)* | C |
+| DERRICK | Anushka | D |
+| ELECTRUM | Anmoll | E |
+| FLAGSTONE | Nilisha | F |
+| GALLEON | Amrusha | G |
+| HALO | Saima | H |
+| INDIGO | Umair | I |
+| JETTY | Sampada | J |
 
-## Motives (Round 2 — riddle pool)
+## Motives (Round 2 - riddle pool)
 
 | Code | Target |
 |---|---|
-| MERIDIAN | Anurag *(killer)* |
-| OBSIDIAN | Yao *(killer)* |
-| PLINTH | Giles *(killer)* |
-| QUASAR | Kalaivani *(killer)* |
-| RIPCORD | Akshat *(killer)* |
-| SEXTANT | Victor |
-| TANGRAM | Sukhans |
-| UKULELE | Aarohi |
-| VERTEX | Nehal |
-| WHARF | Prerna |
-| YODEL | Adithya |
-| ZENITH | Luke |
+| KILN | Jack *(killer)* |
+| LODESTAR | Arun *(killer)* |
+| MANDRAKE | Manasi *(killer)* |
+| NARWHAL | Anushka |
+| ORBITAL | Anmoll |
+| PALISADE | Nilisha |
+| QUILL | Amrusha |
+| ROOKERY | Saima |
+| SUMMIT | Umair |
+| THISTLE | Sampada |
 
-## Evidence (Round 3 — riddle pool)
+## Evidence (Round 3 - riddle pool)
 
 | Code | Title | Settles |
 |---|---|---|
-| BISON | Toxicology Summary | Oleandrin, in the tumbler only; machine/food clean |
-| CALIPER | Tumbler and Coffee-Nook Analysis | Dosed while empty; the unclaimed 2:52 brew |
-| DUNE | Camera and Network Log | The camera gap was scheduled at 11:31 AM |
-| EPOCH | Badge and Lift Trace | Badge V-07's 2:52 lift rides; zero exits |
-| FURLONG | Coffee Machine Service Ticket | The valve was shut by hand; the repair was an appointment |
-| GIMLET | Vendor Dossier Mismatch | The Victor pack was created Wednesday 11:58 PM |
-| HOIST | Payment Alert Trace | The 2:47 alert was a sandbox replay from inside |
-| IBEX | Terrace Planter Survey | The oleander was harvested in-house this week |
+| UMBRA | Toxicology Summary | Poison in Rehan's bottle only |
+| VELDT | Bottle and Tea-Shelf Analysis | Dosed while empty after 5:47; Rehan later refilled it himself from the upstairs self-serve decanter |
+| WYVERN | AV and Camera Log | Blind spot scheduled at 4:46 |
+| XYST | Guest-Network Crash Trace | Crash staged from the AV side, not the guest stack |
+| YEW | Bar and POS Reconciliation | Communal tonic clean; washed dropper used privately |
+| ZITHER | Sponsor Packet Metadata | Nilisha frame drafted the night before and refreshed at 5:22 with stolen welcome-board copy |
+| APERTURE | Garden Survey | Yellow-oleander source on site; dropper and shears washed |
+| BOLERO | Signing-Folder Print Analysis | Late forged pages inserted after 5:17 |
 
-## Revelations (Rounds 4–5 — riddle pool)
+## Revelations (Rounds 4-5 - riddle pool)
 
 | Code | Title | Round |
 |---|---|---|
-| JUBILEE | Dev's Recovered Draft (the five roles; clears Victor) | 4 |
-| KESTREL | Company Uber Dashboard (the 8:37 shared ride) | 4 |
-| LOCKET | Workspace and Systems Audit (one session, three jobs) | 4 |
-| MINARET | Goods-Received Ledger Analysis (the one genuine signature) | 4 |
-| NOCTURNE | Recovered Group Chat ("Fantasy League ⚽") | 5 |
-| OMNIBUS | The Settlement Archive (the look-alike beneficiary) | 5 |
+| CIRRUS | Rehan's Recovered Memo | 4 |
+| DELPHIC | Run Sheet and Admin-Tablet Audit | 4 |
+| EUREKA | Side-Letter and Handwriting Analysis | 4 |
+| FULCRUM | Beverage Delivery and Buyback Manifest | 4 |
+| GOSSAMER | Recovered Group Chat | 5 |
+| HARBINGER | Beneficiary Map | 5 |
 
 ## Confession (Round 6)
 
 | Code | For |
 |---|---|
-| KEYSTONE | The five killers only (`forCharacters`) |
+| KEYSTONE | The three killers only (`forCharacters`) |
 
-## Login codes (the 69 printed cards)
+## Login codes (the 26 printed cards)
 
-One word per card. **These never overlap the clue codes or the 100 riddle answers.**
+One word per card. These never overlap clue codes or riddle answers.
 
-| Player | Code | | Player | Code | | Player | Code |
-|---|---|---|---|---|---|---|---|
-| Anurag | MOSAIC | | Vipin | PRISM | | Elias | OBOE |
-| Yao | TUNDRA | | Yash S. | QUARTZ | | Caleb | PLAZA |
-| Giles | PARSEC | | Sharad | RAVINE | | Shobhit | RUNE |
-| Kalaivani | COBALT | | Aditi | SADDLE | | Kshitij | SEQUIN |
-| Akshat | FRESCO | | Aksharaa | UMBER | | Navalika | TOGGLE |
-| Victor | GAZEBO | | Rishabh | WALNUT | | Pranav D. | VECTOR |
-| Sukhans | HELIX | | Akshay | XENON | | Aman | WICKET |
-| Aarohi | INGOT | | Kashish | YONDER | | Simran | YURT |
-| Nehal | KAYAK | | Ishan | ZIPPER | | Karthik | ZEBRA |
-| Prerna | LAGOON | | Sanad | ANVIL | | Shrey | ABACUS |
-| Adithya | NIMBUS | | Pragati | BOBBIN | | Dilip | BANJO |
-| Luke | OTTER | | Raaghav | CRAYON | | Abhinav | CANOE |
-| | | | Bhuvan | DYNAMO | | Daiwik | DOMINO |
-| | | | Aarush | FALCON | | Binil | EASEL |
-| | | | Tauseef | GARLAND | | Raksha | FJORD |
-| | | | Sonia | HAMMOCK | | Yash T. | GECKO |
-| | | | Ishika | IGLOO | | Shivam | HAZEL |
-| | | | Thejas | JAVELIN | | Bharatpreet | IVORY |
-| | | | Navya | KIOSK | | Vidisha | JIGSAW |
-| | | | Amisha | LEMUR | | Himanshu | KOALA |
-| | | | Utkarsh | MAGNET | | Mohit A. | LLAMA |
-| | | | Priyanshu | NEBULA | | Tushar | MAROON |
-| | | | | | | Riya | NUGGET |
-| | | | | | | Jason | ORBIT |
-| | | | | | | Nikitha | PICCOLO |
-| | | | | | | Pranav A. | QUIVER |
-| | | | | | | Harsha | RIVET |
-| | | | | | | Neha | SONNET |
-| | | | | | | Chirag | TROMBONE |
-| | | | | | | Shashwat | URCHIN |
-| | | | | | | Anusha | VELCRO |
-| | | | | | | Kursheeth | WIGWAM |
-| | | | | | | Mohit P. | ZIRCON |
-| | | | | | | Sagrika | CARAVAN |
-| | | | | | | Vadini | EMBLEM |
-
-Column 1 = the five killers then the seven innocent prime suspects; column 2 = the
-other 22 persons of interest; column 3 = the 35 witnesses. **Do not print this
-table** — print only name + code per card, and shuffle the print order.
+| Player | Code |
+|---|---|
+| Jack | OBELISK |
+| Arun | HALCYON |
+| Manasi | TRESTLE |
+| Anushka | LANTERN |
+| Anmoll | BELLWETHER |
+| Nilisha | VESSEL |
+| Amrusha | CITADEL |
+| Saima | UPLINK |
+| Umair | RADIAN |
+| Sampada | PINNACE |
+| Saanvi | SORREL |
+| Anshu | INKWELL |
+| Kiandra | FABLE |
+| Shivansh | TRUANT |
+| Shivani | LATTICE |
+| Yonella | MARQUIS |
+| Balesh | CANTO |
+| Sharon | MURMUR |
+| Aashna | WISP |
+| Divya | ORIEL |
+| Nathan | TALON |
+| Shivangi | VELLUM |
+| Shivali | GOUACHE |
+| Pujah | YARROW |
+| Elton | SABLE |
+| Anjul | ZEUGMA |

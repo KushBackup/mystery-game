@@ -14,7 +14,7 @@ The folder lives at `d:\Unity Projects\mystery-game` for historical reasons, but
 
 ## TL;DR
 
-**Astral Project's Murder Mystery Experience** — a real-time web murder mystery party game. Players log in as a character, earn clue codes by solving riddles and trade them around the room across 7 rounds, chat in real time, vote across the room, and uncover the killers. **The case on this branch (`triplespeed-onam`) is "Onam in Black" (2108-C)**: 69 playable colleagues — the real TripleSpeed roster, first names only — investigating the poisoning of Dev Malhotra, a fictional revenue-assurance consultant, at the office Onam party on 21 August 2026 (Chimp Processing Pvt Ltd, Midford KTR2, Indiranagar). 34 suspects, 12 primes, and a five-killer conspiracy led by Anurag (Head of Payments). *(`main` still carries the previous 51-player Velvet Ember case.)* Built as an installable PWA with offline support, deployed to GitHub Pages at base path `/mystery-game/`.
+**Astral Project's Murder Mystery Experience** — a real-time web murder mystery party game. Players log in as a character, earn clue codes by solving riddles and trade them around the room across 7 rounds, chat in real time, vote across the room, and uncover the killers. **The active case is "Greenr: Last Seating" (2609-G)**: 26 playable guests, first names only, investigating the poisoning of fictional diligence partner Rehan Vora at Greenr, Assagao, Goa, on 19 September 2026. There are 10 suspects and a three-person conspiracy: Jack, Arun and Manasi. Built as an installable PWA with offline support, deployed to GitHub Pages at base path `/mystery-game/`.
 
 ---
 

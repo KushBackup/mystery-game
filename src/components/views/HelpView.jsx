@@ -126,14 +126,13 @@ export const HelpView = () => {
 
       <Section index={5} label="How voting works">
         <ul className="er-list">
-          <li>Wait for the host to open the ballot.</li>
-          <li>Open Vote — you will see the full guest list on record.</li>
+          <li>When a round ends, the five-minute ballot opens on every phone.</li>
           <li>Tap a name to select, tap again to confirm.</li>
           <li>Change your mind as often as you like until the ballot closes.</li>
-          <li>When the host releases the tally, open it from the Vote screen.</li>
+          <li>When time runs out, the result announces itself and shows who voted for whom.</li>
         </ul>
         <p className="font-body text-[15px] leading-[1.55] text-dim mt-4">
-          Counts update live, and the person you picked is marked as your vote.
+          The host starts the next round only after the room has seen the result.
         </p>
       </Section>
 

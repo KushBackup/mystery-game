@@ -1,6 +1,6 @@
 # Reveal deck — "How It Happened"
 
-A 22-slide reconstruction of the Onam in Black murder (Case 2108-C), in plain language, for **players after the reveal**. Full spoilers throughout.
+A 22-slide reconstruction of the Greenr: Last Seating murder (Case 2609-G), in plain language, for **players after the reveal**. Full spoilers throughout.
 
 Open [index.html](index.html) in any browser. There is no build step, no npm install, and no network dependency except the three Google Fonts.
 
@@ -16,16 +16,14 @@ start reveal-deck\index.html
 |---|---|
 | Slides | 22 (3 chapter dividers) |
 | Density | Reading-first — self-contained slides someone can page through with no host |
-| Canvas | Fixed 1920×1080, scaled by one transform. Never reflows, including on a phone |
+| Canvas | Responsive full-screen slides, printable as one slide per page |
 | Design system | "Evidence Room" — [DESIGN_LANGUAGE.md](../DESIGN_LANGUAGE.md) |
-| Fonts | Big Shoulders Display · Newsreader · IBM Plex Mono (the **deck** voice, §3.1) |
 | Dependencies | None. Single self-contained HTML file |
 
 ## Controls
 
 - `→` `←` `space` `PageUp/Dn` `Home` `End` — navigate. Swipe and scroll-wheel also work.
-- `E`, or hover the top-left corner — **inline text editing**. Click any line, edit it, `Ctrl+S` to save to this browser. *Download HTML* exports an edited copy; *Reset* clears it.
-- Print to PDF gives one 1920×1080 page per slide (`@media print` in the stylesheet).
+- Print to PDF gives one slide per page (`@media print` in the stylesheet).
 
 ---
 
@@ -33,28 +31,10 @@ start reveal-deck\index.html
 
 | # | Slide | |
 |---|---|---|
-| 01 | How It Happened | cover · 69 colleagues / 5 killers / 34 POIs / 1 tumbler |
-| 02 | The Short Answer | the whole case in two paragraphs |
-| 03 | Dev Malhotra | the victim, and what he was actually hired to do |
-| 04 | What The Office Saw | the public timeline — and why it is a trap |
-| **05** | **Part one — The Plan** | *divider* |
-| 06 | Findings v0.9 | the draft with five roles — the motive |
-| 07 | The Draft Was The Recruiter | how five people aligned in one evening |
-| 08 | Poison In The Tumbler | what oleandrin is, and why the coffee machine |
-| 09 | Who Did What | the five jobs |
-| **10** | **Part two — The Day** | *divider · carries the red/grey beat key* |
-| 11 | Planned Before The Marigolds | Tuesday evening – Wednesday midnight |
-| 12 | Friday Morning | 8:12 AM – 1:05 PM |
-| 13 | Thirty-Six Minutes | 2:45 – 3:21 PM — the camera gap and the dose |
-| 14 | He Needed The Log, Not The Lift | badge V-07 — the cleverest part |
-| 15 | The Cameras Were Blind. The Floor Wasn't. | Utkarsh, Rishabh and Raaghav |
-| 16 | Two Sugars | 3:15 PM — the murder itself |
-| 17 | The Last Hour | 3:12 – 4:30 PM |
-| **18** | **Part three — Why It Held** | *divider* |
-| 19 | Twelve Real Motives, Seven Innocent People | the misdirection |
-| 20 | Framed, And Suspected | Victor vs. Sukhans — two different wrongs |
-| 21 | What Proved It | the thirteen clues, in two compact tables |
-| 22 | Five People. Five Departments. One Tumbler. | the verdict |
+| 01-04 | Case, short answer, victim, public record | public frame |
+| 05-09 | Plan, motive, method and jobs | why the three acted |
+| 10-17 | Preparation, crash, service route, deletion and discovery | how the murder occurred |
+| 18-22 | Misdirection, proof and verdict | why the case holds |
 
 ## Where the content comes from
 

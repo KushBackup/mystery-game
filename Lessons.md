@@ -414,4 +414,12 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 
 **What to do instead:** Any function that writes to Firestore should be read against the rule that governs its path, in the same pass — `grep` the collection name in [firestore.rules](firestore.rules) before trusting a helper that mutates it. A mutating helper must **throw**; `console.error` and return is only acceptable where the caller genuinely cannot act on failure, and a host control always can (Reset Game now alerts). Two structural notes from the same fix: the rules text is restated in three docs ([CHAT_IMPLEMENTATION_COMPLETE.md](CHAT_IMPLEMENTATION_COMPLETE.md), [FIREBASE_SETUP.md](FIREBASE_SETUP.md), [FIREBASE_VISUAL_GUIDE.md](FIREBASE_VISUAL_GUIDE.md)) and all three had to change with it — the 2026-08-21 restatement lesson applies to config as much as to prose. And `writeBatch` caps at 500 operations while `messages` is unbounded on the server (only the *read* in `subscribeToMessages` is windowed to 100, which is what made the collection's real size invisible), so the single-batch version would have started failing on its own at the next larger event.
 
+### 2026-09-19 — A standby gate needs a separate host entry point on shared devices
+
+**What happened:** The new waiting screen correctly held players until the host started the game, but a browser carrying a persisted player session could no longer reach the host login on the same device. The main route restored that player and immediately showed standby.
+
+**Why it was wrong:** The host exemption only exists after the host identity is established. A saved player identity therefore wins the routing decision before the host can enter their code, and a SPA path also needs a GitHub Pages fallback to survive direct navigation.
+
+**What to do instead:** Keep the player route gated, but provide `/mystery-game/host` as a host-only portal that deliberately ignores persisted player state and renders only the host credential form. Ship a `public/404.html` redirect that restores the route into the Vite SPA for direct GitHub Pages loads.
+
 <!-- Add new lessons above this line, newest first or oldest first — keep one consistent order. Current order: oldest first. -->

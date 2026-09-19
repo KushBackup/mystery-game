@@ -11,10 +11,11 @@ export const GuestProfileModal = ({ guest, currentUser, isVotingOpen, onClose, o
 
   const isMe = guest.id === currentUser;
   const isVictim = guest.role === 'VICTIM';
+  const isWalkIn = guest.role === 'BYSTANDER';
   // Deliberately neutral: the file never says whether this guest is a prime
   // suspect or a witness. Working that out from the clue deck *is* the game, so
   // `guest.isSuspect` must not reach a player-facing surface.
-  const standingLabel = isVictim ? 'Known victim' : 'Guest on record';
+  const standingLabel = isVictim ? 'Known victim' : isWalkIn ? 'Walk-in · non-case witness' : 'Guest on record';
 
   return (
     <div
@@ -60,7 +61,7 @@ export const GuestProfileModal = ({ guest, currentUser, isVotingOpen, onClose, o
 
         {/* Standing */}
         <div className="mt-5">
-          <span className={`er-tag ${isVictim ? 'er-tag--mute' : 'er-tag--onbone'}`}>
+          <span className={`er-tag ${(isVictim || isWalkIn) ? 'er-tag--mute' : 'er-tag--onbone'}`}>
             {standingLabel}
           </span>
         </div>
@@ -81,7 +82,27 @@ export const GuestProfileModal = ({ guest, currentUser, isVotingOpen, onClose, o
           </p>
         </section>
 
-        {isVotingOpen && !isVictim && (
+        {isWalkIn && (
+          <>
+            <section className="mt-6">
+              <p className="er-bone-label">Filed traits</p>
+              <div className="mt-2" style={{ borderTop: '1px solid var(--color-line-bone)' }} />
+              <p className="er-bone-body mt-3">{guest.traits?.join(' · ') || 'No traits filed.'}</p>
+            </section>
+
+            {guest.confession && (
+              <section className="mt-6">
+                <p className="er-bone-label">Voluntary confession</p>
+                <div className="mt-2" style={{ borderTop: '1px solid var(--color-line-bone)' }} />
+                <p className="font-note text-[17px] leading-[1.35] text-ink mt-3 -rotate-1 origin-left">
+                  “{guest.confession}”
+                </p>
+              </section>
+            )}
+          </>
+        )}
+
+        {isVotingOpen && !isVictim && !isWalkIn && (
           <button
             onClick={() => {
               onVote(guest.id);

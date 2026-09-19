@@ -91,12 +91,12 @@ export const TOOLTIPS = {
   // --- Vote ---------------------------------------------------------------
   ballot: {
     label: 'The ballot',
-    body: 'The host opens and closes it. While it is open, tap a name once to select and again to confirm — and change your mind as often as you like until it shuts.',
+    body: 'It opens automatically when a round timer ends and stays open for five minutes. Tap a name once to select and again to confirm — and change your mind as often as you like until it shuts.',
   },
 
   tally: {
     label: 'The tally',
-    body: 'This round only — the count starts again each time the host opens the ballot. Numbers move live as the room votes, but the host decides when they go public. Withheld means they are hidden from everybody, not just from you.',
+    body: 'This round only — the count starts again when the automatic ballot begins. When its five minutes end, the result opens for everyone and shows who voted for whom.',
   },
 };
 

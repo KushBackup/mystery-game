@@ -392,6 +392,39 @@ its timer would show the new round holding the old round's countdown.
 existing document, so an in-progress game picks up new fields without a manual
 migration.
 
+### Walk-In Collections
+
+```
+/walkInPasses/{passId}
+    ├── code: "CANDLE"              ← one-time registration word
+    ├── status: "OPEN" | "CLAIMED"
+    ├── createdAt / expiresAt
+    └── claimedBy
+
+/bystanders/{bystanderId}
+    ├── kind: "BYSTANDER"
+    ├── active: true | false
+    ├── name / profession / traits / hiddenTalent / confession
+    ├── loginCode: "MAPLE"           ← personal login word
+    ├── passId / addedAt / removedAt
+    └── no canonical role, suspect flag, pod or story fields
+
+/walkInContacts/{bystanderId}
+    ├── phone
+    ├── email
+    └── addedAt
+```
+
+The host creates a pass, a late arrival claims it through a Firestore transaction,
+and all devices watch `bystanders` with one `onSnapshot` subscription. The first
+snapshot hydrates silently; later additions/removals produce the in-app room notice.
+`resetGameState()` deletes all three dynamic collections for the next room while
+leaving the static 26-person roster untouched.
+
+`firestore.rules` is intentionally unauthenticated for this private party app.
+The contacts collection is separated from public profiles and never rendered to
+players, but it is not cryptographically host-private until Firebase Auth is added.
+
 ### Offline Persistence
 
 `db` is built with `initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) })`.

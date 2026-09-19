@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { CASE_META, validateLoginCode } from '../data/gameData';
+import { resolveWalkInLoginCode } from '../firebase/config';
+import { WalkInRegistration } from './WalkInRegistration';
 
 /**
  * Identity verification (DESIGN_LANGUAGE.md §9, "Login").
@@ -9,12 +11,13 @@ import { CASE_META, validateLoginCode } from '../data/gameData';
  * blank (§6.9): a deliberately unknown value, tinted signal with a dashed
  * underline, sitting on the bone document where the form lives.
  */
-export const CharacterSelect = ({ onSelectCharacter }) => {
+export const CharacterSelect = ({ onSelectCharacter, hostOnly = false }) => {
   const [loginCode, setLoginCode] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [registering, setRegistering] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
@@ -26,17 +29,45 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
       return;
     }
 
+    if (hostOnly) {
+      setError('Host access denied — invalid credentials');
+      setIsLoading(false);
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      return;
+    }
+
     const characterId = validateLoginCode(loginCode);
 
     if (characterId) {
       if (navigator.vibrate) navigator.vibrate([50, 50]);
       setTimeout(() => onSelectCharacter(characterId, false), 500);
     } else {
-      setError('Access denied — invalid credentials');
-      setIsLoading(false);
-      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      try {
+        const walkIn = await resolveWalkInLoginCode(loginCode);
+        if (walkIn) {
+          if (navigator.vibrate) navigator.vibrate([50, 50]);
+          setTimeout(() => onSelectCharacter(walkIn.id, false), 500);
+        } else {
+          setError('Access denied — invalid credentials');
+          setIsLoading(false);
+          if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+        }
+      } catch (lookupError) {
+        console.error('Walk-in login lookup failed:', lookupError);
+        setError('Could not verify this code. Try again.');
+        setIsLoading(false);
+      }
     }
   };
+
+  if (registering) {
+    return (
+      <WalkInRegistration
+        onComplete={(walkIn) => onSelectCharacter(walkIn.id, false, walkIn)}
+        onCancel={() => setRegistering(false)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-ink text-bone flex flex-col justify-center px-4 py-10 relative er-grain overflow-hidden">
@@ -55,8 +86,10 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
         {/* Kicker + title */}
         <div className="pt-8 er-enter">
           <span className="er-tag">Confidential</span>
-          <h1 className="er-title mt-4">Identity Verification</h1>
-          <p className="er-mono er-mono--dim mt-3">Restricted access · Authorised guests only</p>
+          <h1 className="er-title mt-4">{hostOnly ? 'Host Console' : 'Identity Verification'}</h1>
+          <p className="er-mono er-mono--dim mt-3">
+            {hostOnly ? 'Restricted access · Host credentials required' : 'Restricted access · Authorised guests only'}
+          </p>
         </div>
 
         {/* The form is a document, so it is paper — pinned, rotated, and the
@@ -88,7 +121,7 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
           />
 
           <p className="font-note text-[17px] text-signal-deep mt-4 -rotate-1 origin-left">
-            Printed on the card you were handed at the door.
+            {hostOnly ? 'Enter the host access code.' : 'Printed on the card you were handed at the door.'}
           </p>
 
           {/* Keyed on the message so a second failed attempt re-runs the shake.
@@ -112,6 +145,17 @@ export const CharacterSelect = ({ onSelectCharacter }) => {
               {isLoading ? 'Verifying…' : 'Open Case File'}
             </span>
           </button>
+
+          {!hostOnly && (
+            <button
+              type="button"
+              onClick={() => setRegistering(true)}
+              disabled={isLoading}
+              className="er-touch w-full mt-3 py-3 px-6 font-mono text-[11px] font-medium uppercase tracking-[0.2em] border border-line-bone text-ink hover:border-signal-deep disabled:opacity-40"
+            >
+              Register as walk-in
+            </button>
+          )}
 
           <div
             className="mt-6 pt-4"

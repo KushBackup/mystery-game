@@ -7,77 +7,66 @@
 
 ## Overview
 
-**Case title:** TripleSpeed: Onam in Black (Case 2108-C)
-**Platform:** React + Vite PWA with Firebase sync
-**Format:** Live social deduction murder mystery for an office party
-**Cast size:** 69 playable colleagues (the real TripleSpeed roster, first names only; the host is not in the fiction), 1 fictional victim
-**Investigation shape:** 34 persons of interest, of which 12 prime suspects carry the clue decks; 35 witnesses; 5 killers
-**Duration:** ~1.5–2.5 hours across 7 rounds
+**Case title:** Greenr: Last Seating (Case 2609-G)  
+**Platform:** React + Vite PWA  
+**Format:** Live social-deduction murder mystery at a private closing dinner  
+**Cast size:** 26 playable guests, 1 fictional victim  
+**Investigation shape:** 10 suspects, 16 witnesses, 3 killers  
+**Duration:** ~1.5-2.5 hours across 7 rounds
 
-The active case is set in the office itself: TripleSpeed's floors at Chimp Processing Pvt Ltd, Midford KTR2, Indiranagar, Bangalore, on Onam day — 21 August 2026. The victim is **Dev Malhotra**, a fictional revenue-assurance consultant the co-founders quietly hired to find why margins leak as revenue scales toward $10M/month. He is poisoned three hours before presenting his findings. The room initially assumes whoever was near him when he drank did it. The real answer is a five-person, five-department conspiracy led by the Head of Payments, executed hours before anyone thought to look.
+The active case is set at **Greenr, Assagao, Goa**, on **19 September 2026**. Twenty-six founders, collaborators and advisers have gathered for a sunset signing dinner that is meant to close a Greenr launch vehicle. Instead, the evening collapses when **Rehan Vora**, an independent diligence partner hired to bless the numbers, is found dead in the upstairs library before the welcome line begins.
 
 ---
 
 ## Story Premise
 
-TripleSpeed runs on ordinary chaos: WiFi flaps, payment-provider hiccups, low-ROAS weeks, AWS billing shocks, a vendor that "turned out to be a scammer." Dev Malhotra discovered that four of those recurring problems were not weather — they were a ₹3.4-crore internal skim wearing the company's chaos as a uniform. On Tuesday he pulled the payment provider's settlement archive, the one dataset nobody inside could sanitize. On Friday at 4 PM — during the office Onam party's evening toast — he was scheduled to read names.
+Rehan spent the day asking the kind of questions rooms like this hate: who got paid twice, who rewrote which paper, why the same work seemed to exist on three invoices, and why so many "temporary" problems seemed to benefit the same small circle of people. By sunset he had separated the room into three criminal lanes and seven merely embarrassing ones.
 
-He died at approximately 3:40 PM, alone in the third-floor Glass Room, from oleander concentrate left in his own steel tumbler at the infamous third-floor coffee machine. The machine had been dead for two weeks and was revived that very morning by an "urgent" ticket. The building was sealed at 4:30 PM with all 69 staff inside — the company Ubers don't even run between 9 AM and 6 PM.
+That split is the case's engine. Ten guests have real reasons to fear what Rehan is about to say. Only three decide that the signing cannot survive him.
 
-The public shape of the case: 34 colleagues cannot be continuously placed on the terrace between 2:45 and 3:25 PM, most for utterly mundane party-day reasons. The private truth: five people, one per department lane — payments, engineering, ops, support, marketing — split the murder into five jobs so cleanly that everyone's afternoon alibi is real and everyone's crime happened earlier, elsewhere, or on a schedule.
+At **5:58 PM**, the launch reel stutters, the guest Wi-Fi dies and the card reader goes with it. In a room like this, that looks like inconvenience. In this case, it is cover. Rehan returns upstairs, refills the black bottle he always carries, and collapses minutes later. By **6:40 PM**, rain, the gate chain and the police have sealed Greenr with all 26 players still inside.
 
 ---
 
 ## Core Gameplay Loop
 
-1. Players log in as one of 69 colleague identities (their own first names).
+1. Players log in as one of 26 guest identities.
 2. Round 0 opens with the fullscreen typed briefing and the Incident Report.
-3. The host opens a blind first vote before the room has enough evidence. From here on the host can put a countdown on each round (30 minutes by default) — every player sees it under the round number.
-4. Round 1 automatically gives every player one accusation card on the Evidence screen — the witness claim their statement pod was handed (12 claims across 12 pods).
-5. Round 2 opens the **riddle lock** and puts the 12 motive files into its prize pool.
-6. Round 3 unlocks forensics case files, adds the 8 evidence clues to the pool, and reopens voting.
-7. Rounds 4 and 5 deliver the twist through 6 revelation clues and the late-game case files.
-8. Round 6 reveals the full killer team to the room, hands every player the 22-slide reconstruction of how the murder was done, and ends the game.
+3. Each round clock automatically gives every player a five-minute ballot when it reaches zero; then a public tally names every voter and their choice.
+4. The host starts the next round only after that announced tally.
+5. Round 1 automatically gives every player one accusation card on the Evidence screen - one suspect-lane witness claim from their statement pod.
+6. Round 2 opens the riddle lock and puts the 10 motive files into its prize pool.
+7. Round 3 unlocks case files and adds 8 evidence clues to the pool.
+8. Rounds 4 and 5 deliver the turn through 6 revelation clues and the late-game case files.
+9. Round 6 reveals the killer team, hands the killers the confession and opens the reconstruction deck for the room.
+
+### Late Walk-Ins
+
+The host may issue a one-time pass for a late arrival. The player completes a short Beautiform-style registration on their own phone, then joins the same public screens, chat, clue economy, accusations and voting as the original room. They appear in Guests as a **Walk-in**, trigger a live arrival notice and can vote only for the ten canonical suspects.
+
+Walk-ins are deliberately not story characters. They do not change the 26-player cast, suspect count, killer team, statement pods, clue decks or reveal. This preserves the fair-play case while letting a late arrival participate immediately.
 
 ---
 
-## How clues reach players — the riddle lock
+## How Clues Reach Players
 
-**There are no printed clue cards.** The 26 motive, evidence and revelation clues are earned inside the app; login cards are the only paper.
+**There are no printed clue cards.** Login cards are the only paper.
 
 On the Evidence screen two buttons sit bottom right:
 
 | Button | What it does |
 |---|---|
-| **ASK** | Deals a riddle — a general riddle, nothing to do with the case. Answer it in one word and the next clue in *your* queue unseals, along with its code. **Appears in Round 02, not before.** |
-| **CODE** | The decoder. Type in a code somebody else has given you and the same clue lands on your board. Present from Round 00. |
+| **ASK** | Deals a general riddle. Solve it and the next clue in *your* queue unseals, along with its code. Appears in Round 02. |
+| **CODE** | The decoder. Type in a code someone else has read out and the same clue lands on your board. Present from Round 00. |
 
-**ASK is round-gated, and the gate is derived, not chosen.** `ASK_OPENS_AT` in
-[src/data/gameData.js](src/data/gameData.js) is the earliest `roundReq` in the reward pool —
-Round 2, where the motive deck opens. Before that `nextRiddleReward()` returns null and the lock
-has nothing it could unseal, so the button is simply absent rather than present-and-refusing.
-Move a reward to an earlier round and ASK follows it without a code change.
+The pool shape for this case is:
 
-Because the button arrives mid-game, next to a CODE button players have been using for two
-rounds, it **knocks once** — three hops with a blink — the first time each player sees the
-Evidence screen with it there. Once per device, ever, then it behaves like any other button
-([DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §7.1).
+- **10 motives** in Round 2
+- **8 evidence clues** in Round 3
+- **4 revelations** in Round 4
+- **2 revelations** in Round 5
 
-Three properties make this a social mechanic rather than a chore:
-
-- **Every player has a different queue order.** `riddleQueueFor()` groups the pool by round,
-  then rotates each round-block by the player's ordinal in the roster. All 69 queues are
-  distinct, and the rotation spreads the *opening* prize evenly — 5 or 6 players on each of
-  the 12 motive clues — so no clue can end up sitting with a single player who never taps ASK.
-- **The reward comes with a shareable code.** A solve that only feeds one phone does nothing
-  for the room. The solve screen puts the code in 30px mono with a Copy button and tells the
-  player to read it out.
-- **Nothing is gated on being good at riddles.** Wrong answers cost nothing, "Another riddle"
-  redeals the same prize, and after three misses the shape of the word is shown. Anyone who
-  cannot crack one can still receive every clue by trading.
-
-The host keeps an override: the clue manifest on the Host Guide's **Deck** tab lists every
-code, so a stalled round can be unblocked by simply reading one out.
+Every player has a different queue order. Solving is private; circulation is social.
 
 ---
 
@@ -85,131 +74,78 @@ code, so a stalled round can be unblocked by simply reading one out.
 
 | Round | Name | What players learn |
 |---|---|---|
-| 0 | The Incident | Public story of the day, the victim, the sealed building, the 34-person POI list, first blind vote |
-| 1 | Accusations | Twelve witness claims pointing at the prime suspects |
-| 2 | Motives | Why each of the 12 primes needed Friday's briefing cancelled |
-| 3 | Evidence | Tumbler-not-machine poisoning, the unclaimed 2:52 brew, the scheduled camera gap, badge V-07, the manually-shut valve, the two-day-old vendor pack, the fake alert, the harvested hedge |
-| 4 | Revelations | Dev's surviving draft (five roles, Victor cleared), the Uber dashboard's shared ride, the one nameless admin session, the one genuine GRN signature |
-| 5 | Finale | The "Fantasy League ⚽" group chat and the settlement archive — cross-department coordination made explicit |
-| 6 | The Reveal | Public screen names the killer team; killers themselves get the confession. Both screens open **How it happened** — the 22-slide reconstruction |
-
----
-
-## Starting the room
-
-*Added 2026-09-19.* The game does not begin when a player logs in. It begins when
-the host presses **Start game**.
-
-69 people arrive over twenty minutes and log in as they come. Everyone who does
-lands on a single waiting screen — *"Waiting for the host to start the game"* —
-and stays there. There is nothing to tap and nothing to get wrong, which is the
-point: an empty board with no evidence on it and a chat channel nobody has posted
-in reads as a broken app rather than as an evening that has not started.
-
-| Control | Where | What it does |
-|---|---|---|
-| Start game | Host console → **Game start** | Counts every waiting phone down from **10**, opens the room together, and starts the Round 0 clock as the countdown clears |
-| Push start to everyone | Host console → **Game start** | The escape hatch. Drops anyone still waiting straight into the game with no countdown, and reloads every device. Logins survive; the round clock is untouched |
-| Back to waiting | Host console → **Game start** | The undo for a mis-tapped Start. Everyone returns to the waiting screen until Start is pressed again |
-
-Two things follow from the start being stored as a moment in time rather than as
-a switch. **A late arrival never sees the countdown** — the gun fired before they
-logged in, so they are simply let in. And **the round clock is armed to begin as
-the countdown clears**, not at the press, so the first round does not spend its
-first ten seconds behind a curtain nobody can play through.
-
-Reset Game puts the room back on the waiting screen, ready for the next sitting.
-
----
-
-## The round clock
-
-Rounds are advanced by the host, not by the app — that has not changed, and no
-countdown ever moves the case on by itself. What the clock adds is that the other
-69 people can see how long the round has left.
-
-| Control | Where | What it does |
-|---|---|---|
-| Start / Pause / Resume | Host console → **Round clock** | One button; starts a stopped clock for the current round, holds a running one, releases a held one |
-| Reset | Host console → **Round clock** | Back to stopped, armed at the chosen length |
-| 30 min · 15 min · 1 min · 10 sec | Host console → **Round clock** | Arms that length. On a *running* clock it restarts there and then — which is how the host squeezes a round that has run long, and how the bottom two get used at all |
-| Round − / + | Host console → **Round** | Still skips freely. A running clock restarts at full length for the new round; a stopped one stays stopped |
-
-Players see the countdown under the round number — on the chrome rail of every
-screen, and on the board between screens. **30 minutes is the default.** Through
-the last minute the digits turn red and tick once a second; through the last ten
-seconds the tick becomes a push; at zero they read **Time up** and stop. Nothing
-locks, nothing submits, nothing advances: the room is being told to hurry, and
-the host is still the one who moves the case on.
-
-A round the host never starts a clock for shows no clock at all.
+| 0 | The Incident | Public story of the dinner, the victim, the seal, the first blind vote |
+| 1 | Accusations | Ten witness claims pointing at the suspect list |
+| 2 | Motives | Why ten different people feared Rehan's corrections |
+| 3 | Evidence | The bottle, the staged crash, the AV blind spot, the frame on Nilisha, the yellow hedge |
+| 4 | Revelations | Rehan's memo, the run-sheet audit, the side-letter analysis and the delivery manifest |
+| 5 | Finale | The group chat and beneficiary map make the three-person conspiracy explicit |
+| 6 | The Reveal | Public screen names the killer team; the reconstruction explains the mechanism |
 
 ---
 
 ## Cast Architecture
 
-The player network is deliberately social first and investigative second.
-
-- 69 playable colleagues — the real office roster, first names only. Duplicate first names are kept and disambiguated: Yash S. / Yash T., Pranav D. / Pranav A., Mohit A. / Mohit P.
-- 34 are persons of interest (anyone not continuously placeable on the terrace 2:45–3:25 PM).
-- 12 of those are prime suspects and carry the accusation + motive decks: the five killers (Anurag, Yao, Giles, Kalaivani, Akshat) plus seven innocents (Victor, Sukhans, Aarohi, Nehal, Prerna, Adithya, Luke).
-- The remaining 35 players are witnesses with terrace-photographed alibis and load-bearing testimony.
-- For Round 1, the roster is split into **12 statement pods** (9 of six, 3 of five). Each pod is dealt the accusation about one prime suspect, never its own member (`PODS` + dev assertion in gameData.js).
+- 26 playable guests, all drawn from the user's submitted roster and rendered by first name only.
+- 10 are suspects. Every suspect is prime - there is no second suspect tier in this case.
+- 3 of those 10 are actual killers: **Jack**, **Arun** and **Manasi**.
+- The other 7 suspects are innocent red herrings with real reasons to fear Rehan's diligence: **Anushka**, **Anmoll**, **Nilisha**, **Amrusha**, **Saima**, **Umair** and **Sampada**.
+- The remaining 16 players are witnesses with load-bearing observations, alibis or contradiction points.
+- For Round 1, the roster is split into **10 statement pods**. Each pod receives the accusation about one suspect and no pod receives the accusation naming one of its own members.
 
 ---
 
 ## Murder Method
 
-Dev is poisoned with concentrated oleandrin — brewed from the terrace smoking-corner hedge — left as a film in his own steel tumbler, which he had rinsed and staged beside the coffee machine himself at 1:05 PM. His 3:15 PM coffee dissolved it. That matters for playability:
+Rehan is poisoned with **concentrated yellow-oleander extract** painted inside his own matte-black steel bottle while it sits empty on the upstairs tea shelf. His 6:08 PM refill dissolves the film.
 
-- the coffee ritual is a visible public fact players remember from Round 0,
-- "dosed while empty at 2:52" breaks the who-was-near-him-at-3:15 instinct — the case's central trap,
-- the machine's morning repair (valve manually shut for two weeks, revived by appointment) gives the room a solvable "who needed the machine to work *today*?" question,
-- and every component was already inside the building — plant, vessel, chaos — which is the story's thesis.
+This matters for playability:
+
+- the bottle is a visible public habit from Round 0,
+- the communal drink stays clean, so the case is about a private vessel not a shared batch,
+- the 5:58 crash moves attention away from the upstairs route,
+- and the entire mechanism depends on timing, paper and venue knowledge rather than on a random stab at opportunity.
 
 ### Killer Roles
 
-- **Anurag** (Payments — lead): read the Tuesday archive-pull notification, assembled the five, staged the 2:47 PM fake payment alert that scattered the party.
-- **Kalaivani** (Support): clipped the hedge, brewed the concentrate, decanted Giles's share into a bottle in the 8:37 AM shared Uber and kept the rest in the flask that never got opened. Spotless afternoon by design.
-- **Giles** (Ops): booked the machine repair, dosed the tumbler at 2:52 inside the camera gap, rode the service lift on dead visitor badge V-07.
-- **Yao** (Engineering): staged the 11:04 AM outage that killed the morning footage; one nameless admin session deleted Dev's draft, scheduled the 2:45–3:21 camera gap, and re-armed badge V-07.
-- **Akshat** (Marketing): the reseller ad-spend skim; forged the Zenlyt vendor pack (Wed 11:58 PM) framing Victor.
+- **Jack** (Legal - lead): sees the first close-review queries on 18 September, recruits the other two, drafts then refreshes the Nilisha frame, and stages the paper panic that keeps the founders occupied.
+- **Arun** (Media): schedules the AV sync at 4:46 PM, blanks the live feeds from 5:58 to 6:11, loops the sunset reel and deletes the buffered corridor clip.
+- **Manasi** (Bar): carries in the concentrate in a brown bitters dropper, paints the inside of Rehan's bottle at 6:02 PM and keeps the room's bar program clean.
 
 ---
 
 ## Fair-Play Design
 
-- Round 1 gives all twelve primes individually plausible heat.
-- Round 2 proves twelve people needed the briefing cancelled — motive closes nothing.
-- Round 3 breaks the food/heart-attack theories and quietly moves the murder window from 3:15 back to 2:52 — and to 8:12 AM.
-- Round 4 replaces suspects with roles (HoP, TL, OE, CS-O, MB) and clears the framed man in Dev's own margin note.
-- Round 5 makes the cross-department conspiracy explicit through the chat and the archive.
-- By Round 6 the room should be able to name the full team of five, not just the mastermind.
+- Round 1 gives all ten suspects plausible heat.
+- Round 2 proves ten people had reasons to dread the signing - motive alone closes nothing.
+- Round 3 settles that the poison traveled through a private bottle, not the communal tonic or the bar.
+- Round 4 separates the room's messy truth from its murderous truth: three criminal lanes, seven embarrassing ones.
+- Round 5 closes the three-person conspiracy through the recovered chat and the beneficiary map.
+- By Round 6 the room should be able to name all three killers and explain what each one did.
 
 ---
 
 ## Canon Timeline
 
-- 8:12 AM — Urgent ticket revives the dead coffee machine ("before the party").
-- 8:37 AM — Kalaivani and Giles arrive in one Uber; a bottle decanted from her flask changes bags.
-- 9:41 AM — Technician signs the machine off: "no fault found — inlet valve manually shut."
-- 11:04–11:47 AM — Staged outage; the NVR's whole fourteen-day array destroyed; draft deleted; camera gap and badge scheduled.
-- 1:00 PM — Onam sadhya on the terrace; Aman's livestream becomes the room's alibi source.
-- 2:47 PM — Fake settlement alert scatters part of the party.
-- 2:52 PM — Giles doses the tumbler inside the camera gap (badge V-07, blank test shot).
-- 3:12 PM — Dev leaves the terrace: "save me some payasam."
-- 3:15 PM — Dev brews; the dose dissolves.
-- 3:55 PM — Aarohi finds him; Kursheeth's CPR; "query poisoning."
-- 4:14 PM — Declared dead.
-- 4:30 PM — Inspector Arjun Kale seals floors 1–3 and the terrace. Zero exits since 1 PM.
+- 4:10 PM - Final setup begins at Greenr.
+- 4:46 PM - Arun schedules the AV sync that will later create the blind spot.
+- 5:15 PM - Guest check-in opens and the courtyard fills.
+- 5:47 PM - Rehan rinses and leaves his bottle on the upstairs tea shelf.
+- 5:58 PM - The sync hits: live feeds blank, local corridor capture buffers, and guest Wi-Fi and card reader fail.
+- 6:02 PM - Manasi doses the bottle while Jack occupies the founders and Arun loops the reel.
+- 6:08 PM - Rehan refills the bottle and returns to the upstairs library.
+- 6:18 PM - Nathan finds him; Sharon reaches him seconds later.
+- 6:31 PM - Likely poisoning is spoken out loud.
+- 6:40 PM - Police seal Greenr. No guest has left since 5:25 PM.
 
 ---
 
 ## Source Files
 
-- [src/data/gameData.js](src/data/gameData.js) — canonical cast, clue deck, pods, round data, host script, login codes
-- [src/data/storyIntro.js](src/data/storyIntro.js) — Round 0 public briefing only
-- [src/data/screenGuide.js](src/data/screenGuide.js) — screen framing, onboarding notes, Guide copy
-- [src/components/StoryIntro.jsx](src/components/StoryIntro.jsx) — typed briefing
-- [src/components/views/IntelView.jsx](src/components/views/IntelView.jsx) — evidence stacks
-- [src/components/HostPanel.jsx](src/components/HostPanel.jsx) — live host controls and reveal trigger
+- [src/data/gameData.js](src/data/gameData.js) - canonical cast, clues, pods, case files, answer key and host script
+- [src/data/storyIntro.js](src/data/storyIntro.js) - Round 0 public briefing only
+- [src/data/screenGuide.js](src/data/screenGuide.js) - screen framing, onboarding notes and round guide
+- [src/data/hostReference.js](src/data/hostReference.js) - host suspect map, witness nudges and question handling
+- [src/components/StoryIntro.jsx](src/components/StoryIntro.jsx) - typed briefing
+- [src/components/views/IntelView.jsx](src/components/views/IntelView.jsx) - evidence stacks
+- [src/components/HostPanel.jsx](src/components/HostPanel.jsx) - live host controls and reveal trigger

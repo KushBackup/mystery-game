@@ -45,8 +45,9 @@ export const TimelineView = ({ myCharacter }) => {
 
   const timelineEvents = parseTimeline(myCharacter.timeline);
   const isMurderer = myCharacter.role === 'MURDERER';
+  const isWalkIn = myCharacter.role === 'BYSTANDER';
   const canSeeMurderTimeline =
-    isMurderer || myCharacter.role === 'SUSPECT';
+    isMurderer || myCharacter.role === 'SUSPECT' || isWalkIn;
 
   return (
     <div className="space-y-6">
@@ -111,6 +112,13 @@ export const TimelineView = ({ myCharacter }) => {
             ))}
           </ul>
         </section>
+      )}
+
+      {isWalkIn && timelineEvents.length === 0 && (
+        <p className="er-card font-body text-[15px] leading-[1.55] text-dim">
+          You arrived after the incident began, so there is no personal movement log to defend.
+          Use the public incident timeline below to orient yourself.
+        </p>
       )}
 
       {/* The incident, as the room knows it */}

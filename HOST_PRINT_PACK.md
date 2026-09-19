@@ -1,75 +1,67 @@
-# HOST_PRINT_PACK.md — Printable Host Packet (Case 2108-C · Onam in Black)
+# HOST_PRINT_PACK.md - Printable Host Packet (Case 2609-G - Greenr: Last Seating)
 
-> **Host-only. Full spoilers.** Everything worth having on paper at the event.
-> The only *player-facing* paper is the 69 login cards — every clue travels
-> in-app. Print this packet single-sided and keep it out of the room's sight.
+> **Host-only. Full spoilers.** Print this for the host only. Player-facing paper
+> is limited to the 26 canonical login cards; late walk-ins self-register from a
+> host-issued pass, and all case clues travel through the app.
 
-## 1. Print checklist
+## Print Checklist
 
-- [ ] 69 login cards — name + login code only ([CLUE_CODES.md](CLUE_CODES.md) has
-      the table; shuffle the print order, never print role or department)
-- [ ] This packet (suspect roster, witness map, answer key)
-- [ ] [HOST_LIVE_FACILITATION.md](HOST_LIVE_FACILITATION.md) run of show
-- [ ] [HOST_QA_BRIEFING.md](HOST_QA_BRIEFING.md) objection sheet
+- [ ] 26 login cards, containing only name and login code
+- [ ] Know **Host Panel → Open walk-in register → Issue registration word** for any late arrival
+- [ ] This packet
+- [ ] [HOST_LIVE_FACILITATION.md](HOST_LIVE_FACILITATION.md)
+- [ ] [HOST_QA_BRIEFING.md](HOST_QA_BRIEFING.md)
 - [ ] One spare phone logged in as host backup
-- [ ] Decide the round length before the room arrives — **Start game** arms the
-      clock at whatever the console's **Round clock** section is showing, and the
-      default is 30 minutes
-      ([HOST_LIVE_FACILITATION.md](HOST_LIVE_FACILITATION.md) § The round clock)
-- [ ] Know the two Game start recovery buttons by name: **Push start to everyone**
-      (a phone stuck on the waiting screen) and **Back to waiting** (you pressed
-      Start too early)
-      ([HOST_LIVE_FACILITATION.md](HOST_LIVE_FACILITATION.md) § Start game)
+- [ ] Round length selected before **Start game**
 
-## 2. The suspect roster (12 primes of 34 POIs)
+## Automated Voting
 
-| # | Name | Dept | Status | One-line lane |
-|---|---|---|---|---|
-| 1 | Anurag | Payments | **KILLER — mastermind** | Knew Tuesday; typed before the ping; staged the alert |
-| 2 | Yao | Engineering | **KILLER — blind spot** | The outage, the dead footage, the 11:31 schedule, the badge |
-| 3 | Giles | Ops | **KILLER — hands** | The ticket, the Uber, badge V-07, the 2:52 dose, the HDMI lie |
-| 4 | Kalaivani | Support | **KILLER — toxin** | The hedge, the flask, the skipped watering, the GRN signature |
-| 5 | Akshat | Marketing | **KILLER — false trail** | The reseller skim; forged the Victor pack Wed 11:58 PM |
-| 6 | Victor | Marketing | Innocent — **framed** | Phone-booth pride; the pack's metadata clears him |
-| 7 | Sukhans | Founders | Innocent | "Witch hunt" quote; verified investor call; Ishan's sightline |
-| 8 | Aarohi | Founders Office | Innocent | Printed & shredded a typo'd agenda at Dev's request; laid the Glass Room out at 3:04 (her window gap); found him |
-| 9 | Nehal | Marketing | Innocent | "The split"; escalation was real, on WhatsApp |
-| 10 | Prerna | Design | Innocent | Related-party vendor; service stairs because the lift was held |
-| 11 | Adithya | Product | Innocent | "Missed it or enabled it"; War Room throughout, vouched |
-| 12 | Luke | Support | Innocent | Comps fight; second gate run on the register's next page |
+Each round ends with an automatic five-minute ballot on every player phone. When
+the ballot timer ends, the public result names every voter and their choice. Read
+the tally, then use **Start Round N** on the host console to begin the next round.
 
-The other 22 POIs (window gaps, all innocent): Vipin, Yash S., Sharad, Aditi,
-Aksharaa, Rishabh, Akshay, Kashish, Ishan, Sanad, Pragati, Raaghav, Bhuvan,
-Aarush, Tauseef, Sonia, Ishika, Thejas, Navya, Amisha, Utkarsh, Priyanshu.
+## Suspect Roster
 
-## 3. Witness relevance map (who to nudge, and for what)
+| Name | Status | Lane |
+|---|---|---|
+| Jack | **Killer - plan** | Side letters, Nilisha frame, late folder pages, founder panic |
+| Arun | **Killer - blind spot** | AV sync, live-feed blackout, buffered-clip deletion, looped reel |
+| Manasi | **Killer - dose** | Oleander dropper, pantry service stair, shell distributor |
+| Anushka | Innocent suspect | Dilution panic, founder-float reimbursements |
+| Anmoll | Innocent suspect | Undisclosed bridge use of launch float |
+| Nilisha | Innocent suspect, framed | Inflated metrics; forged sponsor packet |
+| Amrusha | Innocent suspect | Service-flow access, exclusivity trouble |
+| Saima | Innocent suspect | Guest-stack shortcut and visible crash fallout |
+| Umair | Innocent suspect | Reimbursement dashboard and victim-phone panic |
+| Sampada | Innocent suspect | Certification gaps, waiver panic, pantry tears |
 
-| Lane | Witnesses → what they hold |
+## Witness Map
+
+| Lane | Witnesses and what they hold |
 |---|---|
-| Machine / tumbler | Shivam (counter + 2 of his tickets, 2 of Dev's) · Aksharaa (**can name which Operations Executive raised #4417**) · Chirag ("THE BEAST LIVES" 9:41) · Vidisha (grinder + smell) · Rishabh (2:52 hiss) · Utkarsh (man with steel tumbler) · Raaghav (pull finishing, nobody there) · Thejas (3:15 grinder) · Shashwat (3:31 last sighting) |
-| Cameras / systems | Shrey (refused help) · Priyanshu (old admin lineage) · Mohit P. ("corrupted in the failover") · Tauseef (NVR shouldn't drop) · Navalika (badge desync timing) · Vadini (11:31 screenshot) |
-| Hedge / flask / mornings | Riya (skipped watering, filled cans) · Harsha (Thu 8:52 AM b-roll) · Tushar (washed kit, Thu evening) · Jason (basement, 8:37) · Kursheeth (8:41 walk-in) · Nikitha (unopened flask) · Navya (store sightings) |
-| Vendor / forgery | Karthik (May argument) · Pranav A. (invoice template favour) · Caleb (edit-history question) · Mohit A. (11:45 PM desk lamps) · Pragati (Zenlyt folder Wed night) · Ishika (no flinch at 2:47) · Daiwik (three drafts of the May recap) · Neha (the talking points) |
-| The alert / the plan | Sagrika (pre-ping typing) · Neha (phone pocketed) · Akshay (status page green) · Raksha (Adithya's sprint) |
-| Clearing the innocent | Ishan (Sukhans pacing) · Himanshu ("then we burn") · Bhuvan (Victor's booth) · Anusha (both halves of the Luke fight) · Sonia (WhatsApp escalation) · Binil (3:20 gate run from the rail) · Vidisha (print + shred brackets) · Amisha (nine samosas) · Vipin (Prerna in the bay at 2:58) · Simran (sent her half) |
-| Discovery | Elias ("save me some payasam") · Yash T. (**the HDMI was in his bag**) · Kursheeth (CPR, "query poisoning") · Aman (the livestream) · Shobhit (slo-mo with the War Room window in frame) |
+| Bottle / refill | Shivali saw the bottle empty at 5:47; Kiandra's sketch fixes its position; Pujah clears the batch and filled the upstairs decanter before the crash |
+| Service route | Saanvi saw Manasi with the dropper at the service stair; Anjul saw the service-stair key disappear and return wet beside the sink; Aashna saw the hedge freshly clipped |
+| AV / crash | Nathan saw Arun with the admin tablet; Elton heard the loop; Yonella's run sheet excludes the sync; Shivani explains the physical sightline |
+| Paper / frame | Anshu's 5:17 photo predates late pages; Balesh recognizes stolen welcome-board language; Divya heard Rehan say there were three people |
+| Clearances | Shivangi partly clears Sampada; Shivansh kills the permit panic; Pujah clears the shared drink; Kiandra defeats bottle-swap theories |
 
-## 4. Answer key (fold this page)
+## Answer Key
 
-- **Victim:** Dev Malhotra, revenue-assurance consultant, hired by both founders
-  31 July; cover story "payments consultant"; briefing scheduled Friday 4 PM.
-- **Method:** Oleander concentrate (terrace hedge) in his personal tumbler, dosed
-  empty at 2:52 PM, dissolved by his own 3:15 coffee. Giles's share was decanted into a
-  bottle in the 8:37 Uber; the rest stayed in Kalaivani's flask, which is why she would
-  not let anyone open it. Machine repair booked 8:12 AM
-  (valve had been shut two weeks); camera gap 2:45–3:21 scheduled at 11:31 AM;
-  2:47 alert = sandbox webhook replay; service lift on dead badge V-07.
-- **The five:** Anurag (plan) · Kalaivani (toxin) · Giles (hands) · Yao (blind
-  spot) · Akshat (false trail). Chat: "Fantasy League ⚽", Wed 9:12 PM.
-- **The money:** ₹3.4 crore / 14 months — reserve diversion ("CHIMP PROCESING"),
-  cloud-partner markup, ghost vendor Zenlyt (₹68L), 12% media reseller.
-- **Cleared by:** metadata (Victor), calendar + investor + Ishan (Sukhans),
-  reconstructed "AGNEDA" page (Aarohi), WhatsApp thread (Nehal), file-access log
-  + held lift (Prerna), War Room (Adithya), register's next page (Luke).
-- **Win condition:** the room names the team of five and the tumbler-not-machine
-  method. Four of five with the method = moral victory; grant it generously.
+- **Victim:** Rehan Vora, independent diligence partner for the Greenr launch close.
+- **Method:** Manasi painted concentrated yellow-oleander extract inside Rehan's
+  empty black bottle at 6:02 PM. He refilled it himself at 6:08 from the clean,
+  self-serve upstairs tonic decanter and collapsed from the concentrated exposure
+  before Nathan found him at 6:18 and Sharon reached him seconds later.
+- **Route:** Manasi used the pantry service stair during Arun's scheduled AV sync.
+  The live feeds went blank, but local buffering continued; Arun deleted the one
+  corridor clip at 6:09. The wet returned key and rinsed dropper close the route.
+- **The three:** Jack planned and framed; Arun created the blind spot; Manasi
+  carried and administered the dose.
+- **Motive:** Rehan's corrected packet exposed three criminal lanes: Jack's hidden
+  carry and retainers, Arun's ghost production work, and Manasi's beverage skims.
+- **False trail:** Jack exploited Nilisha's real metric inflation with a forged
+  sponsor packet, while the staged AV reboot made Saima and Umair look responsible
+  for the visible crash.
+- **Win condition:** Name Jack, Arun and Manasi, and explain bottle + service stair
+  + AV sync. A team without the method is incomplete; a method without all three
+  names is incomplete.

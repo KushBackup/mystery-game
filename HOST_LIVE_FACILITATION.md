@@ -1,7 +1,7 @@
-# HOST_LIVE_FACILITATION.md — Run of Show (Case 2108-C · Onam in Black)
+# HOST_LIVE_FACILITATION.md - Run of Show (Case 2609-G · Greenr: Last Seating)
 
 > **Host-only. Full spoilers.** The fast, round-by-round script for running the
-> room live. The in-app twin is Host Guide → Rounds
+> room live. The in-app twin is Host Guide -> Rounds
 > ([src/data/hostReference.js](src/data/hostReference.js)); the spoken lines live
 > in `HOST_SCRIPT` ([src/data/gameData.js](src/data/gameData.js)) and render on the
 > host console. This file is the paper backup and the pacing notes.
@@ -10,130 +10,84 @@
 
 | Phase | Time | What happens |
 |---|---|---|
-| Pre-game | ~5 min | 69 logins onto the waiting screen, the ASK→code→CODE loop explained out loud |
+| Pre-game | ~5 min | 26 canonical logins onto the waiting screen; host-issued passes handle any walk-ins; the ASK->code->CODE loop is explained out loud |
 | **Start game** | 10 sec | You press it. The room counts down together and lands on Round 0 |
-| Round 0 | 10–15 min | Briefing plays, Incident Report, blind first vote |
-| Round 1 | ~15 min | 12 accusations auto-dealt via statement pods |
-| Round 2 | 15–20 min | Riddle lock opens; 12 motive files in the pool |
-| Round 3 | 15–20 min | Case files unlock; 8 evidence files join the pool |
-| Round 4 | 15–20 min | Case files unlock; 4 revelations join the pool |
-| Round 5 | 10–15 min | Final 2 revelations; team-naming push |
-| Round 6 | ~5 min | Close voting, reveal, then "How it happened" |
+| Round 0 | 10-15 min + ballot | Briefing plays, Incident Report, automatic blind vote |
+| Round 1 | ~15 min | 10 accusations auto-dealt via statement pods |
+| Round 2 | 15-20 min | Riddle lock opens; 10 motive files in the pool |
+| Round 3 | 15-20 min | Case files unlock; 8 evidence clues join the pool |
+| Round 4 | 15-20 min | Case files unlock; 4 revelations join the pool |
+| Round 5 | 10-15 min | Final 2 revelations; team-naming push |
+| Round 6 | ~5 min + ballot | Final automatic ballot, reveal, then How it happened |
 
-Total: 1.5–2.5 hours depending on how much the room talks. Err long on rounds 3–5.
+Total: 1.5-2.5 hours depending on how much the room talks. Err long on rounds 3-5.
 
 ## The answer, one breath
 
-**Anurag** (plan) · **Kalaivani** (toxin) · **Giles** (hands) · **Yao** (blind
-spot) · **Akshat** (false trail). Oleander concentrate in Dev's own tumbler at the
-third-floor machine, dosed 2:52 PM inside a camera gap booked at 11:31 AM, drunk
-at 3:15. The mastermind order matters at the reveal: **Anurag first.**
+**Jack** (plan) · **Arun** (blind spot) · **Manasi** (dose). Yellow-oleander
+concentrate painted inside Rehan's own black bottle while the 5:58 AV sync blanked
+the live feeds, took the guest network down and sent the room's attention sideways. He
+refilled the bottle himself at 6:08 and was found at 6:18.
 
 ## Per-round pacing notes
 
 ### Pre-game
-- Nothing to distribute except login cards. Repeat "share your codes" until it's a
-  catchphrase.
-- **Everyone who logs in sits on a waiting screen until you start the game.** So
-  let people arrive and log in at whatever pace they arrive at — there is nothing
-  for anyone to wander into early, and nothing to police.
-- Tell the ASK loop now; the button arrives at Round 2 to a room that expects it.
-- Set the round length before you start — Start game arms the clock at whatever
-  the Round clock section is showing. If you are running to the clock, say so
-  once: "every round is on a timer, you'll see it under the round number."
+- Distribute the 26 canonical login cards. For a late arrival, open **Host Panel → Open walk-in register → Issue registration word**, then give them that one word to enter on their own phone. Their login word appears in the same host screen after they register; never reuse a story code.
+- Everyone who logs in sits on a waiting screen until you start the game.
+- Explain ASK before ASK exists on screen.
+- Set the round length before you start if you do not want the default.
 
 ### Start game
-- Console → **Game start** → **Start game**. Say the line, then press it. Every
-  waiting phone counts down from **10** and opens together on the Round 0
-  briefing, and the Round 0 clock starts as the countdown clears.
-- **Latecomers need nothing from you.** Anyone who logs in after you have started
-  is let straight in with no countdown — the app knows the gun already fired.
-- **One phone still on the waiting screen?** → **Push start to everyone**. It
-  drops that device straight into the game and reloads every phone in the room.
-  Logins survive, the round clock is untouched, and it is over in a blink. This is
-  the one recovery button worth knowing by heart.
-- **Pressed it too early?** → **Back to waiting**. Everyone returns to the waiting
-  screen until you press Start again. It does *not* stop the round clock — do that
-  separately if you meant to.
+- Host console -> **Game start** -> **Start game**.
+- Latecomers need nothing from you; they enter directly once the room has started.
+- One phone still waiting? Use **Push start to everyone**.
+- Mis-tapped Start? Use **Back to waiting**, then fix the clock separately if needed.
 
-### The round clock
-- Console → **Round clock**. **Start** it as you announce each round; the
-  countdown appears on all 69 phones under the round number.
-- The default is 30 minutes. **15 min** tightens the middle rounds; **1 min** and
-  **10 sec** are for testing it before the room arrives — and for the last squeeze
-  on a round that has overrun, since tapping a length while it runs restarts it
-  there and then.
-- **Pause** holds the room (a speech, a photo, a fire alarm); **Resume** gives
-  back exactly what was left.
-- **Start game starts it for you**, armed at whatever length is selected — so on a
-  normal night you never touch Start here at all.
-- Advancing the round restarts a running clock at full length, so **Round + is
-  the only control you need** once it is going. A clock you never started stays
-  off, and the rounds look exactly as they did without it.
-- It never advances the round, closes a ballot or locks anything. At zero it
-  reads **Time up** and waits for you — the deadline is social, not mechanical.
+### Round 0 - The Incident
+- Let the typed briefing play. Do not talk over it.
+- When the round clock ends, the five-minute blind ballot takes over every player phone.
+- Read the public, named tally, then press **Start Round 01** when the room is ready.
+- Seed lightly if needed: the bottle, the crash and the seal are the public anchors.
+- Expected early heat: Anushka, Nilisha, Sampada.
 
-### Round 0 — The Incident
-- Let the typed briefing play. Don't talk over it.
-- Force the blind vote *before* discussion matures. Bad first votes are fuel.
-- Seed lightly if needed: "the machine got fixed *today*, of all days."
-- Expected early heat: Sukhans (next door, "witch hunt") and Aarohi (finder,
-  shredder). Let it burn — both are innocent and both survive scrutiny.
+### Round 1 - Accusations
+- Every player has one card. Make them compare versions out loud.
+- All 10 suspects should have heat by the end.
+- If one suspect has none, read their accusation aloud yourself.
 
-### Round 1 — Accusations
-- Every player has one card; most pods share theirs with five others. Make them
-  compare versions out loud.
-- All 12 primes should have heat by the end. If one has none, read their
-  accusation to the room yourself.
-
-### Round 2 — Motives
+### Round 2 - Motives
 - Demo ASK at one table; the mechanic spreads by imitation.
-- Theme to reinforce: *twelve people needed Friday's meeting cancelled.* Motive
-  alone closes nothing.
-- Watch for hoarders. "Who is sitting on a code?" works every time.
+- Theme to reinforce: ten people feared the signing, only three killed for it.
+- Watch for hoarders. "Who is sitting on a code?" still works every time.
 
-### Round 3 — Evidence (the pivot round)
-- Unlock the case files, reopen voting.
-- The room must leave this round knowing: tumbler not machine, dosed while empty,
-  camera gap *scheduled in the morning*, alert *fake*, machine *never broken*,
-  vendor pack *two days old*, hedge *harvested this week*.
-- The question to plant if they stall: **"Who needed the machine to work today?"**
-- Nudge witnesses by name if a lane is dead — Shivam/Chirag (machine),
-  Rishabh/Utkarsh/Raaghav (the 2:52 minute), Riya/Harsha/Nikitha (the garden).
+### Round 3 - Evidence (the pivot round)
+- Unlock the case files. The round clock handles the automatic ballot after discussion.
+- The room must leave this round knowing: communal tonic clean, bottle dirty,
+  crash staged from AV, blind spot scheduled early, Nilisha packet forged, hedge clipped.
+- The question to plant if they stall: **If the batch was clean, what carried the dose?**
+- Good witness nudges here: Kiandra, Shivali, Pujah, Nathan, Elton, Aashna.
 
-### Round 4 — Revelations
-- The flip: Dev was reading names on Friday, and his draft survived.
-- Make a table say the five roles out loud: HoP, TL, OE, CS-O, MB. Then ask which
-  jobs those are *in this office*.
-- The Uber dashboard is the emotional beat — the free-ride perk as star witness.
-- Clearances start here: the register's turned page (Luke), the WhatsApp
-  escalation (Nehal), the file-access log (Prerna).
+### Round 4 - Revelations
+- The flip: three criminal lanes, seven embarrassing ones.
+- Make a table say the roles out loud: paper, picture, pour.
+- The recovered memo is the emotional beat. The room finally sees why the suspect pool was wide.
+- Good witness nudges here: Anshu, Balesh, Divya, Yonella, Shivani.
 
-### Round 5 — Finale
-- The chat and the archive land. Push from names to a *team*: "five jobs — staff
-  them."
-- If the room has four of five, the usual miss is Anurag ("he never left the War
-  Room"). Counter-question: "who knew on Tuesday what Friday meant?"
-- Use HOST_QA_BRIEFING.md for physics objections. Do not free-style canon.
+### Round 5 - Finale
+- The chat and the beneficiary map land. Push from names to a team.
+- If the room has two of three, the usual miss is Jack because he never touched the bottle.
+- Counter-question: **Who built the frame and kept the founders staring at paper?**
 
-### Round 6 — The Reveal
-- Close voting; show the tally if the theatre helps.
-- Trigger the reveal. Read the five aloud, mastermind first.
-- Point everyone into **How it happened** (both terminal screens carry it) before
-  taking questions. "Read the reconstruction, then argue with me."
+### Round 6 - The Reveal
+- Let the final automatic tally announce itself; it shows every voter and their choice.
+- Trigger the reveal. Read the three names aloud, mastermind first.
+- Point everyone into **How it happened** before handling questions.
 
 ## Emergency levers
 
-- **Room stuck on Sukhans/Aarohi past Round 3:** hand a quiet table Ishan's
-  sightline or the "AGNEDA" shred, via a nudge: "ask Ishan what he could see from
-  his desk."
-- **Nobody connects the coffee machine:** read the job sheet line aloud — "no
-  fault found, inlet valve manually shut" — and let it sit.
-- **Codes not circulating:** call a "press conference": each table reads one code
-  it holds to the room.
-- **Too fast:** withhold Round 4 files for ten minutes and run a mid-game vote
-  with tally shown.
-- **Round overrunning:** tap **1 min** on the clock while it is running. Every
-  phone drops to sixty seconds and starts ticking red — cheaper than shouting.
-- **Killer outed early by accident:** remind the room the win condition is the
-  full team of five plus the method, not one name.
+- **Room stuck on founders past Round 3:** push the bottle timeline. Shivali and Kiandra are the break.
+- **Nobody sees the crash as intentional:** ask Elton what he heard, or Nathan what he saw Arun take back out.
+- **Nilisha frame holding too hard:** feed Balesh or Anshu to a quiet table.
+- **Too fast:** sit on Round 4 files for ten minutes before the clock reaches the automatic ballot.
+- **Round overrunning:** drop the clock to **1 min** while it is running.
+- **Killer outed early:** remind the room the win condition is the full team plus the method, not one name.

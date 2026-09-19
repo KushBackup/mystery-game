@@ -4,9 +4,9 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
   doc, setDoc, getDoc, updateDoc, deleteField, onSnapshot, collection, query, getDocs, writeBatch,
-  orderBy, limit
+  orderBy, limit, where, runTransaction
 } from 'firebase/firestore';
-import { CASE_FILES } from '../data/gameData.js';
+import { CASE_FILES, CLUE_DB, validateLoginCode } from '../data/gameData.js';
 import { IDLE_TIMER, writeTimer } from '../lib/roundTimer.js';
 import { NOT_STARTED, skipCountdown, writeStartedAt } from '../lib/gameStart.js';
 
@@ -42,6 +42,215 @@ export const db = initializeFirestore(app, {
 // Game state document reference
 const GAME_STATE_DOC = 'gameState/current';
 
+// --- WALK-IN PLAYERS --------------------------------------------------------
+//
+// These collections deliberately sit beside, not inside, the canonical case
+// data. A walk-in gets the same public play surfaces as anyone else but never
+// becomes one of the 26 story characters, a suspect, a pod member or a clue.
+const WALK_IN_PASSES = 'walkInPasses';
+const BYSTANDERS = 'bystanders';
+const WALK_IN_CONTACTS = 'walkInContacts';
+const WALK_IN_PASS_LIFETIME_MS = 30 * 60 * 1000;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Door codes must be sayable across a loud room and writable without handing
+// somebody a miniature password. Each word is reserved once at a time: an open
+// pass and an active walk-in can never share one. Fifty words supports twenty-
+// five concurrent registration/login pairs without touching the case-code pool.
+export const WALK_IN_WORDS = [
+  'ACORN', 'BAMBOO', 'BERRY', 'BICYCLE', 'BLOSSOM', 'BUTTON', 'CANDLE', 'CANYON',
+  'CARROT', 'CASTLE', 'CEDAR', 'CLOUD', 'CORAL', 'CRAYON', 'DAISY', 'DRAGON',
+  'FEATHER', 'FERN', 'FIREWORK', 'GARDEN', 'GINGER', 'GLOBE', 'HARBOR', 'HONEY',
+  'ISLAND', 'JACKET', 'JASMINE', 'KETTLE', 'LAGOON', 'LEMON', 'MAPLE', 'MEADOW',
+  'MIRROR', 'MOUNTAIN', 'MUG', 'ORCHARD', 'PAPER', 'PEBBLE', 'PENGUIN', 'PILLOW',
+  'PLANET', 'RAINBOW', 'RIVER', 'ROCKET', 'SHELL', 'SUNFLOWER', 'TEACUP', 'THUNDER',
+  'TULIP', 'WINDOW',
+];
+
+const cleanText = (value, maxLength) => String(value ?? '').trim().slice(0, maxLength);
+
+const phoneIsValid = (phone) => (phone.match(/\d/g) ?? []).length >= 7;
+
+const chooseWalkInWords = async (count = 1) => {
+  const [passSnapshot, bystanderSnapshot] = await Promise.all([
+    getDocs(collection(db, WALK_IN_PASSES)),
+    getDocs(collection(db, BYSTANDERS)),
+  ]);
+  const reserved = new Set([
+    ...passSnapshot.docs
+      .map((docSnap) => docSnap.data())
+      .flatMap((pass) => [pass.code, pass.loginCode]),
+    ...bystanderSnapshot.docs
+      .map((docSnap) => docSnap.data())
+      .map((bystander) => bystander.loginCode),
+    ...CLUE_DB.map((clue) => clue.code),
+  ]);
+  const available = WALK_IN_WORDS.filter(
+    (word) => !reserved.has(word) && !validateLoginCode(word)
+  );
+  if (available.length < count) throw new Error('Not enough walk-in words are free. Reset the game to clear the register.');
+  return [...available]
+    .sort(() => Math.random() - 0.5)
+    .slice(0, count);
+};
+
+export const validateWalkInRegistration = (input = {}) => {
+  const name = cleanText(input.name, 60);
+  const profession = cleanText(input.profession, 60);
+  const hiddenTalent = cleanText(input.hiddenTalent, 140);
+  const phone = cleanText(input.phone, 30);
+  const email = cleanText(input.email, 120).toLowerCase();
+  const confession = cleanText(input.confession, 140);
+  const traits = [...new Set((input.traits ?? []).map((trait) => cleanText(trait, 30)).filter(Boolean))];
+
+  if (!name) return { ok: false, message: 'Name is required.' };
+  if (!profession) return { ok: false, message: 'Choose a profession.' };
+  if (traits.length !== 3) return { ok: false, message: 'Choose exactly three traits.' };
+  if (!hiddenTalent) return { ok: false, message: 'Add a hidden talent.' };
+  if (!phoneIsValid(phone)) return { ok: false, message: 'Enter a valid phone number.' };
+  if (!EMAIL_RE.test(email)) return { ok: false, message: 'Enter a valid email address.' };
+
+  return {
+    ok: true,
+    value: { name, profession, traits, hiddenTalent, phone, email, confession },
+  };
+};
+
+const passByCode = async (code) => {
+  const normalized = cleanText(code, 20).toUpperCase();
+  const snapshot = await getDocs(
+    query(collection(db, WALK_IN_PASSES), where('code', '==', normalized), limit(1))
+  );
+  return snapshot.docs[0] ?? null;
+};
+
+export const issueWalkInPass = async () => {
+  const now = Date.now();
+  const id = `pass_${now}_${Math.random().toString(36).slice(2, 8)}`;
+  const [code, loginCode] = await chooseWalkInWords(2);
+  const pass = {
+    id,
+    code,
+    status: 'OPEN',
+    loginCode,
+    createdAt: now,
+    expiresAt: now + WALK_IN_PASS_LIFETIME_MS,
+    claimedBy: null,
+  };
+
+  await setDoc(doc(db, WALK_IN_PASSES, id), pass);
+  return pass;
+};
+
+export const revokeWalkInPass = async (passId) => {
+  const passRef = doc(db, WALK_IN_PASSES, passId);
+  await runTransaction(db, async (transaction) => {
+    const passSnap = await transaction.get(passRef);
+    if (!passSnap.exists()) throw new Error('That registration word is no longer available.');
+    if (passSnap.data().status !== 'OPEN') throw new Error('A claimed registration word cannot be revoked.');
+    // Keep the record so both pre-reserved words remain unavailable for this
+    // game. Deleting it would make the allocator hand the same words back out.
+    transaction.update(passRef, {
+      status: 'REVOKED',
+      revokedAt: Date.now(),
+    });
+  });
+};
+
+export const claimWalkInPass = async (passCode, registration) => {
+  const validated = validateWalkInRegistration(registration);
+  if (!validated.ok) throw new Error(validated.message);
+
+  const passSnap = await passByCode(passCode);
+  if (!passSnap) throw new Error('That walk-in pass is not recognised.');
+
+  const passRef = passSnap.ref;
+  const bystanderId = `bystander_${passSnap.id}`;
+  const bystanderRef = doc(db, BYSTANDERS, bystanderId);
+  const now = Date.now();
+  let loginCode = passSnap.data().loginCode || null;
+  if (!loginCode) [loginCode] = await chooseWalkInWords(1);
+  const { phone, email, ...publicProfile } = validated.value;
+
+  await runTransaction(db, async (transaction) => {
+    const currentPass = await transaction.get(passRef);
+    if (!currentPass.exists()) throw new Error('That walk-in pass is no longer available.');
+
+    const pass = currentPass.data();
+    if (pass.status !== 'OPEN') throw new Error('That walk-in pass has already been used.');
+    if ((pass.expiresAt ?? 0) < now) throw new Error('That walk-in pass has expired.');
+
+    transaction.set(bystanderRef, {
+      id: bystanderId,
+      kind: 'BYSTANDER',
+      active: true,
+      name: publicProfile.name,
+      profession: publicProfile.profession,
+      traits: publicProfile.traits,
+      hiddenTalent: publicProfile.hiddenTalent,
+      confession: publicProfile.confession,
+      loginCode,
+      passId: passSnap.id,
+      addedAt: now,
+      removedAt: null,
+    });
+    transaction.set(doc(db, WALK_IN_CONTACTS, bystanderId), {
+      id: bystanderId,
+      phone,
+      email,
+      addedAt: now,
+    });
+    transaction.update(passRef, {
+      status: 'CLAIMED',
+      claimedBy: bystanderId,
+      claimedAt: now,
+    });
+  });
+
+  return { id: bystanderId, loginCode, ...publicProfile };
+};
+
+export const resolveWalkInLoginCode = async (code) => {
+  const normalized = cleanText(code, 20).toUpperCase();
+  const snapshot = await getDocs(
+    query(collection(db, BYSTANDERS), where('loginCode', '==', normalized), limit(1))
+  );
+  const found = snapshot.docs[0];
+  if (!found) return null;
+
+  const bystander = found.data();
+  return bystander.active ? bystander : null;
+};
+
+export const removeWalkIn = async (bystanderId) => {
+  await updateDoc(doc(db, BYSTANDERS, bystanderId), {
+    active: false,
+    removedAt: Date.now(),
+  });
+};
+
+export const subscribeToWalkIns = (callback) =>
+  onSnapshot(collection(db, BYSTANDERS), (snapshot) => {
+    callback(
+      snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })),
+      snapshot.docChanges()
+    );
+  });
+
+export const subscribeToWalkInPasses = (callback) =>
+  onSnapshot(collection(db, WALK_IN_PASSES), (snapshot) => {
+    callback(snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() })));
+  });
+
+const clearCollection = async (collectionName) => {
+  const snapshot = await getDocs(collection(db, collectionName));
+  for (let index = 0; index < snapshot.docs.length; index += BATCH_LIMIT) {
+    const batch = writeBatch(db);
+    snapshot.docs.slice(index, index + BATCH_LIMIT).forEach((docSnap) => batch.delete(docSnap.ref));
+    await batch.commit();
+  }
+};
+
 // Initialize game state (call this once on first load)
 export const initializeGameState = async () => {
   const gameStateRef = doc(db, GAME_STATE_DOC);
@@ -50,9 +259,7 @@ export const initializeGameState = async () => {
     if (!docSnap.exists()) {
       await setDoc(gameStateRef, {
         currentRound: 0,
-        isVotingOpen: false,
         unlockedFiles: ['f_incident'], // Incident report unlocked by default
-        voteResultsVisible: false,
         revealedToMurderer: false,
         revealedClues: [], // Host-revealed clues
         gameEnded: false, // Track if game has ended
@@ -68,10 +275,9 @@ export const initializeGameState = async () => {
     } else {
       // Ensure new fields exist in existing game state
       const data = docSnap.data();
-      if (!data.unlockedFiles || !('voteResultsVisible' in data) || !('revealedToMurderer' in data) || !data.revealedClues || !('gameEnded' in data) || !('forceRefreshAt' in data) || !('roundTimerEndsAt' in data) || !('gameStartedAt' in data)) {
+      if (!data.unlockedFiles || !('revealedToMurderer' in data) || !data.revealedClues || !('gameEnded' in data) || !('forceRefreshAt' in data) || !('roundTimerEndsAt' in data) || !('gameStartedAt' in data)) {
         await updateDoc(gameStateRef, {
           unlockedFiles: data.unlockedFiles || ['f_incident'],
-          voteResultsVisible: data.voteResultsVisible ?? false,
           revealedToMurderer: data.revealedToMurderer ?? false,
           revealedClues: data.revealedClues || [],
           gameEnded: data.gameEnded ?? false,
@@ -204,32 +410,6 @@ export const holdGameAtStandby = async () => {
     });
   } catch (error) {
     console.error('Error holding game at standby:', error);
-  }
-};
-
-// Toggle voting status
-export const updateVotingStatus = async (isOpen) => {
-  const gameStateRef = doc(db, GAME_STATE_DOC);
-  try {
-    await updateDoc(gameStateRef, {
-      isVotingOpen: isOpen,
-      lastUpdated: Date.now()
-    });
-  } catch (error) {
-    console.error('Error updating voting status:', error);
-  }
-};
-
-// Toggle vote results visibility
-export const updateVoteResultsVisibility = async (isVisible) => {
-  const gameStateRef = doc(db, GAME_STATE_DOC);
-  try {
-    await updateDoc(gameStateRef, {
-      voteResultsVisible: isVisible,
-      lastUpdated: Date.now()
-    });
-  } catch (error) {
-    console.error('Error updating vote results visibility:', error);
   }
 };
 
@@ -493,9 +673,7 @@ export const resetGameState = async () => {
     // Reset main game state
     await setDoc(gameStateRef, {
       currentRound: 0,
-      isVotingOpen: false,
       unlockedFiles: ['f_incident'],
-      voteResultsVisible: false,
       revealedToMurderer: false,
       revealedClues: [],
       gameEnded: false,
@@ -522,6 +700,13 @@ export const resetGameState = async () => {
       unlockedClues: {},
       lastUpdated: Date.now()
     });
+
+    // Walk-ins belong to this room, not the next one. Their historical profile
+    // records remain in the current game only; the fixed story roster lives in
+    // gameData.js and is never touched by reset.
+    await clearCollection(BYSTANDERS);
+    await clearCollection(WALK_IN_CONTACTS);
+    await clearCollection(WALK_IN_PASSES);
 
     // Clear all chat messages. Deliberately last: if the channel refuses to
     // clear, the round, votes and clues are already back to zero, and the

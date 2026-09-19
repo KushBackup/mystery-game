@@ -15,15 +15,18 @@ import { TOOLTIPS } from '../../data/tooltips';
  * The old rainbow of avatar colours is gone: differentiation comes from the
  * surface and the label, never from a new hue (§2.2).
  */
-export const DossierView = ({ currentUser, onSelectGuest }) => {
+export const DossierView = ({ currentUser, guests = CHARACTERS, onSelectGuest }) => {
   const [query, setQuery] = useState('');
 
   // The file number is the guest's position in the roster, not their position
   // in the filtered list — a file that reads 34 must keep reading 34 while the
   // player is typing, or the number stops being a reference they can call out.
   const roster = useMemo(
-    () => CHARACTERS.map((char, index) => ({ char, fileNumber: index + 1 })),
-    []
+    () => guests.map((char, index) => ({
+      char,
+      fileNumber: char.role === 'BYSTANDER' ? null : index + 1,
+    })),
+    [guests]
   );
 
   const results = useMemo(() => {
@@ -48,11 +51,11 @@ export const DossierView = ({ currentUser, onSelectGuest }) => {
             column makes the paragraph absorb it instead, which it can: it is
             already two lines at its own max width. */}
         <div className="shrink-0">
-          <Numeral as="p" value={CHARACTERS.length} pad={2} className="er-stat__num" />
+          <Numeral as="p" value={guests.length} pad={2} className="er-stat__num" />
           {/* The file number beside each name is a reference the room speaks
               in, and nothing on the screen says so (§6.13). */}
           <p className="er-stat__label flex items-center gap-2">
-            Guests on record
+            Guests present
             <InfoTip tip={TOOLTIPS.guests} />
           </p>
         </div>
@@ -82,6 +85,7 @@ export const DossierView = ({ currentUser, onSelectGuest }) => {
         {results.map(({ char, fileNumber }, index) => {
           const isMe = char.id === currentUser;
           const isVictim = char.role === 'VICTIM';
+          const isWalkIn = char.role === 'BYSTANDER';
 
           return (
             <button
@@ -108,7 +112,7 @@ export const DossierView = ({ currentUser, onSelectGuest }) => {
                     {char.name}
                   </span>
                   <span className="er-num text-[13px] shrink-0">
-                    {String(fileNumber).padStart(2, '0')}
+                    {fileNumber === null ? '—' : String(fileNumber).padStart(2, '0')}
                   </span>
                 </span>
 
@@ -122,10 +126,12 @@ export const DossierView = ({ currentUser, onSelectGuest }) => {
               {/* Only facts the room already knows get a tag here. Suspect vs
                   witness is never shown — the player has to earn that from the
                   clue deck. */}
-              {(isMe || isVictim) && (
+              {(isMe || isVictim || isWalkIn) && (
                 <span className="shrink-0 self-start">
                   {isMe ? (
                     <span className="er-tag">You</span>
+                  ) : isWalkIn ? (
+                    <span className="er-tag er-tag--mute">Walk-in</span>
                   ) : (
                     <span className="er-tag er-tag--mute">Deceased</span>
                   )}
