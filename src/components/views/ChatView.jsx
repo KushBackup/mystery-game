@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { collection, addDoc, serverTimestamp, doc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { db, subscribeToMessages } from '../../firebase/config';
 import { Send } from '../icons/ChatIcons';
-import { ScreenBrief } from '../ui/ScreenBrief';
 import { InfoTip } from '../ui/InfoTip';
 import { TOOLTIPS } from '../../data/tooltips';
 
@@ -18,7 +17,7 @@ import { TOOLTIPS } from '../../data/tooltips';
  * Self-framed: it owns the viewport below the chrome rail (`--chrome-h`, defined
  * in index.css) so the composer can stay pinned above the keyboard.
  */
-export const ChatView = ({ myCharacter, note, currentRound = 0 }) => {
+export const ChatView = ({ myCharacter, tutorialActive = false }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -272,8 +271,6 @@ export const ChatView = ({ myCharacter, note, currentRound = 0 }) => {
           </div>
           <span className="er-mono er-mono--dim truncate">{myCharacter.name}</span>
         </div>
-
-        <ScreenBrief note={note} currentRound={currentRound} className="mt-4" />
       </div>
 
       {/* Messages */}
@@ -426,7 +423,12 @@ export const ChatView = ({ myCharacter, note, currentRound = 0 }) => {
       )}
 
       {/* Composer */}
-      <div className="shrink-0 border-t border-line bg-ink-raised px-4 py-3 pb-safe">
+      <div
+        data-tutorial-cue={tutorialActive ? 'Your channel' : undefined}
+        className={`shrink-0 border-t border-line bg-ink-raised px-4 py-3 pb-safe ${
+          tutorialActive ? 'er-tutorial-target' : ''
+        }`}
+      >
         <form onSubmit={handleSendMessage} className="flex gap-2">
           <input
             type="text"

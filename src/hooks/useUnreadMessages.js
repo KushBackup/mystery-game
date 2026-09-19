@@ -49,6 +49,15 @@ const markSeen = (id) => {
   }
 };
 
+export const clearUnreadMessages = () => {
+  seenMemory = null;
+  try {
+    window.localStorage.removeItem(SEEN_KEY);
+  } catch {
+    // The next empty or fresh channel snapshot still resets the in-memory badge.
+  }
+};
+
 /**
  * @param {string|null} myId    this player's character id; their own messages are excluded
  * @param {boolean}     reading true while the Comms screen is open

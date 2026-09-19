@@ -293,6 +293,115 @@
 .er-card--brass  { border-top: 3px solid var(--color-brass); }
 .er-card--aged   { border-top: 3px solid var(--color-bone-aged); }
 
+/* The arrival tutorial is the player-facing teaching surface. It sits on ink,
+   with one clear action, so it does not compete with a case document or rely on
+   a small help mark being noticed. */
+.er-tutorial {
+  padding: 16px;
+  background: var(--color-ink-raised);
+  border: 1px solid var(--color-line);
+  border-top: 3px solid var(--color-signal);
+}
+
+.er-tutorial__lead {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 108px;
+  gap: 12px;
+  align-items: center;
+}
+
+.er-tutorial__sketch {
+  color: var(--color-bone-aged);
+  opacity: 0.9;
+  aspect-ratio: 33 / 28;
+}
+
+/* Tutorial focus is a short directional cue, never a permanent state. The
+   label and signal outline stay after the three knocks finish, so the intended
+   control remains obvious to anyone who looked away during the motion. */
+@keyframes erTutorialFocus {
+  0%, 100% { opacity: 0.82; transform: scale(1); }
+  20% { opacity: 1; transform: scale(1.035); }
+  42% { opacity: 0.92; transform: scale(1); }
+  58% { opacity: 1; transform: scale(1.018); }
+  74% { opacity: 0.88; transform: scale(1); }
+}
+
+@keyframes erTutorialOutline {
+  0%, 100% { outline-color: var(--tutorial-focus); }
+  20% { outline-color: transparent; }
+  42% { outline-color: var(--tutorial-focus); }
+  58% { outline-color: transparent; }
+  74% { outline-color: var(--tutorial-focus); }
+}
+
+.er-tutorial-target {
+  --tutorial-focus: var(--color-signal-lift);
+  position: relative;
+  z-index: 1;
+  outline: 4px solid var(--tutorial-focus);
+  outline-offset: 6px;
+  animation: erTutorialOutline 1.2s var(--ease-land) 0.6s 3;
+}
+
+.er-tutorial-target:not(.er-bone):not(.er-pin)::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  z-index: 4;
+  pointer-events: none;
+  border: 2px solid var(--color-signal);
+  animation: erTutorialFocus 1.2s var(--ease-land) 0.6s 3;
+}
+
+.er-tutorial-target:not(.er-bone):not(.er-pin)::before {
+  content: attr(data-tutorial-cue);
+  position: absolute;
+  top: -15px;
+  right: 7px;
+  z-index: 5;
+  padding: 4px 7px 3px;
+  background: var(--color-signal);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.er-tutorial-target--onbone { --tutorial-focus: var(--color-signal); }
+.er-tutorial-target--onbone:not(.er-bone):not(.er-pin)::after { border-color: var(--color-signal); }
+.er-tutorial-target--onbone:not(.er-bone):not(.er-pin)::before { background: var(--color-signal); }
+
+.er-tutorial-tile-cue {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 6;
+  padding: 4px 6px 3px;
+  background: var(--color-signal);
+  color: #fff;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  pointer-events: none;
+}
+
+.er-tutorial-action { animation: erTutorialFocus 1.2s var(--ease-land) 1s 3; }
+
+@media (max-width: 359px) {
+  .er-tutorial__lead {
+    grid-template-columns: minmax(0, 1fr) 88px;
+    gap: 8px;
+  }
+}
+
 /* ============================================================
    6. BONE CARD (§6.3) — the document.
    Bone means "this is a piece of paper". Never UI chrome.

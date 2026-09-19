@@ -20,6 +20,7 @@ export const VotingView = ({
   votes,
   votingMsLeft = 0,
   onVote,
+  tutorialActive = false,
 }) => {
   const [selectedSuspect, setSelectedSuspect] = useState(votes[currentRound] || null);
   const [confirmingVote, setConfirmingVote] = useState(null);
@@ -67,7 +68,12 @@ export const VotingView = ({
   return (
     <div className="space-y-5">
       {/* State */}
-      <div className={`er-card ${isVotingOpen ? 'er-card--signal' : ''}`}>
+      <div
+        data-tutorial-cue={tutorialActive ? 'Ballot status' : undefined}
+        className={`er-card ${isVotingOpen ? 'er-card--signal' : ''} ${
+          tutorialActive ? 'er-tutorial-target' : ''
+        }`}
+      >
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 min-w-0">
             <p className={`er-mono er-mono--wide ${isVotingOpen ? 'er-mono--hot' : ''}`}>

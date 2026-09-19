@@ -15,7 +15,7 @@ import { TOOLTIPS } from '../../data/tooltips';
 /** Same uneven rhythm as RedactedLines' default, extended for a longer note. */
 const KILLER_REDACT_WIDTHS = ['96%', '72%', '88%', '61%', '91%', '68%', '83%'];
 
-export const DashboardView = ({ myCharacter }) => {
+export const DashboardView = ({ myCharacter, tutorialActive = false }) => {
   const [secretOpen, setSecretOpen] = useState(false);
 
   if (!myCharacter) return null;
@@ -117,9 +117,10 @@ export const DashboardView = ({ myCharacter }) => {
             }}
             aria-expanded={secretOpen}
             aria-label={secretOpen ? 'Confidential note revealed' : 'Reveal your confidential note'}
+            data-tutorial-cue={tutorialActive && !secretOpen ? 'Tap to read' : undefined}
             className={`relative block w-full text-left mt-4 ${
               secretOpen ? 'cursor-default' : 'er-press'
-            }`}
+            } ${tutorialActive && !secretOpen ? 'er-tutorial-target er-tutorial-target--onbone' : ''}`}
           >
             {/* The note rises in as the bars clear rather than sitting fully
                 formed behind them. */}

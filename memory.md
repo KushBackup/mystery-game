@@ -110,6 +110,7 @@ Also settled the same day, smaller: the four ignored coffee tickets are **two Sh
   4. There must be a way to **force-sync the start state** "in case someone's game glitches and they need to move on" — that is **Push start to everyone**, which rewrites the start into the past *and* bumps `forceRefreshAt`, because the two failure modes (a phone that took the start late, a phone whose listener died) need different fixes.
   Claude added **Back to waiting** unasked, as the undo for a mis-tapped Start — the alternative was Reset Game, which also wipes the round, votes, clues and chat.
 - **`gameStartedAt` is an absolute instant, never a boolean.** Same reasoning as `roundTimerEndsAt`: a late joiner, a reload or a phone waking from sleep must be *let in*, not shown a starting gun that fired three rounds ago.
+- **Progressive player tutorial (decided 2026-09-19):** after the Round 0 briefing, new players learn identity, a guest profile, Comms and voting in sequence; Round 1 then sends them to their accusation on Evidence. Progress is local per player/device and must never become shared Firestore state.
 
 ## Update protocol
 

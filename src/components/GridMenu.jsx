@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { ScreenBrief } from './ui/ScreenBrief';
 import { Numeral } from './ui/Numeral';
 import { InfoTip } from './ui/InfoTip';
 import { RoundClock } from './ui/RoundClock';
+import { DoodleTutorial } from './ui/Doodles';
 import { IDLE_TIMER, isIdle } from '../lib/roundTimer';
 import { CASE_META } from '../data/gameData';
 import { roundTip } from '../data/tooltips';
@@ -98,9 +98,11 @@ export default function GridMenu({
   currentRound = 0,
   roundTimer = IDLE_TIMER,
   isVotingOpen = false,
-  note,
   unreadCount = 0,
   unreadKey = null,
+  allowedTabs,
+  tutorialStep = null,
+  onStartTutorialStep,
 }) {
   // State, not a ref: this is read during render to pick the animation, and refs
   // must not be read during render. The initialiser only *reads* the module flag
@@ -163,6 +165,9 @@ export default function GridMenu({
     { id: 'help',      label: 'Guide',     sub: 'Read Me',      icon: HelpIcon,        tone: 'aged',  rot: '', wide: true },
     { id: 'logout',    label: 'Exit',      sub: 'End Session',  icon: LogoutIcon,      tone: 'ink',   rot: '', wide: true },
   ];
+  const visibleItems = menuItems.filter(
+    (item) => item.id === 'logout' || !allowedTabs || allowedTabs.includes(item.id)
+  );
 
   const handleTileClick = (itemId) => {
     // A 20ms buzz on tile tap is part of the product's texture (§4.3).
@@ -227,27 +232,56 @@ export default function GridMenu({
           <p className="font-note text-signal-lift text-[17px] mt-3 -rotate-1 origin-left">
             Trust no one.
           </p>
-
-          <ScreenBrief note={note} currentRound={currentRound} className="mt-5" />
         </div>
+
+        {tutorialStep && (
+          <section className="er-tutorial er-enter mt-7" aria-label={`Tutorial step ${tutorialStep.step} of ${tutorialStep.total}`}>
+            <div className="er-tutorial__lead">
+              <div>
+                <div className="flex items-baseline justify-between gap-3">
+                  <p className="er-mono er-mono--hot er-mono--wide">{tutorialStep.kicker}</p>
+                  <p className="er-num text-xl shrink-0">{tutorialStep.step}/{tutorialStep.total}</p>
+                </div>
+                <h2 className="font-typewriter font-bold uppercase text-bone text-[24px] leading-[1.08] mt-3">
+                  {tutorialStep.title}
+                </h2>
+                <p className="font-body text-[15px] leading-[1.55] text-dim mt-3">{tutorialStep.body}</p>
+              </div>
+
+              <div className="er-tutorial__sketch">
+                <DoodleTutorial type={tutorialStep.visual} />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => onStartTutorialStep?.(tutorialStep.target)}
+              className="er-touch er-tutorial-action er-mono er-mono--hot mt-5 h-12 w-full border border-signal hover:bg-signal hover:text-white"
+            >
+              {tutorialStep.action}
+            </button>
+          </section>
+        )}
 
         {/* Investigation board */}
         <div className="grid grid-cols-2 gap-3 sm:gap-4 mt-8">
-          {menuItems.map((item, index) => {
+          {visibleItems.map((item, index) => {
             const Icon = item.icon;
             const isPaper = item.tone === 'bone' || item.tone === 'aged';
             const isComms = item.id === 'chat';
             const showBadge = isComms && unreadCount > 0;
+            const isTutorialTarget = tutorialStep?.target === item.id;
 
             return (
               <button
                 key={item.id}
                 onClick={() => handleTileClick(item.id)}
-                className={`er-touch er-lift ${tileMotion} relative w-full flex flex-col items-center justify-center gap-2 px-2 ${
+                data-tutorial-cue={isTutorialTarget ? 'Next' : undefined}
+                className={`er-touch er-lift ${tileMotion} ${isTutorialTarget ? `er-tutorial-target ${isPaper ? 'er-tutorial-target--onbone' : ''}` : ''} relative w-full flex flex-col items-center justify-center gap-2 px-2 ${
                   item.wide ? 'col-span-2 py-3.5' : 'aspect-[4/3]'
                 } ${item.rot} ${toneClasses(item.tone)}`}
                 style={playIntro ? { animationDelay: `${index * 60}ms` } : undefined}
               >
+                {isTutorialTarget && <span className="er-tutorial-tile-cue">Tap here</span>}
                 {/* The icon carries its badge, so both move as one unit when
                     the tile jogs — a badge pinned to a corner the icon has
                     rocked away from is worse than no motion at all. Keyed on

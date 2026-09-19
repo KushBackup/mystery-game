@@ -40,7 +40,10 @@ Owns the live case definition:
 Owns the Round 0 public briefing only. It is spoiler-gated to knowledge available before the investigation starts.
 
 ### [src/data/screenGuide.js](src/data/screenGuide.js)
-Owns per-screen kicker/title/brief/detail copy, the labels for the Evidence stacks, and `ROUND_GUIDE`.
+Owns per-screen kicker/title/brief/detail copy, the labels for the round-aware Evidence tabs, and `ROUND_GUIDE`.
+
+### [src/lib/tutorial.js](src/lib/tutorial.js)
+Owns the player arrival tutorial's stages, copy, permitted hub tabs and local persistence. It is deliberately browser-local rather than Firestore-backed: tutorial completion is a device-level orientation aid, not shared game state.
 
 ### [src/data/hostReference.js](src/data/hostReference.js)
 Owns the structured host-only content rendered in the console:
@@ -122,7 +125,7 @@ The project has no Firebase Authentication. Passes prevent accidental registrati
 
 - `ACCUSATION` - 10 cards, automatically available in Round 1
 - `MOTIVE` - 10 codes, Round 2
-- `EVIDENCE` / `FORENSICS` / `CCTV` - 8 round-3 items sharing the Evidence stack
+- `EVIDENCE` / `FORENSICS` / `CCTV` - 8 round-3 items sharing the Evidence tab
 - `REVELATION` - 6 round-4/5 items
 - `CONFESSION` - 1 final gated clue
 
@@ -141,6 +144,10 @@ The current case uses four reward blocks:
 - Round 5: 2 revelations
 
 `riddleQueueFor()` rotates each block by the player's ordinal, so the first reward in each block spreads evenly across the 26-player room instead of clustering.
+
+### Evidence Navigation
+
+`IntelView` is one tabbed Evidence surface, not a grid of locked stack buttons. Case files are always present. Accusations appears from Round 1, Motives from Round 2, Evidence from Round 3 and Revelations from Round 4; categories absent from the current round are not rendered. `App.jsx` keeps the selected tab in `evidenceStack`, so decoding a clue can land a player directly on its category, while the Evidence title and close behavior remain stable.
 
 ---
 
@@ -173,6 +180,22 @@ The game-start model and round clock are unchanged from the prior case:
 - the ballot and its public result are derived from the clock's absolute end instant, so neither transition creates client writes or drifts on reload
 - when the ballot ends, a locked result takeover shows the tally and every voter-to-candidate choice
 - the host's **Start Round N** control is the only exit from results; it advances the round and starts its new clock in the existing atomic write
+
+## Player Tutorial
+
+After the Round 0 typed briefing, `App.jsx` reads `astral.tutorial.v1` through `lib/tutorial.js` and restricts `GridMenu` to the current lesson's tabs. The sequence is identity, guest profile, Comms, voting and, in Round 1, Evidence. Each task pairs its copy with a small semantic sketch from `DoodleTutorial` in `components/ui/Doodles.jsx`, showing the destination's core interaction before the player opens it. The Dossier lesson only completes after a player opens a guest profile; every other lesson completes when its assigned screen is closed through the standard header route. The state is keyed by player id in `localStorage`, survives reloads and never mutates Firestore during ordinary play.
+
+The active hub tile and the exact in-screen tutorial target use the finite `er-tutorial-target` spotlight: three outline blinks, followed by a persistent focus ring. Ink controls also carry a compact label; paper targets retain their existing grain and pushpin pseudo-elements, so the ring is intentionally the universal cue there. This makes the teaching action explicit without introducing a permanent pulse; reduced-motion mode collapses the animation but retains the focus ring.
+
+`resetGameState()` writes the shared `tutorialResetAt` timestamp alongside its existing force-refresh broadcast. A client that sees a newer marker clears the local tutorial ledger before reloading, so every player receives a fresh walkthrough for each host-reset game. Ordinary **Force Sync All Players** broadcasts do not change tutorial state.
+
+`tutorialStageForRound()` lifts any unfinished player to the Evidence lesson at Round 1. That prevents a late joiner or someone who did not finish the Round 0 walkthrough from being blocked from their accusation. Once the Evidence lesson is completed, the standard complete board is restored; clue availability remains governed by the existing round gates.
+
+## Full Game Reset
+
+**Reset game** is a two-phase Firestore operation. First `gameState/current.resetInProgress` holds all player screens; then it clears the current room's cast votes, unlocked clues, released files, host-revealed clues, reveal/end state, timer, messages, walk-ins, walk-in passes and stored walk-in contacts. Only after those writes and deletions succeed does it publish fresh Round 0 standby state and force every device to reload.
+
+That final reset broadcast clears per-game browser ledgers too: tutorial progress, solved riddle history, Comms read watermark and the one-time ASK cue. Sessions remain persisted so players do not need to re-enter their character code; the SFX preference also remains a device preference. The canonical character roster and static case data are never stored in Firestore and are therefore unchanged.
 
 ## Host Portal
 

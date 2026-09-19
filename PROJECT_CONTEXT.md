@@ -31,14 +31,19 @@ At **5:58 PM**, the launch reel stutters, the guest Wi-Fi dies and the card read
 ## Core Gameplay Loop
 
 1. Players log in as one of 26 guest identities.
-2. Round 0 opens with the fullscreen typed briefing and the Incident Report.
-3. Each round clock automatically gives every player a five-minute ballot when it reaches zero; then a public tally names every voter and their choice.
-4. The host starts the next round only after that announced tally.
-5. Round 1 automatically gives every player one accusation card on the Evidence screen - one suspect-lane witness claim from their statement pod.
-6. Round 2 opens the riddle lock and puts the 10 motive files into its prize pool.
-7. Round 3 unlocks case files and adds 8 evidence clues to the pool.
-8. Rounds 4 and 5 deliver the turn through 6 revelation clues and the late-game case files.
-9. Round 6 reveals the killer team, hands the killers the confession and opens the reconstruction deck for the room.
+2. The host starts the room; Round 0 opens with the fullscreen typed briefing.
+3. A player tutorial then reveals the app one task at a time: identity, one guest profile, Comms and the voting screen.
+4. Each round clock automatically gives every player a five-minute ballot when it reaches zero; then a public tally names every voter and their choice.
+5. The host starts the next round only after that announced tally.
+6. Round 1 directs every player to their accusation card on the Evidence screen - one suspect-lane witness claim from their statement pod.
+7. Round 2 opens the riddle lock and puts the 10 motive files into its prize pool.
+8. Round 3 unlocks case files and adds 8 evidence clues to the pool.
+9. Rounds 4 and 5 deliver the turn through 6 revelation clues and the late-game case files.
+10. Round 6 reveals the killer team, hands the killers the confession and opens the reconstruction deck for the room.
+
+### Arrival Tutorial
+
+The tutorial replaces the old passive screen-note onboarding. It is stored locally per player, so a reload resumes the next task without writing any tutorial state to Firestore. In Round 0, the hub exposes only the destination required for the current lesson; the player must open their identity, a guest profile, Comms and voting in that order. After the vote lesson the core screens remain available, while Evidence remains held until Round 1. At Round 1, unfinished tutorials advance to the Evidence lesson so no player misses their assigned accusation; completing it releases the normal board and the later round gates take over.
 
 ### Late Walk-Ins
 
@@ -147,5 +152,5 @@ This matters for playability:
 - [src/data/screenGuide.js](src/data/screenGuide.js) - screen framing, onboarding notes and round guide
 - [src/data/hostReference.js](src/data/hostReference.js) - host suspect map, witness nudges and question handling
 - [src/components/StoryIntro.jsx](src/components/StoryIntro.jsx) - typed briefing
-- [src/components/views/IntelView.jsx](src/components/views/IntelView.jsx) - evidence stacks
+- [src/components/views/IntelView.jsx](src/components/views/IntelView.jsx) - round-aware Evidence tabs
 - [src/components/HostPanel.jsx](src/components/HostPanel.jsx) - live host controls and reveal trigger

@@ -112,6 +112,7 @@ export const HostPanel = ({
   currentRound,
   votingPhase = 'idle',
   revealedToMurderer = false,
+  resetInProgress = false,
   unlockedFiles = [],
   revealedClues = [],
   roundTimer = IDLE_TIMER,
@@ -147,6 +148,18 @@ export const HostPanel = ({
   const activeScript = HOST_SCRIPT.find(s => s.id === scriptTab) || HOST_SCRIPT[0];
 
   if (!isOpen) return null;
+
+  if (resetInProgress) {
+    return (
+      <div className="er-card er-card--signal er-enter text-center py-10">
+        <p className="er-mono er-mono--hot er-mono--wide">Resetting game</p>
+        <p className="er-title text-[28px] mt-3">Clearing the room</p>
+        <p className="font-body text-[15px] leading-[1.55] text-dim max-w-md mx-auto mt-4">
+          Votes, evidence, messages and walk-in records are being removed. Players are held until the fresh case is ready.
+        </p>
+      </div>
+    );
+  }
 
   if (referenceOpen) {
     return <HostReferenceView currentRound={currentRound} onBack={() => setReferenceOpen(false)} />;
@@ -272,7 +285,10 @@ export const HostPanel = ({
   };
 
   const handleResetGame = async () => {
-    if (window.confirm('Are you sure you want to reset the game? This will clear all progress.')) {
+    if (window.confirm(
+      'Reset this game for everyone? This clears cast votes, unlocked clues and files, the killer reveal, chat messages, walk-ins and their passes. ' +
+      'Every player returns to standby and starts a fresh tutorial. Player logins remain on their devices.'
+    )) {
       try {
         await resetGameState();
       } catch (error) {

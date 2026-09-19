@@ -318,7 +318,9 @@ every player still had the old thread.
         ├── revealedToMurderer: false         ← Round 6 public reveal
         ├── revealedClues: []                 ← clues pushed to everyone
         ├── gameEnded: false
+        ├── resetInProgress: false            ← temporarily holds players during a full wipe
         ├── forceRefreshAt: 0                 ← host force-sync broadcast
+        ├── tutorialResetAt: 0                ← host Reset Game broadcast for local tutorial progress
         ├── gameStartedAt: 0                  ← the starting gun: epoch ms the host pressed Start
         ├── roundTimerEndsAt: 0               ← round clock: epoch ms it runs out
         ├── roundTimerRemainingMs: 0          ← round clock: what is left, while held
@@ -334,6 +336,21 @@ newer one. That is what makes the button re-triggerable and what stops the
 first snapshot after page load from causing a reload loop. `0` means never
 fired. `resetGameState()` also bumps it, so a reset lands every device on the
 clean state.
+
+**`tutorialResetAt`** is another epoch-millisecond timestamp, written only by
+`resetGameState()`. A newer value tells every browser to remove its local
+`astral.tutorial.v1` ledger before the reset's force-refresh reload. This keeps
+tutorial progress device-local during a game while ensuring the same device
+starts the walkthrough again for the next game. Ordinary force-sync broadcasts
+do not change it.
+
+**`resetInProgress`** is the first phase of a full reset. It holds player
+screens while the host clears votes, unlocked clues, all messages and all
+walk-in collections. Only when every deletion succeeds does `resetGameState()`
+publish the clean Round 0 document, set it back to `false`, and bump the two
+reset timestamps. This order stops devices reloading into a half-cleared chat
+or vote record. If cleanup fails, the field is released so the host can see the
+error and retry rather than leaving the room permanently held.
 
 **`gameStartedAt`** is the starting gun ([src/lib/gameStart.js](src/lib/gameStart.js)),
 and like `roundTimerEndsAt` below it is an absolute instant on the *host's*

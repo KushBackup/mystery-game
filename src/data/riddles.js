@@ -210,4 +210,6 @@ export const markRiddleSolved = (id) => {
   writeSeen([...seen, id]);
 };
 
+export const clearSolvedRiddles = () => writeSeen([]);
+
 export const solvedRiddleCount = () => readSeen().length;

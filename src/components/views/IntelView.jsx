@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { CLUE_DB, CASE_FILES, CLUE_STACKS, CLUE_STACK_BY_KEY, ASK_OPENS_AT } from '../../data/gameData';
 import { EVIDENCE_STACKS } from '../../data/screenGuide';
 import { TOOLTIPS } from '../../data/tooltips';
@@ -14,17 +14,12 @@ import { CaseFilesSection } from './CaseFilesSection';
  * the system allows (§5). The clue *type* rides the 3px top border (§6.2) and
  * is spelled out in a mono tag; it never becomes a new hue.
  *
- * The screen is a **hub, not a list** (§6.11). It holds five stacks — accusations,
- * motives, evidence, revelations, and the host-released case files — and a flat
- * scroll cannot carry them: measured at 390px with everything released, the clues
- * alone are 31 cards and ~23,000px. So it opens on a grid of the five stacks and
- * you drill into one, the same tile → screen → close shape the main board uses.
- *
- * Which stack is open is **App.jsx state, not local state**, for one reason: on a
- * stack the screen's *title* is the stack's name, and App owns the screen frame
- * for every view in the app (§4.2). Keeping it here would have meant either three
- * stacked headings — Evidence, Evidence, Motives — or duplicating the whole frame
- * into this file.
+ * The screen is a **round-aware tabbed file**. Categories do not appear until
+ * their round is live: a player in Round 01 sees Accusations and Case files,
+ * then Motives joins in Round 02, Evidence in Round 03, and Revelations in
+ * Round 04. Hidden categories are less confusing than locked controls, and a
+ * tab change keeps the player in the same Evidence surface instead of making
+ * them navigate through a grid and a second screen.
  *
  * The two cards that are *yours* rather than found — the confession and your own
  * accusation — stay pinned on the hub instead of living in a stack. They are what
@@ -85,15 +80,6 @@ const STACK_STYLE = {
   },
 };
 
-// Module scope, so it survives the hub unmounting — which it does every time the
-// player drills into a stack and backs out again, the most frequent navigation on
-// this screen by a wide margin. The staggered landing plays once per session; every
-// return after that is a single quick lift with no stagger (§7.1, and the same call
-// GridMenu makes for the same reason).
-let hubIntroPlayed = false;
-
-const pad2 = (n) => String(n).padStart(2, '0');
-
 /**
  * `fresh` marks the clue this device decoded most recently, and turns its
  * arrival into the §7 "clue unlocked" moment: the card lands with overshoot, the
@@ -104,9 +90,10 @@ const pad2 = (n) => String(n).padStart(2, '0');
  * because a player who looks away for two seconds should still be able to tell
  * which card is new.
  */
-const ClueCard = ({ index, type, title, body, code, note, pinBrass, fresh }) => (
+const ClueCard = ({ index, type, title, body, code, note, pinBrass, fresh, tutorialTarget }) => (
   <article
-    className={`er-bone er-pin ${pinBrass ? 'er-pin--brass' : ''} ${index % 2 === 0 ? 'er-rotR' : 'er-rotL'} er-land p-5 sm:p-6`}
+    data-tutorial-cue={tutorialTarget ? 'Read your lead' : undefined}
+    className={`er-bone er-pin ${tutorialTarget ? 'er-tutorial-target er-tutorial-target--onbone' : ''} ${pinBrass ? 'er-pin--brass' : ''} ${index % 2 === 0 ? 'er-rotR' : 'er-rotL'} er-land p-5 sm:p-6`}
     style={{
       borderTop: `3px solid ${ruleFor(type)}`,
       animationDelay: fresh ? '0ms' : `${Math.min(index, 6) * 70}ms`,
@@ -146,63 +133,6 @@ const ClueCard = ({ index, type, title, body, code, note, pinBrass, fresh }) => 
     )}
   </article>
 );
-
-/**
- * A stack tile on the hub.
- *
- * Paper, pinned and slightly rotated, like the main board — each tile *is* a stack
- * of case paper, so bone is the honest surface. The count is the display face in
- * `ink`, not brass: brass on bone is not a sanctioned pair (§2.3), while `ink` on
- * `bone` is the highest-contrast pair in the system at 15.78:1.
- *
- * A stack the game has not reached yet is not paper at all — it is ink carrying a
- * ghost tag with the round it opens (§6.1, "a state that is not yet true, drawn as
- * an outline rather than a fill"), and it is genuinely inert, because a tap that
- * only tells you it was sealed is a dead end.
- */
-const StackTile = ({ label, sub, count, sealedUntil, tone, rot, wide, onClick, motion, delayMs }) => {
-  const sealed = sealedUntil !== null;
-
-  return (
-    <button
-      type="button"
-      onClick={sealed ? undefined : onClick}
-      disabled={sealed}
-      className={`er-touch er-lift ${motion} relative w-full flex flex-col items-center justify-center gap-1.5 px-3 py-4 ${
-        wide ? 'col-span-2' : ''
-      } ${rot} ${
-        sealed
-          ? 'bg-ink-raised border border-line cursor-not-allowed'
-          : tone === 'aged'
-            ? 'er-bone er-bone--aged er-pin'
-            : 'er-bone er-pin'
-      }`}
-      style={delayMs === null ? undefined : { animationDelay: `${delayMs}ms` }}
-    >
-      {sealed ? (
-        <span className="er-tag er-tag--ghost">Opens R{pad2(sealedUntil)}</span>
-      ) : (
-        // Display face, tabular, in ink — see the note above on brass and bone.
-        <Numeral
-          as="span"
-          value={count}
-          pad={2}
-          className="font-display font-bold text-[30px] leading-none text-ink"
-        />
-      )}
-
-      <span
-        className={`font-typewriter font-bold uppercase leading-none text-[17px] sm:text-[19px] ${
-          sealed ? 'text-bone' : 'text-ink'
-        }`}
-      >
-        {label}
-      </span>
-
-      <span className={`er-mono ${sealed ? 'er-mono--dim' : 'text-signal-deep'}`}>{sub}</span>
-    </button>
-  );
-};
 
 /**
  * The two numbers the hub and an open stack both carry.
@@ -275,14 +205,13 @@ export const IntelView = ({
   // null = the hub. Otherwise a CLUE_STACKS key, or 'files'. Owned by App.jsx.
   stack = null,
   onOpenStack,
+  tutorialActive = false,
 }) => {
   // Clues the player has decoded themselves, plus anything the host pushed out.
   const allAvailableClueIds = [...new Set([...unlockedClues, ...revealedClues])];
   const unlockedClueItems = CLUE_DB.filter((c) => allAvailableClueIds.includes(c.id));
 
-  const reachable = CLUE_DB.filter((c) => c.roundReq <= currentRound && c.type !== 'CONFESSION').length;
   const hasAccusationYet = Boolean(myAccusation) && currentRound >= 1;
-  const releasedFiles = CASE_FILES.filter((f) => unlockedFiles.includes(f.id)).length;
 
   // The player's own accusation is drawn from `myAccusation`, not from the decoded
   // set, so the found list drops it wherever it turns up — it is in ACCUSATION_CLUES
@@ -295,204 +224,121 @@ export const IntelView = ({
         !(hasAccusationYet && myAccusation && c.id === myAccusation.id)
     );
 
-  // …and it is added back at the head of the Accusations stack, where a player
-  // looking for an accusation expects to find it. One predicate for both the tile
-  // count and the stack, so the number on the hub can't disagree with the cards.
+  // …and it is added back at the head of the Accusations tab, where a player
+  // looking for an accusation expects to find it.
   const ownAccusationIn = (def) => hasAccusationYet && def.key === 'accusations';
-  const countIn = (def) => cluesIn(def).length + (ownAccusationIn(def) ? 1 : 0);
-  const collected = CLUE_STACKS.reduce((total, def) => total + countIn(def), 0);
+  const availableStacks = CLUE_STACKS.filter((def) => currentRound >= def.opensAt);
+  const tabs = [
+    ...availableStacks.map((def) => ({ key: def.key, label: EVIDENCE_STACKS[def.key].title })),
+    { key: 'files', label: EVIDENCE_STACKS.files.title },
+    ...(confession ? [{ key: 'personal', label: 'Your file' }] : []),
+  ];
+  const defaultTab = availableStacks.at(-1)?.key || 'files';
+  const activeStack = tabs.some((tab) => tab.key === stack) ? stack : defaultTab;
 
-  // State, not a ref: this is read during render to pick the animation, and refs
-  // must not be read during render. The initialiser only *reads* the module flag
-  // (so it stays pure, and StrictMode's double-invoke gets the same answer both
-  // times); the effect below is what commits it.
-  const [playIntro] = useState(() => !hubIntroPlayed);
-  useEffect(() => {
-    hubIntroPlayed = true;
-  }, []);
-  const tileMotion = playIntro ? 'er-land' : 'er-enter-quick';
-
-  const back = (
-    <button
-      type="button"
-      onClick={() => onOpenStack(null)}
-      className="er-touch inline-flex items-center gap-2 min-h-[44px] er-mono er-mono--hot er-mono--wide"
-    >
-      <span aria-hidden="true">←</span> All evidence
-    </button>
-  );
-
-  // --- A single stack, drilled into. App.jsx has already put its name in the
-  //     screen title, so nothing here repeats it. ---
-
-  if (stack === 'files') {
-    return (
-      <div className="space-y-5">
-        {back}
-        <CaseFilesSection unlockedFiles={unlockedFiles} />
-      </div>
-    );
-  }
-
-  if (stack) {
-    const def = CLUE_STACK_BY_KEY[stack];
-    const style = STACK_STYLE[stack];
-    const items = cluesIn(def);
-    const showMine = ownAccusationIn(def);
-    const inPlay = def.clues.filter((c) => c.roundReq <= currentRound).length;
-
-    // The freshly decoded card floats to the top of its stack — source order
-    // otherwise buries it wherever it happens to sit in the database.
-    const ordered = justUnlockedClue
-      ? [
-          ...items.filter((c) => c.id === justUnlockedClue),
-          ...items.filter((c) => c.id !== justUnlockedClue),
-        ]
-      : items;
-
-    return (
-      <div className="space-y-5">
-        {back}
-
-        <EvidenceStat collected={items.length + (showMine ? 1 : 0)} inPlay={inPlay} />
-
-        {/* Yours leads, under the same label the hub uses — it is the one card here
-            you perform rather than collect, and the room's accusations arrive under
-            a rule of their own so the two never read as one undifferentiated pile. */}
-        {showMine && (
-          <>
-            <p className="er-mono er-mono--hot er-mono--wide">Yours alone</p>
-            <ClueCard
-              index={0}
-              type="Your Accusation"
-              title={myAccusation.title}
-              body={myAccusation.accusation}
-              code={`Code ${myAccusation.code}`}
-              note="Share this out loud. It is what your character witnessed."
-              pinBrass
-            />
-            {ordered.length > 0 && (
-              <div className="pt-1">
-                <div className="er-rule" />
-                <p className="er-mono er-mono--hot er-mono--wide pt-3">From the room</p>
-              </div>
-            )}
-          </>
-        )}
-
-        {ordered.map((clue, idx) => (
-          <ClueCard
-            key={clue.id}
-            index={showMine ? idx + 1 : idx}
-            type={clue.type}
-            title={clue.title}
-            body={clue.type === 'ACCUSATION' ? clue.accusation : clue.content}
-            code={clue.code}
-            fresh={clue.id === justUnlockedClue}
-          />
-        ))}
-
-        {ordered.length === 0 && (
-          <EmptyStack
-            lines={style.sealedLines}
-            title={showMine ? 'Nobody else’s yet' : 'Nothing decoded yet'}
-            hint={style.hint || emptyHint(currentRound >= ASK_OPENS_AT)}
-          />
-        )}
-      </div>
-    );
-  }
-
-  // --- The hub ---
-
-  const openStack = (key) => {
-    // A 20ms buzz on tile tap is part of the product's texture (§4.3).
+  const selectStack = (key) => {
     if (navigator.vibrate) navigator.vibrate(20);
     onOpenStack(key);
   };
 
+  const activeDef = CLUE_STACK_BY_KEY[activeStack];
+  const items = activeDef ? cluesIn(activeDef) : [];
+  const showMine = activeDef ? ownAccusationIn(activeDef) : false;
+  const inPlay = activeDef ? activeDef.clues.filter((clue) => clue.roundReq <= currentRound).length : 0;
+  const ordered = justUnlockedClue
+    ? [
+        ...items.filter((clue) => clue.id === justUnlockedClue),
+        ...items.filter((clue) => clue.id !== justUnlockedClue),
+      ]
+    : items;
+
   return (
     <div className="space-y-5">
-      {/* Stat — brass numeral over a mono label, hairline above (§6.6). Summed from
-          the tiles rather than counted off the decoded set, so the total can never
-          disagree with the four numbers sitting directly under it. */}
-      <EvidenceStat collected={collected} inPlay={reachable} />
-
-      {/* The five stacks. Case files spans the row: it is the official record
-          rather than something you decoded, which is a different kind of thing —
-          and it keeps the four clue stacks a clean 2×2. */}
-      <div className="grid grid-cols-2 gap-3">
-        {CLUE_STACKS.map((def, index) => (
-          <StackTile
-            key={def.key}
-            label={EVIDENCE_STACKS[def.key].title}
-            sub={EVIDENCE_STACKS[def.key].kicker}
-            count={countIn(def)}
-            sealedUntil={currentRound < def.opensAt ? def.opensAt : null}
-            tone={STACK_STYLE[def.key].tone}
-            rot={STACK_STYLE[def.key].rot}
-            motion={tileMotion}
-            delayMs={playIntro ? index * 60 : null}
-            onClick={() => openStack(def.key)}
-          />
-        ))}
-
-        <StackTile
-          label={EVIDENCE_STACKS.files.title}
-          sub={EVIDENCE_STACKS.files.kicker}
-          count={releasedFiles}
-          sealedUntil={null}
-          tone="aged"
-          rot=""
-          wide
-          motion={tileMotion}
-          delayMs={playIntro ? CLUE_STACKS.length * 60 : null}
-          onClick={() => openStack('files')}
-        />
+      <div className="-mx-4 px-4 overflow-x-auto custom-scrollbar" role="tablist" aria-label="Evidence categories">
+        <div className="flex gap-2 w-max min-w-full">
+          {tabs.map((tab) => {
+            const selected = activeStack === tab.key;
+            const tutorialTarget = tutorialActive && tab.key === 'accusations';
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                onClick={() => selectStack(tab.key)}
+                data-tutorial-cue={tutorialTarget ? 'Start here' : undefined}
+                className={`er-touch h-11 shrink-0 px-4 border font-mono text-[11px] font-medium uppercase tracking-[0.18em] ${
+                  selected
+                    ? 'bg-ink-hover border-signal text-signal-lift'
+                    : 'bg-ink-raised border-line text-dim hover:border-signal hover:text-bone'
+                } ${tutorialTarget ? 'er-tutorial-target' : ''}`}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      {/* The cards that are *yours* rather than found: the confession (murderer,
-          Round 6) and your own accusation (Round 1+). One label over both — each
-          card already names itself in its tag, so repeating the name here would
-          say it twice. Never behind a tap: these are the lines you perform out
-          loud, and at the moment the confession exists it is the most important
-          card in the game. */}
-      {(confession || hasAccusationYet) && (
-        <>
-          <div className="pt-1">
-            <div className="er-rule" />
-            <p className="er-mono er-mono--hot er-mono--wide pt-3">Yours alone</p>
-          </div>
+      {activeStack === 'files' && <CaseFilesSection unlockedFiles={unlockedFiles} />}
 
-          {confession && (
-            <ClueCard
-              index={0}
-              type="Confession"
-              title={confession.title}
-              body={confession.content}
-              note="Only you can see this."
-            />
+      {activeStack === 'personal' && confession && (
+        <ClueCard
+          index={0}
+          type="Confession"
+          title={confession.title}
+          body={confession.content}
+          note="Only you can see this."
+        />
+      )}
+
+      {activeDef && (
+        <>
+          <EvidenceStat collected={items.length + (showMine ? 1 : 0)} inPlay={inPlay} />
+
+          {showMine && (
+            <>
+              <p className="er-mono er-mono--hot er-mono--wide">Your lead</p>
+              <ClueCard
+                index={0}
+                type="Your Accusation"
+                title={myAccusation.title}
+                body={myAccusation.accusation}
+                code={`Code ${myAccusation.code}`}
+                note="Share this out loud. It is what your character witnessed."
+                pinBrass
+                tutorialTarget={tutorialActive}
+              />
+              {ordered.length > 0 && (
+                <div className="pt-1">
+                  <div className="er-rule" />
+                  <p className="er-mono er-mono--hot er-mono--wide pt-3">From the room</p>
+                </div>
+              )}
+            </>
           )}
 
-          {hasAccusationYet && (
+          {ordered.map((clue, index) => (
             <ClueCard
-              index={1}
-              type="Your Accusation"
-              title={myAccusation.title}
-              body={myAccusation.accusation}
-              code={`Code ${myAccusation.code}`}
-              note="Share this out loud. It is what your character witnessed."
-              pinBrass
+              key={clue.id}
+              index={showMine ? index + 1 : index}
+              type={clue.type}
+              title={clue.title}
+              body={clue.type === 'ACCUSATION' ? clue.accusation : clue.content}
+              code={clue.code}
+              fresh={clue.id === justUnlockedClue}
+            />
+          ))}
+
+          {ordered.length === 0 && (
+            <EmptyStack
+              lines={STACK_STYLE[activeDef.key].sealedLines}
+              title={showMine ? 'Nobody else’s yet' : 'Nothing decoded yet'}
+              hint={STACK_STYLE[activeDef.key].hint || emptyHint(currentRound >= ASK_OPENS_AT)}
             />
           )}
         </>
       )}
-
-      {/* There is no "your accusation is sealed" placeholder here any more. It was
-          unreachable: App.jsx returns `myAccusation = null` for any round below 1,
-          so its `myAccusation && currentRound < 1` condition could never be true.
-          The Accusations tile stamped "Opens R01" now carries that message, and it
-          carries it for the whole stack rather than just the player's own card. */}
     </div>
   );
 };

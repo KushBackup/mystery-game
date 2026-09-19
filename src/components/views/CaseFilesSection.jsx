@@ -14,22 +14,14 @@ import { InfoTip } from '../ui/InfoTip';
  * splitting them meant the incident report lived on one tile while the clue the
  * player just decoded lived on another.
  *
- * Files the host has released are bone documents. Files still sealed are ghost
- * tags carrying their round number — a state that is not yet true, drawn as an
- * outline rather than a fill (§6.1).
+ * Files the host has released are bone documents. Future releases stay absent
+ * from the player surface until they are relevant to the investigation.
  *
  * It carries no heading of its own: the Case files tab above it is the label, and
  * repeating it here would be a second name for the same stack.
  */
 export const CaseFilesSection = ({ unlockedFiles = [] }) => {
   const availableFiles = CASE_FILES.filter((file) => unlockedFiles.includes(file.id));
-
-  const lockedRounds = [0, 3, 4]
-    .map((round) => ({
-      round,
-      pending: CASE_FILES.filter((f) => f.roundReq === round && !unlockedFiles.includes(f.id)).length,
-    }))
-    .filter((info) => info.pending > 0);
 
   return (
     <section className="space-y-5">
@@ -50,24 +42,6 @@ export const CaseFilesSection = ({ unlockedFiles = [] }) => {
           <p className="er-stat__label">On file</p>
         </div>
       </div>
-
-      {/* Awaiting authorisation */}
-      {lockedRounds.length > 0 && (
-        <div className="er-card">
-          <p className="er-mono er-mono--wide er-mono--bone">Awaiting authorisation</p>
-          <div className="flex flex-wrap gap-2 mt-4">
-            {lockedRounds.map((info) => (
-              <span key={info.round} className="er-tag er-tag--ghost">
-                Round {String(info.round).padStart(2, '0')} · {info.pending}{' '}
-                {info.pending === 1 ? 'file' : 'files'}
-              </span>
-            ))}
-          </div>
-          <p className="font-body text-[15px] leading-[1.55] text-dim mt-4">
-            The host releases these as the investigation moves.
-          </p>
-        </div>
-      )}
 
       {/* Nothing released yet */}
       {availableFiles.length === 0 && (

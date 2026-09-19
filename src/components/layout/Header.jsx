@@ -39,8 +39,8 @@ export const Header = ({
   roundTimer = IDLE_TIMER,
   isVotingOpen,
   onClose,
-  // Where this X actually goes. It is not always the board — from an open Evidence
-  // stack it steps back to the Evidence hub — and a screen reader is told the truth.
+  // Where this X goes. Evidence categories are in-place tabs, so every player
+  // screen uses the same return-to-board behavior.
   closeLabel = 'Close and return to the board',
 }) => {
   const roundTitle = currentRoundData?.title || 'Standby';

@@ -15,7 +15,6 @@ import { GuestProfileModal } from './components/modals/GuestProfileModal';
 import { DecoderModal } from './components/modals/DecoderModal';
 import { RiddleModal } from './components/modals/RiddleModal';
 import { VoteResultsModal } from './components/modals/VoteResultsModal';
-import { ScreenBrief } from './components/ui/ScreenBrief';
 import { InfoTip } from './components/ui/InfoTip';
 import { CharacterSelect } from './components/CharacterSelect';
 import { HostPanel } from './components/HostPanel';
@@ -25,13 +24,15 @@ import { OutroSplash } from './components/OutroSplash';
 import { MurdererRevealOverlay } from './components/MurdererRevealOverlay';
 import { StandbyScreen } from './components/StandbyScreen';
 import { ROUNDS, CHARACTERS, CLUE_DB, stackKeyForClue, getAssignedAccusation, getWalkInAccusation, CONFESSION_CLUE, getKillers, isMurderer, nextRiddleReward, nextWalkInRiddleReward, ASK_OPENS_AT } from './data/gameData';
-import { SCREEN_GUIDE, EVIDENCE_STACKS } from './data/screenGuide';
+import { SCREEN_GUIDE } from './data/screenGuide';
 import { TOOLTIPS } from './data/tooltips';
 import { IDLE_TIMER, readTimer } from './lib/roundTimer';
 import { NOT_STARTED, readStartedAt, startPhase } from './lib/gameStart';
 import { initializeGameState, subscribeToGameState, initializeVotes, subscribeToVotes, submitVote as submitVoteToFirebase, initializePlayerData, subscribeToPlayerData, addUnlockedClue, subscribeToWalkIns, subscribeToWalkInPasses } from './firebase/config';
-import { useUnreadMessages } from './hooks/useUnreadMessages';
+import { clearUnreadMessages, useUnreadMessages } from './hooks/useUnreadMessages';
 import { useVotingPhase } from './hooks/useVotingPhase';
+import { TUTORIAL_STAGES, clearTutorialProgress, readTutorialStage, saveTutorialStage, tutorialStageForRound, tutorialStepFor, tutorialTabsFor } from './lib/tutorial';
+import { clearSolvedRiddles } from './data/riddles';
 
 // Session is persisted so a reload — whether the host's force-sync broadcast, a
 // service-worker update, or a player accidentally swiping the tab away — drops
@@ -82,13 +83,13 @@ const walkInGuest = (walkIn) => ({
 
 // A single beat while that first snapshot lands. Same masthead as the splash, so
 // a reload reads as the app still booting rather than as a blank screen.
-const CaseHold = () => (
+const CaseHold = ({ resetting = false }) => (
   <div className="min-h-screen bg-ink relative er-grain flex items-center justify-center px-6">
     <div className="er-vignette" aria-hidden="true" />
     <div className="relative z-10 text-center er-enter">
-      <p className="er-mono er-mono--hot er-mono--wide">Case 8821-B</p>
+      <p className="er-mono er-mono--hot er-mono--wide">{resetting ? 'Case reset' : 'Case 8821-B'}</p>
       <div className="er-rule my-4" />
-      <p className="er-mono er-mono--dim">Syncing case file</p>
+      <p className="er-mono er-mono--dim">{resetting ? 'Preparing a clean case file' : 'Syncing case file'}</p>
     </div>
   </div>
 );
@@ -135,6 +136,14 @@ const spendAskCue = () => {
   }
 };
 
+const clearAskCue = () => {
+  try {
+    window.localStorage.removeItem(ASK_CUE_KEY);
+  } catch {
+    // Storage can be unavailable in private browsing; the state reset below still applies.
+  }
+};
+
 export default function App() {
   // Global State
   const [splashComplete, setSplashComplete] = useState(false);
@@ -156,6 +165,7 @@ export default function App() {
   const [revealedToMurderer, setRevealedToMurderer] = useState(false); // Round 6 reveal
   const [revealedClues, setRevealedClues] = useState([]); // Host-revealed clues
   const [gameEnded, setGameEnded] = useState(false); // Game ended flag
+  const [resetInProgress, setResetInProgress] = useState(false);
   // The round clock (lib/roundTimer.js). Game state like everything else above —
   // the host starts it, Firestore broadcasts it, and every device reads the same
   // end instant off the same document rather than running a countdown of its own.
@@ -190,12 +200,13 @@ export default function App() {
   // updates when the snapshot lands. Local, and deliberately never cleaned up —
   // once the snapshot arrives the ids are simply duplicates in a Set.
   const [pendingUnlocks, setPendingUnlocks] = useState([]);
-  // Which stack the Evidence screen has open — null is its hub. It lives here
-  // rather than inside IntelView because on a stack the screen *title* is the
-  // stack's name, and this component owns the screen frame for every view (§4.2).
+  // The selected Evidence tab. Null means IntelView chooses the newest category
+  // that is live for this round; it is reset whenever the player leaves Evidence.
   const [evidenceStack, setEvidenceStack] = useState(null);
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [isHost, setIsHost] = useState(() => hostPortal ? false : readSession().isHost);
+  const [tutorialStage, setTutorialStage] = useState(() => readTutorialStage(readSession().currentUser));
+  const [tutorialGuestProfileSeen, setTutorialGuestProfileSeen] = useState(false);
 
   // True once the real game state is known — the first Firestore snapshot, or the
   // STATE_SETTLE_MS backstop, whichever comes first.
@@ -234,6 +245,9 @@ export default function App() {
   // against it is what stops the very first snapshot from triggering a reload
   // loop on every page load.
   const lastForceRefreshRef = useRef(null);
+  // Reset Game is also the start of a new player onboarding cycle. Kept apart
+  // from forceRefreshAt so an ordinary recovery reload never restarts tutorials.
+  const lastTutorialResetRef = useRef(null);
 
   const activeWalkIns = useMemo(
     () => walkIns.filter((walkIn) => walkIn.active),
@@ -264,6 +278,9 @@ export default function App() {
   const currentRoundData = ROUNDS[currentRound] || ROUNDS[ROUNDS.length - 1];
   const voting = useVotingPhase(roundTimer, currentRound);
   const isVotingOpen = voting.phase === 'open';
+  const effectiveTutorialStage = isHost ? TUTORIAL_STAGES.COMPLETE : tutorialStageForRound(tutorialStage, currentRound);
+  const tutorialStep = isHost ? null : tutorialStepFor(effectiveTutorialStage, currentRound);
+  const tutorialTabs = tutorialTabsFor(effectiveTutorialStage, currentRound);
 
   // The ballot tally for the round the room is actually in — { suspectId: count }.
   //
@@ -369,8 +386,25 @@ export default function App() {
       setRevealedToMurderer(gameState.revealedToMurderer || false);
       setRevealedClues(gameState.revealedClues || []);
       setGameEnded(gameState.gameEnded || false);
+      setResetInProgress(gameState.resetInProgress || false);
       setRoundTimer(readTimer(gameState));
       setGameStartedAt(readStartedAt(gameState));
+
+      // Every reset broadcasts a fresh timestamp. The first snapshot is only a
+      // baseline; a newer one means this device should forget every locally
+      // stored player's walkthrough before the reset's force-refresh reload.
+      const tutorialResetAt = gameState.tutorialResetAt || 0;
+      if (lastTutorialResetRef.current === null) {
+        lastTutorialResetRef.current = tutorialResetAt;
+      } else if (tutorialResetAt > lastTutorialResetRef.current) {
+        lastTutorialResetRef.current = tutorialResetAt;
+        clearTutorialProgress();
+        clearSolvedRiddles();
+        clearUnreadMessages();
+        clearAskCue();
+        setTutorialStage(TUTORIAL_STAGES.IDENTITY);
+        setTutorialGuestProfileSeen(false);
+      }
 
       // Host force-sync. The first snapshot only records the current value —
       // reloading on it would put every device in a boot loop. Only a value
@@ -419,8 +453,8 @@ export default function App() {
   // scrolled the board down to reach a tile landed part-way into whatever they
   // opened. Most visible on the Story briefing, which is the tallest surface here.
   //
-  // `evidenceStack` is in the deps for the same reason: drilling into a stack, or
-  // backing out of a long one, is a screen change even though the tab has not moved.
+  // `evidenceStack` is in the deps because switching a long Evidence tab should
+  // start at its top, just like opening another screen.
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [activeTab, evidenceStack]);
@@ -458,6 +492,8 @@ export default function App() {
     }
     setCurrentUser(id);
     setIsHost(isHostLogin);
+    setTutorialStage(isHostLogin ? TUTORIAL_STAGES.COMPLETE : readTutorialStage(id));
+    setTutorialGuestProfileSeen(false);
     if (isHostLogin) {
       setActiveTab('host'); // Go directly to host interface
     } else {
@@ -646,8 +682,8 @@ export default function App() {
   // murderer reveal replaces it) for as long as the snapshot takes to arrive.
   // The host is exempt: the console is safe from the first frame and the run sheet
   // is the thing they are most likely to be reloading to get back to.
-  if (!isHostUser && !stateSettled) {
-    return <CaseHold />;
+  if (!isHostUser && (!stateSettled || resetInProgress)) {
+    return <CaseHold resetting={resetInProgress} />;
   }
 
   // Public killer reveal — the first thing EVERY player sees the moment the host
@@ -764,6 +800,8 @@ export default function App() {
       if (tabId === 'logout') {
         setCurrentUser(null);
         setIsHost(false); // otherwise the persisted host flag outlives the logout
+        setTutorialStage(TUTORIAL_STAGES.IDENTITY);
+        setTutorialGuestProfileSeen(false);
         // Undecide the briefing: the next player to log in on this device is a
         // different person, and if the game is still in Round 0 they need it.
         setBriefingState('pending');
@@ -782,9 +820,11 @@ export default function App() {
           currentRound={currentRound}
           roundTimer={roundTimer}
           isVotingOpen={isVotingOpen}
-          note={SCREEN_GUIDE.hub}
           unreadCount={unread.count}
           unreadKey={unread.newestId}
+          allowedTabs={tutorialTabs}
+          tutorialStep={tutorialStep}
+          onStartTutorialStep={setActiveTab}
         />
 
         {/* Decoder Modal */}
@@ -802,21 +842,21 @@ export default function App() {
     );
   }
 
-  // An open Evidence stack frames itself like any other screen — its own kicker and
-  // title from EVIDENCE_STACKS. It carries no `brief`, because the screen note
-  // describes the hub, and ScreenBrief renders nothing without one.
-  const screen =
-    (activeTab === 'intel' && EVIDENCE_STACKS[evidenceStack]) ||
-    SCREEN_GUIDE[activeTab] || { kicker: 'File', title: activeTab };
+  const screen = SCREEN_GUIDE[activeTab] || { kicker: 'File', title: activeTab };
 
   const isSelfFramed = SELF_FRAMED_VIEWS.has(activeTab);
 
-  // Close undoes one level, not the whole trip. An open Evidence stack is framed as
-  // a screen of its own, so the X on it has to behave like the X on a screen — it
-  // returns to the Evidence hub, and the next one returns to the board. Dropping
-  // straight to the board from a stack would skip a screen the player never left.
-  const inEvidenceStack = activeTab === 'intel' && evidenceStack !== null;
-  const closeScreen = () => (inEvidenceStack ? setEvidenceStack(null) : setActiveTab(null));
+  const closeScreen = () => {
+    const completedTarget = tutorialStep?.target === activeTab;
+    const needsGuestProfile = tutorialStep?.target === 'dossier';
+    if (completedTarget && (!needsGuestProfile || tutorialGuestProfileSeen)) {
+      const nextStage = Math.min(effectiveTutorialStage + 1, TUTORIAL_STAGES.COMPLETE);
+      setTutorialStage(nextStage);
+      saveTutorialStage(currentUser, nextStage);
+      setTutorialGuestProfileSeen(false);
+    }
+    setActiveTab(null);
+  };
 
   // Ink is the world; only diegetic documents get a bone surface (§5).
   //
@@ -837,7 +877,6 @@ export default function App() {
         roundTimer={roundTimer}
         isVotingOpen={isVotingOpen}
         onClose={closeScreen}
-        closeLabel={inEvidenceStack ? 'Close and return to the evidence board' : undefined}
       />
 
       {/* Main Content */}
@@ -852,7 +891,6 @@ export default function App() {
           <div className="mb-6 er-enter">
             <p className="er-mono er-mono--hot er-mono--wide">{screen.kicker}</p>
             <h1 className="er-title mt-2">{screen.title}</h1>
-            <ScreenBrief note={screen} currentRound={currentRound} className="mt-5" />
           </div>
         )}
 
@@ -863,6 +901,7 @@ export default function App() {
             currentRound={currentRound}
             votingPhase={voting.phase}
             revealedToMurderer={revealedToMurderer}
+            resetInProgress={resetInProgress}
             unlockedFiles={unlockedFiles}
             revealedClues={revealedClues}
             roundTimer={roundTimer}
@@ -882,7 +921,11 @@ export default function App() {
         )}
 
         {activeTab === 'dashboard' && (
-          <DashboardView myCharacter={myCharacter} currentRound={currentRound} />
+          <DashboardView
+            myCharacter={myCharacter}
+            currentRound={currentRound}
+            tutorialActive={tutorialStep?.target === 'dashboard'}
+          />
         )}
 
         {activeTab === 'story' && (
@@ -900,15 +943,12 @@ export default function App() {
             unlockedFiles={unlockedFiles}
             stack={evidenceStack}
             onOpenStack={setEvidenceStack}
+            tutorialActive={tutorialStep?.target === 'intel'}
           />
         )}
 
         {activeTab === 'chat' && (
-          <ChatView
-            myCharacter={myCharacter}
-            currentRound={currentRound}
-            note={screen}
-          />
+          <ChatView myCharacter={myCharacter} tutorialActive={tutorialStep?.target === 'chat'} />
         )}
 
         {activeTab === 'timeline' && (
@@ -920,6 +960,8 @@ export default function App() {
             currentUser={currentUser}
             guests={allGuests}
             onSelectGuest={setSelectedGuest}
+            onTutorialProfileOpened={() => setTutorialGuestProfileSeen(true)}
+            tutorialActive={tutorialStep?.target === 'dossier'}
           />
         )}
 
@@ -931,6 +973,7 @@ export default function App() {
             votes={votes[currentUser] || {}}
             votingMsLeft={voting.msLeft}
             onVote={submitVote}
+            tutorialActive={tutorialStep?.target === 'votes'}
           />
         )}
 

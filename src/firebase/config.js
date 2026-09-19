@@ -263,7 +263,9 @@ export const initializeGameState = async () => {
         revealedToMurderer: false,
         revealedClues: [], // Host-revealed clues
         gameEnded: false, // Track if game has ended
+        resetInProgress: false, // Hold clients while the host wipes the previous room
         forceRefreshAt: 0, // Timestamp of the host's last force-sync broadcast
+        tutorialResetAt: 0, // Timestamp of the last host reset for local tutorial ledgers
         // Not started: every player who logs in waits on the standby screen
         // until the host presses Start. See lib/gameStart.js.
         ...writeStartedAt(NOT_STARTED),
@@ -275,13 +277,15 @@ export const initializeGameState = async () => {
     } else {
       // Ensure new fields exist in existing game state
       const data = docSnap.data();
-      if (!data.unlockedFiles || !('revealedToMurderer' in data) || !data.revealedClues || !('gameEnded' in data) || !('forceRefreshAt' in data) || !('roundTimerEndsAt' in data) || !('gameStartedAt' in data)) {
+      if (!data.unlockedFiles || !('revealedToMurderer' in data) || !data.revealedClues || !('gameEnded' in data) || !('resetInProgress' in data) || !('forceRefreshAt' in data) || !('tutorialResetAt' in data) || !('roundTimerEndsAt' in data) || !('gameStartedAt' in data)) {
         await updateDoc(gameStateRef, {
           unlockedFiles: data.unlockedFiles || ['f_incident'],
           revealedToMurderer: data.revealedToMurderer ?? false,
           revealedClues: data.revealedClues || [],
           gameEnded: data.gameEnded ?? false,
+          resetInProgress: data.resetInProgress ?? false,
           forceRefreshAt: data.forceRefreshAt ?? 0,
+          tutorialResetAt: data.tutorialResetAt ?? 0,
           // The mirror image of the round-clock backfill below. Backfilling a
           // game that is already past Round 0 as "not started" would drop the
           // standby screen onto a room mid-evening, so a game with a round on
@@ -668,34 +672,24 @@ export const resetGameState = async () => {
   const gameStateRef = doc(db, GAME_STATE_DOC);
   const votesRef = doc(db, VOTES_DOC);
   const playerDataRef = doc(db, 'gameState/playerData');
-  
-  try {
-    // Reset main game state
-    await setDoc(gameStateRef, {
-      currentRound: 0,
-      unlockedFiles: ['f_incident'],
-      revealedToMurderer: false,
-      revealedClues: [],
-      gameEnded: false,
-      // Back to standby. A reset is the host setting up for the next room, and
-      // the next room should be held at the door exactly like this one was.
-      ...writeStartedAt(NOT_STARTED),
-      // Stopped, and armed at the default length — a new game's Round 0 is the
-      // briefing, which nobody should walk into against a running clock.
-      ...writeTimer(IDLE_TIMER),
-      // A reset bumps this too: every device reloads onto the clean state
-      // rather than sitting on stale round/clue data from the previous game.
-      forceRefreshAt: Date.now(),
-      lastUpdated: Date.now()
-    });
+  let resetStarted = false;
 
-    // Reset votes
+  try {
+    // Phase one: every player who receives this snapshot is held before any
+    // destructive work begins. The force-refresh must not happen here: reloading
+    // halfway through a chat wipe is how a "reset" can still show old messages.
+    await updateDoc(gameStateRef, {
+      resetInProgress: true,
+      lastUpdated: Date.now(),
+    });
+    resetStarted = true;
+
+    // Clear every shared record that belongs to one room.
     await setDoc(votesRef, {
       votes: {},
       lastUpdated: Date.now()
     });
 
-    // Reset player data (unlocked clues)
     await setDoc(playerDataRef, {
       unlockedClues: {},
       lastUpdated: Date.now()
@@ -708,12 +702,36 @@ export const resetGameState = async () => {
     await clearCollection(WALK_IN_CONTACTS);
     await clearCollection(WALK_IN_PASSES);
 
-    // Clear all chat messages. Deliberately last: if the channel refuses to
-    // clear, the round, votes and clues are already back to zero, and the
-    // rethrow below tells the host which half didn't land.
     await clearAllMessages();
 
+    // Phase two: only after every collection has been wiped do we publish the
+    // fresh room and its reload signal. New players return to standby, with no
+    // votes, clues, messages, walk-ins, timer, reveal, or host-released files.
+    const resetAt = Date.now();
+    await setDoc(gameStateRef, {
+      currentRound: 0,
+      unlockedFiles: ['f_incident'],
+      revealedToMurderer: false,
+      revealedClues: [],
+      gameEnded: false,
+      resetInProgress: false,
+      ...writeStartedAt(NOT_STARTED),
+      ...writeTimer(IDLE_TIMER),
+      forceRefreshAt: resetAt,
+      tutorialResetAt: resetAt,
+      lastUpdated: resetAt,
+    });
+
   } catch (error) {
+    // A failed cleanup must not leave players indefinitely behind the reset
+    // curtain. The host still receives the failure and can retry the reset.
+    if (resetStarted) {
+      try {
+        await updateDoc(gameStateRef, { resetInProgress: false, lastUpdated: Date.now() });
+      } catch (releaseError) {
+        console.error('Error releasing reset hold:', releaseError);
+      }
+    }
     console.error('Error resetting game state:', error);
     throw error;
   }

@@ -51,9 +51,9 @@ export const SCREEN_GUIDE = {
   intel: {
     kicker: 'Evidence Board',
     title: 'Evidence',
-    brief: 'Five stacks of paper. Tap one to read it, or punch a code somebody reads out into CODE, bottom right.',
+    brief: 'Tabs only appear when their round is live. Read the file in front of you, or punch a shared clue into CODE, bottom right.',
     detail:
-      'Your case, sorted into stacks: accusations, motives, evidence, revelations and the official case files. Tap a stack to read it. A stack greyed out with a round number on it has not opened yet. CODE sits bottom right: type in a code somebody else has given you. From Round 02 a second button, ASK, appears beside it - solve a riddle and you unseal a new clue plus a code you can pass to the room.',
+      'Your case, sorted into round-aware tabs. Case files are always available; Accusations appears in Round 01, Motives in Round 02, Evidence in Round 03 and Revelations in Round 04. CODE sits bottom right: type in a code somebody else has given you. From Round 02 a second button, ASK, appears beside it - solve a riddle and you unseal a new clue plus a code you can pass to the room.',
   },
 
   chat: {

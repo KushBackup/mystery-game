@@ -15,7 +15,7 @@ import { TOOLTIPS } from '../../data/tooltips';
  * The old rainbow of avatar colours is gone: differentiation comes from the
  * surface and the label, never from a new hue (§2.2).
  */
-export const DossierView = ({ currentUser, guests = CHARACTERS, onSelectGuest }) => {
+export const DossierView = ({ currentUser, guests = CHARACTERS, onSelectGuest, onTutorialProfileOpened, tutorialActive = false }) => {
   const [query, setQuery] = useState('');
 
   // The file number is the guest's position in the roster, not their position
@@ -90,8 +90,12 @@ export const DossierView = ({ currentUser, guests = CHARACTERS, onSelectGuest })
           return (
             <button
               key={char.id}
-              onClick={() => onSelectGuest(char)}
-              className={`er-touch er-enter w-full text-left flex items-center gap-3 px-3 py-3 hover:bg-ink-hover ${
+              onClick={() => {
+                onTutorialProfileOpened?.();
+                onSelectGuest(char);
+              }}
+              data-tutorial-cue={tutorialActive && index === 0 ? 'Open a file' : undefined}
+              className={`er-touch er-enter ${tutorialActive && index === 0 ? 'er-tutorial-target' : ''} w-full text-left flex items-center gap-3 px-3 py-3 hover:bg-ink-hover ${
                 index > 0 ? 'border-t border-line-faint' : ''
               } ${isMe ? 'border-l-[3px] border-l-signal' : ''}`}
               style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
