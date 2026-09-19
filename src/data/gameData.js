@@ -1194,9 +1194,9 @@ export const HOST_SCRIPT = [
     id: 0,
     title: 'Round 0 · The Incident',
     duration: '10-15 min',
-    setup: 'The Incident Report is unlocked by default. When the round clock ends, a five-minute blind ballot opens on every phone automatically.',
+    setup: 'The Incident Report is unlocked by default. When the round clock ends, the host-configured blind ballot opens on every phone automatically.',
     announce: `"Round 0. The Incident. Rehan Vora was found in the upstairs library at 6:18 PM. An onsite doctor flagged likely poisoning by 6:31. Police sealed Greenr at 6:40, and nobody left after 5:25.\n\nOpen Story first. Then open Evidence and read the Incident Report in Case Files. Several of you cannot be continuously placed in public view when it mattered. When the round ends, cast your first bad vote before certainty exists."`,
-    during: 'Let the room read and mingle in character. The round clock starts the blind ballot; its five-minute window closes by itself.',
+    during: 'Let the room read and mingle in character. The round clock starts the blind ballot; its host-set window closes by itself.',
     end: 'Read the named tally, then press Start Round 01 when the room is ready.',
   },
   {

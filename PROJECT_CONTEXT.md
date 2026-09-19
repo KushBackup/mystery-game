@@ -33,8 +33,8 @@ At **5:58 PM**, the launch reel stutters, the guest Wi-Fi dies and the card read
 1. Players log in as one of 26 guest identities.
 2. The host starts the room; Round 0 opens with the fullscreen typed briefing.
 3. A player tutorial then reveals the app one task at a time: identity, one guest profile, Comms and the voting screen.
-4. Each round clock automatically gives every player a five-minute ballot when it reaches zero; then a public tally names every voter and their choice.
-5. The host starts the next round only after that announced tally.
+4. Each round clock automatically gives every player a host-configured ballot when it reaches zero; then a public tally names every voter and their choice.
+5. Normally the host starts the next round after that announced tally; the host console also provides confirmed manual previous/next round recovery controls.
 6. Round 1 directs every player to their accusation card on the Evidence screen - one suspect-lane witness claim from their statement pod.
 7. Round 2 opens the riddle lock and puts the 10 motive files into its prize pool.
 8. Round 3 unlocks case files and adds 8 evidence clues to the pool.

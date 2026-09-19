@@ -16,7 +16,7 @@
 
 ## Automated Voting
 
-Each round ends with an automatic five-minute ballot on every player phone. When
+Each round ends with an automatic host-configured ballot on every player phone. When
 the ballot timer ends, the public result names every voter and their choice. Read
 the tally, then use **Start Round N** on the host console to begin the next round.
 

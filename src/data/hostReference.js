@@ -156,7 +156,7 @@ export const HOST_ROUND_GUIDE = {
     actions: [
       'Let the Round 0 briefing play.',
       'Point players to Story, then Evidence -> Case files.',
-      'Let the round clock open the five-minute blind ballot, then read the named tally.',
+      'Let the round clock open the host-configured blind ballot, then read the named tally.',
     ],
     emphasize: [
       'The venue is sealed and nobody left after 5:25.',

@@ -176,10 +176,12 @@ The game-start model and round clock are unchanged from the prior case:
 - the host starts the room with a shared 10-second countdown
 - the start is stored as an absolute instant, not a boolean
 - the round clock is host-written and player-read only
-- a round clock reaching zero automatically starts a five-minute ballot on every player device
+- a round clock reaching zero automatically starts a host-configured ballot on every player device (five minutes by default)
 - the ballot and its public result are derived from the clock's absolute end instant, so neither transition creates client writes or drifts on reload
 - when the ballot ends, a locked result takeover shows the tally and every voter-to-candidate choice
-- the host's **Start Round N** control is the only exit from results; it advances the round and starts its new clock in the existing atomic write
+- the host's round and timer controls remain available during ballot and results as a recovery override; normal post-results advances remain confirmation-free, while off-script moves require confirmation
+- changing a round with a live clock restarts it for that round; an expired clock stays armed and stopped so the host can set the next duration before starting it
+- ballot presets use the same shared timer record and can be set before a round ends or while its ballot is open; changing one immediately recalculates every ballot countdown
 
 ## Player Tutorial
 

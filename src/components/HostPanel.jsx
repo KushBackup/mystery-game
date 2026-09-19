@@ -17,12 +17,16 @@ import { CASE_FILES, CASE_META, CLUE_DB, HOST_SCRIPT } from '../data/gameData';
 import {
   IDLE_TIMER,
   TIMER_PRESETS,
+  VOTING_PRESETS,
   clearTimer,
+  clockPhase,
+  formatClock,
   isPaused,
   isRunning,
   pauseTimer,
   resumeTimer,
   setTimerDuration,
+  setVotingDuration,
   startTimer,
   timerForRound,
 } from '../lib/roundTimer';
@@ -176,17 +180,17 @@ export const HostPanel = ({
     );
   }
 
-  // Optimistic UI: update local state instantly so the host sees feedback the
-  // moment they tap, then fire-and-forget the Firestore write. The onSnapshot
-  // subscription in App.jsx confirms the same value a moment later (no flicker).
-  //
-  // The clock moves with the round, in the same write (see updateCurrentRound in
-  // firebase/config.js). A running clock restarts at full length for the new
-  // round — skipping ahead is the host saying "this round starts now" — and a
-  // stopped one stays stopped. lib/roundTimer.js owns that decision so the rule
-  // is stated once rather than in every control that can change the round.
+  // The host can move the room at any time. During the normal path this is the
+  // post-results advance; outside it, a confirmation makes the recovery action
+  // deliberate without trapping the host behind an expired timer or ballot.
   const handleRoundChange = (newRound) => {
-    if (votingPhase !== 'results' || newRound !== currentRound + 1) return;
+    if (newRound < 0 || newRound > 6 || newRound === currentRound) return;
+    const needsConfirmation = votingPhase !== 'results' || newRound < currentRound;
+    if (needsConfirmation && !window.confirm(
+      `Move the room from Round ${String(currentRound).padStart(2, '0')} to Round ${String(newRound).padStart(2, '0')}? ` +
+      'This ends any active ballot. A live clock restarts for the new round; an expired clock stays armed and stopped.'
+    )) return;
+
     const nextTimer = timerForRound(roundTimer, newRound);
     setCurrentRound(newRound);
     setRoundTimer?.(nextTimer);
@@ -204,7 +208,9 @@ export const HostPanel = ({
   // screen at all times, and this is a console read at arm's length in a dark
   // room while somebody is talking to you.
   const handleTimerToggle = () => {
-    if (isRunning(roundTimer)) return commitTimer(pauseTimer(roundTimer));
+    if (isRunning(roundTimer) && clockPhase(roundTimer) !== 'done') {
+      return commitTimer(pauseTimer(roundTimer));
+    }
     if (isPaused(roundTimer)) return commitTimer(resumeTimer(roundTimer));
     return commitTimer(startTimer(roundTimer, currentRound));
   };
@@ -217,6 +223,8 @@ export const HostPanel = ({
   // long without waiting for the next advance.
   const handleTimerPreset = (ms) =>
     commitTimer(setTimerDuration(roundTimer, ms, currentRound));
+
+  const handleVotingPreset = (ms) => commitTimer(setVotingDuration(roundTimer, ms));
 
   // --- The starting gun (lib/gameStart.js) ---------------------------------
 
@@ -348,13 +356,14 @@ export const HostPanel = ({
   // than stored for the same reason the reading of "done" is (lib/roundTimer.js):
   // nothing writes when a countdown runs out.
   const timerIdle = !isRunning(roundTimer) && !isPaused(roundTimer);
+  const timerDone = clockPhase(roundTimer) === 'done';
   const timerState = votingPhase === 'open'
     ? 'Ballot open'
     : votingPhase === 'results'
       ? 'Results'
       : isRunning(roundTimer) ? 'Running' : isPaused(roundTimer) ? 'Held' : 'Stopped';
-  const timerControlsLocked = votingPhase !== 'idle';
-  const canStartNextRound = currentRound < 6 && votingPhase === 'results';
+  const canMovePreviousRound = currentRound > 0;
+  const canMoveNextRound = currentRound < 6;
   const activeWalkIns = walkIns.filter((walkIn) => walkIn.active);
 
   // Group clues by round (the confession is handled separately).
@@ -518,26 +527,52 @@ export const HostPanel = ({
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Round control */}
-        <Section label="Round" meta="Live on every device">
+        <Section label="Round" meta="Manual override available">
           <div className="flex flex-col items-center gap-4">
             <Numeral value={currentRound} pad={2} className="er-num text-[56px] leading-none" />
-            <Control
-              disabled={!canStartNextRound}
-              onClick={() => handleRoundChange(currentRound + 1)}
-            >
-              {currentRound >= 6 ? 'Final round' : `Start round ${String(currentRound + 1).padStart(2, '0')}`}
-            </Control>
+            <div className="grid grid-cols-2 gap-3 w-full">
+              <Control
+                danger
+                disabled={!canMovePreviousRound}
+                onClick={() => handleRoundChange(currentRound - 1)}
+              >
+                Previous round
+              </Control>
+              <Control
+                disabled={!canMoveNextRound}
+                onClick={() => handleRoundChange(currentRound + 1)}
+              >
+                {currentRound >= 6 ? 'Final round' : `Start round ${String(currentRound + 1).padStart(2, '0')}`}
+              </Control>
+            </div>
           </div>
         </Section>
 
         {/* Voting */}
         <Section
           label="Ballot"
-          meta={votingPhase === 'open' ? 'Open' : votingPhase === 'results' ? 'Results out' : 'Automatic'}
+          meta={`${votingPhase === 'open' ? 'Open' : votingPhase === 'results' ? 'Results out' : 'Automatic'} · ${formatClock(roundTimer.votingDurationMs)}`}
         >
           <p className="font-body text-[15px] leading-[1.55] text-dim">
-            When the round clock reaches zero, every player receives a five-minute ballot.
+            When the round clock reaches zero, every player receives a ballot.
             The final tally and every vote are announced automatically when that window ends.
+          </p>
+
+          <div className="er-rule my-4" />
+          <p className="er-mono er-mono--dim">Ballot length</p>
+          <div className="grid grid-cols-2 gap-3 mt-3">
+            {VOTING_PRESETS.map((preset) => (
+              <Control
+                key={preset.id}
+                active={roundTimer.votingDurationMs === preset.ms}
+                onClick={() => handleVotingPreset(preset.ms)}
+              >
+                {preset.label}
+              </Control>
+            ))}
+          </div>
+          <p className="font-body text-[15px] leading-[1.55] text-dim mt-4">
+            Set this before the round ends to configure its ballot. Changing it while voting is open updates every player&apos;s ballot clock immediately.
           </p>
         </Section>
       </div>
@@ -550,10 +585,10 @@ export const HostPanel = ({
           <RoundClock timer={roundTimer} variant="console" showIdle />
 
           <div className="flex gap-3 sm:shrink-0 sm:w-[19rem]">
-            <Control active={isRunning(roundTimer)} disabled={timerControlsLocked} onClick={handleTimerToggle}>
-              {isRunning(roundTimer) ? 'Pause' : isPaused(roundTimer) ? 'Resume' : 'Start'}
+            <Control active={isRunning(roundTimer) && !timerDone} onClick={handleTimerToggle}>
+              {isRunning(roundTimer) && !timerDone ? 'Pause' : isPaused(roundTimer) ? 'Resume' : 'Start'}
             </Control>
-            <Control disabled={timerIdle || timerControlsLocked} onClick={handleTimerReset}>
+            <Control disabled={timerIdle} onClick={handleTimerReset}>
               Reset
             </Control>
           </div>
@@ -567,7 +602,6 @@ export const HostPanel = ({
             <Control
               key={preset.id}
               active={roundTimer.durationMs === preset.ms}
-              disabled={timerControlsLocked}
               onClick={() => handleTimerPreset(preset.ms)}
             >
               {preset.label}
@@ -579,9 +613,9 @@ export const HostPanel = ({
             tracking is a wall on a phone, and this is the one paragraph in the
             console a host reads rather than scans. */}
         <p className="font-body text-[15px] leading-[1.55] text-dim mt-4">
-          Every player sees this under the round number. Advancing the round restarts a
-          running clock and leaves a stopped one stopped, so an untimed round stays
-          untimed. Choosing a length while it runs restarts it there and then.
+          These controls remain live during ballot and results. Advancing with a live
+          clock restarts it for the new round; after expiry, choose a length to arm
+          the next round, then press Start when the room is ready.
         </p>
       </Section>
 

@@ -105,7 +105,7 @@ Also settled the same day, smaller: the four ignored coffee tickets are **two Sh
 
 - **The game does not begin at login — it begins when the host presses Start (decided 2026-09-19).** The user asked for a waiting screen because 69 people log in over twenty minutes and an app with no evidence in it yet reads as broken. Four things the brief was explicit about:
   1. The screen is **simple** — "waiting for the host to start the game" and nothing else. No tiles, no progress bar, nothing to poke at.
-  2. Start is a **host console button**, and it starts *all* timers — so `startGame` writes `gameStartedAt` and all four `roundTimer*` fields in one update.
+  2. Start is a **host console button**, and it starts *all* timers — so `startGame` writes `gameStartedAt` and all five `roundTimer*` fields in one update.
   3. The screen fades after a **10-second countdown**, so the room is let in together rather than trickling in.
   4. There must be a way to **force-sync the start state** "in case someone's game glitches and they need to move on" — that is **Push start to everyone**, which rewrites the start into the past *and* bumps `forceRefreshAt`, because the two failure modes (a phone that took the start late, a phone whose listener died) need different fixes.
   Claude added **Back to waiting** unasked, as the undo for a mis-tapped Start — the alternative was Reset Game, which also wipes the round, votes, clues and chat.

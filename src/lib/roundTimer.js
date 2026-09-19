@@ -34,10 +34,10 @@
 // shape the run sheet in data/gameData.js already describes.
 export const DEFAULT_ROUND_MS = 30 * 60 * 1000;
 
-// Every completed round is followed by a fixed five-minute ballot. The ballot
-// shares the round clock's absolute end instant, so no device needs to write a
-// second timer when the round reaches zero.
-export const VOTING_DURATION_MS = 5 * 60 * 1000;
+// Every completed round is followed by a ballot. Its duration is stored beside
+// the round timer, so the host can configure it before the clock ends or adjust
+// a ballot already on screen without creating a second shared timer document.
+export const DEFAULT_VOTING_DURATION_MS = 5 * 60 * 1000;
 
 // What the host can arm the clock with. The bottom two are deliberately absurd
 // for a real round — they exist so the host can prove the thing works, and
@@ -47,6 +47,13 @@ export const TIMER_PRESETS = [
   { id: 'r15', label: '15 min', ms: 15 * 60 * 1000 },
   { id: 'r01', label: '1 min', ms: 60 * 1000 },
   { id: 's10', label: '10 sec', ms: 10 * 1000 },
+];
+
+export const VOTING_PRESETS = [
+  { id: 'v05', label: '5 min', ms: 5 * 60 * 1000 },
+  { id: 'v03', label: '3 min', ms: 3 * 60 * 1000 },
+  { id: 'v01', label: '1 min', ms: 60 * 1000 },
+  { id: 'vs10', label: '10 sec', ms: 10 * 1000 },
 ];
 
 // The two urgency thresholds. SOON is where the digits turn signal and start
@@ -62,6 +69,7 @@ export const IDLE_TIMER = Object.freeze({
   endsAt: 0,
   remainingMs: 0,
   durationMs: DEFAULT_ROUND_MS,
+  votingDurationMs: DEFAULT_VOTING_DURATION_MS,
   round: 0,
 });
 
@@ -80,7 +88,7 @@ export const isIdle = (timer) => timer.endsAt === 0 && timer.remainingMs === 0;
 
 // --- Storage ---------------------------------------------------------------
 //
-// Four flat fields rather than one nested `roundTimer` map, because `updateDoc`
+// Five flat fields rather than one nested `roundTimer` map, because `updateDoc`
 // merges fields but *replaces* maps: a nested object would have to be written
 // whole by every call that touches the round, and one stale copy would silently
 // undo a start. See firebase/config.js.
@@ -89,6 +97,7 @@ export const readTimer = (gameState = {}) => ({
   endsAt: Number(gameState.roundTimerEndsAt) || 0,
   remainingMs: Number(gameState.roundTimerRemainingMs) || 0,
   durationMs: Number(gameState.roundTimerDurationMs) || DEFAULT_ROUND_MS,
+  votingDurationMs: Number(gameState.roundTimerVotingDurationMs) || DEFAULT_VOTING_DURATION_MS,
   round: Number(gameState.roundTimerRound) || 0,
 });
 
@@ -96,8 +105,11 @@ export const writeTimer = (timer) => ({
   roundTimerEndsAt: timer.endsAt,
   roundTimerRemainingMs: timer.remainingMs,
   roundTimerDurationMs: timer.durationMs,
+  roundTimerVotingDurationMs: timer.votingDurationMs ?? DEFAULT_VOTING_DURATION_MS,
   roundTimerRound: timer.round,
 });
+
+export const votingDurationMs = (timer) => timer.votingDurationMs || DEFAULT_VOTING_DURATION_MS;
 
 // --- Reading the clock -----------------------------------------------------
 
@@ -137,7 +149,7 @@ export const clockPhase = (timer, now = Date.now()) => {
  */
 export const votingPhase = (timer, currentRound, now = Date.now()) => {
   if (!isRunning(timer) || timer.round !== currentRound || now < timer.endsAt) return 'idle';
-  return now < timer.endsAt + VOTING_DURATION_MS ? 'open' : 'results';
+  return now < timer.endsAt + votingDurationMs(timer) ? 'open' : 'results';
 };
 
 /**
@@ -163,6 +175,7 @@ export const startTimer = (timer, round, now = Date.now(), ms = timer.durationMs
   endsAt: now + ms,
   remainingMs: 0,
   durationMs: ms,
+  votingDurationMs: votingDurationMs(timer),
   round,
 });
 
@@ -183,32 +196,39 @@ export const clearTimer = (timer, round = timer.round) => ({
   endsAt: 0,
   remainingMs: 0,
   durationMs: timer.durationMs,
+  votingDurationMs: votingDurationMs(timer),
   round,
 });
 
 /**
  * Arm a different length.
  *
- * On a *running* clock this restarts it immediately at the new length rather
+ * On a live running clock this restarts immediately at the new length rather
  * than queueing it for the next round — which is the whole point of the 1 min
- * and 10 sec presets: the host taps one and the room's clock says ten seconds
- * now, not after the next advance.
+ * and 10 sec presets. An expired clock is different: it is armed at the new
+ * length but remains stopped, letting the host set up the next round cleanly.
  */
 export const setTimerDuration = (timer, ms, round = timer.round, now = Date.now()) => {
-  if (isRunning(timer)) return startTimer(timer, round, now, ms);
-  if (isPaused(timer)) return { endsAt: 0, remainingMs: ms, durationMs: ms, round };
-  return { endsAt: 0, remainingMs: 0, durationMs: ms, round };
+  // An expired clock still has an end instant in storage, but it is no longer
+  // actively timing a round. Treat it as stopped so the host can arm the next
+  // round's duration without unexpectedly restarting the room mid-ballot.
+  if (isRunning(timer) && remainingMs(timer, now) > 0) return startTimer(timer, round, now, ms);
+  if (isPaused(timer)) return { endsAt: 0, remainingMs: ms, durationMs: ms, votingDurationMs: votingDurationMs(timer), round };
+  return { endsAt: 0, remainingMs: 0, durationMs: ms, votingDurationMs: votingDurationMs(timer), round };
 };
+
+/** Change the ballot length without disturbing the current round clock. */
+export const setVotingDuration = (timer, ms) => ({ ...timer, votingDurationMs: ms });
 
 /**
  * What the clock should be when the host moves the room to `round`.
  *
- * A running clock restarts at full length for the new round — "skip to the next
- * round" means the next round's time starts now, and the round control is
- * exactly the moment the host would otherwise have to reach for the clock as
- * well. A clock that was stopped stays stopped: a host who has not started one
- * is running the room by feel, and an advance must not suddenly drop 30:00 onto
- * 69 phones.
+ * A live clock restarts at full length for the new round — "skip to the next
+ * round" means the next round's time starts now. A stopped or expired clock
+ * stays stopped, so the host can set its next length before deliberately
+ * starting it for the room.
  */
 export const timerForRound = (timer, round, now = Date.now()) =>
-  isRunning(timer) ? startTimer(timer, round, now) : clearTimer(timer, round);
+  isRunning(timer) && remainingMs(timer, now) > 0
+    ? startTimer(timer, round, now)
+    : clearTimer(timer, round);

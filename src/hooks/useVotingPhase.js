@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { remainingMs, VOTING_DURATION_MS, votingPhase } from '../lib/roundTimer';
+import { remainingMs, votingDurationMs, votingPhase } from '../lib/roundTimer';
 
 // The shared clock already gives every device an absolute instant for the end
 // of a round. This hook reads the two time windows that follow it: the ballot
@@ -7,11 +7,12 @@ import { remainingMs, VOTING_DURATION_MS, votingPhase } from '../lib/roundTimer'
 // transition the game state when a timer expires.
 export const useVotingPhase = (timer, currentRound) => {
   const [now, setNow] = useState(() => Date.now());
+  const ballotDuration = votingDurationMs(timer);
 
   useEffect(() => {
     if (!timer.endsAt || timer.round !== currentRound) return undefined;
 
-    const voteEndsAt = timer.endsAt + VOTING_DURATION_MS;
+    const voteEndsAt = timer.endsAt + ballotDuration;
     let interval = null;
 
     const tickBallot = () => {
@@ -36,12 +37,12 @@ export const useVotingPhase = (timer, currentRound) => {
       if (timeout) clearTimeout(timeout);
       if (interval) clearInterval(interval);
     };
-  }, [timer.endsAt, timer.round, currentRound]);
+  }, [timer.endsAt, timer.round, ballotDuration, currentRound]);
 
   const phase = votingPhase(timer, currentRound, now);
-  const voteEndsAt = timer.endsAt + VOTING_DURATION_MS;
+  const voteEndsAt = timer.endsAt + ballotDuration;
   const msLeft = phase === 'open'
-    ? Math.max(0, Math.min(voteEndsAt - now, VOTING_DURATION_MS))
+    ? Math.max(0, Math.min(voteEndsAt - now, ballotDuration))
     : 0;
 
   return {

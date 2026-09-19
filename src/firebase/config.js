@@ -269,7 +269,7 @@ export const initializeGameState = async () => {
         // Not started: every player who logs in waits on the standby screen
         // until the host presses Start. See lib/gameStart.js.
         ...writeStartedAt(NOT_STARTED),
-        // The round clock, stopped. Four flat fields rather than a nested map —
+        // The round clock and ballot duration, stopped. Five flat fields rather than a nested map —
         // see lib/roundTimer.js for the shape and why it is stored this way.
         ...writeTimer(IDLE_TIMER),
         lastUpdated: Date.now()
@@ -277,7 +277,7 @@ export const initializeGameState = async () => {
     } else {
       // Ensure new fields exist in existing game state
       const data = docSnap.data();
-      if (!data.unlockedFiles || !('revealedToMurderer' in data) || !data.revealedClues || !('gameEnded' in data) || !('resetInProgress' in data) || !('forceRefreshAt' in data) || !('tutorialResetAt' in data) || !('roundTimerEndsAt' in data) || !('gameStartedAt' in data)) {
+      if (!data.unlockedFiles || !('revealedToMurderer' in data) || !data.revealedClues || !('gameEnded' in data) || !('resetInProgress' in data) || !('forceRefreshAt' in data) || !('tutorialResetAt' in data) || !('roundTimerEndsAt' in data) || !('roundTimerVotingDurationMs' in data) || !('gameStartedAt' in data)) {
         await updateDoc(gameStateRef, {
           unlockedFiles: data.unlockedFiles || ['f_incident'],
           revealedToMurderer: data.revealedToMurderer ?? false,
@@ -298,6 +298,7 @@ export const initializeGameState = async () => {
           roundTimerEndsAt: data.roundTimerEndsAt ?? IDLE_TIMER.endsAt,
           roundTimerRemainingMs: data.roundTimerRemainingMs ?? IDLE_TIMER.remainingMs,
           roundTimerDurationMs: data.roundTimerDurationMs ?? IDLE_TIMER.durationMs,
+          roundTimerVotingDurationMs: data.roundTimerVotingDurationMs ?? IDLE_TIMER.votingDurationMs,
           roundTimerRound: data.roundTimerRound ?? (data.currentRound ?? 0),
           lastUpdated: Date.now()
         });

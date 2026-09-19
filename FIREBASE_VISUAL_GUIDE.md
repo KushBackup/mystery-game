@@ -325,6 +325,7 @@ every player still had the old thread.
         ├── roundTimerEndsAt: 0               ← round clock: epoch ms it runs out
         ├── roundTimerRemainingMs: 0          ← round clock: what is left, while held
         ├── roundTimerDurationMs: 1800000     ← round clock: the length it is armed with
+        ├── roundTimerVotingDurationMs: 300000 ← ballot length, host-configured
         ├── roundTimerRound: 0                ← the round this clock belongs to
         └── lastUpdated: 1705968000000
 ```
@@ -370,7 +371,7 @@ of them stored:
 
 Only the host writes it, through three calls in
 [src/firebase/config.js](src/firebase/config.js): `startGame(startedAt, timer)`
-(which also writes all four `roundTimer*` fields in the same update, armed to
+(which also writes all five `roundTimer*` fields in the same update, armed to
 begin as the countdown clears), `pushGameStart()` (rewrites it into the past
 *and* bumps `forceRefreshAt` — the two failure modes it fixes are different),
 and `holdGameAtStandby()` (back to `0`, the undo for a mis-tapped Start).
@@ -381,7 +382,7 @@ the field as `1` — "started, long ago" — whenever `currentRound > 0`, so
 deploying this mid-event cannot drop a waiting screen onto a room that is already
 playing. Only a game still sitting on Round 0 backfills to `0`.
 
-**The four `roundTimer*` fields** are the round clock ([src/lib/roundTimer.js](src/lib/roundTimer.js)).
+**The five `roundTimer*` fields** are the round clock and its ballot duration ([src/lib/roundTimer.js](src/lib/roundTimer.js)).
 Only the host writes them; every player's device reads them and runs the
 countdown locally. They encode four states between them:
 
@@ -398,12 +399,17 @@ remaining time instead of restarting the countdown from the top. Expiry is never
 written: it is a reading every device takes for itself, because 69 devices
 noticing the same instant must not become 69 writes.
 
-Four flat fields rather than one nested `roundTimer` map, because `updateDoc`
+Five flat fields rather than one nested `roundTimer` map, because `updateDoc`
 merges fields but replaces maps — a nested object would have to be written whole
 by every call that touches the round, and one stale copy would silently undo a
 start. `updateCurrentRound(round, timer)` writes the round and its clock in a
 single update for the same reason: an advance that arrived one snapshot ahead of
 its timer would show the new round holding the old round's countdown.
+
+`roundTimerVotingDurationMs` defaults to five minutes and is set by the host's
+Ballot length controls. It applies to the ballot that follows the current round;
+changing it while voting is open immediately adjusts every player's remaining
+ballot countdown.
 
 `initializeGameState()` back-fills any of these fields that are missing from an
 existing document, so an in-progress game picks up new fields without a manual

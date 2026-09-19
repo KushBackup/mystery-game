@@ -45,7 +45,7 @@ refilled the bottle himself at 6:08 and was found at 6:18.
 
 ### Round 0 - The Incident
 - Let the typed briefing play. Do not talk over it.
-- When the round clock ends, the five-minute blind ballot takes over every player phone.
+- When the round clock ends, the host-configured blind ballot takes over every player phone.
 - Read the public, named tally, then press **Start Round 01** when the room is ready.
 - Seed lightly if needed: the bottle, the crash and the seal are the public anchors.
 - Expected early heat: Anushka, Nilisha, Sampada.
