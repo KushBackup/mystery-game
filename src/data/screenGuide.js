@@ -51,9 +51,9 @@ export const SCREEN_GUIDE = {
   intel: {
     kicker: 'Evidence Board',
     title: 'Evidence',
-    brief: 'Tabs only appear when their round is live. Read the file in front of you, or punch a shared clue into CODE, bottom right.',
+    brief: 'Tabs only appear when their round is live. In Accusations, read yours aloud and trade codes through CODE, bottom right.',
     detail:
-      'Your case, sorted into round-aware tabs. Case files are always available; Accusations appears in Round 01, Motives in Round 02, Evidence in Round 03 and Revelations in Round 04. CODE sits bottom right: type in a code somebody else has given you. From Round 02 a second button, ASK, appears beside it - solve a riddle and you unseal a new clue plus a code you can pass to the room.',
+      'Your case, sorted into round-aware tabs. Case files are always available; Accusations appears in Round 01, Motives in Round 02, Evidence in Round 03 and Revelations in Round 04. In Round 01, read your accusation and its code aloud; other players enter that word in CODE to unseal it on their screens, then you enter theirs. From Round 02, ASK joins CODE: solve a riddle and you unseal a new clue plus a code you can pass to the room.',
   },
 
   chat: {

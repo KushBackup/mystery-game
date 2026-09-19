@@ -1204,8 +1204,8 @@ export const HOST_SCRIPT = [
     title: 'Round 1 · Accusations',
     duration: '~15 min',
     setup: 'Every player automatically receives one accusation card the moment Round 1 opens - the witness claim their statement pod was handed.',
-    announce: '"Round 1. Accusations. Open Evidence and read the accusation waiting for you. These are witness claims about people police need the room to examine closely. Use them honestly, strategically or not at all - but use them."',
-    during: 'Push people to read cards out loud and compare versions across the room.',
+    announce: '"Round 1. Accusations. Open Evidence and read the accusation waiting for you. Then read its code out loud. Anyone who hears it opens Evidence, taps CODE and enters that word to unseal your accusation on their own phone. Take theirs in return. These are witness claims, not verdicts - but use them."',
+    during: 'Push people to read accusations and their codes out loud, then enter each other’s codes with CODE. Compare versions across the room.',
     end: 'Advance when all ten suspects feel dangerous in at least one conversation.',
   },
   {

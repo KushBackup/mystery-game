@@ -172,6 +172,7 @@ export const HOST_ROUND_GUIDE = {
     objective: 'Make all ten suspects feel individually plausible.',
     actions: [
       'Advance to Round 1 and tell everyone to open their accusation card.',
+      'Have every player read their accusation and its code out loud; listeners enter it through Evidence → CODE to unseal it themselves.',
       'Push verbal sharing instead of private reading - the pods are the social engine here.',
     ],
     emphasize: [

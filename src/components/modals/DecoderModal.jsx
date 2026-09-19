@@ -75,9 +75,9 @@ export const DecoderModal = ({ isOpen, inputCode, onInputChange, onSubmit, onClo
         </form>
 
         <p className="font-body text-[15px] leading-[1.55] text-dim mt-5">
-          Codes come from other players — anyone who solves a riddle is handed one to
-          share. From Round 02 you can earn your own with ASK, beside this button.
-          Codes belonging to a later round will not open yet.
+          In Round 01, read your accusation&apos;s code out loud and enter the codes other
+          players share to unseal their accusations. From Round 02, ASK also gives you
+          codes to circulate. Codes belonging to a later round will not open yet.
         </p>
       </div>
     </div>

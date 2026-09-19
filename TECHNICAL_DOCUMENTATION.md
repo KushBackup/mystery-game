@@ -131,7 +131,7 @@ The project has no Firebase Authentication. Passes prevent accidental registrati
 
 ### Distribution
 
-- **Round 1** uses 10 statement pods. Each player gets exactly one accusation.
+- **Round 1** uses 10 statement pods. Each player gets exactly one accusation and its shareable code; saying both aloud and entering the code through Evidence → CODE is the first code-exchange mechanic players learn.
 - **Round 2+** uses the riddle lock. Solving a riddle unseals the next clue in that player's queue and reveals its shareable code.
 
 ### Block sizes in the reward queue

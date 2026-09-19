@@ -56,7 +56,7 @@ const STEPS = {
     target: 'intel',
     kicker: 'Round one',
     title: 'Read your first lead',
-    body: 'Your accusation is waiting in Evidence. Read it, decide what it means, then bring it into the conversation. New clue mechanics arrive in later rounds.',
+    body: 'Read your accusation aloud and share its code. Other players tap CODE, enter it, and unseal your lead; then do the same with theirs.',
     action: 'Open evidence',
     visual: 'evidence',
   },

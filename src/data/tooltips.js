@@ -51,7 +51,7 @@ export const TOOLTIPS = {
   // explained a button the player cannot see would send them hunting for it.
   evidenceCode: {
     label: 'Code',
-    body: 'Where you type in a clue code somebody reads out to you. Enter one and their clue opens on your board too — which is the only way anything moves around this room.',
+    body: 'In Round 01, enter the accusation code another player reads out to unseal their lead. From Round 02 onward, this is how every shared clue moves around the room.',
   },
 
   caseFiles: {

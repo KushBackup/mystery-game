@@ -1043,15 +1043,17 @@ export default function App() {
                 </span>
               )}
 
-              <button
-                onClick={() => setModalOpen(true)}
-                aria-label="Enter a clue code"
-                className="er-touch er-land flex flex-col items-center justify-center gap-1 w-16 h-16 bg-ink-raised border border-signal text-signal-lift shadow-[0_12px_28px_rgba(0,0,0,0.6)]"
-                style={{ animationDelay: '260ms' }}
-              >
-                <Calculator size={22} strokeWidth={1.75} />
-                <span className="er-mono er-mono--hot text-[9px]">Code</span>
-              </button>
+              <span className={`inline-flex ${currentRound === 1 && (evidenceStack === null || evidenceStack === 'accusations') ? 'er-summon' : ''}`}>
+                <button
+                  onClick={() => setModalOpen(true)}
+                  aria-label="Enter a clue code"
+                  className="er-touch er-land flex flex-col items-center justify-center gap-1 w-16 h-16 bg-ink-raised border border-signal text-signal-lift shadow-[0_12px_28px_rgba(0,0,0,0.6)]"
+                  style={{ animationDelay: '260ms' }}
+                >
+                  <Calculator size={22} strokeWidth={1.75} />
+                  <span className="er-mono er-mono--hot text-[9px]">Code</span>
+                </button>
+              </span>
             </div>
           </div>
         )}

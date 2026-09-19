@@ -51,7 +51,8 @@ refilled the bottle himself at 6:08 and was found at 6:18.
 - Expected early heat: Anushka, Nilisha, Sampada.
 
 ### Round 1 - Accusations
-- Every player has one card. Make them compare versions out loud.
+- Every player has one card. Make them read the accusation **and its code** out loud.
+- Everyone listening opens **Evidence → CODE**, enters that word and unseals the accusation on their own phone. Then they trade theirs back.
 - All 10 suspects should have heat by the end.
 - If one suspect has none, read their accusation aloud yourself.
 

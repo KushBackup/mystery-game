@@ -90,7 +90,7 @@ const STACK_STYLE = {
  * because a player who looks away for two seconds should still be able to tell
  * which card is new.
  */
-const ClueCard = ({ index, type, title, body, code, note, pinBrass, fresh, tutorialTarget }) => (
+const ClueCard = ({ index, type, title, body, code, note, pinBrass, fresh, tutorialTarget, shareCode = false }) => (
   <article
     data-tutorial-cue={tutorialTarget ? 'Read your lead' : undefined}
     className={`er-bone er-pin ${tutorialTarget ? 'er-tutorial-target er-tutorial-target--onbone' : ''} ${pinBrass ? 'er-pin--brass' : ''} ${index % 2 === 0 ? 'er-rotR' : 'er-rotL'} er-land p-5 sm:p-6`}
@@ -103,7 +103,7 @@ const ClueCard = ({ index, type, title, body, code, note, pinBrass, fresh, tutor
 
     <div className="flex items-start justify-between gap-3">
       <span className="er-tag er-tag--onbone">{type}</span>
-      {code && (
+      {code && !shareCode && (
         <span className="font-mono text-[11px] tracking-[0.18em] uppercase text-body-bone/70 pt-1">
           {code}
         </span>
@@ -125,6 +125,16 @@ const ClueCard = ({ index, type, title, body, code, note, pinBrass, fresh, tutor
 
       {note && <p className="er-bone-body text-[13px] mt-4">{note}</p>}
     </div>
+
+    {shareCode && code && (
+      <div className="mt-5 p-3 border-2 border-signal-deep bg-bone-aged">
+        <p className="er-bone-label">Read this code out loud</p>
+        <p className="font-typewriter font-bold uppercase text-ink text-[25px] leading-none mt-2">{code}</p>
+        <p className="er-bone-body text-[13px] mt-3">
+          Everyone else: Evidence → CODE → enter this word to unseal your accusation.
+        </p>
+      </div>
+    )}
 
     {fresh && (
       <p className="mt-4">
@@ -192,6 +202,29 @@ const EmptyStack = ({ lines, title = 'Nothing decoded yet', hint }) => (
       {hint}
     </p>
   </div>
+);
+
+const AccusationExchangeGuide = () => (
+  <section className="er-card er-card--signal er-land">
+    <p className="er-mono er-mono--hot er-mono--wide">How accusations move</p>
+    <h2 className="font-typewriter font-bold uppercase text-bone text-[22px] leading-[1.12] mt-3">
+      Say it. Share the code. Unseal theirs.
+    </h2>
+    <ol className="grid grid-cols-3 gap-3 mt-5">
+      <li>
+        <p className="er-num text-[28px]">01</p>
+        <p className="font-body text-[13px] leading-[1.45] text-dim mt-1">Read your accusation aloud.</p>
+      </li>
+      <li>
+        <p className="er-num text-[28px]">02</p>
+        <p className="font-body text-[13px] leading-[1.45] text-dim mt-1">Say the code printed below it.</p>
+      </li>
+      <li>
+        <p className="er-num text-[28px]">03</p>
+        <p className="font-body text-[13px] leading-[1.45] text-dim mt-1">Enter theirs with CODE, bottom right.</p>
+      </li>
+    </ol>
+  </section>
 );
 
 export const IntelView = ({
@@ -296,6 +329,8 @@ export const IntelView = ({
         <>
           <EvidenceStat collected={items.length + (showMine ? 1 : 0)} inPlay={inPlay} />
 
+          {activeDef.key === 'accusations' && currentRound === 1 && <AccusationExchangeGuide />}
+
           {showMine && (
             <>
               <p className="er-mono er-mono--hot er-mono--wide">Your lead</p>
@@ -304,10 +339,11 @@ export const IntelView = ({
                 type="Your Accusation"
                 title={myAccusation.title}
                 body={myAccusation.accusation}
-                code={`Code ${myAccusation.code}`}
-                note="Share this out loud. It is what your character witnessed."
+                code={myAccusation.code}
+                note="Read the accusation aloud, then give the room the code below."
                 pinBrass
                 tutorialTarget={tutorialActive}
+                shareCode
               />
               {ordered.length > 0 && (
                 <div className="pt-1">
