@@ -772,11 +772,9 @@ export const initializeVotes = async () => {
 // Submit a vote
 //
 // `votes` is the only record of who voted for whom: { userId: { round: suspectId } }.
-// There is deliberately no stored tally alongside it. A flat { suspectId: count }
-// cache cannot express "this round" — it summed every round of the game into one
-// number, so by Round 7 the ballot screen was reporting seven rounds of votes as
-// though the room had just cast them. The counts are derived per round from this
-// map instead (see App.jsx).
+// There is deliberately no stored tally alongside it. The counts are derived from
+// this per-round record in App.jsx, where every ballot through the current round
+// contributes to the running total.
 //
 // The write is a deep merge of one field rather than a read-then-replace of the
 // whole document: 69 phones tap the same ballot within a few seconds of the host
@@ -791,8 +789,8 @@ export const submitVote = async (userId, suspectId, currentRound) => {
       votesRef,
       {
         votes: { [userId]: { [currentRound]: suspectId } },
-        // Clears the retired cross-round cache the moment anyone votes, so a
-        // database carried over from an earlier game stops holding a stale total.
+        // Clears the retired derived cache so a database carried over from an
+        // earlier version cannot present a stale total.
         voteCounts: deleteField(),
         lastUpdated: Date.now()
       },

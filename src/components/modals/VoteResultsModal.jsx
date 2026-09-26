@@ -90,7 +90,7 @@ export const VoteResultsModal = ({
         <div className="px-4 pt-4 pb-3 border-b border-line flex items-start justify-between gap-3">
           <div>
             <p className="er-mono er-mono--hot er-mono--wide">
-              {locked ? `Round ${String(currentRound).padStart(2, '0')} complete` : 'Live tally'}
+              {locked ? `Tally through Round ${String(currentRound).padStart(2, '0')}` : 'Live tally'}
             </p>
             <h2 className="er-title text-[26px] mt-2">Vote Results</h2>
           </div>
@@ -108,7 +108,7 @@ export const VoteResultsModal = ({
         <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-4">
           <div className="er-stat">
             <Numeral as="p" value={totalVotes} pad={2} className="er-stat__num" />
-            <p className="er-stat__label">Votes cast</p>
+            <p className="er-stat__label">Cumulative votes</p>
           </div>
 
           {voteResults.length === 0 ? (
@@ -155,7 +155,7 @@ export const VoteResultsModal = ({
                 </div>
 
                 <p className="er-mono er-mono--dim mt-2 tabular-nums">
-                  {totalVotes > 0 ? Math.round((result.votes / totalVotes) * 100) : 0}% of the room
+                  {totalVotes > 0 ? Math.round((result.votes / totalVotes) * 100) : 0}% of all votes
                 </p>
 
                 <div className="mt-3 pt-3 border-t border-line-faint">

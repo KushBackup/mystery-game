@@ -23,7 +23,7 @@ import { StoryIntro } from './components/StoryIntro';
 import { OutroSplash } from './components/OutroSplash';
 import { MurdererRevealOverlay } from './components/MurdererRevealOverlay';
 import { StandbyScreen } from './components/StandbyScreen';
-import { ROUNDS, CHARACTERS, CLUE_DB, stackKeyForClue, getAssignedAccusation, getWalkInAccusation, CONFESSION_CLUE, getKillers, isMurderer, nextRiddleReward, nextWalkInRiddleReward, ASK_OPENS_AT } from './data/gameData';
+import { ROUNDS, CHARACTERS, REGISTERED_GUESTS, CLUE_DB, stackKeyForClue, getAssignedAccusation, getWalkInAccusation, CONFESSION_CLUE, getKillers, isMurderer, nextRiddleReward, nextWalkInRiddleReward, ASK_OPENS_AT } from './data/gameData';
 import { SCREEN_GUIDE } from './data/screenGuide';
 import { TOOLTIPS } from './data/tooltips';
 import { IDLE_TIMER, readTimer } from './lib/roundTimer';
@@ -255,7 +255,7 @@ export default function App() {
   );
 
   const allGuests = useMemo(
-    () => [...CHARACTERS, ...activeWalkIns.map(walkInGuest)],
+    () => [...CHARACTERS, ...REGISTERED_GUESTS, ...activeWalkIns.map(walkInGuest)],
     [activeWalkIns]
   );
 
@@ -282,37 +282,41 @@ export default function App() {
   const tutorialStep = isHost ? null : tutorialStepFor(effectiveTutorialStage, currentRound);
   const tutorialTabs = tutorialTabsFor(effectiveTutorialStage, currentRound);
 
-  // The ballot tally for the round the room is actually in — { suspectId: count }.
+  // The running ballot tally through the round the room is actually in —
+  // { suspectId: count }.
   //
   // Derived from `votes` rather than read from the database, because a tally is a
-  // per-round fact and the stored one wasn't: it was a single flat counter that
-  // every round added to and none ever cleared, so a fresh game inheriting an old
-  // database, or simply a game that had reached the later rounds, would announce
-  // a total nobody in the room had cast. `votes` is keyed { userId: { round: … } },
-  // so counting one round out of it is both correct and self-clearing when the
-  // host advances.
+  // record remains keyed { userId: { round: … } }, preserving one editable pick
+  // per player per round. Adding every recorded round up to the current one gives
+  // the room the running total without relying on a stale stored counter.
   const voteCounts = useMemo(() => {
     const counts = {};
     const activeVoterIds = new Set(allGuests.map((guest) => guest.id));
     Object.entries(votes).forEach(([voterId, byRound]) => {
       if (!activeVoterIds.has(voterId)) return;
-      const pick = byRound?.[currentRound];
-      if (pick) counts[pick] = (counts[pick] || 0) + 1;
+      Object.entries(byRound || {}).forEach(([round, suspectId]) => {
+        if (Number(round) <= currentRound && suspectId) {
+          counts[suspectId] = (counts[suspectId] || 0) + 1;
+        }
+      });
     });
     return counts;
   }, [votes, currentRound, allGuests]);
 
-  // The final ballot is public. Keep the voter identity beside the candidate
-  // rather than reconstructing it in the tally component, which only knows the
-  // canonical roster and not late walk-ins.
+  // The running tally is public. Keep each ballot beside the candidate rather
+  // than reconstructing it in the tally component, which only knows the canonical
+  // roster and not late walk-ins.
   const voteDetails = useMemo(() => {
     const guestsById = new Map(allGuests.map((guest) => [guest.id, guest]));
     return Object.entries(votes).flatMap(([voterId, byRound]) => {
-      const suspectId = byRound?.[currentRound];
       const voter = guestsById.get(voterId);
-      return suspectId && voter
-        ? [{ voterId, voterName: voter.name, suspectId }]
-        : [];
+      if (!voter) return [];
+
+      return Object.entries(byRound || {}).flatMap(([round, suspectId]) => (
+        Number(round) <= currentRound && suspectId
+          ? [{ voterId, voterName: voter.name, suspectId }]
+          : []
+      ));
     });
   }, [votes, currentRound, allGuests]);
 

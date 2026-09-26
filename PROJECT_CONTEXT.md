@@ -10,7 +10,7 @@
 **Case title:** Greenr: Last Seating (Case 2609-G)  
 **Platform:** React + Vite PWA  
 **Format:** Live social-deduction murder mystery at a private closing dinner  
-**Cast size:** 26 playable guests, 1 fictional victim  
+**Cast size:** 26 canonical guests, 10 pre-registered non-case guests, 1 fictional victim  
 **Investigation shape:** 10 suspects, 16 witnesses, 3 killers  
 **Duration:** ~1.5-2.5 hours across 7 rounds
 
@@ -24,16 +24,16 @@ Rehan spent the day asking the kind of questions rooms like this hate: who got p
 
 That split is the case's engine. Ten guests have real reasons to fear what Rehan is about to say. Only three decide that the signing cannot survive him.
 
-At **5:58 PM**, the launch reel stutters, the guest Wi-Fi dies and the card reader goes with it. In a room like this, that looks like inconvenience. In this case, it is cover. Rehan returns upstairs, refills the black bottle he always carries, and collapses minutes later. By **6:40 PM**, rain, the gate chain and the police have sealed Greenr with all 26 players still inside.
+At **5:58 PM**, the launch reel stutters, the guest Wi-Fi dies and the card reader goes with it. In a room like this, that looks like inconvenience. In this case, it is cover. Rehan returns upstairs, refills the black bottle he always carries, and collapses minutes later. By **6:40 PM**, rain, the gate chain and the police have sealed Greenr with all 26 canonical guests still inside.
 
 ---
 
 ## Core Gameplay Loop
 
-1. Players log in as one of 26 guest identities.
+1. Players log in as one of 26 canonical identities or one of the registered non-case guest identities.
 2. The host starts the room; Round 0 opens with the fullscreen typed briefing.
 3. A player tutorial then reveals the app one task at a time: identity, one guest profile, Comms and the voting screen.
-4. Each round clock automatically gives every player a host-configured ballot when it reaches zero; then a public tally names every voter and their choice.
+4. Each round clock automatically gives every player a host-configured ballot when it reaches zero; then a public running tally adds every completed round together and names every voter and their choice.
 5. Normally the host starts the next round after that announced tally; the host console also provides confirmed manual previous/next round recovery controls.
 6. Round 1 directs every player to their accusation card on the Evidence screen - one suspect-lane witness claim from their statement pod. Players read the accusation and its code aloud; listeners enter the code through Evidence → CODE to unseal that accusation on their own phones.
 7. Round 2 opens the riddle lock and puts the 10 motive files into its prize pool.
@@ -44,6 +44,12 @@ At **5:58 PM**, the launch reel stutters, the guest Wi-Fi dies and the card read
 ### Arrival Tutorial
 
 The tutorial replaces the old passive screen-note onboarding. It is stored locally per player, so a reload resumes the next task without writing any tutorial state to Firestore. In Round 0, the hub exposes only the destination required for the current lesson; the player must open their identity, a guest profile, Comms and voting in that order. After the vote lesson the core screens remain available, while Evidence remains held until Round 1. At Round 1, unfinished tutorials advance to the Evidence lesson so no player misses their assigned accusation; completing it releases the normal board and the later round gates take over.
+
+### Pre-Registered Non-Case Guests
+
+Ten registrations are shipped in the static guest list with their own secret login codes. They play the same public screens, chat, riddle economy, accusations and voting as the canonical room, but appear as **Walk-in** guests and receive the standard deterministic bystander accusation and reward queue.
+
+They are not story characters. They do not change the 26-player cast, suspect count, killer team, statement pods, clue decks or reveal.
 
 ### Late Walk-Ins
 

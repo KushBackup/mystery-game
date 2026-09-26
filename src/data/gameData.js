@@ -16,6 +16,16 @@ export const ROUNDS = [
 const killer = (data) => ({ ...data, role: 'MURDERER', isSuspect: true });
 const suspect = (data) => ({ ...data, role: 'SUSPECT', isSuspect: true });
 const witness = (data) => ({ ...data, role: 'WITNESS', isSuspect: false });
+const registeredGuest = (data) => ({
+  ...data,
+  role: 'BYSTANDER',
+  isSuspect: false,
+  group: 'REGISTERED GUESTS',
+  secret: 'You registered as a non-case guest. You have no statement that changes the Greenr investigation.',
+  neverDo: 'Claim a detail you cannot stand behind.',
+  motive: 'Not a case witness. You joined the evening without a role in Rehan Vora\'s death.',
+  timeline: 'No case statement filed.',
+});
 
 const stableHash = (str) => {
   let h = 0;
@@ -399,6 +409,91 @@ export const CHARACTERS = dealt(ROSTER, {
   isHot: (character) => character.role === 'MURDERER',
   safeTop: 4,
 });
+
+// Pre-registered guests participate normally but are not part of the fixed
+// Greenr case, statement pods or suspect roster.
+export const REGISTERED_GUESTS = [
+  registeredGuest({
+    id: 'guest_bosco_marottikal',
+    name: 'Bosco Marottikal',
+    profession: 'Djing',
+    bio: 'Sly, quiet, patient guest who prefers observing the room before joining it.',
+    quirk: 'Can convince people to go outdoors even if they do not want to.',
+    code: 'VORLUNE',
+  }),
+  registeredGuest({
+    id: 'guest_ankit_ghanekar',
+    name: 'Ankit Ghanekar',
+    profession: 'Software',
+    bio: 'Observant, blunt, stubborn guest with an investigator\'s attention to detail.',
+    quirk: 'Deep dives into serial-murder documentaries and shows such as Criminal Minds.',
+    code: 'KEXTRAL',
+  }),
+  registeredGuest({
+    id: 'guest_alvin_augustine',
+    name: 'Alvin Augustine',
+    profession: 'Student',
+    bio: 'Observant, impulsive, unpredictable student who keeps a close eye on the room.',
+    quirk: 'A book nerd.',
+    code: 'MORVANE',
+  }),
+  registeredGuest({
+    id: 'guest_docdcp',
+    name: 'Docdcp',
+    profession: 'Medicine',
+    bio: 'Optimistic, competitive, patient medical guest with a practical streak.',
+    quirk: 'An electrician by hobby.',
+    code: 'ZELTRIX',
+  }),
+  registeredGuest({
+    id: 'guest_aryan_dabholkar',
+    name: 'Aryan Dabholkar',
+    profession: 'Medicine',
+    bio: 'Charming, impulsive, confident guest who does not give much away.',
+    quirk: 'Very good at covering up things.',
+    code: 'DAXVORE',
+  }),
+  registeredGuest({
+    id: 'guest_siddhi_wadekar',
+    name: 'Siddhi Wadekar',
+    profession: 'Medicine',
+    bio: 'Curious, bold, playful medical guest with an easy energy.',
+    quirk: 'Dances.',
+    code: 'KIRVANI',
+  }),
+  registeredGuest({
+    id: 'guest_samuel_cordeiro',
+    name: 'Samuel Cordeiro',
+    profession: 'Software',
+    bio: 'Calculating, intense, patient guest who is never far from a plan.',
+    quirk: 'Writes elaborate roadmaps and letters.',
+    code: 'PELDRUM',
+  }),
+  registeredGuest({
+    id: 'guest_prajyot_lotlikar',
+    name: 'Prajyot Lotlikar',
+    profession: 'Engineering',
+    bio: 'Loyal, secretive, meticulous engineering guest who listens carefully.',
+    quirk: 'Gossips.',
+    code: 'RAVNEX',
+  }),
+  registeredGuest({
+    id: 'guest_selwyn_joshua_coelho',
+    name: 'Selwyn Joshua Coelho',
+    profession: 'Sales',
+    bio: 'Analytical, gullible, competitive sales guest with a surprising party trick.',
+    quirk: 'Can burp on purpose.',
+    code: 'LORVEX',
+  }),
+  registeredGuest({
+    id: 'guest_hagen_desa',
+    name: 'Hagen Desa',
+    profession: 'Nonprofit',
+    bio: 'Detached, competitive, secretive guest who keeps their cards close to the chest.',
+    quirk: 'Plans on keeping it a secret.',
+    code: 'NEXHARBOR',
+  }),
+];
 
 export const CASE_META = {
   caseId: '2609-G',
@@ -1110,8 +1205,10 @@ export const isMurderer = (characterId) => {
   return getKillers().some((character) => character.id === characterId);
 };
 
+const LOGIN_IDENTITIES = [...CHARACTERS, ...REGISTERED_GUESTS];
+
 export const LOGIN_CODE_MAP = Object.fromEntries(
-  CHARACTERS.map((character) => [character.code.trim().toUpperCase(), character.id])
+  LOGIN_IDENTITIES.map((character) => [character.code.trim().toUpperCase(), character.id])
 );
 
 export const validateLoginCode = (code) => {
@@ -1121,9 +1218,9 @@ export const validateLoginCode = (code) => {
 
 if (import.meta.env?.DEV) {
   const loginCodes = new Set(Object.keys(LOGIN_CODE_MAP));
-  if (loginCodes.size !== ROSTER.length) {
+  if (loginCodes.size !== LOGIN_IDENTITIES.length) {
     console.error(
-      `[gameData] duplicate login codes: ${ROSTER.length} characters share ${loginCodes.size} codes. ` +
+      `[gameData] duplicate login codes: ${LOGIN_IDENTITIES.length} players share ${loginCodes.size} codes. ` +
         'Two players would resolve to one identity.'
     );
   }

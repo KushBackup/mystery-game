@@ -10,7 +10,7 @@
 **Application type:** Interactive multiplayer web-based murder mystery PWA  
 **Framework:** React 19 + Vite 7  
 **State model:** React local state + Firebase Firestore realtime sync  
-**Current case scale:** 26 playable guests, 10 suspects, 3 killers, 6 case files, 35 clue codes
+**Current case scale:** 26 canonical guests, 10 pre-registered non-case guests, 10 suspects, 3 killers, 6 case files, 35 clue codes
 
 The app shell is unchanged: one host advances the room through seven rounds while players decode clues, chat, vote and inspect guest profiles. What changed in this case is the story scale and the clue distribution: the current data layer supports a smaller guest list, a narrower suspect pool, and a three-person conspiracy without any runtime refactor.
 
@@ -24,7 +24,8 @@ Late arrivals use a separate real-time walk-in system. They are mechanically ful
 Owns the live case definition:
 
 - `CASE_META` - case ID, title, venue, victim, inspector, player count, suspect count, killer count
-- `CHARACTERS` - 26 playable guests with `role`, `profession`, `bio`, `quirk`, `secret`, `neverDo`, `motive`, `timeline` and `code`
+- `CHARACTERS` - 26 canonical guests with `role`, `profession`, `bio`, `quirk`, `secret`, `neverDo`, `motive`, `timeline` and `code`
+- `REGISTERED_GUESTS` - static `BYSTANDER` identities with normal player access and no story role
 - `CASE_TIMELINE` - public incident beats used by the Timeline screen
 - `PODS` - the 10 statement pods; `ACCUSATION_CLUES` - 10 accusation narratives whose `assignedTo` arrays cover all 26 players exactly once
 - `MOTIVE_CLUES` - 10 motive files
@@ -34,7 +35,7 @@ Owns the live case definition:
 - `CASE_FILES` - 6 host-unlocked reports shown under Evidence -> Case files
 - `RIDDLE_REWARD_POOL` / `riddleQueueFor()` / `nextRiddleReward()` - the prize side of the riddle lock
 - `HOST_SCRIPT` - host-facing run sheet for the host console
-- `LOGIN_CODE_MAP` - generated from the character roster
+- `LOGIN_CODE_MAP` - generated from the canonical and static registered guest rosters
 
 ### [src/data/storyIntro.js](src/data/storyIntro.js)
 Owns the Round 0 public briefing only. It is spoiler-gated to knowledge available before the investigation starts.
@@ -101,7 +102,9 @@ The only case-level requirement is that `KILLER_IDS` and the `role === 'MURDERER
 
 ---
 
-## Real-Time Walk-Ins
+## Registered And Real-Time Walk-Ins
+
+`REGISTERED_GUESTS` holds pre-event registrations in static source data. Each has a unique login code, is appended to `App.jsx`'s guest directory and is handled as a `BYSTANDER`, so it receives the deterministic bystander accusation and riddle queue without entering `PODS` or the case count.
 
 Walk-ins are dynamic `BYSTANDER` identities, not additions to `CHARACTERS`.
 
@@ -113,7 +116,7 @@ Walk-ins are dynamic `BYSTANDER` identities, not additions to `CHARACTERS`.
 - The canonical roster, story counts, `PODS`, fixed clue decks, killer checks and final reveal continue to use `CHARACTERS` only.
 - Removal marks the record inactive. It removes the identity from the directory and active tally calculation, returns that device to login on its next render, and emits a departure notice.
 
-`App.jsx` derives three scopes: canonical story players (`CHARACTERS`), active voters (canonical plus active walk-ins), and directory guests (canonical plus active walk-ins). Keep these scopes separate when adding future features.
+`App.jsx` derives three scopes: canonical story players (`CHARACTERS`), active voters (canonical plus pre-registered and active walk-ins), and directory guests (canonical plus pre-registered and active walk-ins). Keep these scopes separate when adding future features.
 
 The project has no Firebase Authentication. Passes prevent accidental registration in the event UI but do not provide hostile-client security; the separate contact collection is private by application convention only until authenticated host access exists.
 
@@ -178,7 +181,7 @@ The game-start model and round clock are unchanged from the prior case:
 - the round clock is host-written and player-read only
 - a round clock reaching zero automatically starts a host-configured ballot on every player device (five minutes by default)
 - the ballot and its public result are derived from the clock's absolute end instant, so neither transition creates client writes or drifts on reload
-- when the ballot ends, a locked result takeover shows the tally and every voter-to-candidate choice
+- when the ballot ends, a locked result takeover shows the cumulative tally through that round and every voter-to-candidate choice
 - the host's round and timer controls remain available during ballot and results as a recovery override; normal post-results advances remain confirmation-free, while off-script moves require confirmation
 - changing a round with a live clock restarts it for that round; an expired clock stays armed and stopped so the host can set the next duration before starting it
 - ballot presets use the same shared timer record and can be set before a round ends or while its ballot is open; changing one immediately recalculates every ballot countdown

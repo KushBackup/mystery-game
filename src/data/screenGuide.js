@@ -83,7 +83,7 @@ export const SCREEN_GUIDE = {
     title: 'Vote',
     brief: 'Name who you think did it. The ballot opens automatically for five minutes when a round ends.',
     detail:
-      'When the round ends, the ballot takes over every screen for five minutes. Tap a name to select, tap again to confirm, and change your vote until the timer closes it. The public result names every voter and their choice.',
+      'When the round ends, the ballot takes over every screen for five minutes. Tap a name to select, tap again to confirm, and change your vote until the timer closes it. The public result adds every round together and names every voter and their choice.',
   },
 
   help: {

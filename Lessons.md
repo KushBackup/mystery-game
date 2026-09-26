@@ -26,6 +26,14 @@ When the same lesson recurs, **edit the existing entry** rather than adding a du
 
 ## Entries
 
+### 2026-09-19 — Preserve the cumulative vote rule
+
+**What happened:** The tally had been changed to count only the current round's ballots, even though the game rule is that votes accumulate across rounds.
+
+**Why it was wrong:** The per-round vote record was mistaken for a requirement that the displayed result must reset each round.
+
+**What to do instead:** Keep one editable vote per player per round in Firestore, but derive the public tally from every ballot through the current round.
+
 ### 2026-05-07 — Don't assume Unity from the folder name
 
 **What happened:** On first encountering the project at `d:\Unity Projects\mystery-game`, the folder name and recent commit "theme change" suggested a Unity game project. I almost started exploring as if Unity tooling, Assets/, and C# scripts would exist.

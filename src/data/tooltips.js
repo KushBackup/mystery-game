@@ -96,7 +96,7 @@ export const TOOLTIPS = {
 
   tally: {
     label: 'The tally',
-    body: 'This round only — the count starts again when the automatic ballot begins. When its five minutes end, the result opens for everyone and shows who voted for whom.',
+    body: 'Votes accumulate from every completed ballot. When each five-minute ballot ends, the result opens for everyone and shows the running total and who voted for whom.',
   },
 };
 

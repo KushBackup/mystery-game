@@ -24,7 +24,7 @@ export const DossierView = ({ currentUser, guests = CHARACTERS, onSelectGuest, o
   const roster = useMemo(
     () => guests.map((char, index) => ({
       char,
-      fileNumber: char.role === 'BYSTANDER' ? null : index + 1,
+      fileNumber: index + 1,
     })),
     [guests]
   );
@@ -85,7 +85,6 @@ export const DossierView = ({ currentUser, guests = CHARACTERS, onSelectGuest, o
         {results.map(({ char, fileNumber }, index) => {
           const isMe = char.id === currentUser;
           const isVictim = char.role === 'VICTIM';
-          const isWalkIn = char.role === 'BYSTANDER';
 
           return (
             <button
@@ -116,7 +115,7 @@ export const DossierView = ({ currentUser, guests = CHARACTERS, onSelectGuest, o
                     {char.name}
                   </span>
                   <span className="er-num text-[13px] shrink-0">
-                    {fileNumber === null ? '—' : String(fileNumber).padStart(2, '0')}
+                    {String(fileNumber).padStart(2, '0')}
                   </span>
                 </span>
 
@@ -130,12 +129,10 @@ export const DossierView = ({ currentUser, guests = CHARACTERS, onSelectGuest, o
               {/* Only facts the room already knows get a tag here. Suspect vs
                   witness is never shown — the player has to earn that from the
                   clue deck. */}
-              {(isMe || isVictim || isWalkIn) && (
+              {(isMe || isVictim) && (
                 <span className="shrink-0 self-start">
                   {isMe ? (
                     <span className="er-tag">You</span>
-                  ) : isWalkIn ? (
-                    <span className="er-tag er-tag--mute">Walk-in</span>
                   ) : (
                     <span className="er-tag er-tag--mute">Deceased</span>
                   )}
