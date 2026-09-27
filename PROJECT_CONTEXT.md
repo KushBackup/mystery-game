@@ -5,7 +5,36 @@
 
 ---
 
-## Overview
+## Killers Night: the new format (replacing the authored case below)
+
+**Why:**
+- Players said there was too much to read, it got long and boring, and most of them had nothing to do.
+- The host had to write a new story for every event, and the case broke whenever a killer or key witness didn't show.
+
+**Shape:** about 2 hours, 25–45 guests, tables of 4–8 plus mingling, no projector.
+
+**The evening:**
+1. **Arrival.** Scan in, give a first name and table, and answer six one-tap trait questions: top colour, glasses, footwear, first drink, birthday, siblings.
+2. **Casting.** The host deals roles to whoever is present: 3 Killers from 12 to 50 guests, plus a Doctor, a Detective, a Medium and the Faithful.
+3. **Five cycles**, each about 21 minutes:
+   - **Night (3 min, on phones).** Killers pick a victim and *the hand* who strikes, and once per game they can frame someone. The Faithful watch a guest or search the scene, the Doctor protects someone, the Detective checks someone, and Ghosts whisper one word.
+   - **Dawn.** A synced reveal of who died, and clue fragments describing the hand's real traits reach several players each.
+   - **Investigation (10 min).** Talk, compare clues, look at each other.
+   - **Round Table.** Vote to banish, with one re-vote if it ties. A synced reveal shows Killer or Faithful and who voted for whom.
+4. **Endgame.** Two votes; Ghosts vote too. Any Killer left alive wins it for the Killers.
+
+**Live roster:**
+- A late arrival is dealt in straight away, always on the Faithful team.
+- A guest who leaves vanishes at the next dawn, and their role stays secret.
+- If a vanished Killer leaves the team short, the Killers recruit. A guest who refuses is murdered.
+
+**Balance:** tuned with `npm run sim`. The Faithful win about 50–56% of simulated games from 20 to 45 guests.
+
+The technical design is in [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md).
+
+---
+
+## Overview (Greenr, retiring)
 
 **Case title:** Greenr: Last Seating (Case 2609-G)  
 **Platform:** React + Vite PWA  

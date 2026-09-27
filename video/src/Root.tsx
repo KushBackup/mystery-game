@@ -15,6 +15,9 @@
 import React from "react";
 import { Composition, Folder } from "remotion";
 import { Explainer } from "./Explainer";
+import { Promo, PROMO_FRAMES } from "./ad/Promo";
+import { Compositions as FootagePromo } from "./ad60/Compositions";
+import { Compositions as KillersPromo } from "./adtn/Compositions";
 import { SCENES, TOTAL_FRAMES } from "./scenes/manifest";
 import { S01Cold } from "./scenes/S01Cold";
 import { S02Problem } from "./scenes/S02Problem";
@@ -84,6 +87,33 @@ export const RemotionRoot: React.FC = () => {
           />
         ))}
       </Folder>
+
+      {/* The 15s Meta ad — see src/ad/. `-SafeZone` is the precheck cut. */}
+      <Folder name="Promo">
+        <Composition
+          id="Promo-15s"
+          component={Promo}
+          durationInFrames={PROMO_FRAMES}
+          fps={30}
+          width={1080}
+          height={1920}
+          defaultProps={{ safeZone: false, withAudio: true }}
+        />
+        <Composition
+          id="Promo-15s-SafeZone"
+          component={Promo}
+          durationInFrames={PROMO_FRAMES}
+          fps={30}
+          width={1080}
+          height={1920}
+          defaultProps={{ safeZone: true, withAudio: false }}
+        />
+      </Folder>
+
+      {/* The footage ad for Meta — an instance of the footage-reel-ad skill (src/ad60/).
+          Registers Promo-60s, Promo-60s-SafeZone and Promo-60s-Probe. */}
+      <FootagePromo />
+      <KillersPromo />
 
       <Folder name="Scenes-Vertical">
         {SCENES.map((scene) => (

@@ -5,3 +5,19 @@ dist
 
 # Ignore the output video from Git but not videos you import into src/.
 out
+
+# The promo soundtrack is rebuilt by `npm run promo:audio`; only the
+# loudness-normalised result is kept.
+public/ad/promo-raw.wav
+public/ad60/sfx-raw.wav
+
+# The footage promo's clips and photos are real guests at a real event. They
+# stay local; `npm run reel:cut -- src/ad60` rebuilds the clips from the
+# GameNight master (see src/ad60/footage.ts).
+public/ad60/*.mp4
+public/ad60/*.jpg
+
+# The Killers Night promo: same rule (src/adtn/footage.ts rebuilds them).
+public/adtn/sfx-raw.wav
+public/adtn/*.mp4
+public/adtn/*.jpg

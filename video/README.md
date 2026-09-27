@@ -266,3 +266,168 @@ Specific choices made to keep it honest:
 - The `SECRET` redaction was pixel-verified: fully opaque at frame 220 (363 red
   pixels, 0 ink pixels) and fully open at frame 270.
 - All nine screenshots confirmed 780×1688 before use.
+
+---
+
+# The 15s Meta promo (`src/ad/`)
+
+A separate, self-contained piece: a **15-second portrait ad** for Meta
+(Reels / Stories / Feed 9:16). It shares only `theme.ts` and `anim.ts`'s
+`EASE` with the explainer; everything else lives in `src/ad/`.
+
+| | |
+|---|---|
+| **Output** | `out/astral-promo-15s-9x16.mp4` — 1080×1920, 30fps, H.264 CRF 18, AAC 320k |
+| **Length** | 450 frames · 15.0s |
+| **Loudness** | −13.5 LUFS integrated, −1.4 dBTP (Meta/Reels target is −14) |
+| **Compositions** | `Promo-15s` (the ad) · `Promo-15s-SafeZone` (precheck cut, overlay on, no audio) |
+
+```bash
+npm run promo:audio    # re-synthesize the soundtrack from src/ad/timeline.ts
+npm run promo:stills   # safe-zone stills into out/promo-stills/ (one bundle, many frames)
+npm run promo:render   # the deliverable
+```
+
+## Beats
+
+| Frames | Shot | Job |
+|---|---|---|
+| 0–60 | Hook | "SOMEONE AT THIS PARTY IS THE" + a redaction that tears off **KILLER.** Topic in under 2s, first frame already has type on it |
+| 60–135 | Identity | A drawn phone: your character's name, then your **secret**, rip open |
+| 135–180 | Riddle | Montage 1/3 — the answer types itself, the padlock springs, *Clue unsealed* |
+| 180–225 | Trade | Montage 2/3 — a code resolves out of noise and rides a red thread to a second phone |
+| 225–270 | Board | Montage 3/3 — four pin cards, a thread, a marker loop round the suspect |
+| 270–330 | Vote | Round rail 00–06, a live tally, the lead changes hands |
+| 330–375 | Twist | The music cuts. "THE KILLER COULD BE" — **YOU.** |
+| 375–450 | End | Wordmark, one line, *7 rounds · No app to install*, **Book your night** — holds ~2s clean |
+
+## Rules this piece keeps
+
+- **Sound leads picture.** `src/ad/timeline.ts` is the only clock. The soundtrack
+  script imports it (Node runs the `.ts` directly), so every kick, rip and bell
+  lands on the frame its cut or wipe does. Change a number there, then run
+  `promo:audio` *and* re-render.
+- **Everything is synthesized.** No samples, no stock music, no licences — a D-minor
+  drone, sub kicks at 120 BPM (one beat = 15 frames; every cut is on the grid),
+  a ticking clock, typewriter keys, paper rips, a margin bell, one boom.
+- **Sound-off first.** Meta autoplays muted; every beat carries its meaning in type.
+- **Meta safe zone.** Words and the thing being shown stay inside x 72–1008,
+  y 270–1240. The lower band holds only decoration (phone bodies, the outlined
+  *ghost* words), because the caption and CTA button cover it on Reels.
+- **No near-empty frame after a cut.** Montage and vote headlines start rising
+  `LEAD` (4) frames *before* their cut, so the cut frame already shows type
+  mid-whip. Starting on the cut produced 1–3 dark frames that read as a dropout
+  in the encode. The one deliberate exception is the twist: its dark first frame
+  is the silence.
+- **Fact discipline** — same rule as the explainer. Every claim is true of the
+  shipped game (7 rounds, played in the browser on each guest's phone, riddles
+  unseal clues, spoken codes unseal them on other phones, a vote every round, a
+  killer team drawn from the players). **Nothing is from the live case**: the
+  riddle is a case-neutral deck entry, the code word `NIGHTJAR`, the character
+  and every card line are invented, suspect names are redaction bars. No price,
+  date, rating, attendance or testimonial may be added.
+- The CTA copy (**Book your night**) is a placeholder default. Match it to the
+  ad's destination and to the Meta CTA button you pick.
+
+## Verifying
+
+Stills lie about motion. After `promo:stills`, also pull frames from the
+**encoded** MP4 around every cut and wipe (system `ffmpeg`; Remotion's bundled
+one has no `drawtext`, `pad` or `hstack`) — that is how the dropout frames and
+the headline-swap overlap were found. `scripts/sheets.sh <dir> <prefix>` tiles a
+folder of `f###.png` into 6-up contact sheets.
+
+---
+
+# The footage promo (`src/ad60/`)
+
+A **53.5-second portrait ad** for Meta, timed word by word to an ElevenLabs voiceover and built
+from the game-night reel. It is **an instance of the `footage-reel-ad` skill**
+(`~/.claude/skills/footage-reel-ad/`), which is the reusable version of this ad: the method,
+the rules the user set across five rounds of feedback, and the template and toolkit.
+`src/ad60/` is that template's worked example with `config.ts` pointed here. `scripts/reel/` is
+the toolkit.
+
+| | |
+|---|---|
+| **Output** | `out/astral-promo-60s-9x16.mp4`: 1080×1920, 30fps, 1605 frames (53.5s), H.264 CRF 17, AAC 320k |
+| **Audio** | the VO (`public/ad60/vo.mp3`) with synthesized SFX sidechain-ducked under it. **No music.** −14.3 LUFS, −1.5 dBTP |
+| **Compositions** | `Promo-60s` · `Promo-60s-SafeZone` (precheck: safe zone + keep-clear bands + text boxes) · `Promo-60s-Probe` (a clip on a y-grid) |
+
+```bash
+npm run reel:scan -- ~/Downloads/GameNight.MP4      # survey the master: out/scan/GameNight/
+npm run reel:transcribe -- src/ad60 <vo.mp3>        # VO -> src/ad60/voWords.ts (whisper.cpp; first run ~0.5GB)
+npm run reel:cut -- src/ad60                        # clips, cut to exactly the timeline's lengths
+npm run reel:probe -- src/ad60                      # keep-clear probe sheets: out/astral-promo-60s-9x16-probe/
+npm run promo60:check                               # alignment · coverage · keep-clear · safe zone · logos
+npm run promo60:stills                              # precheck stills with every band drawn
+npm run promo60:audio                               # SFX (sfx.ts) + VO mix, -14 LUFS (SYSTEM ffmpeg)
+npm run promo60:render                              # check -> render -> probe
+npm run promo60:verify                              # spec, loudness, dropouts, cut frames, flipbook, VO sync
+```
+
+**The footage is not in git.** `public/ad60/*.mp4` and `*.jpg` show real guests. `reel:cut`
+rebuilds the clips from the master named in `src/ad60/footage.ts`.
+
+## How it is built
+
+- **The voiceover is the clock.** `timeline.ts` aligns each caption to the transcribed VO
+  (words pop 2 frames before they are spoken). Shots cut on phrase starts at real speed, and
+  every graphic and sound cue sits on a spoken word (`w("killer", 14)`). `transcribe.mjs` snaps
+  whisper's phrase starts to real speech onsets (whisper starts them 0.2–0.4s early).
+- **Captions never sit on heads, faces or important things.** Every shot has keep-clear bands
+  read off the probe grid. `checkCaptions()` tests every caption and the step chip against
+  them, on every frame, with the lens move applied. `promo60:render` refuses to render on a
+  collision. Putting the previous render's caption positions back gives 18 collisions.
+- The look, the script method, the sound design and the verification loop are documented in
+  the skill (`SKILL.md` + `references/`). Don't duplicate them here; change them there.
+
+## Verification performed (the final render)
+
+- `promo60:check` passes: 26 captions aligned, every clip covers its shot, no text on a
+  keep-clear band, all inside the safe zone, logos present.
+- `promo60:verify`: 1605 frames at 1080×1920 30/1; −14.3 LUFS and −1.5 dBFS; no dark frames
+  (minimum YAVG 23.1); VO 43ms late in the encode (AAC priming). The cut frames and the 2fps
+  flipbook were reviewed.
+- The previous (pre-rule) render is kept in the session scratchpad only.
+
+# The Killers Night promo (`src/adtn/`)
+
+A **57.9-second portrait ad** for Meta for the new format (Killers Night), built from the same
+game-night reel with the `footage-reel-ad` skill. Event card: Saturday 3 October · 6 PM ·
+Greenr, Panjim, Goa · Astral × Greenr. CTA button: **Book now**.
+
+| | |
+|---|---|
+| **Output** | `out/adtn-9x16.mp4`: 1080×1920, 30fps, 1734 frames (57.9s), H.264 CRF 17, AAC 320k |
+| **Audio** | **currently a SCRATCH voice** (Windows "Microsoft Ravi" TTS, `public/adtn/vo.wav`) + synthesized SFX, no music. −14.8 LUFS, −1.4 dBFS |
+| **Compositions** | `Promo-Killers` · `Promo-Killers-SafeZone` · `Promo-Killers-Probe` |
+
+```bash
+npm run reel:transcribe -- src/adtn <vo.mp3>   # the user's ElevenLabs VO replaces the scratch one; everything re-times
+npm run reel:cut -- src/adtn                   # a new VO can change shot lengths: re-cut, then check
+npm run promotn:check; npm run promotn:audio; npm run promotn:render; npm run promotn:verify
+node --no-warnings scripts/reel/stills.mjs src/adtn 120,560 --clean   # the ad itself (no bands) -> out/adtn-9x16-clean/
+```
+
+**The scratch voice.** The TTS was made with `SpeechSynthesizer` (WinRT, OneCore voices) and its
+own word-boundary metadata written as `public/adtn/vo-words.json`, then `transcribe.mjs
+--from-json`. Don't whisper a robotic TTS: whisper put its phrase-final words 0.3–0.7s late.
+A real VO goes through `transcribe.mjs` normally.
+
+**What is new over the Greenr ad** (all in `scenes.tsx`, every graphic on a spoken word):
+
+- reticles that lock onto three guests in the crowd ("three of them are Killers") and come back
+  for the twist, drawn inside the shot's lens (`InLens`) so they ride the push;
+- the arrival phone: three of the six real trait questions answered with a tap, then a 3D card
+  flip, a slot reel of the real roles, and a redaction with a TOP SECRET stamp;
+- night: the lights stutter out, and a blade SLASH splits the frame on "kill" (a shot `fx`);
+- dawn: eight phones light bone-white on the same frame ("at the same second");
+- clue banners with the story pack's real clue lines; marker loops round a guest's glasses, a
+  pair of sandals and a bottle, each with a drawn trait badge;
+- the round-table tally, then a reveal card that spins between KILLER and FAITHFUL and lands
+  "Faithful — the room was wrong";
+- the GHOST shot `fx`: the picture drains to grey and trails two delayed echoes of itself;
+- the step chip can step aside for a shot whose faces fill the top (`STEPS[].since`).
+
+**The footage is not in git** (`public/adtn/*.mp4`, `*.jpg`); `reel:cut` rebuilds it.

@@ -1,5 +1,30 @@
 # 🎯 Firebase Chat Setup - Visual Guide
 
+## Killers Night schema (2026-09-26)
+
+The new game uses authentication and locked-down rules ([firestore.rules](firestore.rules)); the legacy open collections further down belong to the retiring Greenr game.
+- **Players** sign in anonymously.
+- **The host** signs in with Google, as `kushagranagar25@gmail.com` or `astralprojectco@gmail.com`.
+- **Reset:** `meta/active` names the current game, and a reset is simply a new `gid`, so nothing is ever bulk-deleted.
+
+| Path under `games/{gid}/` | Contents | Written by | Read by |
+|---|---|---|---|
+| *(the game doc)* | `phase, cycle, ballot, tied, phaseEndsAt, revealAt, config, dawn, banish, winner, finaleRoles, endgameRound, autopilot` | host | everyone |
+| `bindings/{uid}` | `{pid}` (auth uid → game identity) | self on arrival, host on relink | self, host |
+| `players/{pid}` | `name, table, status (alive/ghost/vanished), cause, revealedRole, leaveRequestedAt` | self (only name, table and leave), host | everyone |
+| `traits/{pid}` | the six arrival answers, frozen once dealt | self | self, host |
+| `roles/{pid}` | `role, team, checksLeft` | host | self, host |
+| `killers/{pid}` | membership marker | host | Killers, host |
+| `den/{cycle}_{pid}`, `den/meta` | a Killer's night pick (victim, hand, frame, recruit); tonight's den status | that Killer, only during `night` / host | Killers, host |
+| `denChat/*` | Killer chat | Killers | Killers, host |
+| `actions/{cycle}_{pid}` | one night action (watch, scour, protect, check, whisper, recruitAnswer) | self, only during `night` / `recruit` | self, host |
+| `votes/{ballot}_{pid}` | `{target, ballot}` | self, only on the open ballot | self, host |
+| `inbox/{cycle}-{step}-{i}` | fragments, watch results, checks, whispers, recruit offers | host | the addressee only (query with `where('to','==',pid)`) |
+| `chat/*`, `mediumChat/*` | room chat (living players); Spirits (ghosts and the Medium) | as stated | as stated |
+| `presence/{pid}` | heartbeat, and the clock-skew stamp | self | self, host |
+| `secret/engine`, `resolutions/*`, `hostLease/current` | seed, hands, plant and recruit state; idempotency markers; host clock stamp | host | host |
+
+
 ## 🗺️ Architecture Overview
 
 ```

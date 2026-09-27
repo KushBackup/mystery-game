@@ -26,6 +26,22 @@ When the same lesson recurs, **edit the existing entry** rather than adding a du
 
 ## Entries
 
+### 2026-09-26 — A locally-pending binding mounts listeners the server will refuse
+
+**What happened:** On arrival, the binding doc was written and its own listener fired straight away on the local, still-pending copy. That mounted the in-game screens, whose role, inbox and action listeners reached the server before the binding had committed. The rules check those listeners against the binding, so they were refused. In React StrictMode, the refused listen plus the dev double-subscribe then tripped Firestore's `INTERNAL ASSERTION FAILED (ca9 / b815)`, killing the whole client. Every phone froze in the lobby while the host moved on.
+
+**Why it was wrong:** When a rule depends on another doc via `exists()`/`get()`, a listener is only safe once that doc is *committed*. Latency compensation makes "I can see it" arrive before "the server has it". Separately, a listener that errors once is dead forever unless something re-subscribes it.
+
+**What to do instead:** Gate anything whose rule depends on a just-written doc on `includeMetadataChanges: true` plus `!snap.metadata.hasPendingWrites` (see `subscribeBinding` in src/firebase/game.js). Wrap every listener in the self-healing `resilient()` helper. Verify with real browsers and StrictMode on (the Playwright drive), not just Node bots: the bots never exercised this path.
+
+### 2026-09-26 — `er-mono--bone` is bone-coloured text, not "mono for bone cards"
+
+**What happened:** Labels on bone surfaces (role card, clue cards, the read-aloud card) used `er-mono--bone` and rendered almost invisible, bone on bone.
+
+**Why it was wrong:** The modifier names the text colour, not the surface it is meant for.
+
+**What to do instead:** On a bone surface, use `er-mono text-body-bone`. Keep `er-mono--bone` for ink surfaces only. Check every new bone card in a screenshot.
+
 ### 2026-09-19 — Preserve the cumulative vote rule
 
 **What happened:** The tally had been changed to count only the current round's ballots, even though the game rule is that votes accumulate across rounds.
@@ -51,6 +67,56 @@ When the same lesson recurs, **edit the existing entry** rather than adding a du
 **Why it was wrong:** `src/` was not what was running. Inspecting the `gh-pages` bundle showed it contained `localStorage` session restore (`mg.currentUser`) that exists in no commit — that seeds `currentUser` on boot, so the reveal overlay (checked *before* the login gate) rendered immediately and permanently blocked access to CharacterSelect. The guard was fine; the render *order* plus a feature missing from `src/` was the bug.
 
 **What to do instead:** When a live-site symptom contradicts the source, inspect the deployed artifact before doubting the report: `git show gh-pages:assets/<bundle>.js` and search it. Also: early-return terminal screens must always sit **after** the login gate, so no game state can trap a device with no route back to login.
+
+---
+
+### 2026-09-27 — A keep-clear check is only as good as its bands; read them off the grid, then prove it fails
+
+**What happened:** The user added a rule: captions must never sit on people's heads or important things. I built a check (`checkCaptions()` in the footage-reel-ad template), filled in each shot's face bands, and it passed. The precheck stills then showed captions on three faces (TALK, ACCUSE, "or come solo" on the helmet). I had written several bands from memory of earlier thumbnails, and they were off by 200–400px.
+
+**Why it was wrong:** A passing check proves only that the captions miss the bands I typed. It says nothing about whether the bands are where the faces are.
+
+**What to do instead:** Probe every clip (first, middle and last frame on a labelled y-grid), open each sheet at full size, and read each band's top and bottom off the grid labels. Take the union of the three frames and pad about 15px. Then run the negative test: put known-bad caption positions back and confirm the check reports them. Here it found 18. Look at the stills with the bands drawn even when the check is green.
+
+---
+
+### 2026-09-26 — Whisper's word timestamps start a phrase too early; snap them to the silences
+
+**What happened:** Syncing the footage ad to an ElevenLabs voiceover, whisper.cpp's token timestamps put the first word of most phrases at the end of the previous pause, 0.2–0.4s before it is actually spoken ("Come" at 2.24s, spoken at 2.45s; "and every clue" at 17.10s, spoken at 17.57s). Captions and cuts timed to those numbers would all have been early.
+
+**Why it was easy to miss:** The word order and the text were perfect, and the later words in each phrase were accurate. Only phrase starts drift, and that is exactly where the cuts and the caption changes sit.
+
+**What to do instead:** Run `silencedetect` on the VO and snap any word that begins inside a silence to where the speech resumes (`scripts/transcribe-vo.mjs` does this). Snap caption starts to the nearest silence end within 0.5s. Then verify the final file, not the plan: cross-correlate the VO against the rendered mix (43 ms, from AAC padding, here), and pull frames from the MP4 at spoken key words.
+
+---
+
+### 2026-09-26 — An ad script has to pass the framework the user handed over, line by line
+
+**What happened:** The user supplied a viral-script framework (hook diagnostic, topic clarity plus A/B contrast, "you" framing, open-loop chaining, 6th-grade clarity). The first two cuts of the footage ad in [video/src/ad60/](video/src/ad60/) cited the framework but did not apply it. The hook "Someone in this room is a killer" failed isolation-proofing (it read as a true-crime trailer, not a night you can book), had no contrast and no "you" pain point, and the body never explained the game in plain steps. The user also disliked the poster-style graphics and the pacing.
+
+**Why it was wrong:** I wrote the script the way the explainer film was written, as a cinematic tease, and treated the framework as a checklist to mention rather than a test to pass. I also never checked what actually performs in the category before designing the look.
+
+**What to do instead:** Before writing ad copy, run the supplied framework explicitly on the hook: say out loud whether it passes delay, confusion, irrelevance and disinterest, and rewrite until it does. Structure the body as numbered, plain-language steps, each ending on the next question, then friction killers, then a CTA that pays off the hook. Look at the category's longest-running ads in Meta's Ad Library first (`agent-browser` can open it and pull the ad copy and video URLs). In this category that means native captions over bright real footage, not title cards.
+
+---
+
+### 2026-09-26 — Footage promo: slow motion and a music bed were both rejected
+
+**What happened:** The first cut of the footage ad in [video/src/ad60/](video/src/ad60/) stretched every clip with 0.4–0.8x slow motion, so short shots could fill 3–4 second beats, and it carried a synthesized 120 BPM score. The user rejected both: the slow motion made the night look sluggish, and they did not want background music.
+
+**Why it was wrong:** I used slow motion as a way to make short footage fill long beats. That was a timing convenience, not a creative choice. The ad's energy is the room, and at half speed a party reads as tired. The score was added because the skills I had read call silence amateur, but whether an ad has music is a brand call for the user, not a craft default.
+
+**What to do instead:** Cut footage at real speed and let the length of each clean shot set the edit's rhythm. Find the shot boundaries with ffmpeg scene detection, cut each clip to its exact shot length, and accept a shorter runtime rather than stretching the footage. For audio, default to sound effects tied to on-screen events, and ask before adding a music bed.
+
+---
+
+### 2026-09-26 — A full-HD `<OffthreadVideo>` render can fail on memory, and a `tail` of the log hides why
+
+**What happened:** The 60s promo in [video/src/ad60/](video/src/ad60/) (sixteen 1080x1920 clips) rendered stills fine, then the full render died at frame 166: `No frame found at position 10444` for `c02_walk.mp4`. I had piped the render through `tail -5`, so the first run showed only a stack trace fragment and no message, and the MP4 simply was not there.
+
+**Why it was wrong:** The clips were fine (start_time 0, constant 60fps, checked with `ffprobe`). The cause was the OffthreadVideo frame cache: with the default concurrency on a 20-thread machine and ~3.6 GB free, extracted 1080x1920 frames were evicted before they were read. Stills never hit this because they render one frame at a time.
+
+**What to do instead:** Render footage-heavy compositions with `--offthreadvideo-cache-size-in-bytes=3000000000 --concurrency=4` (it is baked into `promo60:render`). Send the whole render log to a file and grep it, rather than tailing it. And confirm the output file exists before calling a render done: an exit code seen through a pipe is the pipe's.
 
 ---
 
@@ -431,3 +497,11 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 **What to do instead:** Keep the player route gated, but provide `/mystery-game/host` as a host-only portal that deliberately ignores persisted player state and renders only the host credential form. Ship a `public/404.html` redirect that restores the route into the Vite SPA for direct GitHub Pages loads.
 
 <!-- Add new lessons above this line, newest first or oldest first — keep one consistent order. Current order: oldest first. -->
+
+### 2026-09-27 — Whisper drifts on a robotic TTS voice; use the TTS's own word timings
+
+**What happened:** To time the Killers Night ad before the user's voiceover existed, I generated a scratch VO with the Windows TTS and ran it through `transcribe.mjs`. Whisper misheard words ("votes someone" as "won't summon"). It also put phrase-final words 0.3–0.7s late, so the silence snap then pushed them later still ("plays" at 4.05s, spoken at about 3.0s).
+
+**Why it was wrong:** Whisper's token timestamps are tuned for natural speech. A flat synthetic voice with hard gaps breaks both its recognition and its timing, and the snap step assumes whisper is *early*, not late.
+
+**What to do instead:** For a scratch TTS, take the timings from the synthesizer. WinRT `SpeechSynthesizer` with `Options.IncludeWordBoundaryMetadata` gives every word's start. Write them as `vo-words.json` and run `transcribe.mjs --from-json`. Only a real voiceover goes through whisper.

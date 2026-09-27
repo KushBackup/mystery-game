@@ -5,7 +5,47 @@
 
 ---
 
-## Overview
+## Killers Night (the new format, in progress since 2026-09-26)
+
+The Greenr authored case below is being replaced by **Killers Night**, a Killers/Mafia hybrid:
+- Roles are dealt live from whoever turns up.
+- Clues describe the killer's real traits, answered at arrival.
+- Murdered and banished players become Ghosts.
+
+The rationale and milestones are in the plan file named in [memory.md](memory.md). `/` now opens Killers Night; `?classic` still opens the Greenr game until the cleanup milestone deletes it.
+
+### Layers
+
+| Layer | Files | Rule |
+|---|---|---|
+| Engine | [src/lib/engine/](src/lib/engine/) — `rng`, `roles`, `clues`, `night`, `banish`, `win`, `roster`, `phases` | Pure, no Firebase, runs in Node. Every random draw is `makeRng(seed, cycle, purpose)`, so a resolution is reproducible on any host device |
+| Content | [src/data/traits.js](src/data/traits.js), [src/data/packs/](src/data/packs/), [src/data/killersCopy.js](src/data/killersCopy.js) | Six arrival traits (grouped so one clue splits the room about in half); a story pack (setting, two narration lines per beat, one clue line per trait group, whisper words); all other copy is 25 words or fewer |
+| Firebase | [src/firebase/app.js](src/firebase/app.js) (init, emulator switch), [game.js](src/firebase/game.js) (player reads/writes), [host.js](src/firebase/host.js) (every outcome) | Players write only their own action, vote and chat. The host device resolves each phase in four steps: lock, read from server, resolve, then one transaction guarded by `resolutions/<id>` |
+| Clock | [src/lib/clockSkew.js](src/lib/clockSkew.js) | Every device reads time as `serverNow()`, so a reveal at `revealAt` flips on every phone at once (there is no projector) |
+| UI | [src/KillersApp.jsx](src/KillersApp.jsx), [src/components/game/](src/components/game/), [src/components/host/HostApp.jsx](src/components/host/HostApp.jsx), [src/hooks/useKillers.js](src/hooks/useKillers.js) | Player: Arrival, then a phase screen with the NowCard on top and five tabs (Now, Clues, Guests, Talk, Me). Host: Google sign-in, Setup, then a console with one Next button, read-aloud lines, autopilot and roster |
+
+### Phase machine
+
+`lobby → casting → [night → (recruit) → dawn → investigation → roundtable → (revote) → banish] × cycles → endgame ×2 → finale`
+
+- Every `*_locked` phase is the host's resolution beat. The rules refuse actions and votes during it.
+- A host that crashes mid-resolution leaves the game locked. Pressing Next again finishes the job, and the marker keeps it single.
+
+### Listeners
+
+- Every listener is self-healing (`resilient()` in game.js, `listen()` in host.js): an error schedules a retry with backoff.
+- The binding listener ignores pending local writes (see Lessons.md, 2026-09-26).
+
+### Testing (no test framework, by design)
+
+- `npm run emulators`: Auth and Firestore emulators under the `demo-killers` project. Needs JDK 21.
+- `npm run sim`: balance simulator. Plays thousands of games through the real engine.
+- `node scripts/bots.mjs --selftest --n 30 [--killer-leaves]`: a whole game plus 16 privacy-rule checks, against the emulator.
+- `node scripts/bots.mjs --join 12`: 12 bots join the active game, to fill a room around real phones.
+
+---
+
+## Overview (Greenr, retiring)
 
 **Application type:** Interactive multiplayer web-based murder mystery PWA  
 **Framework:** React 19 + Vite 7  

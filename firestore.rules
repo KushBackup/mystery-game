@@ -1,42 +1,192 @@
 rules_version = '2';
 
-// Open rules suitable for an unauthenticated party-game lobby.
-// The game runs on a private invite link with no Firebase Auth — the host is
-// the trust boundary, not the database. Anyone who can load the app can write.
+// =============================================================================
+// Killers Night
+// =============================================================================
 //
-// Collections used by the app (see src/firebase/config.js):
-//   gameState/current      - round, round clock, voting flags, unlocked files, revealed clues
-//   gameState/votes        - per-player vote records and aggregate counts
-//   gameState/playerData   - per-player unlocked clue list
-//   messages/{id}          - chat messages
+// Everything a player must not see is enforced here, not in the UI. The app is
+// a static site: anyone at the party can open devtools and query Firestore
+// directly, so "the screen doesn't show it" protects nothing.
+//
+//   Players  sign in anonymously. Their game identity is a pid, mapped from
+//            the auth uid by games/{gid}/bindings/{uid}. The pid starts equal
+//            to the uid; the host can relink a new device to an old pid.
+//   Host     signs in with Google, as one of the emails in isHost(). The host
+//            device deals roles and resolves every night and vote. No player
+//            ever writes an outcome.
+//
+// Timing is enforced as well: actions only while the phase is 'night', votes
+// only on the open ballot. The host locks a phase before reading it, so
+// nothing can be changed after the host has looked (lib/engine/phases.js).
+//
+// Paths are all under games/{gid}; meta/active names the current game, and a
+// reset simply starts a new gid.
+
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+
+    function isHost() {
+      // .get() with defaults: an anonymous token has no email at all, and this
+      // must answer a clean false for it, not an evaluation error.
+      return signedIn()
+        && request.auth.token.get('email_verified', false) == true
+        && request.auth.token.get('email', '') in ['kushagranagar25@gmail.com', 'astralprojectco@gmail.com'];
+    }
+
+    match /meta/active {
+      allow read: if signedIn();
+      allow write: if isHost();
+    }
+
+    match /games/{gid} {
+      function hasBinding() { return exists(/databases/$(database)/documents/games/$(gid)/bindings/$(request.auth.uid)); }
+      function me() { return get(/databases/$(database)/documents/games/$(gid)/bindings/$(request.auth.uid)).data.pid; }
+      function game() { return get(/databases/$(database)/documents/games/$(gid)).data; }
+      function myStatus() { return get(/databases/$(database)/documents/games/$(gid)/players/$(me())).data.status; }
+      function myRole() { return get(/databases/$(database)/documents/games/$(gid)/roles/$(me())).data.role; }
+      function isKiller() { return hasBinding() && exists(/databases/$(database)/documents/games/$(gid)/killers/$(me())); }
+      function isMe(pid) { return hasBinding() && me() == pid; }
+      // Ids of the form "<key>_<pid>" belong to that pid.
+      function ownsId(id) { return hasBinding() && id.matches('^[A-Za-z0-9-]+_' + me() + '$'); }
+      function shortText(t) { return t is string && t.size() > 0 && t.size() <= 280; }
+
+      allow read: if signedIn();
+      allow write: if isHost();
+
+      // --- Identity ----------------------------------------------------------
+      match /bindings/{uid} {
+        allow read: if request.auth.uid == uid || isHost();
+        allow create: if request.auth.uid == uid && request.resource.data.pid == uid;
+        allow update, delete: if isHost();
+      }
+
+      // Public: name, table, status. Status is the host's alone to change.
+      match /players/{pid} {
+        allow read: if signedIn();
+        allow create: if request.auth.uid == pid
+          && request.resource.data.keys().hasOnly(['name', 'table', 'status', 'joinedAt'])
+          && request.resource.data.status == 'alive'
+          && shortText(request.resource.data.name)
+          && request.resource.data.name.size() <= 24;
+        allow update: if isHost() || (isMe(pid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'table', 'leaveRequestedAt']));
+        allow delete: if isHost();
+      }
+
+      // The six arrival answers. Private, and frozen once roles are dealt.
+      match /traits/{pid} {
+        allow read: if isHost() || isMe(pid);
+        allow create, update: if (request.auth.uid == pid || isMe(pid)) && !exists(/databases/$(database)/documents/games/$(gid)/roles/$(pid));
+        allow delete: if isHost();
+      }
+
+      // Written by its owner as a heartbeat, and read back once to measure the
+      // device's clock against the server's (lib/clockSkew.js).
+      match /presence/{pid} {
+        allow read: if isHost() || isMe(pid);
+        allow write: if isMe(pid);
+      }
+
+      // --- Secrets -----------------------------------------------------------
+      match /roles/{pid} {
+        allow read: if isHost() || isMe(pid);
+        allow write: if isHost();
+      }
+
+      match /killers/{pid} {
+        allow read: if isHost() || isKiller();
+        allow write: if isHost();
+      }
+
+      // One doc per Killer per night: "<cycle>_<pid>" → { victim, hand, frame, recruit }.
+      match /den/{id} {
+        allow read: if isHost() || isKiller();
+        allow create, update: if isHost() || (isKiller() && ownsId(id)
+          && game().phase == 'night'
+          && id == string(game().cycle) + '_' + me()
+          && request.resource.data.pid == me());
+      }
+
+      match /denChat/{id} {
+        allow read: if isHost() || isKiller();
+        allow create: if isKiller() && request.resource.data.pid == me() && shortText(request.resource.data.text);
+        allow delete: if isHost();
+      }
+
+      // "<cycle>_<pid>" → one night action. Ghosts act too (their whisper), and
+      // a recruit answers here during the recruit beat.
+      match /actions/{id} {
+        allow read: if isHost() || ownsId(id);
+        allow create, update: if ownsId(id)
+          && request.resource.data.pid == me()
+          && id == string(game().cycle) + '_' + me()
+          && request.resource.data.cycle == game().cycle
+          && (
+            (game().phase == 'night' && myStatus() in ['alive', 'ghost'])
+            || (game().phase == 'recruit' && request.resource.data.kind == 'recruitAnswer')
+          );
+      }
+
+      // "<ballot>_<pid>" → { target }. The ballot id lives on the game doc.
+      match /votes/{id} {
+        allow read: if isHost() || ownsId(id);
+        allow create, update: if ownsId(id)
+          && request.resource.data.pid == me()
+          && id == game().ballot + '_' + me()
+          && (
+            (game().phase in ['roundtable', 'revote'] && myStatus() == 'alive')
+            || (game().phase == 'endgame' && myStatus() in ['alive', 'ghost'])
+          )
+          && (game().phase != 'revote' || request.resource.data.target in game().tied);
+      }
+
+      // Fragments, watch results, checks, whispers, recruit offers. Addressed to
+      // one pid; clients must query with where('to', '==', pid).
+      match /inbox/{id} {
+        allow read: if isHost() || (hasBinding() && resource.data.to == me());
+        allow write: if isHost();
+      }
+
+      // --- Talk ----------------------------------------------------------------
+      match /chat/{id} {
+        allow read: if signedIn();
+        allow create: if hasBinding() && myStatus() == 'alive'
+          && request.resource.data.pid == me() && shortText(request.resource.data.text);
+        allow delete: if isHost();
+      }
+
+      match /mediumChat/{id} {
+        allow read: if isHost() || (hasBinding() && (myStatus() == 'ghost' || myRole() == 'medium'));
+        allow create: if hasBinding() && request.resource.data.pid == me() && shortText(request.resource.data.text)
+          && ((myStatus() == 'ghost') || (myRole() == 'medium' && myStatus() == 'alive'));
+        allow delete: if isHost();
+      }
+
+      // --- Host only -------------------------------------------------------------
+      match /secret/{doc} { allow read, write: if isHost(); }
+      match /resolutions/{doc} { allow read, write: if isHost(); }
+      match /hostLease/{doc} { allow read, write: if isHost(); }
+    }
+
+    // =========================================================================
+    // LEGACY: the Greenr authored case. Open rules, no auth. Delete with the old
+    // game at the M6 cleanup; until then, deploying this file must not break it.
+    // =========================================================================
+
     match /gameState/{docId} {
       allow read, write: if true;
     }
-
-    // Walk-in registration is host-authorized by one-time passes in the UI.
-    // This project has no Firebase Auth, so these rules cannot distinguish a
-    // host from a participant; do not present the contact collection as secure
-    // against a determined client until authentication is added.
     match /walkInPasses/{passId} {
       allow read, write: if true;
     }
-
     match /bystanders/{bystanderId} {
       allow read, write: if true;
     }
-
     match /walkInContacts/{bystanderId} {
       allow read, write: if true;
     }
-
-    // Delete is open because the host has to be able to wipe the channel
-    // between games. It used to be `delete: if false`, which meant the Host
-    // Panel's Reset Game silently failed on the chat — clearAllMessages()
-    // swallows its own error, so the host saw a clean reset while every player
-    // still had the previous game's thread in front of them.
-    // Update stays closed: nobody edits a message once it is sent.
     match /messages/{messageId} {
       allow read: if true;
       allow create: if true;

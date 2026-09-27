@@ -32,7 +32,33 @@
 - **Game name:** Astral Project's Murder Mystery Experience
 - **Real-world purpose:** Social murder-mystery + networking event. The game's events are *not real*.
 
-### Greenr: Last Seating (2609-G, active case)
+### Next event (supplied 2026-09-26)
+
+- **Saturday 3 October 2026, 6 PM – 9 PM, at Greenr, Panjim, Goa**, in collaboration with Greenr. The previous event was at Greenr, Assagao.
+- The footage ad in `video/src/ad60/` ends on this event card, with the Astral Project and Greenr logos in `video/public/ad60/`.
+- On 2026-09-27 the user gave the same event as "Greenr, Panjim, Goa, 3rd Oct 6PM" for the Killers Night ad (`video/src/adtn/`), so that card says **6 PM** with no end time. The Meta button for that ad is **Book now**. The user attached a white Greenr logo (EST. 2015) and the ASTRAL PROJECT.IN logo for it.
+- "Killers Night" is the game's working name. The ad uses it as the public wordmark, pending the user's OK: "The Killers" is a TV show with an official live experience.
+
+### Killers Night: the new format (decided 2026-09-26, build in progress)
+
+- **Why:** player feedback was that there was too much reading, it got long and boring, and most players had nothing to do. The host's problems were writing a new story per event, and absent killers or key witnesses breaking the case.
+- **Decision:** replace the authored-case loop with a Killers/Mafia hybrid.
+  - Roles are dealt live from whoever is present.
+  - Clues describe *the hand* (the Killer who kills) through six real traits answered at arrival.
+  - Murdered and banished players become Ghosts, who keep playing.
+  - Team win only, no personal scores.
+  - 5 cycles, about 2 hours.
+  - A small role set: Killer, Faithful, Doctor, Detective, Medium.
+- **Venue:** bars and cafes, seated tables of 4–8 plus mingling, mixed friend groups, **no projector**. Every reveal is synced to every phone at once.
+- **Balance** (from `scripts/sim-balance.mjs`):
+  - 3 Killers from 12 to 50 players; the count does not scale with room size.
+  - 2 Endgame banishments.
+  - The clue budget scales by ±1 clue per 20 guests around 35.
+  - Result: the Faithful win about 50–56% at 20–45 players.
+- **Plan file:** `C:\Users\Kush\.claude\plans\so-i-want-you-peppy-island.md`. The Greenr game stays in the repo until the M6 cleanup; the new code lives in `src/lib/engine/`, `src/data/traits.js` and `src/data/packs/`.
+- **Testing:** the plan is to test against the Firebase Local Emulator, never the live `murder-1bf1c` project. The emulator needs a JDK, and none was installed on 2026-09-26.
+
+### Greenr: Last Seating (2609-G, the retiring case)
 
 - **Cast and setting:** 26 playable, first-name-only guests at Greenr, Assagao, Goa, on 19 September 2026.
 - **Victim and team (spoiler):** independent diligence partner Rehan Vora is killed by Jack (plan), Arun (AV blind spot) and Manasi (dose).

@@ -9,7 +9,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "gh-pages -d dist",
+    "emulators": "npx firebase emulators:start --only auth,firestore --project demo-killers",
+    "sim": "node scripts/sim-balance.mjs",
+    "bots": "node scripts/bots.mjs"
   },
   "dependencies": {
     "firebase": "^11.1.0",

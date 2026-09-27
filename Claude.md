@@ -18,6 +18,10 @@ The folder lives at `d:\Unity Projects\mystery-game` for historical reasons, but
 
 ---
 
+> **Rebuild in progress (2026-09-26): Killers Night.** The authored case is being replaced by a Killers/Mafia hybrid. Roles are dealt live from whoever is present; clues describe the killer's real traits, answered at arrival; the dead play on as Ghosts. `/` opens the new game and `?classic` the retiring Greenr case. Start with the Killers Night sections of [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) and [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md), and the plan named in [memory.md](memory.md). Everything below about rounds, clue codes, riddles and pods describes the retiring game.
+
+---
+
 ## Documentation map
 
 Always start at this file. Read the others on demand based on what you're working on.
@@ -42,7 +46,7 @@ Always start at this file. Read the others on demand based on what you're workin
 | **[PWA_IMPLEMENTATION_COMPLETE.md](PWA_IMPLEMENTATION_COMPLETE.md)** | PWA / offline / service worker details | Touching PWA, vibration, offline behavior |
 | **[MYSTERY_IMPROVEMENTS_SUMMARY.md](MYSTERY_IMPROVEMENTS_SUMMARY.md)** | Snapshot of recent enhancements | Historical reference only |
 | **[reveal-deck/README.md](reveal-deck/README.md)** | The 22-slide post-game "How It Happened" reconstruction deck — structure, controls, the two components it adds. The **projected** copy; [src/data/revealDeck.js](src/data/revealDeck.js) is the same 22 slides in the app | Touching either reveal deck |
-| **[video/README.md](video/README.md)** | The Remotion explainer film — tokens, motion language, timeline, how to re-render | Touching the explainer video |
+| **[video/README.md](video/README.md)** | The Remotion explainer film, **the 15s Meta promo** (`src/ad/`) **and the 53s footage promo** (`src/ad60/`: an instance of the `footage-reel-ad` skill in `~/.claude/skills/`, which is the reusable method + template + `scripts/reel/` toolkit for any footage ad) — tokens, motion language, timelines, synthesized soundtracks, safe zone, how to re-render | Touching any of the videos |
 | **[video/script.md](video/script.md)** | Voiceover script for the explainer (optional track) | Recording or editing the VO |
 | **[README.md](README.md)** | Vite/React boilerplate | Low-value, skip |
 
@@ -83,6 +87,17 @@ The files you will most often need to open:
 - [vite.config.js](vite.config.js) — build config + PWA plugin
 - [tailwind.config.js](tailwind.config.js) — custom mystery theme palette
 
+### Killers Night (the new game)
+
+- [src/lib/engine/](src/lib/engine/) — the rules, pure and Node-runnable: roles, night resolution, clue generation, banishment, win, roster churn, phases. **Seeded**: never call `Math.random` in it
+- [src/data/traits.js](src/data/traits.js) — the six arrival questions and their clue groups
+- [src/data/packs/](src/data/packs/) — story packs (setting, narration, clue flavour, whisper words). A new theme is a new pack file, not new code
+- [src/data/killersCopy.js](src/data/killersCopy.js) — role cards, the NowCard line per phase/role, inbox wording. 25 words or fewer per line
+- [src/firebase/app.js](src/firebase/app.js) · [game.js](src/firebase/game.js) · [host.js](src/firebase/host.js) — init with the emulator switch; player reads/writes; the host's lock → read → resolve → commit-once
+- [firestore.rules](firestore.rules) — **the only thing keeping roles secret**. Change it together with `scripts/bots.mjs --selftest`, which checks 16 privacy rules
+- [src/components/game/](src/components/game/) · [src/components/host/HostApp.jsx](src/components/host/HostApp.jsx) — player screens; the host console
+- [scripts/sim-balance.mjs](scripts/sim-balance.mjs) · [scripts/bots.mjs](scripts/bots.mjs) — balance simulator; emulator bots (self-test, or `--join N`)
+
 ### Sibling sub-projects (not part of the PWA build)
 
 - [pitch-deck/index.html](pitch-deck/index.html) — self-contained 1920×1080 HTML pitch deck (its own CSS/JS, no build step). The `:root` block is the canonical "Evidence Room" design system.
@@ -104,13 +119,16 @@ The files you will most often need to open:
 | Linting | ESLint | ^9.39.1 |
 | Deploy | gh-pages | ^6.3.0 |
 | Tests | **None** — no test framework configured |
+| Auth (Killers Night) | Firebase Auth — anonymous for players, Google for the host | ^11.1.0 (same package) |
+| Local backend (dev) | Firebase Local Emulator (`firebase-tools`, global) + Microsoft OpenJDK 21 | 14.26 / 21.0.12 |
+| Browser checks (dev) | Playwright, global install, driven from scratch scripts | 1.63 |
 
 ### `video/` sub-project (independent dependency tree)
 
 | Area | Tool | Version |
 |---|---|---|
 | Video framework | Remotion (`remotion`, `@remotion/cli`) | 4.0.503 |
-| Also installed | `@remotion/google-fonts`, `@remotion/transitions`, `@remotion/shapes` | 4.0.503 |
+| Also installed | `@remotion/google-fonts`, `@remotion/transitions`, `@remotion/shapes`, `@remotion/install-whisper-cpp` (VO word timings; the model lives in `~/.cache/remotion-whisper`) | 4.0.503 |
 | UI framework | React | 19.2.3 |
 | Language | TypeScript | 5.9.3 |
 | Styling | **Inline styles only** — no Tailwind, no CSS files, no animation library |
@@ -131,6 +149,14 @@ npm run dev              # localhost:5173
 npm run lint             # before committing
 npm run build            # verify production build is healthy
 npm run preview          # serve the production build locally
+
+# Killers Night. A dev build talks to the emulator (project demo-killers) unless ?live=1
+npm run emulators        # Auth + Firestore emulators (needs JDK 21); UI at localhost:4000
+npm run sim              # balance sweep through the real engine
+node scripts/bots.mjs --selftest --n 30   # whole game + privacy-rule checks, emulator only
+node scripts/bots.mjs --join 12           # 12 bots join the active game around real phones
+# Host console: localhost:5173/mystery-game/host (emulator sign-in: add a host-email account)
+# Several players on one laptop: add ?tab=1 so each tab is its own guest
 ```
 
 ### The explainer video (run these from `video/`, not the repo root)
@@ -143,6 +169,12 @@ npx remotion studio                          # live preview at localhost:3000
 npx remotion still S08Rounds out/check.png --frame=290 --scale=0.5   # fast layout check
 npx remotion render Explainer out/astral-explainer.mp4 --codec=h264 --crf=18
 npx remotion render Explainer-Vertical out/astral-explainer-vertical.mp4 --codec=h264 --crf=18
+npm run promo:audio; npm run promo:render   # the 15s 9:16 Meta ad (~20s to render)
+bash scripts/cut-promo60-footage.sh <GameNight.MP4> <photo-dir>   # once: rebuild the 60s ad's clips (not in git)
+npm run reel:transcribe -- src/ad60 <vo.mp3>   # VO -> word timings (whisper.cpp, first run downloads ~0.5GB)
+npm run promo60:check; npm run promo60:audio; npm run promo60:render; npm run promo60:verify   # the 53s 9:16 Meta ad (~5 min; system ffmpeg)
+# A NEW footage ad: load the footage-reel-ad skill; it installs its toolkit with template/install.mjs
+npm run promotn:check; npm run promotn:audio; npm run promotn:render; npm run promotn:verify   # the Killers Night 58s ad (src/adtn/; scratch VO until the user's ElevenLabs one arrives)
 ```
 
 A full render is ~4 minutes per cut for 3900 frames. Prefer `remotion still` while iterating on layout.
