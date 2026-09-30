@@ -505,3 +505,21 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 **Why it was wrong:** Whisper's token timestamps are tuned for natural speech. A flat synthetic voice with hard gaps breaks both its recognition and its timing, and the snap step assumes whisper is *early*, not late.
 
 **What to do instead:** For a scratch TTS, take the timings from the synthesizer. WinRT `SpeechSynthesizer` with `Options.IncludeWordBoundaryMetadata` gives every word's start. Write them as `vo-words.json` and run `transcribe.mjs --from-json`. Only a real voiceover goes through whisper.
+
+### 2026-09-27 — Whisper can collapse a phrase onto one timestamp near the end of a long VO
+
+**What happened:** On the 61s ElevenLabs voiceover for the ad in `video/src/adtn/`, whisper gave "by", "Astral", "Project" and "Happening" all the same start (57.44s). The silence snap left them stacked there. Cues on "Astral" or "Happening" would all have fired on one frame, 0.5s early.
+
+**What to do instead:** After every transcription, scan the printed word list for runs of identical start times, especially in the last few seconds. Re-transcribe that stretch as a short standalone clip (`ffmpeg -ss … -t …` → whisper, then add the offset back). Splice the corrected words into `vo-words.json` and rebuild with `transcribe.mjs --from-json`.
+
+### 2026-09-28 — The footage-reel-ad installer overwrote a newer toolkit script
+
+**What happened:** Installing a new reel instance (`src/adfg/`) also copied the skill's `scripts/reel/` over the project's. The project's `stills.mjs` was newer (it had `--clean`), and the copy silently removed that. The installer itself also failed to parse, because of an apostrophe inside a single-quoted string.
+
+**What to do instead:** After `install.mjs`, run `git status video/scripts` and restore anything it downgraded. Then copy the project's newer file back into `~/.claude/skills/footage-reel-ad/template/` so the two stop drifting. Both are fixed now.
+
+### 2026-09-28 — A user's finished edit can hide black frames and a strobe
+
+**What happened:** The user's own edit, used as a master, alternated footage with black every 0.5s for its first 8s, and had a single black frame at 38.0s. The scan's contact sheets showed every other shot as black, and the render first opened a shot on that black frame. `verify.mjs`'s dropout check caught it (min YAVG 6.1).
+
+**What to do instead:** Run `blackdetect` on any master before planning shots, and pick clip in-points after its black frames. On a frame-locked reel, shift the shots after it by a frame rather than stretch a clip.

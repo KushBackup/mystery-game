@@ -13,7 +13,7 @@
  *   Caption       — the caption system: " / " line breaks, *highlight* segments,
  *                   "!" extra-large punch lines. Each word pops on the frame it is
  *                   SPOKEN in the voiceover (timeline.ts aligns them).
- *   StepChip      — a plain "How it works" label, fixed top-left (no progress tab).
+ *   StepChip      — "How it works" and five progress bars, fixed top-left.
  *   Rays / Flash / Film — the poster's red rays, a decaying hit, grain + vignette.
  *
  * TYPE. Inter Tight at 800/900 with tight tracking, the closest free match to
@@ -38,7 +38,7 @@ const clamp = { extrapolateLeft: "clamp", extrapolateRight: "clamp" } as const;
 export const X = 72;
 export const INNER = 936;
 
-export type Grade = "warm" | "noir" | "dim" | "plate" | "ghost";
+export type Grade = "warm" | "noir" | "dim" | "plate";
 
 const FILTER: Record<Grade, string> = {
   // Bright on purpose: the footage carries the ad, the captions carry their own shadow.
@@ -48,8 +48,6 @@ const FILTER: Record<Grade, string> = {
   dim: "contrast(1.05) saturate(0.8) brightness(0.55) blur(2px)",
   // Under a full-screen card (CTA, event): texture only. Faces must not be recognisable through it.
   plate: "contrast(1.05) saturate(0.7) brightness(0.5) blur(10px)",
-  // The dead: drained to grey, lifted a touch so it reads as light, not as dark.
-  ghost: "grayscale(1) contrast(1.12) brightness(1.1)",
 };
 
 type MediaProps = { frame: number; src: string; dur: number; grade?: Grade; origin?: string; push?: number; zoom?: number };
@@ -240,36 +238,54 @@ export const Captions: React.FC<{ frame: number; caps: CaptionData[]; fps: numbe
   </>
 );
 
-/**
- * StepChip — a plain "How it works" label, fixed top-left through the steps.
- * Deliberately NOT a progress tab (no pill, no n/5, no bars): the user asked
- * for the words only. It fades in once, and again after stepping aside.
- */
-export const StepChip: React.FC<{ frame: number; step: number; first: boolean; resumed?: number }> = ({ frame, first, resumed }) => {
-  const inP = first ? prog(frame, 0, 8) : resumed !== undefined ? prog(resumed, 0, 6) : 1;
+/** StepChip — "How it works" plus five bars; the current step's bar fills as it arrives. */
+export const StepChip: React.FC<{ frame: number; step: number; first: boolean }> = ({ frame, step, first }) => {
+  const inP = first ? prog(frame, 0, 8) : 1;
+  const fill = prog(frame, 2, 10);
   return (
     <div
       style={{
         position: "absolute",
         left: X,
-        top: 296,
+        top: 292,
         display: "flex",
         alignItems: "center",
-        gap: 14,
+        gap: 18,
         opacity: inP,
-        translate: `${((1 - inP) * -18).toFixed(2)}px 0px`,
+        translate: `${((1 - inP) * -24).toFixed(2)}px 0px`,
         fontFamily: SANS,
-        fontWeight: 800,
-        fontSize: 32,
-        lineHeight: "44px",
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        color: C.bone,
-        textShadow: CAP_SHADOW,
       }}
     >
-      <span style={{ width: 12, height: 12, borderRadius: 6, background: C.red, boxShadow: "0 2px 6px rgba(0,0,0,.4)" }} />
-      How it works
+      <span
+        style={{
+          background: C.red,
+          color: C.bone,
+          fontWeight: 800,
+          fontSize: 30,
+          letterSpacing: "0.04em",
+          textTransform: "uppercase",
+          padding: "12px 22px 11px",
+          borderRadius: 999,
+          boxShadow: "0 8px 24px rgba(0,0,0,.35)",
+        }}
+      >
+        How it works · {step}/5
+      </span>
+      <div style={{ display: "flex", gap: 8 }}>
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} style={{ width: 44, height: 9, borderRadius: 9, background: "rgba(237,231,218,.3)", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,.35)" }}>
+            <div
+              style={{
+                width: "100%",
+                height: "100%",
+                background: C.bone,
+                transformOrigin: "left center",
+                scale: `${(i < step ? 1 : i === step ? fill : 0).toFixed(4)} 1`,
+              }}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

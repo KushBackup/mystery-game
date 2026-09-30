@@ -391,26 +391,34 @@ rebuilds the clips from the master named in `src/ad60/footage.ts`.
   flipbook were reviewed.
 - The previous (pre-rule) render is kept in the session scratchpad only.
 
-# The Killers Night promo (`src/adtn/`)
+# The Murder Mystery Experience promo (`src/adtn/`)
 
-A **57.9-second portrait ad** for Meta for the new format (Killers Night), built from the same
-game-night reel with the `footage-reel-ad` skill. Event card: Saturday 3 October · 6 PM ·
-Greenr, Panjim, Goa · Astral × Greenr. CTA button: **Book now**.
+A **63-second portrait ad** for Meta for the new format, built from the game-night reel with
+the `footage-reel-ad` skill and timed word by word to the user's ElevenLabs VO
+(`KillersNarration.mp3`, 60.9s). The VO ends on the event itself ("Happening at Greenr on 3rd
+October at 6PM"), so the event card builds line by line on those words, and the **Book now**
+button holds for 2s after them. The captions follow the VO exactly: it says "Traitors" in the
+hook and the twist and "Killers" everywhere else.
 
 | | |
 |---|---|
-| **Output** | `out/adtn-9x16.mp4`: 1080×1920, 30fps, 1734 frames (57.9s), H.264 CRF 17, AAC 320k |
-| **Audio** | **currently a SCRATCH voice** (Windows "Microsoft Ravi" TTS, `public/adtn/vo.wav`) + synthesized SFX, no music. −14.8 LUFS, −1.4 dBFS |
-| **Compositions** | `Promo-Killers` · `Promo-Killers-SafeZone` · `Promo-Killers-Probe` |
+| **Output** | `out/adtn-9x16.mp4`: 1080×1920, 30fps, 1890 frames (63.0s), H.264 CRF 17, AAC 320k |
+| **Audio** | the user's VO (`public/adtn/vo.mp3`) + synthesized SFX ducked under it, no music |
+| **Compositions** | `Promo-Traitors` · `Promo-Traitors-SafeZone` · `Promo-Traitors-Probe` |
 
 ```bash
-npm run reel:transcribe -- src/adtn <vo.mp3>   # the user's ElevenLabs VO replaces the scratch one; everything re-times
+npm run reel:transcribe -- src/adtn <vo.mp3>   # a new VO: everything re-times (then check the ending, below)
 npm run reel:cut -- src/adtn                   # a new VO can change shot lengths: re-cut, then check
 npm run promotn:check; npm run promotn:audio; npm run promotn:render; npm run promotn:verify
 node --no-warnings scripts/reel/stills.mjs src/adtn 120,560 --clean   # the ad itself (no bands) -> out/adtn-9x16-clean/
 ```
 
-**The scratch voice.** The TTS was made with `SpeechSynthesizer` (WinRT, OneCore voices) and its
+**Whisper and the ending.** On this VO whisper collapsed "by Astral Project. Happening" onto
+one instant (57.44s), and put "the" of "the drink" before the pause it follows. The last 7s
+were re-transcribed as short standalone clips and spliced into `public/adtn/vo-words.json`,
+then `transcribe.mjs --from-json`. Check the printed word list for words sharing a start time.
+
+**The first cut's scratch voice.** A TTS was made with `SpeechSynthesizer` (WinRT, OneCore voices) and its
 own word-boundary metadata written as `public/adtn/vo-words.json`, then `transcribe.mjs
 --from-json`. Don't whisper a robotic TTS: whisper put its phrase-final words 0.3–0.7s late.
 A real VO goes through `transcribe.mjs` normally.
@@ -428,6 +436,53 @@ A real VO goes through `transcribe.mjs` normally.
 - the round-table tally, then a reveal card that spins between KILLER and FAITHFUL and lands
   "Faithful — the room was wrong";
 - the GHOST shot `fx`: the picture drains to grey and trails two delayed echoes of itself;
-- the step chip can step aside for a shot whose faces fill the top (`STEPS[].since`).
+- a plain "How it works" label through the steps (no pill, no n/5, no progress bars; the user's call), which steps aside for shots whose faces fill the top (`STEPS[].since`);
+- the opener's hook is set ON the blank card the guest holds up, fully boxed like a sign;
+- the ghost is the host staring down the lens (#16): grey drain, bloom, three rising echoes, a flash on "Ghost".
 
 **The footage is not in git** (`public/adtn/*.mp4`, `*.jpg`); `reel:cut` rebuilds it.
+
+# The feel-good brand reel (`src/adfg/`)
+
+A **39-second portrait brand-awareness reel** for Meta, cut from the user's own finished edit
+(`Murder mystery edit.mp4`, 75s, in Downloads) with the `footage-reel-ad` skill. It **sells
+nothing**: no date, price or button. It ends on the Astral Project × Greenr logos and one line,
+"Already planning the next one." (the user's brief, 2026-09-28).
+
+| | |
+|---|---|
+| **Output** | `out/adfg-9x16.mp4`: 1080×1920, 30fps, 1170 frames (39.0s), H.264 CRF 17, AAC 320k |
+| **Audio** | **the edit's own soundtrack** (its music plus the room's real laughter and voices), not a VO. −13.9 LUFS, −1.4 dBFS |
+| **Compositions** | `Promo-FeelGood` · `Promo-FeelGood-SafeZone` · `Promo-FeelGood-Probe` |
+
+```bash
+npm run reel:cut -- src/adfg        # rebuild the clips from the master (not in git)
+npm run promofg:audio               # scripts/reel/soundtrack.mjs: splice + two-pass loudnorm from AUDIO in timeline.ts
+npm run promofg:check; npm run promofg:render; npm run promofg:verify
+```
+
+**The music is the clock, not a voiceover.** Differences from the other reels:
+
+- **Frame-locked to the soundtrack.** Every body shot plays at reel frame = master frame − 134,
+  so each face stays on its own laughter. Clips start a quarter-frame before their first frame,
+  and a PSNR check confirmed each clip's frame 0 is the master frame.
+- **The hook.** The edit opened on a strobe (flash, black, flash, black) over a filtered build.
+  The black beats are gone: eight flashes play back to back, each cut within a frame of a kick.
+  The music drops at frame 117.
+- **The audio splice.** The track runs the master from 4.47s to the kick at 39.09s, then is
+  spliced kick to kick (20ms equal-power crossfade) onto 50.26s to carry the music under the
+  sign-off. It fades out over the last 1.6s. `soundtrack.mjs` also writes the un-faded splice
+  as `vo.wav`, so `verify.mjs`'s sync check measures picture against sound (+43ms, which is AAC
+  priming).
+- **Captions are explicit frames** (`from`, `to`, `pop` per word), since there is no VO to align to.
+  - A caption with no free band on the next shot ends early (`to`). The role phone, the host's
+    grin and the reaction burst play with no text on them.
+- **Master frame 1140 is black** (in the user's edit). The orange shot starts on 1141, and the
+  last two shots plus the sign-off run one frame (33ms) ahead of their sound.
+- **Dropped:** everything after 39.5s of the edit, including the value-for-money testimonial.
+  It's a sales line, and this reel doesn't sell.
+- **Music licence.** The user doesn't know whether the edit's track is cleared for paid ads. If
+  it came from the Instagram or CapCut library, Meta may mute it in an ad; as an organic post
+  it's fine.
+
+**The footage is not in git** (`public/adfg/*.mp4`); `reel:cut` rebuilds it from the master.

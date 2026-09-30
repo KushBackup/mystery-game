@@ -21,3 +21,7 @@ public/ad60/*.jpg
 public/adtn/sfx-raw.wav
 public/adtn/*.mp4
 public/adtn/*.jpg
+
+# The feel-good brand reel: same rule (src/adfg/footage.ts rebuilds them).
+public/adfg/*.mp4
+public/adfg/*.jpg

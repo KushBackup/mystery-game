@@ -2,7 +2,7 @@
  * content.ts — every piece of fixed on-screen copy that is NOT a caption.
  * (Captions live in timeline.ts, because they are timed to the voiceover.)
  *
- * KILLERS NIGHT, 2026-09-27. FACT DISCIPLINE: only facts the user supplied or
+ * THE MURDER MYSTERY EXPERIENCE (the Traitors/Mafia format), 2026-09-27. FACT DISCIPLINE: only facts the user supplied or
  * that are true of the game (src/data/traits.js, src/data/packs/greenr.js,
  * src/data/killersCopy.js). No prices, counts, ratings or testimonials.
  */
@@ -11,8 +11,9 @@
 export const BRAND = {
   /** The question that pays off the hook, as two lines; line 2 gets the highlight box. */
   question: ["Can you catch", "the Killers?"] as const,
-  /** The wordmark, two words; word 2 is set in the accent. (Working name — the user's call.) */
-  name: ["Killers", "Night"] as const,
+  /** The lockup, as spoken: a small kicker, then two lines; line 2 is set in the accent. */
+  kicker: "The",
+  name: ["Murder Mystery", "Experience"] as const,
   by: "by",
   logo: "logo-astral.png",
   cta: "Book now",
@@ -21,7 +22,7 @@ export const BRAND = {
 
 /** The event card (the last ~5.5s). Supplied by the user: Greenr, Panjim, Goa · 3 October · 6 PM. */
 export const EVENT = {
-  kicker: "Next game night",
+  kicker: "Happening at",
   day: "Saturday",
   date: "3 October",
   time: "6 PM",

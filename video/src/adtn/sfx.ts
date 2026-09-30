@@ -60,7 +60,8 @@ export const arrange = (x: Sfx) => {
     x.thud(l + 3, { gain: 0.32 });
     x.tick(l + 3, { gain: 0.16, pan: [-0.4, 0, 0.4][i] });
   });
-  x.heartbeat(CUE.reticles.locks[2] + 6, { gain: 0.6 });
+  // The stare: the room drops out to a single heartbeat under the breath.
+  x.heartbeat(CUE.stare.from, { gain: 0.75 });
   x.boom(CUE.brand, { gain: 0.55, len: 1.6 });
 
   // STEP 1: the phone lands; each tap; the progress rush; the card flips, the reel spins, the redaction slams.
@@ -111,13 +112,16 @@ export const arrange = (x: Sfx) => {
   // CTA: the question lands, the brand thuds in, the button rings.
   x.boom(CUE.end.from, { gain: 0.6, len: 2.2 });
   x.thud(CUE.end.mark + 6, { gain: 0.36 });
-  x.bell(CUE.end.cta, { gain: 0.28, f: 1174.66 });
-  x.bell(CUE.end.cta + 10, { gain: 0.14, f: 1760 });
+  x.thud(CUE.end.mark2 + 4, { gain: 0.4 });
+  x.bell(CUE.end.cta, { gain: 0.2, f: 1174.66 });
 
-  // EVENT: the card rises, each line lands, the logos ring it out.
+  // EVENT: each line lands on its spoken word; the button rings; the logos close it.
   x.whoosh(CUE.event.from - 5, { gain: 0.3, len: 0.35, from: 300, to: 2400 });
-  x.boom(CUE.event.from, { gain: 0.7, len: 2.6 });
-  [0, 1, 2, 3, 4].forEach((i) => x.typeKey(CUE.event.from + 2 + i * 5 + 3, { gain: 0.22, pan: -0.2 + i * 0.1 }));
-  x.bell(CUE.event.from + 2 + 6 * 5 + 4, { gain: 0.26, f: 1174.66 });
-  x.bell(CUE.event.from + 2 + 6 * 5 + 14, { gain: 0.14, f: 1568 });
+  x.boom(CUE.event.from, { gain: 0.55, len: 2.6 });
+  x.typeKey(CUE.event.place + 3, { gain: 0.22, pan: -0.2 });
+  x.thud(CUE.event.date + 3, { gain: 0.4 });
+  x.typeKey(CUE.event.time + 3, { gain: 0.22, pan: 0.2 });
+  x.bell(CUE.event.button, { gain: 0.28, f: 1174.66 });
+  x.bell(CUE.event.button + 10, { gain: 0.14, f: 1760 });
+  x.typeKey(CUE.event.button + 11, { gain: 0.16 });
 };

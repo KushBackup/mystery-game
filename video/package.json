@@ -50,7 +50,12 @@
     "promotn:check": "npm run reel:check -- src/adtn",
     "promotn:stills": "npm run reel:stills -- src/adtn",
     "promotn:render": "npm run reel:render -- src/adtn",
-    "promotn:verify": "npm run reel:verify -- src/adtn"
+    "promotn:verify": "npm run reel:verify -- src/adtn",
+    "reel:soundtrack": "node --no-warnings scripts/reel/soundtrack.mjs",
+    "promofg:audio": "npm run reel:soundtrack -- src/adfg",
+    "promofg:check": "npm run reel:check -- src/adfg",
+    "promofg:render": "node --no-warnings scripts/reel/render.mjs src/adfg --concurrency 2",
+    "promofg:verify": "npm run reel:verify -- src/adfg"
   },
   "sideEffects": [
     "*.css"

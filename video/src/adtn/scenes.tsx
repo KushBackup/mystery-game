@@ -1,5 +1,5 @@
 /**
- * scenes.tsx — the Killers Night reel's layers and its overlay library.
+ * scenes.tsx — the Murder Mystery Experience reel's layers and its overlay library.
  *
  * Built as independent tracks, timed to the voiceover (./timeline.ts), bottom to top:
  *
@@ -9,7 +9,7 @@
  *   Overlays    reticles, the arrival phone, night, the dawn grid, clue banners,
  *               marker loops, the round-table tally, the reveal card, the twist,
  *               the CTA and the event card
- *   StepChip    "How it works · n/5" across the five steps
+ *   StepChip    a plain "How it works" label across the five steps
  *   Captions    the on-screen script, each word popping as it is spoken
  *   Film        grain, vignette, the thin bands under the platform UI
  *
@@ -118,6 +118,8 @@ const Media: React.FC<{ shot: ShotT; f: number; grade?: ShotT["grade"] }> = ({ s
 /** The blade: a diagonal from (0, SLASH.y0) to (1080, SLASH.y1). */
 const SLASH = { y0: 1270, y1: 830 };
 
+const EASE_GHOST = Easing.bezier(0.33, 0, 0.2, 1);
+
 const ShotMedia: React.FC<{ shot: ShotT }> = ({ shot }) => {
   const f = useCurrentFrame(); // shot-relative
   const abs = shot.from + f;
@@ -157,15 +159,24 @@ const ShotMedia: React.FC<{ shot: ShotT }> = ({ shot }) => {
         </AbsoluteFill>
       </Sequence>
     );
+    // The picture floats up a touch as the life leaves it.
+    const lift = -18 * EASE_GHOST(Math.min(1, Math.max(0, (abs - fx.at) / 30)));
     body = (
       <>
         <Media shot={shot} f={f} />
-        <AbsoluteFill style={{ opacity: g }}>
+        <AbsoluteFill style={{ opacity: g, translate: `0px ${lift.toFixed(2)}px` }}>
           <Media shot={shot} f={f} grade="ghost" />
         </AbsoluteFill>
-        {echo(5, 0.42, 22)}
-        {echo(10, 0.26, 44)}
-        <AbsoluteFill style={{ opacity: 0.18 * g, background: "radial-gradient(ellipse at 50% 40%, rgba(237,231,218,.9), rgba(237,231,218,0) 65%)", mixBlendMode: "screen" }} />
+        {/* A soft bloom: the ghost glows rather than darkens. */}
+        <AbsoluteFill style={{ opacity: 0.38 * g, mixBlendMode: "screen", filter: "blur(22px)", translate: `0px ${lift.toFixed(2)}px` }}>
+          <Media shot={shot} f={f} grade="ghost" />
+        </AbsoluteFill>
+        {/* Three delayed copies of himself, trailing and rising: the camera closing in leaves them behind. */}
+        {echo(4, 0.46, 18)}
+        {echo(9, 0.3, 40)}
+        {echo(15, 0.18, 66)}
+        <AbsoluteFill style={{ opacity: 0.2 * g, background: "radial-gradient(ellipse at 45% 30%, rgba(237,231,218,.9), rgba(237,231,218,0) 62%)", mixBlendMode: "screen" }} />
+        <Flash frame={abs} at={fx.at} color={C.bone} peak={0.4} tau={4} />
       </>
     );
   }
@@ -827,19 +838,21 @@ const Twist: React.FC<{ f: number; fps: number }> = ({ f, fps }) => {
   );
 };
 
-/** CTA — the question, the lockup (Killers Night · by Astral Project), the button — each on its spoken line. */
+/** CTA — "Can you catch the Killers?", then the lockup (The Murder Mystery Experience · by Astral Project), each on its spoken line. */
 const End: React.FC<{ f: number; fps: number }> = ({ f, fps }) => {
   const E = CUE.end;
   if (!inRange(f, E)) return null;
   const line = rise(f, E.line, fps, 60);
   const mark = spring({ frame: f - E.mark, fps, config: { damping: 14, stiffness: 200 } });
+  const mark2 = spring({ frame: f - E.mark2, fps, config: { damping: 12, stiffness: 190 } });
   const by = rise(f, E.by, fps, 30);
-  const cta = spring({ frame: f - E.cta, fps, config: { damping: 12, stiffness: 180 } });
-  const bob = f > E.cta + 20 ? Math.abs(Math.sin(((f - E.cta) / 30) * Math.PI)) * 12 : 0;
   const out = prog(f, E.to - 8, 8, Easing.bezier(0.5, 0, 0.75, 0));
-  // The wordmark tracks in from wide as it lands.
-  const track = interpolate(mark, [0, 1], [0.4, -0.01]);
-  const sheen = interpolate(f, [E.mark + 8, E.mark + 26], [-30, 130], clamp);
+  // The wordmark tracks in from wide as it lands; a sheen crosses it once.
+  const track = (p: number) => interpolate(p, [0, 1], [0.035, -0.01]);
+  const sheen = interpolate(f, [E.mark2 + 6, E.mark2 + 26], [-30, 130], clamp);
+  const mask = `linear-gradient(105deg, black ${sheen - 12}%, rgba(0,0,0,.55) ${sheen}%, black ${sheen + 12}%)`;
+  // nowrap: the lockup never re-flows while it tracks in.
+  const word: React.CSSProperties = { fontFamily: F.disp, fontWeight: 800, lineHeight: 0.9, textTransform: "uppercase", textShadow: CAP_SHADOW, whiteSpace: "nowrap" };
   return (
     <div
       style={{
@@ -861,70 +874,36 @@ const End: React.FC<{ f: number; fps: number }> = ({ f, fps }) => {
         </div>
       </div>
 
-      <div style={{ marginTop: 64, opacity: interpolate(mark, [0, 0.3], [0, 1], clamp), scale: (0.9 + 0.1 * mark).toFixed(4) }}>
+      <div style={{ marginTop: 70, WebkitMaskImage: mask, maskImage: mask }}>
+        <div style={{ ...word, fontWeight: 700, fontSize: 40, letterSpacing: "0.3em", color: C.dim, opacity: interpolate(mark, [0, 0.3], [0, 1], clamp) }}>{BRAND.kicker}</div>
         <div
           style={{
-            position: "relative",
-            display: "inline-block",
-            fontFamily: F.disp,
-            fontWeight: 800,
-            fontSize: 150,
-            lineHeight: 0.9,
-            textTransform: "uppercase",
-            letterSpacing: `${track.toFixed(4)}em`,
-            WebkitMaskImage: `linear-gradient(105deg, black ${sheen - 12}%, rgba(0,0,0,.55) ${sheen}%, black ${sheen + 12}%)`,
-            maskImage: `linear-gradient(105deg, black ${sheen - 12}%, rgba(0,0,0,.55) ${sheen}%, black ${sheen + 12}%)`,
-            textShadow: CAP_SHADOW,
+            ...word,
+            fontSize: 136,
+            marginTop: 10,
+            letterSpacing: `${track(mark).toFixed(4)}em`,
+            opacity: interpolate(mark, [0, 0.3], [0, 1], clamp),
+            scale: (0.9 + 0.1 * mark).toFixed(4),
           }}
         >
-          {BRAND.name[0]} <span style={{ color: C.red }}>{BRAND.name[1]}</span>
+          {BRAND.name[0]}
+        </div>
+        <div
+          style={{
+            ...word,
+            fontSize: 136,
+            color: C.red,
+            letterSpacing: `${track(mark2).toFixed(4)}em`,
+            opacity: interpolate(mark2, [0, 0.3], [0, 1], clamp),
+            scale: (0.9 + 0.1 * mark2).toFixed(4),
+          }}
+        >
+          {BRAND.name[1]}
         </div>
       </div>
-      <div style={{ ...by, marginTop: 26, display: "flex", justifyContent: "center", alignItems: "center", gap: 18 }}>
-        <span style={{ fontWeight: 700, fontSize: 30, color: C.dim }}>{BRAND.by}</span>
-        <Img src={staticFile(`${ASSET_DIR}/${BRAND.logo}`)} style={{ height: 48, filter: LOGO_EDGE }} />
-      </div>
-
-      <div
-        style={{
-          marginTop: 60,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 22,
-          background: C.red,
-          borderRadius: 999,
-          padding: "30px 64px",
-          fontWeight: 900,
-          fontSize: 70,
-          letterSpacing: "-0.03em",
-          boxShadow: "0 20px 50px rgba(224,49,39,.35), 0 16px 32px rgba(0,0,0,.45)",
-          opacity: interpolate(cta, [0, 0.3], [0, 1], clamp),
-          scale: `${(0.8 + 0.2 * cta).toFixed(4)}`,
-        }}
-      >
-        {BRAND.cta}
-        <svg width={50} height={36} viewBox="0 0 50 36">
-          <path d="M2 18 H42 M28 4 L44 18 L28 32" fill="none" stroke={C.bone} strokeWidth={7} strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </div>
-
-      <div
-        style={{
-          marginTop: 34,
-          fontWeight: 700,
-          fontSize: 30,
-          color: C.dim,
-          opacity: interpolate(cta, [0.3, 1], [0, 1], clamp),
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          gap: 14,
-        }}
-      >
-        {BRAND.tap}
-        <svg width={30} height={30} viewBox="0 0 30 30" style={{ translate: `0px ${bob.toFixed(2)}px` }}>
-          <path d="M5 10 L15 20 L25 10" fill="none" stroke={C.dim} strokeWidth={5} strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+      <div style={{ ...by, marginTop: 30, display: "flex", justifyContent: "center", alignItems: "center", gap: 18 }}>
+        <span style={{ fontWeight: 700, fontSize: 32, color: C.dim }}>{BRAND.by}</span>
+        <Img src={staticFile(`${ASSET_DIR}/${BRAND.logo}`)} style={{ height: 54, filter: LOGO_EDGE }} />
       </div>
     </div>
   );
@@ -933,15 +912,25 @@ const End: React.FC<{ f: number; fps: number }> = ({ f, fps }) => {
 /** The Astral mark's "ASTRAL" is slate, built for a mid-tone ground: a thin light edge keeps it legible on ink. */
 const LOGO_EDGE = "drop-shadow(0 0 1.5px rgba(237,231,218,.95)) drop-shadow(0 0 1px rgba(237,231,218,.8)) drop-shadow(0 0 14px rgba(237,231,218,.25))";
 
-/** EVENT — the next night: date, time, venue, and the two logos. Supplied by the user. */
+/**
+ * EVENT — "Happening at Greenr on 3rd October at 6PM": each line lands on its
+ * spoken word, in the order it is said, then the Book now button, then the
+ * two logos. Facts supplied by the user.
+ */
 const Event: React.FC<{ f: number; fps: number }> = ({ f, fps }) => {
   const E = CUE.event;
   if (!inRange(f, E)) return null;
-  const at = (i: number) => rise(f, E.from + 2 + i * 5, fps, 70);
-  const dateP = spring({ frame: f - (E.from + 12), fps, config: { damping: 13, stiffness: 190 } });
+  const kick = rise(f, E.from, fps, 50);
+  const place = rise(f, E.place, fps, 70);
+  const dateP = spring({ frame: f - E.date, fps, config: { damping: 13, stiffness: 190 } });
+  const day = rise(f, E.date - 2, fps, 50);
+  const time = rise(f, E.time, fps, 60);
+  const cta = spring({ frame: f - E.button, fps, config: { damping: 12, stiffness: 180 } });
+  const logos = rise(f, E.button + 8, fps, 40);
+  const pulse = f > E.button + 18 ? 1 + 0.03 * Math.sin(((f - E.button - 18) / 30) * Math.PI * 2) : 1;
   return (
-    <div style={{ position: "absolute", left: X, width: INNER, top: 320, textAlign: "center", fontFamily: SANS, color: C.bone }}>
-      <div style={{ ...at(0) }}>
+    <div style={{ position: "absolute", left: X, width: INNER, top: 300, textAlign: "center", fontFamily: SANS, color: C.bone }}>
+      <div style={{ ...kick }}>
         <span
           style={{
             display: "inline-block",
@@ -957,11 +946,31 @@ const Event: React.FC<{ f: number; fps: number }> = ({ f, fps }) => {
           {EVENT.kicker}
         </span>
       </div>
-      <div style={{ ...at(1), marginTop: 30, fontWeight: 800, fontSize: 80, lineHeight: 1, letterSpacing: "-0.03em", textShadow: CAP_SHADOW }}>{EVENT.day}</div>
+      <div
+        style={{
+          ...place,
+          marginTop: 26,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: 18,
+          fontWeight: 800,
+          fontSize: 66,
+          letterSpacing: "-0.03em",
+          textShadow: CAP_SHADOW,
+        }}
+      >
+        <svg width={50} height={64} viewBox="0 0 50 64" style={{ translate: `0px ${(-12 * impact(f, E.place + 4, 5)).toFixed(2)}px` }}>
+          <path d="M25 60 C25 60 4 36 4 22 A21 21 0 0 1 46 22 C46 36 25 60 25 60 Z" fill={C.red} />
+          <circle cx={25} cy={22} r={8} fill={C.bone} />
+        </svg>
+        {EVENT.place}
+      </div>
+      <div style={{ ...day, marginTop: 26, fontWeight: 800, fontSize: 72, lineHeight: 1, letterSpacing: "-0.03em", textShadow: CAP_SHADOW }}>{EVENT.day}</div>
       <div
         style={{
           fontWeight: 900,
-          fontSize: 176,
+          fontSize: 160,
           lineHeight: 1.02,
           letterSpacing: `${interpolate(dateP, [0, 1], [0.08, -0.05]).toFixed(4)}em`,
           textShadow: CAP_SHADOW,
@@ -973,8 +982,8 @@ const Event: React.FC<{ f: number; fps: number }> = ({ f, fps }) => {
       </div>
       <div
         style={{
-          ...at(3),
-          marginTop: 10,
+          ...time,
+          marginTop: 6,
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
@@ -988,37 +997,40 @@ const Event: React.FC<{ f: number; fps: number }> = ({ f, fps }) => {
         <svg width={62} height={62} viewBox="0 0 62 62">
           <circle cx={31} cy={31} r={26} fill="none" stroke={C.red} strokeWidth={7} />
           <path d="M31 31 L22 25" stroke={C.bone} strokeWidth={6} strokeLinecap="round" />
-          <path d="M31 31 L31 14" stroke={C.bone} strokeWidth={5} strokeLinecap="round" transform={`rotate(${(prog(f, E.from + 17, 24) * 360).toFixed(1)} 31 31)`} />
+          <path d="M31 31 L31 14" stroke={C.bone} strokeWidth={5} strokeLinecap="round" transform={`rotate(${(prog(f, E.time, 20) * 360).toFixed(1)} 31 31)`} />
         </svg>
         {EVENT.time}
       </div>
+
       <div
         style={{
-          ...at(4),
-          marginTop: 22,
-          display: "flex",
-          justifyContent: "center",
+          marginTop: 44,
+          display: "inline-flex",
           alignItems: "center",
-          gap: 18,
-          fontWeight: 800,
-          fontSize: 64,
+          gap: 22,
+          background: C.red,
+          borderRadius: 999,
+          padding: "28px 64px",
+          fontWeight: 900,
+          fontSize: 68,
           letterSpacing: "-0.03em",
-          textShadow: CAP_SHADOW,
+          boxShadow: "0 20px 50px rgba(224,49,39,.35), 0 16px 32px rgba(0,0,0,.45)",
+          opacity: interpolate(cta, [0, 0.3], [0, 1], clamp),
+          scale: `${((0.8 + 0.2 * cta) * pulse).toFixed(4)}`,
         }}
       >
-        <svg width={50} height={64} viewBox="0 0 50 64" style={{ translate: `0px ${(-10 * impact(f, E.from + 22, 5)).toFixed(2)}px` }}>
-          <path d="M25 60 C25 60 4 36 4 22 A21 21 0 0 1 46 22 C46 36 25 60 25 60 Z" fill={C.red} />
-          <circle cx={25} cy={22} r={8} fill={C.bone} />
+        {BRAND.cta}
+        <svg width={50} height={36} viewBox="0 0 50 36">
+          <path d="M2 18 H42 M28 4 L44 18 L28 32" fill="none" stroke={C.bone} strokeWidth={7} strokeLinecap="round" strokeLinejoin="round" />
         </svg>
-        {EVENT.place}
       </div>
 
-      <div style={{ ...at(6), marginTop: 56 }}>
-        <div style={{ fontWeight: 700, fontSize: 24, letterSpacing: "0.3em", textTransform: "uppercase", color: C.dim }}>{EVENT.withLine}</div>
-        <div style={{ marginTop: 28, display: "flex", justifyContent: "center", alignItems: "center", gap: 44 }}>
-          <Img src={staticFile(`${ASSET_DIR}/${EVENT.logoA}`)} style={{ height: 76, filter: LOGO_EDGE }} />
-          <span style={{ fontWeight: 800, fontSize: 48, color: C.dim }}>×</span>
-          <Img src={staticFile(`${ASSET_DIR}/${EVENT.logoB}`)} style={{ height: 130 }} />
+      <div style={{ ...logos, marginTop: 40 }}>
+        <div style={{ fontWeight: 700, fontSize: 22, letterSpacing: "0.3em", textTransform: "uppercase", color: C.dim }}>{EVENT.withLine}</div>
+        <div style={{ marginTop: 20, display: "flex", justifyContent: "center", alignItems: "center", gap: 40 }}>
+          <Img src={staticFile(`${ASSET_DIR}/${EVENT.logoA}`)} style={{ height: 60, filter: LOGO_EDGE }} />
+          <span style={{ fontWeight: 800, fontSize: 40, color: C.dim }}>×</span>
+          <Img src={staticFile(`${ASSET_DIR}/${EVENT.logoB}`)} style={{ height: 104 }} />
         </div>
       </div>
     </div>

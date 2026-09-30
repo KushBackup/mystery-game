@@ -36,8 +36,8 @@
 
 - **Saturday 3 October 2026, 6 PM – 9 PM, at Greenr, Panjim, Goa**, in collaboration with Greenr. The previous event was at Greenr, Assagao.
 - The footage ad in `video/src/ad60/` ends on this event card, with the Astral Project and Greenr logos in `video/public/ad60/`.
-- On 2026-09-27 the user gave the same event as "Greenr, Panjim, Goa, 3rd Oct 6PM" for the Killers Night ad (`video/src/adtn/`), so that card says **6 PM** with no end time. The Meta button for that ad is **Book now**. The user attached a white Greenr logo (EST. 2015) and the ASTRAL PROJECT.IN logo for it.
-- "Killers Night" is the game's working name. The ad uses it as the public wordmark, pending the user's OK: "The Killers" is a TV show with an official live experience.
+- On 2026-09-27 the user gave the same event as "Greenr, Panjim, Goa, 3rd Oct 6PM" for the Murder Mystery Experience ad (`video/src/adtn/`), so that card says **6 PM** with no end time. The Meta button for that ad is **Book now**. The user attached a white Greenr logo (EST. 2015) and the ASTRAL PROJECT.IN logo for it.
+- On 2026-09-27 the user chose **"The Murder Mystery Experience"** (by Astral Project) as the public name in the ad (`video/src/adtn/`). The ad's voiceover (their ElevenLabs take, `KillersNarration.mp3`) says "Traitors" in the hook and the twist and "Killers" elsewhere. The captions follow the voiceover word for word.
 
 ### Killers Night: the new format (decided 2026-09-26, build in progress)
 

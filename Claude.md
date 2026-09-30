@@ -174,7 +174,8 @@ bash scripts/cut-promo60-footage.sh <GameNight.MP4> <photo-dir>   # once: rebuil
 npm run reel:transcribe -- src/ad60 <vo.mp3>   # VO -> word timings (whisper.cpp, first run downloads ~0.5GB)
 npm run promo60:check; npm run promo60:audio; npm run promo60:render; npm run promo60:verify   # the 53s 9:16 Meta ad (~5 min; system ffmpeg)
 # A NEW footage ad: load the footage-reel-ad skill; it installs its toolkit with template/install.mjs
-npm run promotn:check; npm run promotn:audio; npm run promotn:render; npm run promotn:verify   # the Killers Night 58s ad (src/adtn/; scratch VO until the user's ElevenLabs one arrives)
+npm run promotn:check; npm run promotn:audio; npm run promotn:render; npm run promotn:verify   # the 63s Murder Mystery Experience ad (src/adtn/)
+npm run promofg:audio; npm run promofg:check; npm run promofg:render; npm run promofg:verify   # the 39s feel-good brand reel (src/adfg/), on the edit's own soundtrack
 ```
 
 A full render is ~4 minutes per cut for 3900 frames. Prefer `remotion still` while iterating on layout.

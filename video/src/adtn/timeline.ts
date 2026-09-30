@@ -92,13 +92,14 @@ type CapSpec = { text: string; y: number; align?: "left" | "center"; scale?: num
  * box. Vary it beat to beat (top / bottom), but never onto a face.
  */
 const CAP_SPECS: CapSpec[] = [
-  // HOOK — A (Mafia, a table of friends), B (the whole room: the topic by 2.5s), the open loop (three Killers).
-  { text: "Ever played *Mafia* / with your friends?", y: 390 },
+  // HOOK — A (Mafia, a table of friends), B (the whole room: the topic by 2.5s), the open loop (three Traitors).
+  // The opener holds up a blank card: the hook is set ON it, fully boxed, like a sign he is showing you.
+  { text: "*Ever played Mafia* / *with your friends?*", y: 1110 },
   { text: "Now the / *whole room* / plays.", y: 460 },
-  { text: "And three of them / are *Killers.*", y: 470 },
+  { text: "And three of them / are *Traitors.*", y: 470 },
   // WHAT
-  { text: "This is / *Killers Night,*", y: 440 },
-  { text: "a live party game / on *your phone.*", y: 470 },
+  { text: "This is the / *Murder Mystery* / *Experience,*", y: 445 },
+  { text: "a live party game / on *your phone!*", y: 400 },
   { text: "Here's how / it *works.*", y: 845, align: "left" },
   // HOW 1 — arrive, answer, get a role
   { text: "*Walk in,*", y: 760 },
@@ -124,14 +125,16 @@ const CAP_SPECS: CapSpec[] = [
   // HOW 5 — the dead play on
   { text: "Get *killed?*", y: 470 },
   { text: "You're / *not out.*", y: 480 },
-  { text: "You play on / as a *Ghost.*", y: 480 },
+  { text: "You play on", y: 480 },
+  // On the ghost: low, over his dark shirt, clear of his face as the camera closes in.
+  { text: "as a / !*Ghost.*", y: 1000, scale: 0.9 },
   // WHY
-  { text: "No *script,*", y: 470 },
-  { text: "no app / to *download.*", y: 470 },
+  { text: "No *script,*", y: 400 },
+  { text: "no app / to *download.*", y: 420 },
   { text: "Come *solo* / or bring friends,", y: 560 },
   { text: "and leave / knowing *everyone.*", y: 470 },
   // TWIST — closes the hook's loop
-  { text: "And those / *three Killers?*", y: 470 },
+  { text: "And those / *three Traitors?*", y: 470 },
   { text: "One of them / could be / !*You.*", y: 980, align: "left" },
 ];
 
@@ -160,7 +163,7 @@ const aligned = (() => {
 })();
 
 /** The end card's first line, which ends the last caption. */
-const END_LINE = phraseStart(w("can", 46.5));
+const END_LINE = phraseStart(w("can", 51.5));
 
 /** Captions before cut-snapping; shots tied to a caption use these. */
 const RAW = aligned.map((c, i) => {
@@ -214,45 +217,66 @@ type ShotSpec = {
   fx?: { kind: "slash" | "ghost"; at: number };
 };
 
-/** The event card starts here, after the VO's last word and a clean hold on the button. */
-const EVENT_AT = sec(52.3);
-export const TOTAL = sec(57.8); // the VO (51.5s) + the CTA hold + the 5.5s event card
+/**
+ * The event card rises as the VO says "Happening at Greenr on 3rd October at
+ * 6PM": each line lands on its spoken word, then the card holds with the button.
+ */
+const EVENT_AT = sec(phraseStart(w("happening"))) - LEAD;
+const VO_END = sec(60.9);
+export const TOTAL = VO_END + sec(2.1); // 63.0s: the VO (60.9s) + a clean 2s hold on the event card and its button
 
-/** The table shot (1.6s) runs out mid-hook; the room shot takes over. */
-const TABLE_OUT = sec(1.58);
+/** The opening shot (2s) runs out mid-hook; guests clapping take the rest of the line. */
+const TABLE_OUT = sec(1.93);
 
-/** The ghost shot's keep-clear bands (the laughing pair). */
-const GHOST_CLEAR: Clear[] = [{ y: [580, 1310], what: "the laughing pair" }];
+/**
+ * The hook's pause: after "…are Traitors." the voice breathes, and the edit
+ * holds on the host staring down the lens. No caption over it (his face fills
+ * the frame), so the hook caption ends on this cut (CAPTION_ENDS below).
+ */
+const STARE = sec(WORDS.find((x) => norm(x.w) === "traitors")!.e);
+
+/** The ghost shot is 1.35s of real footage: it takes the end of "You play on as a Ghost." */
+const GHOST_AT = sec(w("ghost")) - 14;
+const GHOST_CLEAR: Clear[] = [
+  // The camera closes in on him: his head grows and rises over the 1.35s.
+  { y: [650, 810], x: [300, 800], to: 10, what: "his head (far)" },
+  { y: [430, 770], x: [230, 760], from: 10, to: 25, what: "his head" },
+  { y: [240, 730], x: [140, 700], from: 25, what: "his head (close)" },
+];
 
 const SPECS: ShotSpec[] = [
   // Every `clear` band below was read off the probe sheets (scripts/reel/probe.mjs):
   // the union over the clip's first, middle and last frame, padded ~15px.
   // HOOK — zoomed from the top edge so the table's heads sit below the hook caption.
   {
-    key: "table",
-    src: "h_table",
+    key: "open",
+    src: "h_open",
     kind: "clip",
     at: 0,
-    origin: "50% 0%",
-    zoom: 1.15,
-    clear: [{ y: [470, 1260], what: "the table's heads (standing and seated)" }],
+    // His card is blank: the caption may sit on it. His head may not.
+    clear: [{ y: [0, 820], x: [340, 900], what: "his head" }],
   },
-  // The table shot runs out at 1.6s: the wide room takes the end of the hook line and all of the next.
-  { key: "room", src: "h_room", kind: "clip", at: TABLE_OUT, clear: [{ y: [750, 1320], what: "the room's heads" }] },
-  { key: "three", src: "h_phones", kind: "clip", at: rawCap(2), clear: [{ y: [880, 1920], what: "the crowd and the two in front" }] },
-  // WHAT
-  { key: "laugh", src: "w_laugh", kind: "clip", at: rawCap(3), section: true, clear: [{ y: [620, 1320], what: "his head and hers" }] },
-  // The table shot is shorter than its line: cut to it on "live".
+  // Zoomed from the bottom edge: the heads rise clear of the hook caption below them.
+  { key: "clap", src: "h_clap", kind: "clip", at: TABLE_OUT, origin: "50% 100%", zoom: 1.04, clear: [{ y: [760, 1020], what: "the guests' heads" }] },
+  // The room lands on "whole"; the phones shot on "three" (each shot is shorter than its line).
+  // The clap shot pans into a blur after 0.7s: the room takes over early.
+  { key: "room", src: "h_room", kind: "clip", at: sec(2.62), clear: [{ y: [750, 1320], what: "the room's heads" }] },
+  { key: "three", src: "h_phones", kind: "clip", at: sec(w("three")) + 1, clear: [{ y: [880, 1920], what: "the crowd and the two in front" }] },
+  { key: "stare", src: "h_stare", kind: "clip", at: STARE, clear: [{ y: [380, 1150], what: "her face" }] },
+  // WHAT — zoomed from the top edge so the three-line brand caption clears their heads.
+  { key: "laugh", src: "w_laugh", kind: "clip", at: rawCap(3), section: true, origin: "50% 0%", zoom: 1.05, clear: [{ y: [620, 1320], what: "his head and hers" }] },
   {
     key: "tables",
     src: "w_tables",
     kind: "clip",
-    at: sec(w("live")),
+    at: rawCap(4),
     clear: [
       { y: [820, 1030], what: "the seated heads" },
       { y: [990, 1280], x: [150, 620], what: "the head in the foreground" },
     ],
   },
+  // The tables shot runs out: cut to the group round their phones on "your".
+  { key: "group", src: "w_group", kind: "clip", at: sec(w("your", 11)), origin: "50% 0%", zoom: 1.15, clear: [{ y: [480, 1010], what: "the group's heads" }] },
   {
     key: "host",
     src: "w_host",
@@ -266,14 +290,15 @@ const SPECS: ShotSpec[] = [
   // HOW 1
   { key: "walk", src: "s_walk", kind: "clip", at: rawCap(6), section: true, clear: [{ y: [100, 510], x: [260, 1080], what: "his head (walking away)" }] },
   { key: "quiz", src: "s_dimcrowd", kind: "clip", at: rawCap(7), grade: "dim", clear: [{ y: [800, 1150], what: "heads" }] },
-  { key: "role", src: "s_crowd", kind: "clip", at: rawCap(8), grade: "dim", clear: [{ y: [800, 1480], what: "heads" }] },
+  // One frame late: the crowd shot is half a frame shorter than the line.
+  { key: "role", src: "s_crowd", kind: "clip", at: rawCap(8) + 1, grade: "dim", clear: [{ y: [800, 1480], what: "heads" }] },
   // HOW 2
   { key: "night", src: "n_crowd", kind: "clip", at: rawCap(9), fx: { kind: "slash", at: sec(w("kill")) }, clear: [{ y: [790, 1110], what: "the crowd's heads" }] },
-  { key: "dawn", src: "n_room", kind: "clip", at: rawCap(11), grade: "dim", clear: [{ y: [800, 1110], what: "the room's heads" }] },
+  // Dawn: the road in morning light, under the grid of phones.
+  { key: "dawn", src: "d_road", kind: "clip", at: rawCap(11), grade: "dim" },
   // HOW 3
-  { key: "clues", src: "c_lights", kind: "clip", at: rawCap(13), grade: "dim", clear: [{ y: [820, 1320], what: "heads under the fairy lights" }] },
-  // Zoomed from the top edge so the heads clear the caption under the step chip.
-  { key: "people", src: "c_group", kind: "clip", at: rawCap(14), origin: "50% 0%", zoom: 1.15, clear: [{ y: [520, 1010], what: "the group's heads" }] },
+  { key: "clues", src: "c_dimlaugh", kind: "clip", at: rawCap(13), grade: "dim", origin: "50% 0%", zoom: 1.05, clear: [{ y: [580, 1310], what: "the laughing pair" }] },
+  { key: "people", src: "c_people", kind: "clip", at: rawCap(14), clear: [{ y: [790, 1150], what: "the guests' heads" }] },
   {
     key: "glasses",
     src: "c_glasses",
@@ -334,28 +359,43 @@ const SPECS: ShotSpec[] = [
   { key: "reveal", src: "v_blur", kind: "clip", at: rawCap(22), grade: "dim", clear: [{ y: [780, 1050], what: "heads" }] },
   // HOW 5
   { key: "killed", src: "g_empty", kind: "clip", at: rawCap(23), clear: [{ y: [0, 320], x: [820, 1080], what: "a guest in the background" }] },
-  { key: "ghost", src: "g_ghost", kind: "clip", at: rawCap(24), origin: "50% 0%", zoom: 1.1, fx: { kind: "ghost", at: sec(w("play", 36)) - 6 }, clear: GHOST_CLEAR },
+  { key: "alive", src: "g_alive", kind: "clip", at: rawCap(24), origin: "50% 0%", zoom: 1.1, clear: [{ y: [560, 960], what: "the pair's faces" }] },
+  // THE GHOST: cut to the host, dead still, on "…on as"; he drains to grey and trails an echo on "Ghost".
+  { key: "ghost", src: "g_ghost", kind: "clip", at: GHOST_AT, fx: { kind: "ghost", at: sec(w("ghost")) - 8 }, clear: GHOST_CLEAR },
   // WHY
-  { key: "script", src: "y_mic", kind: "clip", at: rawCap(26), section: true, clear: [{ y: [600, 1110], what: "his face" }] },
+  { key: "script", src: "y_table", kind: "clip", at: rawCap(27), section: true, origin: "50% 0%", zoom: 1.15, clear: [{ y: [470, 1260], what: "the table's heads" }] },
   {
     key: "app",
-    src: "y_room",
+    src: "y_phones",
     kind: "clip",
-    at: rawCap(27),
+    at: rawCap(28),
     clear: [
-      { y: [790, 1000], what: "the room's heads" },
-      { y: [840, 1120], x: [0, 520], what: "a guest in the foreground" },
+      { y: [940, 1120], what: "heads" },
+      { y: [1250, 1410], x: [780, 930], what: "the phone held up" },
     ],
   },
-  { key: "solo", src: "y_scooter", kind: "clip", at: rawCap(28), clear: [{ y: [840, 1620], what: "the rider's helmet" }] },
-  { key: "everyone", src: "y_winners", kind: "clip", at: rawCap(29), clear: [{ y: [680, 910], what: "the winners' faces" }] },
+  {
+    key: "phone",
+    src: "y_phone",
+    kind: "clip",
+    at: sec(w("download")) - 1,
+    origin: "50% 0%",
+    zoom: 1.18,
+    clear: [
+      { y: [480, 790], x: [560, 930], what: "her face" },
+      { y: [790, 1010], x: [400, 620], what: "her phone" },
+      { y: [800, 1000], x: [0, 360], what: "faces at the table behind" },
+    ],
+  },
+  { key: "solo", src: "y_scooter", kind: "clip", at: rawCap(29), clear: [{ y: [840, 1620], what: "the rider's helmet" }] },
+  { key: "everyone", src: "y_everyone", kind: "clip", at: rawCap(30), clear: [{ y: [790, 1200], what: "the guests' heads" }] },
   // TWIST — the hook's crowd again, the reticles return; then the pointing poster.
-  { key: "those", src: "h_phones", kind: "clip", at: rawCap(30), section: true, clear: [{ y: [880, 1920], what: "the crowd and the two in front" }] },
+  { key: "those", src: "h_phones", kind: "clip", at: rawCap(31), section: true, clear: [{ y: [880, 1920], what: "the crowd and the two in front" }] },
   {
     key: "you",
     src: "p1_point",
     kind: "photo",
-    at: rawCap(31),
+    at: rawCap(32),
     grade: "noir",
     origin: "30% 70%",
     clear: [
@@ -385,6 +425,8 @@ export const CAPTIONS = (() => {
       out[i - 1].to = cut;
     }
   }
+  // The hook caption clears for the stare: nothing sits on his face.
+  out[2].to = STARE;
   return out;
 })();
 export type CaptionData = (typeof CAPTIONS)[number];
@@ -415,8 +457,8 @@ export const LAYOUT = {
   reveal: { top: 640, width: 560 },
   /** The Killer card that slams in on "you" (right of the left-aligned twist caption). */
   twistCard: { left: 724, top: 820, width: 284, height: 340 },
-  /** The "HOW IT WORKS · n/5" pill + five bars. Measured on a still: x 72–710, y 292–351. */
-  chip: { top: 292, bottom: 351, left: 72, right: 710 },
+  /** The plain "HOW IT WORKS" label (no pill, no progress). Measured on a still. */
+  chip: { top: 296, bottom: 340, left: 72, right: 420 },
 } as const;
 const GRID_H = LAYOUT.grid.rows * LAYOUT.grid.width * 2.16 + (LAYOUT.grid.rows - 1) * LAYOUT.grid.rowGap;
 
@@ -433,15 +475,18 @@ export const STEPS: { step: number; from: number; to: number; since?: number }[]
   { step: 3, from: cap(13), to: cap(17) },
   { step: 3, from: cap(19), to: cap(21), since: cap(13) },
   { step: 4, from: cap(21), to: cap(23) },
-  { step: 5, from: cap(23), to: cap(26) },
+  // The label steps off for the ghost: his face fills the top of that shot.
+  { step: 5, from: cap(23), to: at("ghost") },
 ];
 
 /** Every cue is an absolute frame on a spoken word. */
 export const CUE = {
   /** Three reticles lock onto the crowd, one per word: "three · them · Killers". */
-  reticles: { from: cap(2), to: cap(3), locks: [said("three"), said("them"), said("killers")] },
-  reticles2: { from: cap(30), to: cap(31), locks: [said("those", 43), said("three", 43), said("killers", 43)] },
-  brand: said("killers", 5.5),
+  reticles: { from: sec(w("three")) + 1, to: STARE, locks: [sec(w("three")) + 2, said("them"), said("traitors")] },
+  reticles2: { from: cap(31), to: cap(32), locks: [said("those", 48), said("three", 48), said("traitors", 48)] },
+  /** The stare: a slow push and a red pulse under the breath after "Traitors." */
+  stare: { from: STARE, to: cap(3) },
+  brand: said("murder", 7.5),
   /** The arrival phone: quiz screens on "answer / quick / questions", then the role card flips on "secret" and lands on "role". */
   arrival: {
     from: cap(7),
@@ -452,24 +497,25 @@ export const CUE = {
     flip: said("secret") - 2,
     land: said("role") + 2,
   },
-  night: { fall: said("night", 14.5), kill: sec(w("kill")) },
+  night: { fall: said("night", 17.5), kill: sec(w("kill")) },
   dawn: { from: cap(11), to: cap(13), phonesIn: cap(11) + 2, light: said("same") },
   clues: { from: cap(13), to: cap(14), cards: [said("clues", 19.5), said("drop") + 4, said("drop") + 16] },
   /** Hand-drawn marker loops round the trait in shot, on the spoken word. */
   loops: { glasses: said("glasses") + 2, shoes: said("shoes") + 2, drink: said("drink") + 2 },
-  vote: { from: cap(21), to: cap(22), panelIn: said("votes") - 2, barsFrom: said("votes") + 4, overtake: said("out", 30.8) },
-  reveal: { from: cap(22), to: cap(23), spin: said("killer", 31.5), land: said("faithful") + 8 },
+  vote: { from: cap(21), to: cap(22), panelIn: said("votes") - 2, barsFrom: said("votes") + 4, overtake: said("out", 35) },
+  reveal: { from: cap(22), to: cap(23), spin: said("killer", 35.5), land: said("faithful") + 8 },
   killed: said("killed"),
-  twist: { from: cap(31), to: sec(END_LINE) - LEAD, youHit: said("you", 45.8) },
+  twist: { from: cap(32), to: sec(END_LINE) - LEAD, youHit: said("you", 51) },
   end: {
     from: sec(END_LINE) - LEAD,
     to: EVENT_AT,
     line: sec(END_LINE) - LEAD,
-    mark: sec(phraseStart(w("killers", 48.3))) - LEAD,
-    by: said("astral", 49),
-    cta: sec(phraseStart(w("book"))) - LEAD,
+    mark: sec(phraseStart(w("the", 54))) - LEAD,
+    mark2: said("experience", 55),
+    by: said("by", 55),
+    cta: said("project", 56) + 8,
   },
-  event: { from: EVENT_AT, to: TOTAL },
+  event: { from: EVENT_AT, to: TOTAL, place: said("greenr"), date: said("3rd"), time: said("6pm"), button: said("6pm") + 12 },
 } as const;
 
 /** Graphics that matter: a caption may not sit on these either. Canvas px, absolute frames. */
@@ -521,7 +567,7 @@ export const captionBox = (c: { text: string; y: number; align?: string; scale?:
 export const TEXT = [
   ...CAPTIONS.map((c) => ({ label: `"${c.text}"`, from: c.from, to: c.to, box: captionBox(c), isCaption: true })),
   ...STEPS.map((st) => ({
-    label: `the step chip (${st.step}/5)`,
+    label: `the How-it-works label (step ${st.step})`,
     from: st.from,
     to: st.to,
     box: { x: [LAYOUT.chip.left, LAYOUT.chip.right] as [number, number], y: [LAYOUT.chip.top, LAYOUT.chip.bottom] as [number, number] },
