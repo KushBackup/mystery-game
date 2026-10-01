@@ -4,6 +4,7 @@ export * from './rng.js';
 export * from './roles.js';
 export * from './clues.js';
 export * from './night.js';
+export * from './morning.js';
 export * from './banish.js';
 export * from './win.js';
 export * from './roster.js';

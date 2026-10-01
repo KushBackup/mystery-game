@@ -13,13 +13,17 @@
 
 **Shape:** about 2 hours, 25–45 guests, tables of 4–8 plus mingling, no projector.
 
+**The skin: DEEP BLUE (2026-09-30).** Every guest's phone becomes a retro iPhone-era (iOS 6) home screen in Helvetica-style type, with apps for each part of the game: Messages (the group chat), DEEP BLUE (the game), News, Photos, Clock, Contacts, Notes, Night and Settings. The story: everyone in the room has a viral app called DEEP BLUE. Every morning it rings, everyone plays a Flappy-style run as a little pixel whale, and the lowest score is "taken by the deep". The Killers have the admin password, and they murder by rigging a score to the bottom. DEEP BLUE is fictional on purpose; see [memory.md](memory.md).
+
 **The evening:**
 1. **Arrival.** Scan in, give a first name and table, and answer six one-tap trait questions: top colour, glasses, footwear, first drink, birthday, siblings.
 2. **Casting.** The host deals roles to whoever is present: 3 Killers from 12 to 50 guests, plus a Doctor, a Detective, a Medium and the Faithful.
-3. **Five cycles**, each about 21 minutes:
-   - **Night (3 min, on phones).** Killers pick a victim and *the hand* who strikes, and once per game they can frame someone. The Faithful watch a guest or search the scene, the Doctor protects someone, the Detective checks someone, and Ghosts whisper one word.
-   - **Dawn.** A synced reveal of who died, and clue fragments describing the hand's real traits reach several players each.
-   - **Investigation (10 min).** Talk, compare clues, look at each other.
+3. **Three to five days**, each about 21 minutes:
+   - **Night (3 min, the Night app).** Killers pick whose score to sink, *the hand* who hacks, and whether to rig it to zero or just below last place; once per game they can frame someone. The Faithful watch a guest or dig through the logs. The Doctor puts a firewall on one guest. The Detective traces two guests' phones: did either one do tonight's hacking? The Medium summons a ghost: their true clue, and whether they were a Killer. Ghosts whisper one word.
+   - **Alarm (20 s).** Every phone rings at once. Slide to stop.
+   - **The run (90 s).** Everyone plays the same course. Your best run counts. Ghosts can play too, on their own board.
+   - **The board (dawn).** A synced leaderboard reveal: the podium, then last place glitches to TAKEN. If the Killers' rig landed, their target is taken, whatever they really scored. If a firewall blocked it, the deep takes the lowest honest score instead, and that can be a Killer. The top 3 each earn a clue photo, and everyone else's clues arrive with the board.
+   - **Investigation (8 min).** Photos, Messages, and real conversation about shoes, tops, glasses and drinks.
    - **Round Table.** Vote to banish, with one re-vote if it ties. A synced reveal shows Killer or Faithful and who voted for whom.
 4. **Endgame.** Two votes; Ghosts vote too. Any Killer left alive wins it for the Killers.
 
@@ -28,7 +32,7 @@
 - A guest who leaves vanishes at the next dawn, and their role stays secret.
 - If a vanished Killer leaves the team short, the Killers recruit. A guest who refuses is murdered.
 
-**Balance:** tuned with `npm run sim`. The Faithful win about 50–56% of simulated games from 20 to 45 guests.
+**Balance:** tuned with `npm run sim`. With the morning rules, Trace and Séance, the Faithful win 47–54% of simulated games from 20 to 45 guests.
 
 The technical design is in [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md).
 

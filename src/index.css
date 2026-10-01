@@ -9,6 +9,10 @@
    like `er-title text-[28px]` expect. */
 @import "./App.css" layer(components);
 
+/* The DEEP BLUE phone OS (player phones only). Its own vocabulary, same
+   layering reason as App.css. See DESIGN_LANGUAGE.md, Part II. */
+@import "./os/os.css" layer(components);
+
 /* Tailwind v4 does NOT pick up tailwind.config.js automatically — without this
    line the custom keyframes resolve to nothing and every animate-fade-in in the
    app silently renders unstyled. The colour palette lives in @theme below
@@ -66,6 +70,33 @@
   --font-typewriter:  'Special Elite', 'Courier New', monospace;
   --font-note:        'Special Elite', 'Courier New', monospace;
   --font-body:        'Courier Prime', monospace;
+
+  /* ==========================================================
+     PIXEL OS — the DEEP BLUE phone (DESIGN_LANGUAGE.md Part II)
+     Player phones only. The host console and ?classic stay on
+     Evidence Room above; never mix the two palettes on a screen.
+     Deep water is the world, foam is text, one blue for actions,
+     green is "yes / you / sent", red is death and badges, gold is
+     a score and nothing else.
+     ========================================================== */
+  --color-os-abyss:  #050E24;  /* deepest background, the lock screen */
+  --color-os-navy:   #0B1D45;  /* app backgrounds */
+  --color-os-deep:   #12306B;  /* raised rows, cards on navy */
+  --color-os-ocean:  #1E56B0;  /* bars, pressed states */
+  --color-os-sea:    #3D8BF2;  /* the action colour: buttons, links, selection */
+  --color-os-foam:   #EAF3FF;  /* text on water, light surfaces */
+  --color-os-mist:   #C7D3E6;  /* grouped-list backdrop (the pinstripe) */
+  --color-os-chrome: #8FA3C2;  /* secondary text on navy, bar gloss edges */
+  --color-os-steel:  #4A5B7A;  /* tertiary, hairlines on light */
+  --color-os-ink:    #0E1626;  /* text on light surfaces */
+  --color-os-green:  #4CD964;  /* sent bubbles, slide-to-unlock, "done" */
+  --color-os-red:    #FF3B30;  /* badges, TAKEN, deaths, destructive */
+  --color-os-gold:   #FFCC33;  /* scores only */
+  --color-os-coral:  #FF7A59;  /* the game's obstacles; never UI */
+
+  --font-pixel:  'Helvetica Neue', Helvetica, 'Inter', Arial, sans-serif;   /* body, all readable copy (iOS 6 type) */
+  --font-screen: 'Helvetica Neue', Helvetica, 'Inter', Arial, sans-serif;   /* bars, labels, headers: same face, bolder */
+  --font-arcade: 'Helvetica Neue', Helvetica, 'Inter', Arial, sans-serif;   /* scores and the game HUD: heavy weight */
 
   /* Motion (DESIGN_LANGUAGE.md §7) */
   --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
@@ -136,6 +167,12 @@ input,
 textarea,
 button {
   font-family: inherit;
+}
+/* The phone (src/os) is rounded like the iOS it imitates; this un-layered rule
+   would otherwise beat every radius set inside the components layer. */
+input:not(.os-root *),
+textarea:not(.os-root *),
+button:not(.os-root *) {
   border-radius: 0;
 }
 

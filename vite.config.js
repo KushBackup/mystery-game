@@ -10,14 +10,13 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'Astral Project The Murder Mystery Experience',
-        short_name: 'The Murder Mystery Experience',
-        description: 'An interactive murder mystery party game where you investigate clues and vote for the killer',
-        // Evidence Room ink (DESIGN_LANGUAGE.md §2.1) — the splash and the
-        // installed app's chrome open on the same near-black the app itself
-        // uses, so there is no colour jump on launch.
-        theme_color: '#0C0D0F',
-        background_color: '#0C0D0F',
+        name: 'DEEP BLUE · The Murder Mystery Experience',
+        short_name: 'DEEP BLUE',
+        description: 'Every morning everyone plays. The lowest score is taken. Find the Killers rigging the board. A party game by Astral Project.',
+        // The phone's status bar is black and its world is abyss (DESIGN_LANGUAGE.md
+        // Part II), so the splash and installed chrome open on the same colours.
+        theme_color: '#000000',
+        background_color: '#050E24',
         display: 'standalone',
         orientation: 'portrait-primary',
         icons: [
@@ -42,7 +41,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

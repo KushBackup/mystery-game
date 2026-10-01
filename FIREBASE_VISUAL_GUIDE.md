@@ -9,20 +9,21 @@ The new game uses authentication and locked-down rules ([firestore.rules](firest
 
 | Path under `games/{gid}/` | Contents | Written by | Read by |
 |---|---|---|---|
-| *(the game doc)* | `phase, cycle, ballot, tied, phaseEndsAt, revealAt, config, dawn, banish, winner, finaleRoles, endgameRound, autopilot` | host | everyone |
+| *(the game doc)* | `phase, cycle, ballot, tied, phaseEndsAt, revealAt, config, courseSeed, dawn (victims, attempted, cause, taken, rigged), board (cycle, rows, ghosts, top), news (every dawn and verdict), banish, winner, finaleRoles, endgameRound, autopilot` | host | everyone |
 | `bindings/{uid}` | `{pid}` (auth uid → game identity) | self on arrival, host on relink | self, host |
 | `players/{pid}` | `name, table, status (alive/ghost/vanished), cause, revealedRole, leaveRequestedAt` | self (only name, table and leave), host | everyone |
 | `traits/{pid}` | the six arrival answers, frozen once dealt | self | self, host |
 | `roles/{pid}` | `role, team, checksLeft` | host | self, host |
 | `killers/{pid}` | membership marker | host | Killers, host |
-| `den/{cycle}_{pid}`, `den/meta` | a Killer's night pick (victim, hand, frame, recruit); tonight's den status | that Killer, only during `night` / host | Killers, host |
+| `den/{cycle}_{pid}`, `den/meta` | a Killer's night pick (victim, hand, rig, frame, recruit); tonight's den status | that Killer, only during `night` / host | Killers, host |
 | `denChat/*` | Killer chat | Killers | Killers, host |
-| `actions/{cycle}_{pid}` | one night action (watch, scour, protect, check, whisper, recruitAnswer) | self, only during `night` / `recruit` | self, host |
+| `actions/{cycle}_{pid}` | one night action (watch, scour, protect, trace, seance, whisper, recruitAnswer) | self, only during `night` / `recruit` | self, host |
+| `scores/{cycle}_{pid}` | `{pid, cycle, best, runs, at}`: the day's best run, an int 0–999 that can only go up | self, only during `game` | self, host (private until the board) |
 | `votes/{ballot}_{pid}` | `{target, ballot}` | self, only on the open ballot | self, host |
-| `inbox/{cycle}-{step}-{i}` | fragments, watch results, checks, whispers, recruit offers | host | the addressee only (query with `where('to','==',pid)`) |
+| `inbox/{cycle}-{step}-{i}` | fragments (`via`: search, watch, ghost, top, seance), watch results, traces, séances, whispers, recruit offers. Steps: `night` (recruit offer only), `morning` (everything else) | host | the addressee only (query with `where('to','==',pid)`) |
 | `chat/*`, `mediumChat/*` | room chat (living players); Spirits (ghosts and the Medium) | as stated | as stated |
 | `presence/{pid}` | heartbeat, and the clock-skew stamp | self | self, host |
-| `secret/engine`, `resolutions/*`, `hostLease/current` | seed, hands, plant and recruit state; idempotency markers; host clock stamp | host | host |
+| `secret/engine`, `resolutions/*`, `hostLease/current` | seed, hands, plant and recruit state, `pendingMorning` (the stashed night); idempotency markers; host clock stamp | host | host |
 
 
 ## 🗺️ Architecture Overview

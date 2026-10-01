@@ -9,6 +9,9 @@ import HostApp from './components/host/HostApp';
  */
 export default function KillersApp() {
   const path = location.pathname.replace(/\/+$/, '');
-  const isHost = path.endsWith('/host') || new URLSearchParams(location.search).has('host');
+  const params = new URLSearchParams(location.search);
+  // On GitHub Pages a direct hit on /mystery-game/host is a 404, which
+  // public/404.html bounces to /mystery-game/?route=/host.
+  const isHost = path.endsWith('/host') || params.has('host') || params.get('route')?.replace(/\/+$/, '') === '/host';
   return isHost ? <HostApp /> : <PlayerApp />;
 }

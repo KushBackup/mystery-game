@@ -3,7 +3,7 @@ import { HOST_EMAILS, EMULATED } from '../../firebase/app';
 import {
   signInHost, signOutHost, createGame, advance, setAutopilot, extendPhase, endPhaseNow, removePlayer, cancelRemove,
   dealLateJoiners, syncHostClock, subscribeRoles, subscribePresence, subscribeNightActions,
-  subscribeNightDen, subscribeBallot, subscribeSecret,
+  subscribeNightDen, subscribeBallot, subscribeSecret, subscribeScores,
 } from '../../firebase/host';
 import { useAuthUser, useActiveGameId, useGame, usePlayers } from '../../hooks/useKillers';
 import { PACKS, packFor, narrate } from '../../data/packs/index.js';
@@ -26,7 +26,7 @@ import { Screen, PhaseClock, Hold, Action } from '../game/parts';
 // A stable empty list, so a missing snapshot doesn't look like a new array every render.
 const EMPTY = [];
 
-const QUICK = { casting: 15_000, night: 45_000, recruit: 20_000, dawn: 15_000, investigation: 60_000, roundtable: 60_000, revote: 30_000, banish: 15_000, endgame: 60_000 };
+const QUICK = { casting: 15_000, night: 45_000, recruit: 20_000, alarm: 10_000, game: 40_000, dawn: 20_000, investigation: 60_000, roundtable: 60_000, revote: 30_000, banish: 15_000, endgame: 60_000 };
 
 export default function HostApp() {
   const user = useAuthUser();
@@ -85,7 +85,7 @@ function Setup({ onCancel }) {
         </Field>
         <Field label="Cycles">
           {[3, 4, 5].map((n) => (
-            <Choice key={n} on={cycles === n} onClick={() => setCycles(n)}>{n} nights</Choice>
+            <Choice key={n} on={cycles === n} onClick={() => setCycles(n)}>{n} days</Choice>
           ))}
         </Field>
         <Field label="Pace">
@@ -133,6 +133,8 @@ function nextLabel(game, alive) {
     case PHASE.CASTING: return 'Start night 1';
     case PHASE.NIGHT: return 'End the night';
     case PHASE.RECRUIT: return 'End the recruitment';
+    case PHASE.ALARM: return 'Start the run';
+    case PHASE.GAME: return 'Stop the run and post the board';
     case PHASE.DAWN: return game.winner ? 'Reveal the winner' : 'Start the investigation';
     case PHASE.INVESTIGATION: return 'Call the Round Table';
     case PHASE.ROUNDTABLE:
@@ -153,9 +155,13 @@ function narrationFor(game, pack, nameOf) {
     case PHASE.CASTING: return narrate(pack, 'casting');
     case PHASE.NIGHT:
     case PHASE.RECRUIT: return narrate(pack, 'night');
+    case PHASE.ALARM: return narrate(pack, 'alarm');
+    case PHASE.GAME: return narrate(pack, 'game');
     case PHASE.DAWN: {
       const d = game.dawn ?? {};
-      const v = d.victims?.[0];
+      const v = d.taken ?? d.victims?.[0];
+      if (d.cause === 'rig') return narrate(pack, 'dawnRig', nameOf(v), { score: d.rigged ?? 0 }, 'dawnDeath');
+      if (d.cause === 'deep') return narrate(pack, 'dawnDeep', nameOf(v), { saved: nameOf(d.attempted) }, 'dawnDeath');
       return narrate(pack, v ? 'dawnDeath' : d.attempted ? 'dawnSaved' : d.recruited ? 'dawnRecruited' : 'dawnQuiet', nameOf(v ?? d.attempted));
     }
     case PHASE.INVESTIGATION: return narrate(pack, 'investigation');
@@ -180,6 +186,8 @@ function Console({ gid, game }) {
   const actions = useHostSub((cb) => subscribeNightActions(gid, game.cycle, cb), [gid, game.cycle]) ?? EMPTY;
   const den = useHostSub((cb) => subscribeNightDen(gid, game.cycle, cb), [gid, game.cycle]) ?? EMPTY;
   const votes = useHostSub((cb) => subscribeBallot(gid, game.ballot, cb), [gid, game.ballot]) ?? EMPTY;
+  const scoring = [PHASE.GAME, PHASE.GAME_LOCKED].includes(game.phase);
+  const scores = useHostSub((cb) => subscribeScores(gid, game.cycle, cb), [gid, scoring ? game.cycle : null]) ?? EMPTY;
   const pack = packFor(game.packId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -278,6 +286,7 @@ function Console({ gid, game }) {
         {game.phase === PHASE.NIGHT && <Stat n={actedNight.size} label={`of ${alive.length + ghosts.length} acted`} />}
         {[PHASE.ROUNDTABLE, PHASE.REVOTE, PHASE.ENDGAME].includes(game.phase) && <Stat n={votes.length} label={`of ${voters} voted`} />}
         {game.phase === PHASE.LOBBY && <Stat n={counts.killer} label="killers to deal" />}
+        {scoring && <Stat n={scores.length} label={`of ${alive.length + ghosts.length} played`} />}
       </div>
 
       {/* Say this */}
@@ -305,10 +314,26 @@ function Console({ gid, game }) {
           <ul className="mt-2 space-y-1">
             {den.filter((d) => d.id !== 'meta').map((d) => (
               <li key={d.id} className="font-body text-[14px] text-bone">
-                {nameOf(d.pid)}: kill {nameOf(d.victim)}{d.hand ? `, ${nameOf(d.hand)} strikes` : ''}{d.frame ? `, frame ${nameOf(d.frame)}` : ''}{d.recruit ? `, recruit ${nameOf(d.recruit)}` : ''}
+                {nameOf(d.pid)}: sink {nameOf(d.victim)}{d.rig ? ` to ${d.rig === 'under' ? 'just below last' : 'zero'}` : ''}{d.hand ? `, ${nameOf(d.hand)} hacks` : ''}{d.frame ? `, frame ${nameOf(d.frame)}` : ''}{d.recruit ? `, recruit ${nameOf(d.recruit)}` : ''}
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {/* The run, live: who is where on today's board, before anyone else sees it */}
+      {scoring && showRoles && (
+        <section className="er-card mt-6">
+          <p className="er-mono">Today's run, live{secret?.pendingMorning?.victim ? ` · rig on ${nameOf(secret.pendingMorning.victim)}${secret.pendingMorning.saved ? ' (firewalled: the lowest honest score dies instead)' : ''}` : ''}</p>
+          <ol className="mt-2 space-y-1">
+            {[...scores].sort((a, b) => b.best - a.best).map((s, i) => (
+              <li key={s.id} className="font-body text-[14px] text-bone flex justify-between gap-3">
+                <span>{i + 1}. {nameOf(s.pid)}</span>
+                <span className="er-num text-[16px]">{s.best}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="font-body text-[13px] text-dim mt-2">Guests who haven't played count as 0.</p>
         </section>
       )}
 

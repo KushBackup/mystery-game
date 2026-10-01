@@ -58,6 +58,16 @@
 - **Plan file:** `C:\Users\Kush\.claude\plans\so-i-want-you-peppy-island.md`. The Greenr game stays in the repo until the M6 cleanup; the new code lives in `src/lib/engine/`, `src/data/traits.js` and `src/data/packs/`.
 - **Testing:** the plan is to test against the Firebase Local Emulator, never the live `murder-1bf1c` project. The emulator needs a JDK, and none was installed on 2026-09-26.
 
+### DEEP BLUE: the phone-OS skin (decided 2026-09-30, for the 3 Oct Greenr Panjim event)
+
+- **The ask:** a retro iPhone 4/5-style phone interface in an 8-bit font, with apps (Alarm, News, a WhatsApp-like group, Gallery, the game); every round the whole room plays the same Flappy-style game; Killers murder by editing one person's score to the bottom of the leaderboard; make the Detective and Medium do something every round.
+- **"Blue Whale" is never used.** The user's brief said "blue whale game". The real "Blue Whale challenge" is tied to teen self-harm, so the user chose a fictional name, **DEEP BLUE**, to keep ads safe and guests comfortable. The whale sprite stays.
+- **Rules the user chose:** the rig is picked at night; the run is the best of unlimited retries inside a 90 s window; only rigged scores kill, **except** that a Doctor's firewall blocking the rig means the genuinely lowest scorer dies instead (which can be a Killer); the day's top 3 earn a clue photo.
+- **Host console:** keeps the Evidence Room look and gains controls; only player phones changed.
+- **Detective = Trace, Medium = Séance** (built 2026-10-01, stretch tier): see TECHNICAL_DOCUMENTATION.md. Trace originally cleared "neither" guests outright, which pushed the Faithful to 68–78% in the sim; it now reads only tonight's hacker.
+
+- **News app world (2026-10-02).** The user wanted the paper to feel like part of the story: authored articles dripped by day, **local to Panjim, Goa, with Greenr, Panjim as the setting**, plus the room's own events printed as articles. Pure flavour only (the user chose this over hints or rule-teaching). Decisions that are not obvious from the code: **Greenr appears only as a bystander** (it is the real venue and a collaborator, so it is never the site of a death, a fault or a cover-up, and it only ever says things like "we checked the Wi-Fi"); all outlets, officials and sources are invented or anonymous (never a real outlet, never "Goa Police"); no victim is under 18 and no method is given, because DEEP BLUE stands in for the real challenge. The toll rises on a fixed curve (9, 14, 23, 31, 40, 52). Content lives in `src/data/packs/deepblue.news.js`.
+
 ### Greenr: Last Seating (2609-G, the retiring case)
 
 - **Cast and setting:** 26 playable, first-name-only guests at Greenr, Assagao, Goa, on 19 September 2026.

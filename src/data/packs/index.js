@@ -7,17 +7,29 @@
  */
 
 import greenr from './greenr.js';
+import deepblue from './deepblue.js';
 import { TRAITS, TRAIT_BY_ID } from '../traits.js';
 
-export const PACKS = { [greenr.id]: greenr };
-export const DEFAULT_PACK_ID = greenr.id;
+export const PACKS = { [deepblue.id]: deepblue, [greenr.id]: greenr };
+export const DEFAULT_PACK_ID = deepblue.id;
 
 export const packFor = (id) => PACKS[id] ?? PACKS[DEFAULT_PACK_ID];
 
-/** The two narration lines for a beat, with {name} filled. */
-export function narrate(pack, beat, name = '') {
-  return (pack.narration[beat] ?? []).map((line) => line.replaceAll('{name}', name));
+/**
+ * The two narration lines for a beat, with {name} filled, plus any other
+ * {key} from `vars`. A pack without the beat falls back to `fallback`, so
+ * an older pack (greenr has no dawnRig or dawnDeep) still says something true.
+ */
+export function narrate(pack, beat, name = '', vars = {}, fallback = null) {
+  const lines = pack.narration[beat] ?? (fallback ? pack.narration[fallback] : null) ?? [];
+  return lines.map((line) => Object.entries({ name, ...vars }).reduce((l, [k, v]) => l.replaceAll(`{${k}}`, String(v ?? '')), line));
 }
+
+/** The alarm headline for day `cycle`. */
+export const alarmLine = (pack, cycle) => {
+  const list = pack.alarm ?? [];
+  return list.length ? list[Math.min(Math.max(cycle, 1), list.length) - 1] : `DAY ${cycle}.`;
+};
 
 /**
  * A clue card's words: the pack's flavour line, plus a plain sentence built

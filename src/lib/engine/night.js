@@ -18,17 +18,32 @@
  *   4. Watchers: whoever watched the hand spots them with probability `watchP`;
  *      everyone else gets "a quiet night", which is ambiguous on purpose.
  *      Watching the victim earns one true clue.
- *   5. Detectives: a check reveals a guest's team, until checks run out.
+ *   5. Detectives trace two guests' phones a night against tonight's server
+ *      log: did either of them do tonight's hacking (were they the hand)?
+ *      "Neither" clears nobody of being a Killer, only of tonight. (The older single `check`, which reveals one
+ *      guest's team until checks run out, still resolves if sent.)
+ *      The Medium holds a séance with one Ghost: a copy of that Ghost's clue
+ *      tonight, which is always true (a frame never reaches the dead), and
+ *      the Ghost's team, the only way to learn it for someone the deep took.
  *   6. Scourers (and anyone who did nothing) each receive one clue fragment.
  *   7. Ghosts each receive one *true* clue, and deliver their whispers.
  *
  * A recruit night (see roster.js) swaps step 1 for an offer, and the murder,
  * if the offer is refused, happens in `resolveRecruit`.
+ *
+ * DEEP BLUE: this decides the night, but it does not kill anyone. Its
+ * `deaths` are what *would* happen if the rig lands; the host stashes the
+ * result and hands it to resolveMorning (morning.js) once the day's scores
+ * are in, which is where a Firewall save turns into "the deep takes the
+ * lowest honest score". `rig` is how the Killers dress the victim's score:
+ * 'zero' (blatant) or 'under' (one below last place).
  */
 
 import { makeRng, pick, chance } from './rng.js';
 import { ROLE, teamOf } from './roles.js';
 import { nightClues, distributeFragments } from './clues.js';
+
+export const RIG_VALUES = Object.freeze(['zero', 'under']);
 
 export const DEFAULT_NIGHT_CONFIG = Object.freeze({
   clueBudget: [2, 2, 3, 3, 3], // clues per night at `sizePivot` players, by cycle; the last entry repeats
@@ -105,6 +120,7 @@ function murderOutcome(ctx, { victim, hand, framePid, protectedSet, scourers, ex
     deaths,
     saved,
     facts,
+    trueFacts: trueFacts.map(strip),
     plantUsed: Boolean(framePid) && !plantFailed,
     deliveries,
     publicDawn: { victims: deaths.map((d) => d.pid), attempted: saved ? victim : null },
@@ -153,6 +169,7 @@ export function resolveNight(ctx) {
 
   // --- Who strikes ---------------------------------------------------------
   const handVote = majority(denVotes('hand'), killerSet, rng);
+  const rig = majority(denVotes('rig'), new Set(RIG_VALUES), rng) ?? 'zero';
   const recruitTarget = secret.recruitDue ? majority(denVotes('recruit'), faithfulSet, rng) ?? pick(faithful, rng) : null;
   let victim = null;
   let hand = null;
@@ -165,10 +182,18 @@ export function resolveNight(ctx) {
   // --- Faithful night actions ---------------------------------------------
   const scourers = [];
   const watchedVictim = [];
+  const seances = [];
+  const ghostSet = new Set(ghosts);
   for (const pid of faithful) {
     const a = actions[pid];
     const role = roles[pid];
-    if (a?.kind === 'watch' && a.target && a.target !== pid && players[a.target]?.status === 'alive') {
+    const traced = role === ROLE.DETECTIVE && a?.kind === 'trace' ? [...new Set(a.targets ?? [])].filter((t) => t !== pid && players[t]?.status === 'alive') : [];
+    if (traced.length === 2) {
+      deliveries.push({ to: pid, kind: 'trace', targets: sorted(traced), hit: hand != null && traced.includes(hand) });
+    } else if (role === ROLE.MEDIUM && a?.kind === 'seance' && ghostSet.has(a.target)) {
+      seances.push({ medium: pid, ghost: a.target });
+      deliveries.push({ to: pid, kind: 'seance', ghost: a.target, team: teamOf(roles[a.target]) });
+    } else if (a?.kind === 'watch' && a.target && a.target !== pid && players[a.target]?.status === 'alive') {
       if (a.target === victim) watchedVictim.push(pid);
       const seen = hand != null && a.target === hand && chance(rng, config.watchP);
       deliveries.push({ to: pid, kind: 'watch', target: a.target, seen });
@@ -199,7 +224,7 @@ export function resolveNight(ctx) {
   // --- A recruit night: no murder yet ---------------------------------------
   if (recruitTarget) {
     return {
-      recruit: { target: recruitTarget, hand: handVote ?? pick(killers, rng) },
+      recruit: { target: recruitTarget, hand: handVote ?? pick(killers, rng), rig },
       deaths: [],
       facts: [],
       deliveries: [
@@ -217,13 +242,18 @@ export function resolveNight(ctx) {
   }
 
   if (!victim) {
-    return { deaths: [], facts: [], deliveries: [...deliveries, ...whisperDeliveries], publicDawn: { victims: [], attempted: null }, secretPatch };
+    return { deaths: [], facts: [], trueFacts: [], deliveries: [...deliveries, ...whisperDeliveries], publicDawn: { victims: [], attempted: null }, secretPatch, rig };
   }
 
   // --- The murder ------------------------------------------------------------
   const framePid = secret.plantUsed ? null : majority(denVotes('frame'), new Set(faithful.filter((p) => p !== victim)), rng);
   const out = murderOutcome(full, { victim, hand, framePid, protectedSet, scourers, extraFactTo: watchedVictim });
   if (out.plantUsed) secretPatch.plantUsed = true;
+  // A séance copies what the summoned Ghost learned tonight.
+  for (const { medium, ghost } of seances) {
+    const seen = out.deliveries.find((d) => d.to === ghost && d.via === 'ghost');
+    if (seen) out.deliveries.push({ to: medium, kind: 'fact', via: 'seance', ghost, fact: seen.fact });
+  }
 
   for (const pid of alive) {
     if (roles[pid] === ROLE.DOCTOR && out.saved && secretPatch.lastProtected[pid] === victim) {
@@ -237,8 +267,11 @@ export function resolveNight(ctx) {
     saved: out.saved,
     deaths: out.deaths,
     facts: out.facts,
+    trueFacts: out.trueFacts,
     deliveries: [...deliveries, ...out.deliveries, ...whisperDeliveries],
     publicDawn: out.publicDawn,
+    protectedList: sorted(protectedSet),
+    rig,
     secretPatch,
   };
 }
@@ -256,6 +289,7 @@ export function resolveRecruit(ctx, { target, hand, accepted, scourers, protecte
       rolePatch: { [target]: ROLE.KILLER },
       deaths: [],
       facts: [],
+      trueFacts: [],
       deliveries: [{ to: target, kind: 'recruited' }, ...scourers.map((to) => ({ to, kind: 'quiet' }))],
       publicDawn: { victims: [], attempted: null },
     };
@@ -263,5 +297,8 @@ export function resolveRecruit(ctx, { target, hand, accepted, scourers, protecte
   const out = murderOutcome({ ...ctx, config, rng }, {
     victim: target, hand, framePid: null, protectedSet: new Set(protectedList), scourers, extraFactTo: [],
   });
-  return { rolePatch: {}, deaths: out.deaths, facts: out.facts, deliveries: out.deliveries, publicDawn: out.publicDawn, hand };
+  return {
+    rolePatch: {}, victim: target, saved: out.saved, deaths: out.deaths, facts: out.facts, trueFacts: out.trueFacts,
+    deliveries: out.deliveries, publicDawn: out.publicDawn, hand, protectedList,
+  };
 }

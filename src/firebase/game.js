@@ -101,6 +101,7 @@ export const subscribeMyTraits = (gid, pid, cb) => watchDoc('traits', sub(gid, '
 export const subscribeInbox = (gid, pid, cb) => watchList('inbox', query(col(gid, 'inbox'), where('to', '==', pid)), cb);
 export const subscribeMyAction = (gid, cycle, pid, cb) => watchDoc('action', sub(gid, 'actions', `${cycle}_${pid}`), cb);
 export const subscribeMyVote = (gid, ballot, pid, cb) => watchDoc('vote', sub(gid, 'votes', `${ballot}_${pid}`), cb);
+export const subscribeMyScore = (gid, cycle, pid, cb) => watchDoc('score', sub(gid, 'scores', `${cycle}_${pid}`), cb);
 
 // Killer-only. The rules deny these to everyone else, so only mount them for a Killer.
 export const subscribeKillers = (gid, cb) =>
@@ -137,6 +138,10 @@ export const submitDen = (gid, cycle, pid, choice) =>
 
 export const submitVote = (gid, ballot, pid, target) =>
   setDoc(sub(gid, 'votes', `${ballot}_${pid}`), { target, pid, ballot, at: serverTimestamp() });
+
+/** A new best for today's run. Only ever called with a higher score (the rules refuse a lower one). */
+export const submitScore = (gid, cycle, pid, best, runs) =>
+  setDoc(sub(gid, 'scores', `${cycle}_${pid}`), { pid, cycle, best, runs, at: Date.now() });
 
 export const sendToChannel = (gid, channel, pid, name, text) =>
   addDoc(col(gid, channel), { pid, name, text: text.trim().slice(0, 280), at: Date.now() });

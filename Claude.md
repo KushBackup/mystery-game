@@ -19,6 +19,8 @@ The folder lives at `d:\Unity Projects\mystery-game` for historical reasons, but
 ---
 
 > **Rebuild in progress (2026-09-26): Killers Night.** The authored case is being replaced by a Killers/Mafia hybrid. Roles are dealt live from whoever is present; clues describe the killer's real traits, answered at arrival; the dead play on as Ghosts. `/` opens the new game and `?classic` the retiring Greenr case. Start with the Killers Night sections of [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) and [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md), and the plan named in [memory.md](memory.md). Everything below about rounds, clue codes, riddles and pods describes the retiring game.
+>
+> **DEEP BLUE (2026-09-30).** The player's phone is now a retro iPhone-era (iOS 6) OS, drawn smooth in Helvetica-style type (it was 8-bit pixel art until 2026-10-01; only the run mini-game's canvas is still pixel) ([src/os/](src/os/), design in [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) Part II). Every morning the whole room plays a Flappy-style run, and Killers murder by rigging a score to the bottom of the board ([src/lib/engine/morning.js](src/lib/engine/morning.js)). **Evidence Room now covers only the host console, `?classic` and marketing**; the colour rules below apply there, and the phone has its own palette.
 
 ---
 
@@ -93,9 +95,11 @@ The files you will most often need to open:
 - [src/data/traits.js](src/data/traits.js) — the six arrival questions and their clue groups
 - [src/data/packs/](src/data/packs/) — story packs (setting, narration, clue flavour, whisper words). A new theme is a new pack file, not new code
 - [src/data/killersCopy.js](src/data/killersCopy.js) — role cards, the NowCard line per phase/role, inbox wording. 25 words or fewer per line
-- [src/firebase/app.js](src/firebase/app.js) · [game.js](src/firebase/game.js) · [host.js](src/firebase/host.js) — init with the emulator switch; player reads/writes; the host's lock → read → resolve → commit-once
-- [firestore.rules](firestore.rules) — **the only thing keeping roles secret**. Change it together with `scripts/bots.mjs --selftest`, which checks 16 privacy rules
-- [src/components/game/](src/components/game/) · [src/components/host/HostApp.jsx](src/components/host/HostApp.jsx) — player screens; the host console
+- [src/firebase/app.js](src/firebase/app.js) · [game.js](src/firebase/game.js) · [host.js](src/firebase/host.js) — init with the emulator switch; player reads/writes; the host's lock → read → resolve → commit-once. The night only *stashes* its outcome (`secret.pendingMorning`); the morning commit after the run applies it
+- [src/lib/engine/morning.js](src/lib/engine/morning.js) — the board decides who is taken: the rig, or (if a firewall held) the lowest honest score; top 3 earn a photo
+- [src/os/](src/os/) — **the DEEP BLUE phone**: `PhoneOS.jsx` (shell, phase → app, takeovers, badges, the phone's only chat listeners), `chrome.jsx`, `takeovers.jsx`, `apps/*` (one file per app), `game/` (the run: pure `physics.js` + canvas), `icons/` + `art/` (pixel SVG, clue photos), `sfx.js`, `os.css`
+- [firestore.rules](firestore.rules) — **the only thing keeping roles secret**, and scores private until the board. Change it together with `scripts/bots.mjs --selftest`, which checks 23 privacy rules
+- [src/components/game/PlayerApp.jsx](src/components/game/PlayerApp.jsx) · [src/components/host/HostApp.jsx](src/components/host/HostApp.jsx) — loads a guest and hands them to the phone; the host console (Evidence Room, `parts.jsx`)
 - [scripts/sim-balance.mjs](scripts/sim-balance.mjs) · [scripts/bots.mjs](scripts/bots.mjs) — balance simulator; emulator bots (self-test, or `--join N`)
 
 ### Sibling sub-projects (not part of the PWA build)
@@ -203,7 +207,8 @@ npm run deploy           # builds + pushes /dist to gh-pages branch (GitHub Page
 ## Code conventions
 
 - Functional React components + hooks only — no class components.
-- **The app runs on the "Evidence Room" design system** — see [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md). Palette names are `ink`, `ink-raised`, `ink-hover`, `bone`, `bone-aged`, `signal`, `signal-deep`, `signal-lift`, `brass`, `dim`, `dim-2`, `body-bone`, `line`, defined in the `@theme` block of [src/index.css](src/index.css). The old `mystery-*` palette is **deleted**.
+- **Player phones run on the DEEP BLUE phone skin (older iOS)** ([DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) Part II): `--color-os-*`, `--font-pixel/screen/arcade`, `.os-*` in [src/os/os.css](src/os/os.css). Never mix its palette with Evidence Room on one screen.
+- **The host console and `?classic` run on the "Evidence Room" design system** — see [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md). Palette names are `ink`, `ink-raised`, `ink-hover`, `bone`, `bone-aged`, `signal`, `signal-deep`, `signal-lift`, `brass`, `dim`, `dim-2`, `body-bone`, `line`, defined in the `@theme` block of [src/index.css](src/index.css). The old `mystery-*` palette is **deleted**.
 - **Never introduce a hue outside that list.** No `green-500`, no `blue-600`, no gradients. Differentiate by changing the *surface* (ink → bone) or the *label*, not the colour. Brass is for numerals only; red never fills a large area except the murderer reveal.
 - Reusable pieces are the `.er-*` classes in [src/App.css](src/App.css) (`er-card`, `er-bone`, `er-tag`, `er-mono`, `er-num`, `er-redact`, `er-stat`, `er-list`, `er-touch`, …). Prefer composing those over hand-rolling a new card.
 - All icons are inline SVG components in [src/components/icons/](src/components/icons/) — there are no PNG/raster assets in the repo.
@@ -237,6 +242,10 @@ npm run deploy           # builds + pushes /dist to gh-pages branch (GitHub Page
 | Add/remove/reorder a reveal slide | [src/data/revealDeck.js](src/data/revealDeck.js), then the matching `<section class="slide">` in [reveal-deck/index.html](reveal-deck/index.html) | Both decks are 22 slides in the same order on purpose. A new **block type** also needs a renderer in `BLOCKS` in [RevealDeck.jsx](src/components/RevealDeck.jsx) — data, copy and presentation stay separate the same way the Evidence categories do |
 | Anything that reads the chat channel | `subscribeToMessages` in [src/firebase/config.js](src/firebase/config.js) | **Never build a second `onSnapshot` over `messages`.** One query definition is one Firestore listen stream for both consumers (the thread and the hub's unread badge), and it is what stops them disagreeing about which hundred messages are the channel. It is `desc` + `limit` on purpose — `asc` returns the *oldest* hundred and freezes the thread once the room passes 100 |
 | The Comms unread badge / hub tile state | [src/hooks/useUnreadMessages.js](src/hooks/useUnreadMessages.js) (what is unread), [GridMenu.jsx](src/components/GridMenu.jsx) (badge, sub-label, jog budget), `.er-badge` / `.er-jog` in [src/App.css](src/App.css) | Read [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) **§7.1** first — the jog has the strictest motion budget in the app because its trigger is unbounded. Don't reach for `.er-shake`: that one means *refusal* (bad login code, wrong riddle answer). And never let the badge be the only channel — the sub-label says it in words |
+| A DEEP BLUE app or phone screen | [src/os/apps/](src/os/apps/) + the `APPS`/`GRID`/`DOCK`/`AUTO` tables in [PhoneOS.jsx](src/os/PhoneOS.jsx) | Build from [ui.jsx](src/os/ui.jsx) (`AppFrame`, `Section`, `Group`, `Cell`, `GuestPicker`). Never open a second chat listener in an app: take `ctx.chat` / `ctx.spirits` / `ctx.den`. Nothing role-specific may show on the home screen (the Night icon is the same on every phone). Check 320×568 as well as 390×844 |
+| A News article, ticker line or news picture | [deepblue.news.js](src/data/packs/deepblue.news.js) for words, [NewsArt.jsx](src/os/art/NewsArt.jsx) for pictures, [news.js](src/os/news.js) for when it appears, [NewsPaper.jsx](src/os/apps/NewsPaper.jsx) for layout | **Read the rules in the data file's header first**: pure flavour (nothing may name or hint at a real Killer), true whatever the room does, no real people or outlets, Greenr only ever a bystander, no victims under 18, no method. Stories unlock by day, never by outcome, and the toll follows a fixed curve. Anything that reads `game.news`/`game.board` must respect `revealGate` (see Lessons 2026-10-02) |
+| The run (game feel, difficulty) | [src/os/game/physics.js](src/os/game/physics.js) | Keep it pure and fixed-tick: every phone must score the same run the same way. Retune gaps against a skill-model bot (average ≈ 5, good ≈ 25), not a perfect bot |
+| Story words for DEEP BLUE | [src/data/packs/deepblue.js](src/data/packs/deepblue.js) | Never use the real "Blue Whale" name anywhere (memory.md) |
 | Firestore schema change | [src/firebase/config.js](src/firebase/config.js) | Update [FIREBASE_VISUAL_GUIDE.md](FIREBASE_VISUAL_GUIDE.md); coordinate with user before deploying — breaks live games |
 | Host control | [src/components/HostPanel.jsx](src/components/HostPanel.jsx) | — |
 | PWA / service worker | [vite.config.js](vite.config.js) | Update [PWA_IMPLEMENTATION_COMPLETE.md](PWA_IMPLEMENTATION_COMPLETE.md) |
@@ -253,7 +262,7 @@ npm run deploy           # builds + pushes /dist to gh-pages branch (GitHub Page
 - ❌ Don't assume Unity tooling, Unity project structure, or C# scripts.
 - ❌ Don't add a test framework or CI config without asking — this project has chosen not to use one.
 - ❌ Don't introduce animation/UI libraries — the project deliberately uses plain CSS + Tailwind.
-- ❌ Don't add a colour outside the [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §2.1 table, and don't put `brass` on anything that isn't a numeral.
+- ❌ Don't add a colour outside the [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) §2.1 table (Evidence Room) or the Part II table (the phone), and don't put `brass` (or `os-gold`) on anything that isn't a numeral or score.
 - ❌ Don't import [src/App.css](src/App.css) from [src/main.jsx](src/main.jsx) — it must stay a `layer(components)` import inside [src/index.css](src/index.css).
 
 ---

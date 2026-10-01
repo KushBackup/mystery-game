@@ -16,11 +16,18 @@
  *
  * Inbox docs get deterministic ids for the same reason: a re-run overwrites
  * with identical content instead of duplicating a clue.
+ *
+ * DEEP BLUE splits a day in two. The night resolves when it locks, but its
+ * deaths and deliveries are only *stashed* (secret.pendingMorning). The alarm
+ * rings, the room plays the run, and when the game locks the host reads the
+ * scores and resolveMorning decides who the board takes. That commit is the
+ * dawn: deaths, the board and every held delivery land together, so no clue
+ * arrives before the leaderboard does.
  */
 
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import {
-  doc, getDocFromServer, getDocsFromServer, query, where, runTransaction, setDoc, updateDoc, writeBatch, deleteDoc, onSnapshot,
+  doc, getDocFromServer, getDocsFromServer, query, where, runTransaction, setDoc, updateDoc, writeBatch, deleteDoc, onSnapshot, arrayUnion,
 } from 'firebase/firestore';
 import { auth, authReady, db } from './app.js';
 import { serverNow, measureOffset } from '../lib/clockSkew.js';
@@ -30,7 +37,7 @@ import { DEFAULT_PACK_ID } from '../data/packs/index.js';
 import {
   PHASE, DEFAULT_DURATIONS, DEFAULT_CYCLES, ENDGAME_ROUNDS, phaseTiming, lockFor,
   ROLE, ROLE_INFO, teamOf, DEFAULT_RATIOS, targetCounts, dealRoles, assignLateJoiner,
-  makeRng, freshSeed, resolveNight, resolveRecruit, DEFAULT_NIGHT_CONFIG,
+  makeRng, freshSeed, resolveNight, resolveRecruit, resolveMorning, DEFAULT_NIGHT_CONFIG,
   tallyBanish, breakTie, checkWin, applyLeaves, recruitNeed, fateRecruit,
 } from '../lib/engine/index.js';
 
@@ -81,6 +88,7 @@ export const subscribeSecret = (gid, cb) => listen(sub(gid, 'secret', 'engine'),
 export const subscribeNightActions = (gid, cycle, cb) => listen(query(col(gid, 'actions'), where('cycle', '==', cycle)), cb, 'actions');
 export const subscribeNightDen = (gid, cycle, cb) => listen(query(col(gid, 'den'), where('cycle', '==', cycle)), cb, 'den');
 export const subscribeBallot = (gid, ballot, cb) => listen(query(col(gid, 'votes'), where('ballot', '==', ballot)), cb, 'votes');
+export const subscribeScores = (gid, cycle, cb) => listen(query(col(gid, 'scores'), where('cycle', '==', cycle)), cb, 'scores');
 
 // --- Reading everything ----------------------------------------------------------
 
@@ -109,6 +117,12 @@ const denFor = async (gid, cycle) =>
     .filter((d) => d.id !== 'meta')
     .map((d) => [d.data().pid, d.data()]));
 
+const scoresFor = async (gid, cycle) =>
+  Object.fromEntries((await getDocsFromServer(query(col(gid, 'scores'), where('cycle', '==', cycle)))).docs.map((d) => [d.data().pid, d.data()]));
+
+// Firestore refuses `undefined` anywhere in a write; engine output may carry it.
+const clean = (v) => JSON.parse(JSON.stringify(v ?? null));
+
 const votesFor = async (gid, ballot) =>
   Object.fromEntries((await getDocsFromServer(query(col(gid, 'votes'), where('ballot', '==', ballot)))).docs.map((d) => [d.data().pid, d.data().target]));
 
@@ -122,6 +136,8 @@ export async function createGame({ packId = DEFAULT_PACK_ID, durations = DEFAULT
     phase: PHASE.LOBBY,
     cycle: 0,
     packId,
+    // Public on purpose: every phone builds the same run from it (os/game/course.js).
+    courseSeed: freshSeed(),
     config: { durations: { ...DEFAULT_DURATIONS, ...durations }, cycles, ratios: { ...DEFAULT_RATIOS, ...ratios } },
     autopilot: false,
     createdAt: Date.now(),
@@ -315,8 +331,8 @@ function nightCtx(gid, g, world, extra = {}) {
   };
 }
 
-/** Dawn bookkeeping shared by a night and a recruit beat: deaths, leavers, win check. */
-function stageDawn(tx, gid, g, world, { deaths, publicDawn, recruited = false }) {
+/** Dawn bookkeeping, at the end of the morning: deaths, leavers, the board, win check. */
+function stageDawn(tx, gid, g, world, { deaths, publicDawn, recruited = false, board = null }) {
   const players = structuredClone(world.players);
   for (const d of deaths) {
     players[d.pid].status = 'ghost';
@@ -329,9 +345,12 @@ function stageDawn(tx, gid, g, world, { deaths, publicDawn, recruited = false })
     tx.delete(sub(gid, 'killers', pid));
   }
   const winner = checkWin(players, world.roles);
+  const dawn = clean({ cycle: g.cycle, ...publicDawn, vanished, recruited });
   tx.update(gameRef(gid), {
     ...timed(g, PHASE.DAWN),
-    dawn: { cycle: g.cycle, ...publicDawn, vanished, recruited },
+    dawn,
+    board: clean(board),
+    news: arrayUnion({ kind: 'dawn', ...dawn, top: board?.top ?? [], at: serverNow() }),
     winner: winner ?? null,
     ...(winner ? { finaleRoles: world.roles } : {}),
   });
@@ -345,22 +364,41 @@ async function resolveNightPhase(gid) {
   const res = resolveNight(nightCtx(gid, g, world, { actions, den }));
 
   return commitOnce(gid, `${g.cycle}-night`, PHASE.NIGHT_LOCKED, (tx) => {
-    writeDeliveries(tx, gid, g.cycle, 'night', res.deliveries);
+    // The recruit's offer has to reach them now; everything else waits for the board.
+    const offer = res.recruit ? res.deliveries.filter((d) => d.kind === 'recruitOffer') : [];
+    writeDeliveries(tx, gid, g.cycle, 'night', offer);
     const secretPatch = {
       ...res.secretPatch,
       recruitDue: false,
       [`hands.${g.cycle}`]: res.hand ?? res.recruit?.hand ?? null,
-      pendingRecruit: res.recruit ? { ...res.recruit, scourers: res.scourers, protectedList: res.protectedList, cycle: g.cycle } : null,
+      pendingRecruit: res.recruit ? clean({
+        ...res.recruit, scourers: res.scourers, protectedList: res.protectedList, cycle: g.cycle,
+        held: res.deliveries.filter((d) => d.kind !== 'recruitOffer'),
+      }) : null,
+      pendingMorning: res.recruit ? null : pendingMorning(g.cycle, res),
     };
     tx.update(sub(gid, 'secret', 'engine'), secretPatch);
     for (const [pid, left] of Object.entries(res.secretPatch.checksLeft ?? {})) {
       if (left !== world.secret.checksLeft?.[pid]) tx.update(sub(gid, 'roles', pid), { checksLeft: left });
     }
-    if (res.recruit) {
-      tx.update(gameRef(gid), { ...timed(g, PHASE.RECRUIT) });
-    } else {
-      stageDawn(tx, gid, g, world, { deaths: res.deaths, publicDawn: res.publicDawn });
-    }
+    tx.update(gameRef(gid), { ...timed(g, res.recruit ? PHASE.RECRUIT : PHASE.ALARM) });
+  });
+}
+
+/** What the morning needs from the night, stashed where only the host can read it. */
+function pendingMorning(cycle, res, extra = {}) {
+  return clean({
+    cycle,
+    victim: res.victim ?? null,
+    saved: Boolean(res.saved),
+    protectedList: res.protectedList ?? [],
+    rig: res.rig ?? 'zero',
+    facts: res.facts ?? [],
+    trueFacts: res.trueFacts ?? [],
+    deliveries: res.deliveries ?? [],
+    publicDawn: res.publicDawn ?? { victims: [], attempted: null },
+    recruited: false,
+    ...extra,
   });
 }
 
@@ -377,15 +415,44 @@ async function resolveRecruitPhase(gid) {
     : { rolePatch: {}, deaths: [], deliveries: [], publicDawn: { victims: [], attempted: null } };
 
   return commitOnce(gid, `${g.cycle}-recruit`, PHASE.RECRUIT_LOCKED, (tx) => {
-    writeDeliveries(tx, gid, g.cycle, 'recruit', res.deliveries);
-    const roles = { ...world.roles };
     for (const [pid, role] of Object.entries(res.rolePatch)) {
-      roles[pid] = role;
       tx.set(sub(gid, 'roles', pid), { role, team: teamOf(role), dealtCycle: g.cycle, recruited: true });
       tx.set(sub(gid, 'killers', pid), { at: Date.now(), recruited: true });
     }
-    tx.update(sub(gid, 'secret', 'engine'), { pendingRecruit: null });
-    stageDawn(tx, gid, g, { ...world, roles }, { deaths: res.deaths, publicDawn: res.publicDawn, recruited: accepted });
+    tx.update(sub(gid, 'secret', 'engine'), {
+      pendingRecruit: null,
+      pendingMorning: pendingMorning(g.cycle, { ...res, rig: pending?.rig }, {
+        victim: accepted ? null : res.victim ?? null,
+        protectedList: res.protectedList ?? pending?.protectedList ?? [],
+        deliveries: [...(pending?.held ?? []), ...(res.deliveries ?? [])],
+        recruited: accepted,
+      }),
+    });
+    tx.update(gameRef(gid), { ...timed(g, PHASE.ALARM) });
+  });
+}
+
+// --- The morning ---------------------------------------------------------------------
+
+/** The run is over: read the scores, let the board take someone, and open dawn. */
+async function resolveMorningPhase(gid) {
+  await lock(gid, PHASE.GAME);
+  const g = (await getDocFromServer(gameRef(gid))).data();
+  const world = await readWorld(gid);
+  const scores = await scoresFor(gid, g.cycle);
+  const stash = world.secret.pendingMorning;
+  const pending = stash?.cycle === g.cycle ? stash : {};
+  const res = resolveMorning({ seed: world.secret.seed, cycle: g.cycle, players: world.players, roles: world.roles, scores, pending });
+
+  return commitOnce(gid, `${g.cycle}-morning`, PHASE.GAME_LOCKED, (tx) => {
+    writeDeliveries(tx, gid, g.cycle, 'morning', clean(res.deliveries));
+    tx.update(sub(gid, 'secret', 'engine'), { pendingMorning: null });
+    stageDawn(tx, gid, g, world, {
+      deaths: res.deaths,
+      publicDawn: res.publicDawn,
+      recruited: Boolean(pending.recruited),
+      board: { cycle: g.cycle, rows: res.board, ghosts: res.ghostBoard, top: res.top },
+    });
   });
 }
 
@@ -435,6 +502,7 @@ async function resolveBallotPhase(gid, from) {
     const shown = Object.fromEntries(Object.entries(votes).filter(([v, t]) => voters.includes(v) && targets.includes(t)));
     tx.update(gameRef(gid), {
       ...timed(g, PHASE.BANISH),
+      news: arrayUnion({ kind: 'banish', cycle: g.cycle, ballot: g.ballot, pid: banished ?? null, team, endgame: from === PHASE.ENDGAME, at: serverNow() }),
       banish: { pid: banished, team, role: banished ? ROLE_INFO[world.roles[banished]]?.label : null, tally, cast, votes: shown, fromTie: !winnerPid && Boolean(banished) },
       tied: [],
       winner: winner ?? null,
@@ -474,6 +542,11 @@ export async function advance(gid) {
     case PHASE.RECRUIT:
     case PHASE.RECRUIT_LOCKED:
       return resolveRecruitPhase(gid);
+    case PHASE.ALARM:
+      return step(PHASE.ALARM, timed(g, PHASE.GAME));
+    case PHASE.GAME:
+    case PHASE.GAME_LOCKED:
+      return resolveMorningPhase(gid);
     case PHASE.DAWN:
       if (g.winner) return step(PHASE.DAWN, timed(g, PHASE.FINALE));
       return step(PHASE.DAWN, timed(g, PHASE.INVESTIGATION));

@@ -142,6 +142,25 @@ service cloud.firestore {
           && (game().phase != 'revote' || request.resource.data.target in game().tied);
       }
 
+      // "<cycle>_<pid>" → { best, runs }: this guest's best run of the day
+      // (DEEP BLUE). Private until the host publishes the board, so nobody can
+      // watch the scores and learn who played badly on purpose. Written only
+      // while the run is open, and a best can only go up.
+      match /scores/{id} {
+        allow read: if isHost() || ownsId(id);
+        allow create, update: if ownsId(id)
+          && game().phase == 'game'
+          && id == string(game().cycle) + '_' + me()
+          && myStatus() in ['alive', 'ghost']
+          && request.resource.data.keys().hasOnly(['pid', 'cycle', 'best', 'runs', 'at'])
+          && request.resource.data.pid == me()
+          && request.resource.data.cycle == game().cycle
+          && request.resource.data.best is int
+          && request.resource.data.best >= 0 && request.resource.data.best <= 999
+          && request.resource.data.runs is int
+          && (resource == null || request.resource.data.best >= resource.data.best);
+      }
+
       // Fragments, watch results, checks, whispers, recruit offers. Addressed to
       // one pid; clients must query with where('to', '==', pid).
       match /inbox/{id} {

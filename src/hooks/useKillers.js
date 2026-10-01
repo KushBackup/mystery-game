@@ -10,7 +10,7 @@
 import { useEffect, useState } from 'react';
 import {
   watchAuth, subscribeActive, subscribeGame, subscribeBinding, subscribePlayers, subscribeMyRole, subscribeInbox,
-  subscribeChannel, subscribeMyAction, subscribeMyVote, subscribeKillers, subscribeDen, subscribeDenMeta,
+  subscribeChannel, subscribeMyAction, subscribeMyVote, subscribeMyScore, subscribeMyTraits, subscribeKillers, subscribeDen, subscribeDenMeta,
 } from '../firebase/game.js';
 import { serverNow } from '../lib/clockSkew.js';
 
@@ -51,6 +51,8 @@ export const useChannel = (gid, channel, enabled = true) =>
   useSub((cb) => subscribeChannel(gid, channel, cb), [gid, channel, enabled || null]);
 export const useMyAction = (gid, cycle, pid) => useSub((cb) => subscribeMyAction(gid, cycle, pid, cb), [gid, cycle, pid]);
 export const useMyVote = (gid, ballot, pid) => useSub((cb) => subscribeMyVote(gid, ballot, pid, cb), [gid, ballot, pid]);
+export const useMyTraits = (gid, pid) => useSub((cb) => subscribeMyTraits(gid, pid, cb), [gid, pid]);
+export const useMyScore = (gid, cycle, pid) => useSub((cb) => subscribeMyScore(gid, cycle, pid, cb), [gid, cycle, pid]);
 export const useKillerIds = (gid, isKiller) => useSub((cb) => subscribeKillers(gid, cb), [gid, isKiller || null]);
 export const useDen = (gid, cycle, isKiller) => useSub((cb) => subscribeDen(gid, cycle, cb), [gid, cycle, isKiller || null]);
 export const useDenMeta = (gid, isKiller) => useSub((cb) => subscribeDenMeta(gid, cb), [gid, isKiller || null]);

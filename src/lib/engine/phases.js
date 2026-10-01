@@ -1,8 +1,13 @@
 /**
  * The shape of the evening: every phase, how long it lasts, what comes next.
  *
- *   lobby → casting → [ night → (recruit) → dawn → investigation →
- *   roundtable → (revote) → banish ] × cycles → endgame → finale
+ *   lobby → casting → [ night → (recruit) → alarm → game → dawn →
+ *   investigation → roundtable → (revote) → banish ] × cycles → endgame → finale
+ *
+ * The morning (DEEP BLUE): the night's outcome is decided when the night locks,
+ * but nobody dies yet. The alarm rings on every phone, the whole room plays
+ * the day's run, and only when the game locks does the host read the scores
+ * and apply the deaths (engine/morning.js). Dawn is the leaderboard reveal.
  *
  * `*_locked` phases are the host's resolution beats. The host writes the
  * locked phase first, which makes the Firestore rules refuse any further
@@ -23,6 +28,9 @@ export const PHASE = Object.freeze({
   NIGHT_LOCKED: 'night_locked',
   RECRUIT: 'recruit',
   RECRUIT_LOCKED: 'recruit_locked',
+  ALARM: 'alarm',
+  GAME: 'game',
+  GAME_LOCKED: 'game_locked',
   DAWN: 'dawn',
   INVESTIGATION: 'investigation',
   ROUNDTABLE: 'roundtable',
@@ -38,13 +46,15 @@ export const PHASE = Object.freeze({
 const MIN = 60 * 1000;
 const SEC = 1000;
 
-// About 21 minutes a cycle; five cycles plus arrival and the Endgame fill two hours.
+// About 21 minutes a cycle; four or five cycles plus arrival and the Endgame fill the night.
 export const DEFAULT_DURATIONS = Object.freeze({
   casting: 45 * SEC,
   night: 3 * MIN,
   recruit: 45 * SEC,
+  alarm: 20 * SEC,
+  game: 90 * SEC,
   dawn: 60 * SEC,
-  investigation: 10 * MIN,
+  investigation: 8 * MIN,
   roundtable: 6 * MIN,
   revote: 60 * SEC,
   banish: 45 * SEC,
@@ -60,18 +70,24 @@ export const ENDGAME_ROUNDS = 2;
 // How long every phone holds "…" before a reveal flips, so the room gasps together.
 export const REVEAL_LEAD_MS = 4 * SEC;
 
+// The day's run stops this long before the game phase ends, so the last score
+// write lands before the host locks the phase and the rules refuse it.
+export const GAME_GRACE_MS = 2 * SEC;
+
 export const LOCKED = new Set([
-  PHASE.NIGHT_LOCKED, PHASE.RECRUIT_LOCKED, PHASE.ROUNDTABLE_LOCKED, PHASE.REVOTE_LOCKED, PHASE.ENDGAME_LOCKED,
+  PHASE.NIGHT_LOCKED, PHASE.RECRUIT_LOCKED, PHASE.GAME_LOCKED, PHASE.ROUNDTABLE_LOCKED, PHASE.REVOTE_LOCKED, PHASE.ENDGAME_LOCKED,
 ]);
 
 // Phases that end in a reveal, so they open with a held beat.
-export const REVEALS = new Set([PHASE.CASTING, PHASE.DAWN, PHASE.BANISH, PHASE.FINALE]);
+// The alarm and the run start on the same instant on every phone, like a reveal.
+export const REVEALS = new Set([PHASE.CASTING, PHASE.ALARM, PHASE.GAME, PHASE.DAWN, PHASE.BANISH, PHASE.FINALE]);
 
 /** The locked beat that closes an action phase, or null if none. */
 export function lockFor(phase) {
   return {
     [PHASE.NIGHT]: PHASE.NIGHT_LOCKED,
     [PHASE.RECRUIT]: PHASE.RECRUIT_LOCKED,
+    [PHASE.GAME]: PHASE.GAME_LOCKED,
     [PHASE.ROUNDTABLE]: PHASE.ROUNDTABLE_LOCKED,
     [PHASE.REVOTE]: PHASE.REVOTE_LOCKED,
     [PHASE.ENDGAME]: PHASE.ENDGAME_LOCKED,
@@ -89,6 +105,8 @@ export function nextPlainPhase(game, { maxCycles = DEFAULT_CYCLES } = {}) {
       return { phase: PHASE.CASTING, cycle: 0 };
     case PHASE.CASTING:
       return { phase: PHASE.NIGHT, cycle: 1 };
+    case PHASE.ALARM:
+      return { phase: PHASE.GAME, cycle: game.cycle };
     case PHASE.DAWN:
       return game.winner ? { phase: PHASE.FINALE, cycle: game.cycle } : { phase: PHASE.INVESTIGATION, cycle: game.cycle };
     case PHASE.INVESTIGATION:

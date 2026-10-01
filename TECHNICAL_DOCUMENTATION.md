@@ -18,18 +18,68 @@ The rationale and milestones are in the plan file named in [memory.md](memory.md
 
 | Layer | Files | Rule |
 |---|---|---|
-| Engine | [src/lib/engine/](src/lib/engine/) — `rng`, `roles`, `clues`, `night`, `banish`, `win`, `roster`, `phases` | Pure, no Firebase, runs in Node. Every random draw is `makeRng(seed, cycle, purpose)`, so a resolution is reproducible on any host device |
+| Engine | [src/lib/engine/](src/lib/engine/) — `rng`, `roles`, `clues`, `night`, `morning`, `banish`, `win`, `roster`, `phases` | Pure, no Firebase, runs in Node. Every random draw is `makeRng(seed, cycle, purpose)`, so a resolution is reproducible on any host device |
 | Content | [src/data/traits.js](src/data/traits.js), [src/data/packs/](src/data/packs/), [src/data/killersCopy.js](src/data/killersCopy.js) | Six arrival traits (grouped so one clue splits the room about in half); a story pack (setting, two narration lines per beat, one clue line per trait group, whisper words); all other copy is 25 words or fewer |
 | Firebase | [src/firebase/app.js](src/firebase/app.js) (init, emulator switch), [game.js](src/firebase/game.js) (player reads/writes), [host.js](src/firebase/host.js) (every outcome) | Players write only their own action, vote and chat. The host device resolves each phase in four steps: lock, read from server, resolve, then one transaction guarded by `resolutions/<id>` |
 | Clock | [src/lib/clockSkew.js](src/lib/clockSkew.js) | Every device reads time as `serverNow()`, so a reveal at `revealAt` flips on every phone at once (there is no projector) |
-| UI | [src/KillersApp.jsx](src/KillersApp.jsx), [src/components/game/](src/components/game/), [src/components/host/HostApp.jsx](src/components/host/HostApp.jsx), [src/hooks/useKillers.js](src/hooks/useKillers.js) | Player: Arrival, then a phase screen with the NowCard on top and five tabs (Now, Clues, Guests, Talk, Me). Host: Google sign-in, Setup, then a console with one Next button, read-aloud lines, autopilot and roster |
+| UI | [src/KillersApp.jsx](src/KillersApp.jsx), [src/os/](src/os/) (the DEEP BLUE phone), [src/components/game/PlayerApp.jsx](src/components/game/PlayerApp.jsx) (loading only), [src/components/host/HostApp.jsx](src/components/host/HostApp.jsx), [src/hooks/useKillers.js](src/hooks/useKillers.js) | Player: a retro phone OS (see below). Host: Google sign-in, Setup, then a console with one Next button, read-aloud lines, autopilot, roster, and a live board during the run |
 
 ### Phase machine
 
-`lobby → casting → [night → (recruit) → dawn → investigation → roundtable → (revote) → banish] × cycles → endgame ×2 → finale`
+`lobby → casting → [night → (recruit) → alarm → game → dawn → investigation → roundtable → (revote) → banish] × cycles → endgame ×2 → finale`
 
-- Every `*_locked` phase is the host's resolution beat. The rules refuse actions and votes during it.
+- Every `*_locked` phase is the host's resolution beat. The rules refuse actions, scores and votes during it.
 - A host that crashes mid-resolution leaves the game locked. Pressing Next again finishes the job, and the marker keeps it single.
+
+### The morning (DEEP BLUE, 2026-09-30)
+
+Killers murder by rigging the morning run's leaderboard, so a day resolves in two halves.
+
+1. **Night locks.** `resolveNight` decides the victim, the hand, the rig value (`zero` or `under`), saves, traces, séances and the night's facts. Nothing is written for players except a recruit offer; the whole result is stashed in `secret.pendingMorning`.
+2. **Alarm** (20 s, synced ring) then **game** (90 s). Every phone plays the same seeded course (`game.courseSeed` + the day, attempt `n` → course `${seed}:${n}`). Each phone writes `scores/{cycle}_{pid}` only on a new best, and always on its first run.
+3. **Game locks.** The host reads every score from the server and runs `resolveMorning` ([src/lib/engine/morning.js](src/lib/engine/morning.js)):
+   - The rig lands: the target dies (`cause: 'murdered'`) and their row shows the rigged value, last.
+   - The Firewall held (Doctor): the lowest living honest score dies instead (`cause: 'deep'`), protected guests excepted, ties by seed; a guest who never played scores 0. It can take a Killer, whose role stays hidden.
+   - The top 3 living scorers each receive one of the night's facts (`via: 'top'`).
+4. **Dawn** is one commit: deaths, `game.board`, the `news` log entry and every held delivery land together, so no clue arrives before the board.
+
+The run stops `GAME_GRACE_MS` (2 s) before `phaseEndsAt` so the last score write beats the host's lock.
+
+### The Detective and the Medium (2026-10-01)
+
+- **Trace** (Detective, every night): two guests' phones against tonight's server log. `hit` means one of them was tonight's hand; "neither" clears them of tonight only. Delivered as `kind: 'trace'`. (The older `check` still resolves if sent, but nothing sends it.)
+- **Séance** (Medium, every night once ghosts exist): one Ghost. The Medium receives `kind: 'seance'` with the Ghost's `team`, plus a copy of the Ghost's clue tonight as `kind: 'fact', via: 'seance'`. Ghost clues are always true, so a séance cannot be framed.
+- With both, `npm run sim` puts the Faithful at 47–54% from 20 to 45 guests (3 Killers).
+
+### The phone ([src/os/](src/os/))
+
+| File | Role |
+|---|---|
+| [PhoneOS.jsx](src/os/PhoneOS.jsx) | The shell. Owns the open app (each phase auto-opens its app via `AUTO`; the Home button always goes home), the takeovers, badges and banners, and the phone's only chat listeners (`chat`, `mediumChat`, `denChat`); apps get them through `ctx` |
+| [chrome.jsx](src/os/chrome.jsx) | Status bar (the battery is the phase timer), home screen and glass dock, home button, lock screen, slide to unlock, notification banner |
+| [takeovers.jsx](src/os/takeovers.jsx) | Full-screen moments synced to `revealAt`: the role text at casting, the alarm, the recruit "incoming call", the signed-out screen |
+| [apps/](src/os/apps/) | Messages (The Room, Spirits, DEEP BLUE, Unknown), DEEP BLUE (the game), News (board reveal, verdict, finale, and the paper: see [The News app](#the-news-app)), Photos (clue photos), Clock, Contacts, Notes, Night (every role's night, same icon for all), Settings, Vote |
+| [game/](src/os/game/) | `physics.js` (pure, fixed 60 Hz tick, seeded course) and `DeepBlueGame.jsx` (canvas at 144×256, integer-scaled; the one 8-bit thing left on the phone) |
+| [icons/](src/os/icons/), [art/](src/os/art/) | Smooth vector art: `AppIcon` (glossy iOS-style app icons), `Glyph` (UI glyphs, status-bar signal/wifi/battery), the `Wallpaper`, and `CluePhoto` (one softened CCTV still per trait group, still drawn on a coarse grid) |
+| [sfx.js](src/os/sfx.js) | Every sound, synthesized (Web Audio); vibration patterns; the `astral.sfx` / `astral.vibe` preferences |
+| [seen.js](src/os/seen.js) | Read marks behind every badge, in localStorage only (`deepblue.seen.*`), never Firestore; also `booted` (first boot shown) and `taken` (death screen shown) |
+| [beats.js](src/os/beats.js) | When each reveal's beats land, and `useMaskedPlayers`: a player who dies in the reveal still playing reads as alive until its beat, so no phone (or Contacts, or the group chat) spoils it |
+| [nav.js](src/os/nav.js), [hooks.js](src/os/hooks.js) | `useStack` (push/pop inside an app); `useWorldClock`, `useOnline` |
+| [Setup.jsx](src/os/Setup.jsx) | Arrival as a phone setup assistant |
+
+The styling is its own system: `--color-os-*` and `--font-pixel/screen/arcade` in `@theme` (all Helvetica Neue / Inter), `.os-*` classes in [src/os/os.css](src/os/os.css), imported into the components layer like App.css. See [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) Part II.
+
+### The News app
+
+News plays the reveal for the phase it is in (`BoardReveal`, `BanishReveal`, `Finale` in [NewsApp.jsx](src/os/apps/NewsApp.jsx), unchanged) and is **the paper** the rest of the time ([NewsPaper.jsx](src/os/apps/NewsPaper.jsx)). From a live reveal, **Paper** steps into the paper and the paper's **Latest board** button steps into the board.
+
+- **Three sections** in an iOS 6 segmented control: *Top* (masthead, a ticker, a "from the room" strip, the lead, the next four stories), *The Room* (the live events), *Panjim* (the authored world stories, grouped by day). A story opens as an article (outlet, byline, time, a drawn picture with a caption, the body) and offers three more from its section.
+- **Two feeds, one story shape** ([news.js](src/os/news.js)). *World* stories are authored in [deepblue.news.js](src/data/packs/deepblue.news.js) and unlock by **day, never by outcome**: day 0 is there from the lobby, day N lands with day N's alarm (the night before it still holds day N-1's paper), and a morning-after piece appears at the finale by winner. So every phone holds the same paper and it is true whatever happened. *Room* stories are `game.news` (the board, the vote) written up from the pack's `live` templates. No Firestore change: `game.news` is untouched.
+- **A live story is held until its reveal.** The host writes a death ~5 s before the phones flip, so `useNews` drops the story being announced (and `held` hides the Latest board button) until `revealGate()`. Before this, Paper → the story headline or Latest board leaked who was taken during the hold.
+- **Badges.** `useNews` is called once in PhoneOS and passed down as `ctx.news`. The home badge counts story ids not in `deepblue.seen.<gid>.news` (opening News marks the page seen); the paper's own blue dots use `<gid>.newsread` (an id is added when its article opens). Both are localStorage lists.
+- **The art** is `NewsArt` ([NewsArt.jsx](src/os/art/NewsArt.jsx)): 13 drawn 16:9 scenes in the phone's blues, named by each story's `art`. The frame is `slice`d so one scene serves as a lead picture and a square thumbnail; keep the subject central.
+- **Pack contract.** `pack.news = { outlets, sections, articles, epilogue, live, ticker }`. A pack with no `news` prints only the live stories; the rules for writing it (pure flavour, no real people or outlets, Greenr is only ever a bystander, no victims under 18, no method) are in the header of `deepblue.news.js` and must be read before adding an article.
+- **Type.** The paper is the one place the phone uses a serif (`Georgia`, as iOS 6's reading surfaces did): `.os-news`, `.os-article`, section 17 of [os.css](src/os/os.css).
 
 ### Listeners
 
@@ -40,7 +90,7 @@ The rationale and milestones are in the plan file named in [memory.md](memory.md
 
 - `npm run emulators`: Auth and Firestore emulators under the `demo-killers` project. Needs JDK 21.
 - `npm run sim`: balance simulator. Plays thousands of games through the real engine.
-- `node scripts/bots.mjs --selftest --n 30 [--killer-leaves]`: a whole game plus 16 privacy-rule checks, against the emulator.
+- `node scripts/bots.mjs --selftest --n 30 [--killer-leaves]`: a whole game, bots playing the morning run, plus 23 privacy-rule checks (7 of them on `scores`), against the emulator.
 - `node scripts/bots.mjs --join 12`: 12 bots join the active game, to fill a room around real phones.
 
 ---

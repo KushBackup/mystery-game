@@ -29,7 +29,7 @@
 
 import { TRAITS } from '../src/data/traits.js';
 import {
-  makeRng, pick, chance, targetCounts, dealRoles, resolveNight, tallyBanish, breakTie,
+  makeRng, pick, chance, targetCounts, dealRoles, resolveNight, resolveMorning, tallyBanish, breakTie,
   checkWin, candidatesFor, fits, DEFAULT_RATIOS, DEFAULT_NIGHT_CONFIG, ROLE, ENDGAME_ROUNDS as DEFAULT_ENDGAME,
 } from '../src/lib/engine/index.js';
 
@@ -104,6 +104,9 @@ function playGame(n, ratios, gameSeed) {
   };
 
   const alive = () => Object.keys(players).filter((p) => players[p].status === 'alive').sort();
+  // DEEP BLUE: everyone has a skill at the morning run. It only matters when a
+  // Firewall blocks the rig and the deep takes the lowest honest score.
+  const skill = Object.fromEntries(Object.keys(players).map((p) => [p, 1 + rng() * 30]));
   const isKiller = (p) => roles[p] === ROLE.KILLER;
 
   // What the room collectively knows.
@@ -188,8 +191,12 @@ function playGame(n, ratios, gameSeed) {
       if (role === ROLE.DOCTOR) {
         actions[p] = { kind: 'protect', target: detectiveClaimed && players[detectiveClaimed]?.status === 'alive' ? detectiveClaimed : pick(living, rng) };
       } else if (role === ROLE.DETECTIVE) {
-        const target = ranked.find((q) => q !== p && !cleared.has(q));
-        actions[p] = { kind: 'check', target };
+        // Trace the two most suspected guests not yet cleared.
+        const targets = ranked.filter((q) => q !== p && !cleared.has(q)).slice(0, 2);
+        actions[p] = targets.length === 2 ? { kind: 'trace', targets } : { kind: 'scour' };
+      } else if (role === ROLE.MEDIUM) {
+        const ghosts = Object.keys(players).filter((q) => players[q].status === 'ghost');
+        actions[p] = ghosts.length ? { kind: 'seance', target: pick(ghosts, rng) } : { kind: 'scour' };
       } else if (chance(rng, 0.35)) {
         actions[p] = { kind: 'watch', target: pick(ranked.filter((q) => q !== p).slice(0, 8), rng) };
       } else {
@@ -199,13 +206,21 @@ function playGame(n, ratios, gameSeed) {
 
     const out = resolveNight({ seed: gameSeed, cycle, players, roles, traitsByPid: traits, traitDefs: TRAITS, actions, den, secret, config });
     Object.assign(secret, out.secretPatch);
-    for (const d of out.deaths) players[d.pid].status = 'ghost';
+    const scores = Object.fromEntries(alive().filter(() => chance(rng, 0.95)).map((p) => [p, { best: Math.floor(skill[p] * (0.5 + rng() * 0.5)) }]));
+    const morning = resolveMorning({
+      seed: gameSeed, cycle, players, roles, scores,
+      pending: { victim: out.victim, saved: out.saved, protectedList: out.protectedList, facts: out.facts, trueFacts: out.trueFacts, deliveries: out.deliveries },
+    });
+    for (const d of morning.deaths) players[d.pid].status = 'ghost';
+    if (morning.cause === 'deep') stats.deep = (stats.deep ?? 0) + 1;
+    if (morning.cause === 'deep' && isKiller(morning.deaths[0].pid)) stats.deepKiller = (stats.deepKiller ?? 0) + 1;
 
     // --- What reaches the room
     const pool = alive();
     const heard = [];
     for (const f of out.facts) {
-      const holders = out.deliveries.filter((d) => d.kind === 'fact' && !d.via && d.fact.trait === f.trait && d.fact.group === f.group);
+      // Searchers and the day's top three hold the night's clues.
+      const holders = morning.deliveries.filter((d) => d.kind === 'fact' && (!d.via || d.via === 'top' || d.via === 'seance') && d.fact.trait === f.trait && d.fact.group === f.group);
       const faithfulHolders = holders.filter((d) => !isKiller(d.to)).length;
       if (1 - (1 - SHARE_Q) ** faithfulHolders > rng()) heard.push(f);
       stats.factShare.push(pool.filter((p) => fits(TRAITS, traits[p], f)).length / pool.length);
@@ -225,6 +240,12 @@ function playGame(n, ratios, gameSeed) {
 
     for (const d of out.deliveries) {
       if (d.kind === 'watch' && d.seen && chance(rng, 0.9)) claims[d.target] = (claims[d.target] ?? 0) + 0.6;
+      if (d.kind === 'trace' && chance(rng, 0.7)) {
+        if (d.hit) for (const t of d.targets) claims[t] = (claims[t] ?? 0) + 0.7;
+        else for (const t of d.targets) claims[t] = (claims[t] ?? 0) - 0.1;
+        detectiveClaimed = d.to;
+      }
+      if (d.kind === 'seance' && d.team === 'killers') claims[d.ghost] = (claims[d.ghost] ?? 0);
       if (d.kind === 'check') {
         if (d.team === 'killers' && chance(rng, 0.6)) {
           claims[d.target] = (claims[d.target] ?? 0) + 1.5;
@@ -309,6 +330,8 @@ if (VERBOSE || !args.n) {
     console.log(`  ${buckets[i].toFixed(2)}–${Math.min(1, buckets[i + 1]).toFixed(2)}  ${'#'.repeat(Math.round((k / shares.length) * 60))} ${pct(k / shares.length)}`);
   }
   console.log(`  facts outside 0.2–0.8: ${pct(out / shares.length)}; nights where heard clues named the hand outright: ${pct(stats.namedOutright / stats.nights)}`);
+  console.log(`
+Mornings where a Firewall held and the deep took the lowest score: ${stats.deep ?? 0} (a Killer ${stats.deepKiller ?? 0} times)`);
   console.log('\nBanishments that caught a Killer, by cycle:');
   for (const [c, k] of Object.entries(stats.banishByCycle)) {
     console.log(`  cycle ${c}: ${pct((stats.hitsByCycle[c] ?? 0) / k)}`);

@@ -11,28 +11,28 @@
 export const ROLE_CARD = {
   killer: {
     title: 'Killer',
-    line: 'Each night, choose who dies and which Killer strikes. By day, blend in. Survive the last seating.',
-    tip: 'The one who strikes leaves clues. Take turns.',
+    line: 'You have the admin password. Each night, pick whose score sinks to the bottom, and who does the hacking.',
+    tip: 'Whoever hacks leaves clues. Take turns. Still play the run: last place is dangerous for you too.',
   },
   faithful: {
     title: 'Faithful',
-    line: 'Each night, watch a guest or search the scene. By day, find the Killers and banish them.',
-    tip: 'Clues describe the killer. Look at shoes, tops, glasses.',
+    line: 'Each night, watch a guest or dig through the logs. By day, find the Killers and vote them out.',
+    tip: 'Clues describe whoever hacked. Look at shoes, tops, glasses. Top 3 in the run earn a photo.',
   },
   doctor: {
     title: 'Doctor',
-    line: 'Each night, protect one guest from the Killers. Never the same guest two nights running.',
-    tip: 'You play for the Faithful. Stay quiet about it.',
+    line: 'Each night, put a firewall on one guest’s score. Never the same guest two nights running.',
+    tip: 'If your firewall stops a rig, the lowest honest score is taken instead.',
   },
   detective: {
     title: 'Detective',
-    line: 'Twice this game, learn whether a guest is a Killer. Every other night, search the scene.',
+    line: 'Each night, trace two guests’ phones against the server log. Learn if either of them did tonight’s hacking.',
     tip: 'Claim it and the Killers will come for you.',
   },
   medium: {
     title: 'Medium',
-    line: 'The dead can talk to you. Listen in the Spirits channel, then decide what to tell the room.',
-    tip: 'You play for the Faithful. Ghosts can lie too.',
+    line: 'Each night, summon one ghost. You see their clue, and learn if they were a Killer. They talk to you in Spirits.',
+    tip: 'You play for the Faithful. Ghosts can lie in Spirits. A séance can’t.',
   },
 };
 
@@ -42,6 +42,7 @@ export function nowLine({ phase, role, status, isRecruitTarget, hasActed }) {
   if (status === 'ghost') {
     if (phase === 'night') return hasActed ? 'Whisper sent. Wait for dawn.' : 'Send one word to one living guest.';
     if (phase === 'endgame') return 'Final vote. The dead vote too.';
+    if (phase === 'game') return 'Ghosts can still play. Your score can’t hurt you now.';
     return 'You are a ghost. Talk to the Medium in Spirits. Vote in the Endgame.';
   }
   switch (phase) {
@@ -53,16 +54,23 @@ export function nowLine({ phase, role, status, isRecruitTarget, hasActed }) {
       if (hasActed) return 'Done. Keep your phone close until dawn.';
       if (role === 'killer') return 'Choose tonight’s victim, and who strikes.';
       if (role === 'doctor') return 'Choose one guest to protect tonight.';
-      if (role === 'detective') return 'Check a guest, or search the scene.';
-      return 'Watch a guest, or search the scene.';
+      if (role === 'detective') return 'Trace two guests, or dig through the logs.';
+      if (role === 'medium') return 'Summon a ghost, or dig through the logs.';
+      return 'Watch a guest, or dig through the logs.';
     case 'recruit':
       return isRecruitTarget ? 'The Killers want you. Decide.' : 'The night is long. Wait.';
+    case 'alarm':
+      return 'Wake up. The run starts in a moment.';
+    case 'game':
+      return 'Tap to swim. Your best run counts. Don’t come last.';
+    case 'game_locked':
+      return 'Time. The board is being posted…';
     case 'dawn':
-      return 'See who is gone. Then check your evidence.';
+      return 'The board is up. See who was taken.';
     case 'investigation':
-      return 'Share your clue. Compare. Look at people.';
+      return 'Check Gallery and Messages. Compare. Look at people.';
     case 'roundtable':
-      return 'Vote to banish one guest.';
+      return 'Vote someone out in the group.';
     case 'revote':
       return 'A tie. Vote again, between these guests only.';
     case 'banish':
@@ -83,7 +91,10 @@ export const PHASE_LABEL = {
   night_locked: 'Night',
   recruit: 'Night',
   recruit_locked: 'Night',
-  dawn: 'Dawn',
+  alarm: 'Alarm',
+  game: 'The run',
+  game_locked: 'The run',
+  dawn: 'Board',
   investigation: 'Investigate',
   roundtable: 'Round table',
   roundtable_locked: 'Round table',
@@ -104,6 +115,14 @@ export function deliveryLine(d, nameOf) {
         : `You watched ${nameOf(d.target)}. A quiet night.`;
     case 'check':
       return d.team === 'killers' ? `${nameOf(d.target)} is a KILLER.` : `${nameOf(d.target)} is Faithful.`;
+    case 'fact':
+      return d.via === 'top' ? `You finished #${d.rank ?? 1}. DEEP BLUE sent you a photo.` : 'A photo arrived.';
+    case 'trace': {
+      const [a, b] = (d.targets ?? []).map(nameOf);
+      return d.hit ? `TRACE: ${a} or ${b} did tonight’s hacking. At least one of them is a KILLER.` : `Trace: neither ${a} nor ${b} did tonight’s hacking.`;
+    }
+    case 'seance':
+      return d.team === 'killers' ? `${nameOf(d.ghost)} came through. They were a KILLER.` : `${nameOf(d.ghost)} came through. They were innocent.`;
     case 'whisper':
       return `${nameOf(d.from)} whispers from beyond: “${d.word}”`;
     case 'saved':
@@ -123,6 +142,8 @@ export const DELIVERY_TAG = {
   fact: 'Clue',
   watch: 'Watch',
   check: 'Check',
+  trace: 'Trace',
+  seance: 'Séance',
   whisper: 'Whisper',
   saved: 'Saved',
   quiet: 'Search',

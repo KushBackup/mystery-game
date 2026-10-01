@@ -26,6 +26,53 @@ When the same lesson recurs, **edit the existing entry** rather than adding a du
 
 ## Entries
 
+### 2026-10-02 — A shortcut into the data can bypass a reveal hold the main screen respects
+
+**What happened:** While rebuilding News I found that the old "Paper" button and "Latest board" button, reachable during the board's "POSTING THE BOARD…" hold, listed the new `game.news` headline ("Maya finishes last") and the board with the TAKEN row ~5 s before the room was told. The reveal screen was gated by `revealAt`; the paper beside it read the same data ungated.
+
+**What to do instead:** When a screen is gated on a reveal, grep for every other reader of the same data (`game.news`, `game.board`, `game.dawn`) and gate those too through `revealGate` in beats.js. Verify with a held reveal (`revealAt` in the future) and read the text of every route into the data, not only the main one. `useNews` now does this for the paper and the badge.
+
+### 2026-10-01 — "iOS in 8-bit" was the wrong reading of "retro iPhone"
+
+**What happened:** The user asked for an iPhone 4/5-era phone. I drew it as pixel art (stepped corners, Pixelify/Silkscreen type, 20x20 pixel icons). They said the UI "looks very off" and wanted real older-iOS icons, type and interactions, keeping the animations and UX.
+
+**Why it was wrong:** I took "retro" as licence for a second, unrequested aesthetic (8-bit) layered on the one they asked for. A skeuomorphic OS only works if its details are the real ones: Helvetica, soft shadows, gloss, a pointed back button. Pixel versions of them read as a parody.
+
+**What to do instead:** When a reference style is named, reproduce that style and leave the extra twist out unless asked. Keep the structure and motion that already worked and swap only the skin: here that meant remapping the three font tokens, rewriting `os.css`, and replacing the icon/glyph/wallpaper components with the same props. Only the run mini-game's board stays pixel art.
+
+### 2026-10-01 — A global un-layered `border-radius: 0` silently flattened every rounded control
+
+**What happened:** After the reskin the Settings switch and the "Leave the game" button still had square corners. `index.css` has an un-layered `button { border-radius: 0 }` (an Evidence Room rule), and `os.css` is imported into the components layer, so the layered radius lost.
+
+**What to do instead:** Un-layered CSS beats every layered rule regardless of specificity. Scope the global rule (`button:not(.os-root *)`) instead of fighting it. Also: the run canvas measured itself with `getBoundingClientRect` while the app was zooming open with a CSS `scale`, so it sized the board for a 0.2x phone. Use `offsetWidth/offsetHeight` for anything that must ignore transforms.
+
+### 2026-10-01 — Three invisible-in-code defects that only a screenshot or a probe caught
+
+**What happened:** In the phone polish pass, three things looked fine in the source:
+- **The spoiler.** The host writes a death at the same instant it opens the reveal, about 4 s before phones flip. So a victim's own phone greyed out, and Contacts on every phone listed them as a ghost, before the board said who was taken.
+- **The ligature.** Pixelify Sans draws "fi" like a capital A. "The board is final" rendered as "The board is Anal", and "first" as "Arst".
+- **The cancelled filter.** A keyframe that set `filter: none` silently cancelled the ghost's inline greyscale, because animations override inline styles.
+
+**What to do instead:**
+- Any UI that reacts to data the room is about to be *told* must wait for the reveal's beat (`src/os/beats.js`).
+- Turn ligatures off for any display or pixel face (`font-variant-ligatures: none`), and read screenshots of real copy, not lorem.
+- A keyframe must never touch a property the element also sets inline.
+- Prove the first and last with a probe, not a screenshot. The spoiler probe checked Contacts before and after the beat. A text probe must be case-insensitive, because a caps pixel face shows capitals the DOM doesn't contain.
+
+### 2026-09-30 — A "port taken" or "write error" can be a full disk
+
+**What happened:** Starting the Firebase emulator failed, and reading its log failed with `tail: write error: No space left on device`. C: had 0 bytes free, filled by 827 leftover Remotion render bundles in `%TEMP%` (10 GB). A background agent writing screenshots to the C: scratchpad quietly moved them to S: instead. The retry then failed with "port taken": the first attempt had actually started the emulator.
+
+**Why it was easy to miss:** None of the tools said "disk full". Each failure looked like its own problem.
+
+**What to do instead:** When unrelated tools start failing oddly, check free space first (`Get-PSDrive`). Remotion leaves a ~12 MB `remotion-webpack-bundle-*` folder in Temp on every render; clearing them (with the user's OK) is safe. Before restarting a background service, probe its port (`curl 127.0.0.1:8080`): it may already be up.
+
+### 2026-09-30 — A rule check that writes data can break the next step of the self-test
+
+**What happened:** The self-test's new "a guest posts a best during the run" check set one bot's best to 500. That same bot then played its real run and wrote a lower best, which the rules correctly refused. The refusal was uncaught, so the whole self-test crashed. It passed at 8 bots only because of which bot the check happened to pick.
+
+**What to do instead:** A security check that is expected to succeed leaves state behind. Either use a guest who takes no further part, or make the normal path tolerate what the check left. Then run the self-test at more than one room size before trusting it.
+
 ### 2026-09-26 — A locally-pending binding mounts listeners the server will refuse
 
 **What happened:** On arrival, the binding doc was written and its own listener fired straight away on the local, still-pending copy. That mounted the in-game screens, whose role, inbox and action listeners reached the server before the binding had committed. The rules check those listeners against the binding, so they were refused. In React StrictMode, the refused listen plus the dev double-subscribe then tripped Firestore's `INTERNAL ASSERTION FAILED (ca9 / b815)`, killing the whole client. Every phone froze in the lobby while the host moved on.

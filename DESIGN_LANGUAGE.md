@@ -1,4 +1,6 @@
-# Design Language — "Evidence Room"
+# Design Language — "Evidence Room" and the DEEP BLUE phone (older iOS)
+
+> **Two systems, two surfaces (2026-09-30).** Evidence Room (Part I, everything below until Part II) is the host console, `?classic` and all marketing material. **the DEEP BLUE phone** (Part II, at the end; an older-iOS interface, redrawn from 8-bit on 2026-10-01) is the player's phone. Never mix them on one screen.
 
 > The visual system built for [pitch-deck/index.html](pitch-deck/index.html), and — as of 2026-08-02 — the system the player app is built on.
 >
@@ -663,3 +665,102 @@ Before shipping a screen:
 ---
 
 **Source of truth:** [pitch-deck/index.html](pitch-deck/index.html) — the `:root` block and the component vocabulary section. Values here were read from that file and contrast ratios computed against it.
+
+---
+
+# Part II — The DEEP BLUE phone (older iOS)
+
+> Player phones only, since 2026-09-30; **redrawn smooth on 2026-10-01** (it began as iOS-in-8-bit and read as off). Tokens are `--color-os-*` and `--font-pixel / screen / arcade` in the `@theme` block of [src/index.css](src/index.css); components are the `.os-*` classes in [src/os/os.css](src/os/os.css). Code map: [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md) → *The phone*.
+
+## II.1 The thesis
+
+An iPhone 4/5-era interface, done properly: **iOS 6 skeuomorphism.** Helvetica Neue type, a lit glossy steel-blue navigation bar with an engraved title, the pinstripe grouped lists with white rounded cells, a glass dock, glossy rounded app icons with a curved highlight, the ON/OFF pill switch, "slide to unlock" and the physical home button. Depth comes from gradients, a 1 px highlight on top, and soft drop shadows.
+
+**What stays 8-bit, on purpose:** only the run mini-game's board ([game/](src/os/game/)): the whale, kelp and seabed are pixel art because it is a game inside the phone. Its HUD words are set in the phone's own bold type. Everything else (icons, glyphs, wallpaper, type, controls) is smooth vector. Clue photos are CCTV stills drawn on a coarse grid and softened with a blur, scan lines and a vignette, so they read as low-resolution camera footage, not pixel art.
+
+It must still be usable standing up in a loud bar: body copy is 15–17 px, labels never below 11 px.
+
+## II.2 Colour
+
+| Token | Hex | Use |
+|---|---|---|
+| `os-abyss` | #050E24 | Deepest background: lock screen, letterbox |
+| `os-navy` | #0B1D45 | App backgrounds |
+| `os-deep` | #12306B | Raised rows and cards on navy |
+| `os-ocean` | #1E56B0 | Bars, pressed states |
+| `os-sea` | #3D8BF2 | **The action colour**: buttons, links, selection |
+| `os-foam` | #EAF3FF | Text on water, light surfaces |
+| `os-mist` | #C7D3E6 | The grouped-list pinstripe backdrop |
+| `os-chrome` | #8FA3C2 | Secondary text on navy |
+| `os-steel` | #4A5B7A | Tertiary text, hairlines on light |
+| `os-ink` | #0E1626 | Text on light surfaces |
+| `os-green` | #4CD964 | "Yes / you / sent / done": your bubbles, confirmations |
+| `os-red` | #FF3B30 | Death and badges only: TAKEN, KILLER, unread counts, destructive buttons |
+| `os-gold` | #FFCC33 | **Scores only**, plus the plain line under a clue photo |
+| `os-coral` | #FF7A59 | The game's obstacles. Never UI |
+
+Gloss gradients are allowed inside the OS (bars, buttons, badges, icons). The app icons, wallpaper, clue photos and the game may use their own in-between shades; the UI chrome around them may not. The red `os-red` stays reserved for death, badges and destructive buttons, so no app icon is red.
+
+## II.3 Type
+
+One family. `--font-pixel`, `--font-screen` and `--font-arcade` all resolve to `'Helvetica Neue', Helvetica, 'Inter', Arial`; the three names survive only so call sites didn't have to change, and the *role* is now carried by weight and size.
+
+| Role | Weight / size |
+|---|---|
+| Body, list rows, chat, captions | 400–500, 15–17 px |
+| Cell titles, bar titles, section heads, buttons | 700, 17–20 px (bar title 20 px, section head 16 px) |
+| Small labels (`.os-label`) | 700, 12 px |
+| Scores, stamps, `.os-arcade` | 800 |
+| Lock-screen and alarm clock, chapter cards | 200 (thin), 72–84 px |
+
+iPhones have the real Helvetica Neue. Everything else gets **Inter** (variable, `public/fonts/inter-var.woff2`, latin subset, SIL OFL), the closest free neighbour, precached by the service worker so a bar's wifi can't drop the phone into a fallback face. iOS sets text in sentence case, so write copy that way; only stamps (TAKEN, the verdict) and the news masthead are capitals.
+
+## II.4 Components (os.css)
+
+- **Frame:** `.os-root` (full screen; on a laptop it sits in a 390 px bezel), `.os-status` (the battery is the phase timer and turns red in the last fifth; a ghost's phone says "No Service"), `.os-homebar` / `.os-homebtn`.
+- **Home:** `.os-now` (the NowCard as a pinned notice), `.os-grid` (4 columns), `.os-dock` (glass shelf), `.os-icon` + `.os-badge`.
+- **Apps:** `.os-app` (`--light` pinstripe for lists, `--dark` for night and media), `.os-nav` (`--dark`, `--red` for Breaking News and the vote), `.os-barbtn--back` (the pointed iOS back button: a rotated square clipped to its left half, in `.os-barbtn__tip`).
+- **Lists:** `.os-section` / `.os-group` / `.os-cell` (`--on` = selected, with a check). `GuestPicker` in [ui.jsx](src/os/ui.jsx) builds every "pick a guest" screen from these.
+- **Messages:** `.os-bubble` (grey theirs, `--me` green, `--sys` navy for the app talking, `--alert` red), `.os-compose`, `.os-pinned` (the open poll).
+- **Moments:** `.os-lock`, `.os-slide` (slide to unlock / set up / stop, with the shimmer), `.os-alarm`, `.os-banner` (drops in and removes itself; no JS timer), `.os-hold` + `.os-spinner`.
+- **Reveals:** `.os-glitch` (the bottom row corrupting), `.os-rgb`, `.os-taken`, `.os-verdict` (the stamp), `.os-board-row`.
+- **The paper (News):** `.os-app--paper` (cream broadsheet surface; `AppFrame paper`), `.os-news` (sets `--paper`, `--rule`, `--serif`; **wrap anything using `--paper` in it**), `.os-seg` (bar-style segmented control), `.os-ticker` (the one continuous motion in the app, `transform` only, still under reduced motion), `.os-lead`, `.os-storylist` / `.os-story`, `.os-article`. Georgia is the sole serif the phone uses, and only for reading surfaces.
+
+## II.5 Motion
+
+- **Short and springy.** Presses dim and shrink slightly (80–120 ms), the switch knob slides with a small overshoot, the spinner is a smooth ring. App open (300 ms) zooms out of the icon you tapped (`--os-origin`); drilling into a list pushes from the right.
+- **The loud moments are the synced ones:** the alarm (flash, ring, vibration), the board (podium pop, then the TAKEN glitch), the verdict stamp. Everything between is quiet.
+- **Sounds are tied to those moments** (see [sfx.js](src/os/sfx.js)) and only play for a beat *reached* while the screen is open, never replayed by opening News later.
+- Everything stops under `prefers-reduced-motion`; the banner still appears, without the slide.
+
+## II.6 Rules
+
+- One icon per app, and the **Night** icon is identical on every phone, so a glance at a home screen reveals no role. Nothing role-specific may ever show on the home screen, including badges for the Killers' chat.
+- Phases drive the phone: each phase opens its own app, and a takeover (alarm, role text, recruit call) sits over everything. The Home button always works outside a takeover.
+- Badges are per-phone read marks in localStorage ([seen.js](src/os/seen.js)), never Firestore.
+- Verify layouts at **320×568** (iPhone 5) as well as 390×844: every screen must have zero horizontal overflow at both.
+- **Never reveal a death early.** Deaths reach the data ~4 s before the reveal plays. Anything that reacts to a player's status (Contacts, the group chat, your own phone going grey) goes through [beats.js](src/os/beats.js).
+- **Rounded corners need care here.** [src/index.css](src/index.css) has an un-layered `button { border-radius: 0 }` for the Evidence Room; it is scoped with `:not(.os-root *)` so the phone's radii in the components layer still apply. Add any new phone control inside `.os-root`.
+- Measure the run canvas with `offsetWidth`, never `getBoundingClientRect`: the app zooms open with a CSS scale and a transformed rect sizes the board for a 0.2× phone.
+
+## II.7 The world (polish pass, 2026-10-01)
+
+The phone should feel like it lives *inside* the game, not like an app about it.
+
+| Detail | Where |
+|---|---|
+| **In-world clock.** The status bar, lock screen and alarm show the game's time of day: nights run 01:00→05:00, the alarm is always 07:00, the investigation fills 09:00→17:00, the vote is at dusk | `worldClock` in [words.js](src/os/words.js), `useWorldClock` in [hooks.js](src/os/hooks.js) |
+| **Light.** The wallpaper dims and cools at night (with stars), brightens at dawn, warms at dusk | `data-time` on `.os-root`, `.os-wall`, `.os-stars` |
+| **First boot.** Once per phone: logo, a stepped progress bar, a chime | `Boot` in [Setup.jsx](src/os/Setup.jsx) |
+| **Terms of Service.** The rules, told as a contract with a cursed app. "Disagree" refuses to work ("There is no disagree") | `Terms` in Setup.jsx |
+| **Chapter cards.** NIGHT 2, INVESTIGATE, THE VOTE, ENDGAME: 2.4 s, only for a phase that began moments ago | `ChapterCard` in [takeovers.jsx](src/os/takeovers.jsx) |
+| **The night console.** Every role's Night app is the same green-phosphor terminal, so a glance reveals nothing | `.os-term` |
+| **Snooze.** The alarm's Snooze button shakes: "DEEP BLUE does not snooze" | `AlarmScreen` |
+| **The board.** A clock ticks through "…and last place"; last place's score scrambles before it lands | `useTicking`, `Scramble` in [NewsApp.jsx](src/os/apps/NewsApp.jsx) |
+| **Taken.** Once per death, after the room has seen it: static, SIGNAL LOST, then what a ghost can still do. A ghost's home is grey with a rare flicker, and the carrier reads No Service | `TakenScreen`, `.os-haunt` |
+| **The group remembers.** The Room shows "DEEP BLUE removed Rohan · score 0" and "The group removed Sam · was innocent" in line with the chat, each after its reveal beat; your last message reads Delivered | `useRoomEvents` in [MessagesApp.jsx](src/os/apps/MessagesApp.jsx) |
+| **iOS navigation.** Apps zoom out of their icon and back into it; lists push details in from the right and pop back from the left; the home screen flies in on unlock | `.os-app-exit`, `.os-nav-push/pop`, `.os-home--enter`, [nav.js](src/os/nav.js) |
+| **Real-phone behaviour.** "Searching…" when offline; the phone resizes above the keyboard; a burst of arrivals banners as "3 new photos" | `useOnline`, `PhoneFrame`, the banner in PhoneOS |
+
+The night console and the taken screen add a few greens and greys outside the §II.2 table (phosphor on black). They are "art" in the sense of §II.2: they belong to that one surface and nowhere else.
+

@@ -103,14 +103,43 @@ async function act(bot, gid, game) {
   if (bot.role === 'killer') {
     const mates = (await getDocs(collection(bot.db, 'games', gid, 'killers'))).docs.map((d) => d.id);
     const faithful = alive.filter((p) => !mates.includes(p.pid));
-    const choice = { victim: rnd(faithful)?.pid ?? null, hand: rnd(mates), pid: bot.pid, cycle: c };
+    const choice = { victim: rnd(faithful)?.pid ?? null, hand: rnd(mates), rig: rnd(['zero', 'under']), pid: bot.pid, cycle: c };
     if (c === 2) choice.frame = rnd(faithful)?.pid ?? null;
     if (Math.random() < 0.5) choice.recruit = rnd(faithful)?.pid ?? null;
     return setDoc(G(bot, gid, 'den', `${c}_${bot.pid}`), choice);
   }
   if (bot.role === 'doctor') return action({ kind: 'protect', target: rnd(alive).pid });
-  if (bot.role === 'detective') return action({ kind: 'check', target: rnd(alive).pid });
+  if (bot.role === 'detective') {
+    const two = [...alive].sort(() => Math.random() - 0.5).slice(0, 2).map((p) => p.pid);
+    return two.length === 2 ? action({ kind: 'trace', targets: two, target: null }) : action({ kind: 'scour' });
+  }
+  if (bot.role === 'medium') {
+    const ghosts = players.filter((p) => p.status === 'ghost');
+    return ghosts.length ? action({ kind: 'seance', target: rnd(ghosts).pid }) : action({ kind: 'scour' });
+  }
   return Math.random() < 0.4 ? action({ kind: 'watch', target: rnd(alive).pid }) : action({ kind: 'scour' });
+}
+
+/**
+ * The morning run. Each bot has a skill it keeps all game, plays a couple of
+ * runs, and writes only a new best, as the real app does. One in ten skips
+ * the run, to exercise "didn't play counts as 0".
+ */
+async function play(bot, gid, game) {
+  await readSelf(bot, gid);
+  if (!['alive', 'ghost'].includes(bot.status)) return;
+  bot.skill ??= 2 + Math.floor(Math.random() * 30);
+  if (Math.random() < 0.1) return;
+  const c = game.cycle;
+  const runs = [0, 1].map(() => Math.floor(bot.skill * (0.4 + Math.random() * 0.6)));
+  let best = -1;
+  for (const [i, score] of runs.entries()) {
+    if (score <= best) continue;
+    best = score;
+    // A refusal here is the rules working: the rule checks already set this bot a higher best.
+    await setDoc(G(bot, gid, 'scores', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, best, runs: i + 1, at: Date.now() })
+      .catch((e) => { if (e.code !== 'permission-denied') throw e; });
+  }
 }
 
 async function vote(bot, gid, game) {
@@ -171,11 +200,29 @@ async function securityChecks(bots, gid) {
   await expectDenied('faithful acts outside the night', () => setDoc(G(faithful, gid, 'actions', `99_${faithful.pid}`), { kind: 'scour', pid: faithful.pid, cycle: 99 }), results);
   await expectDenied('faithful casts a vote for someone else', () => setDoc(G(faithful, gid, 'votes', `c1_${other.pid}`), { target: faithful.pid, pid: other.pid, ballot: 'c1' }), results);
   await expectDenied('faithful rewrites their traits after the deal', () => setDoc(G(faithful, gid, 'traits', faithful.pid), faithful.traits), results);
+  await expectDenied('faithful posts a score outside the run', () => setDoc(G(faithful, gid, 'scores', `0_${faithful.pid}`), { pid: faithful.pid, cycle: 0, best: 99, runs: 1, at: 1 }), results);
+  await expectDenied('faithful reads another guest\'s score', () => getDoc(G(faithful, gid, 'scores', `1_${other.pid}`)), results);
   if (killer) {
     await expectAllowed('killer lists the killers', () => getDocs(collection(killer.db, 'games', gid, 'killers')), results);
     await expectDenied('killer reads a guest\'s role', () => getDoc(G(killer, gid, 'roles', faithful.pid)), results);
   }
   return results;
+}
+
+/** Rule checks that need the run open: scores can only go up, and only your own. */
+async function runChecks(bots, gid, game) {
+  const results = [];
+  const a = bots.find((b) => b.status === 'alive');
+  const b = bots.find((x) => x !== a && x.status === 'alive');
+  const c = game.cycle;
+  const score = (bot, pid, best) => setDoc(G(bot, gid, 'scores', `${c}_${pid}`), { pid, cycle: c, best, runs: 9, at: Date.now() });
+  await expectAllowed('guest posts a best during the run', () => score(a, a.pid, 500), results);
+  await expectDenied('guest lowers their best', () => score(a, a.pid, 3), results);
+  await expectDenied('guest posts a score for someone else', () => score(a, b.pid, 999), results);
+  await expectDenied('guest posts an impossible score', () => score(b, b.pid, 5000), results);
+  await expectDenied('guest adds a field to their score', () => setDoc(G(b, gid, 'scores', `${c}_${b.pid}`), { pid: b.pid, cycle: c, best: 4, runs: 1, at: 1, rigged: true }), results);
+  // Put a's score back to something ordinary, via the host, so the check doesn't skew the board.
+  return { results, fix: a.pid };
 }
 
 // --- Self-test: a whole game ---------------------------------------------------------
@@ -206,8 +253,9 @@ async function selftest(n) {
   const log = [];
   let guard = 0;
   let late = null;
+  let ranChecks = false;
   for (;;) {
-    if (guard++ > 80) throw new Error('game did not finish in 80 steps');
+    if (guard++ > 140) throw new Error('game did not finish in 140 steps');
     const g = await game();
     if (g.phase === 'finale') break;
 
@@ -215,6 +263,14 @@ async function selftest(n) {
       await Promise.all(bots.map((b) => act(b, gid, g)));
     } else if (g.phase === 'recruit') {
       await Promise.all(bots.map((b) => answerRecruit(b, gid, g)));
+    } else if (g.phase === 'game') {
+      await Promise.all(bots.map((b) => readSelf(b, gid)));
+      if (!ranChecks) {
+        ranChecks = true;
+        const { results } = await runChecks(bots, gid, g);
+        security.push(...results);
+      }
+      await Promise.all(bots.map((b) => play(b, gid, g)));
     } else if (['roundtable', 'revote', 'endgame'].includes(g.phase)) {
       await Promise.all(bots.map((b) => vote(b, gid, g)));
     } else if (g.phase === 'investigation' && g.cycle === 2 && !late) {
@@ -235,7 +291,9 @@ async function selftest(n) {
     if (after.phase === 'dawn') {
       const d = after.dawn;
       const names = (pids) => pids.map((p) => bots.find((b) => b.pid === p)?.name ?? p).join(', ') || 'none';
-      log.push(`night ${after.cycle}: died ${names(d.victims)}${d.attempted ? `; attempt on ${names([d.attempted])} foiled` : ''}${d.vanished.length ? `; vanished ${names(d.vanished)}` : ''}${d.recruited ? '; a recruit said yes' : ''}`);
+      const rows = after.board?.rows ?? [];
+      log.push(`day ${after.cycle}: ${d.cause === 'rig' ? `rig took ${names(d.victims)} (board shows ${d.rigged})` : d.cause === 'deep' ? `firewall on ${names([d.attempted])}; the deep took ${names(d.victims)}` : 'nobody taken'}${d.vanished.length ? `; vanished ${names(d.vanished)}` : ''}${d.recruited ? '; a recruit said yes' : ''}`);
+      log.push(`  board: ${rows.slice(0, 3).map((r) => `${names([r.pid])} ${r.score}`).join(', ')} … last ${rows.length ? `${names([rows.at(-1).pid])} ${rows.at(-1).score}` : '-'}; top-3 photos to ${names(after.board?.top ?? [])}`);
     }
     if (after.phase === 'revote') log.push(`  tie between ${after.tied.length}; re-vote`);
     if (after.phase === 'banish') {
@@ -287,6 +345,11 @@ async function join(n) {
     try {
       if (g.phase === 'night') await Promise.all(bots.map((b) => act(b, gid, g)));
       if (g.phase === 'recruit') await Promise.all(bots.map((b) => answerRecruit(b, gid, g)));
+      if (g.phase === 'game') {
+        // Wait out the countdown so bot scores land inside the window, like a phone's would.
+        await new Promise((r) => setTimeout(r, Math.max(0, (g.revealAt ?? 0) - Date.now()) + 3000));
+        await Promise.all(bots.map((b) => play(b, gid, g)));
+      }
       if (['roundtable', 'revote', 'endgame'].includes(g.phase)) await Promise.all(bots.map((b) => vote(b, gid, g)));
     } catch (e) {
       console.warn('bot error:', e.code ?? e.message);

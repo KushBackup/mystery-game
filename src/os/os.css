@@ -1,0 +1,1116 @@
+/* =============================================================================
+   THE PHONE: the DEEP BLUE OS (DESIGN_LANGUAGE.md, Part II)
+   =============================================================================
+
+   Older-iOS skeuomorphism, drawn properly: Helvetica Neue type, a lit glossy
+   blue navigation bar, a pinstripe grouped-list backdrop, soft shadows, a glass
+   dock, glossy rounded app icons, "slide to unlock" and the physical home
+   button. Gradients, 1px highlights and soft drop shadows give depth.
+
+   Imported into the components layer by index.css (like App.css), so a
+   Tailwind utility at a call site still wins.
+
+   Type: one family everywhere (--font-pixel / --font-screen / --font-arcade
+   all resolve to the Helvetica Neue stack; the names are kept so call sites
+   didn't have to change). iPhones have real Helvetica Neue; everything else
+   falls back to the bundled Inter, the closest free neighbour. Only the run
+   mini-game's board stays pixel art: it is a game inside the phone.
+
+   Motion: short and springy. Everything here respects prefers-reduced-motion
+   at the bottom of the file.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------- 0. Faces */
+
+/* Self-hosted (public/fonts, latin subset, SIL Open Font License) so the PWA
+   works offline and a bar's wifi can't leave the phone in a fallback face. */
+@font-face { font-family: 'Inter'; src: url('/fonts/inter-var.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
+
+/* ---------------------------------------------------------------- 1. Frame */
+
+.os-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-os-abyss);
+  color: var(--color-os-foam);
+  font-family: var(--font-pixel);
+  font-size: 16px;
+  line-height: 1.3;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  isolation: isolate;
+}
+.os-root p { text-wrap: pretty; }
+.os-balance { text-wrap: balance; }
+
+/* On a laptop the phone sits in a bezel, so the host can test on one screen. */
+@media (min-width: 640px) and (min-height: 700px) {
+  body:has(.os-root) { background: #0a0c10; }
+  .os-root {
+    inset: auto;
+    top: 50%;
+    left: 50%;
+    width: 390px;
+    height: min(844px, calc(100dvh - 48px));
+    translate: -50% -50%;
+    border-radius: 44px;
+    box-shadow: 0 0 0 10px #0d0f14, 0 0 0 12px #2b3140, 0 30px 80px rgba(0, 0, 0, 0.6);
+  }
+}
+
+.os-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.os-fill { position: absolute; inset: 0; }
+
+.os-scroll {
+  overflow-y: auto;
+  overflow-x: clip;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.os-scroll::-webkit-scrollbar { display: none; }
+
+.os-selectable { user-select: text; }
+
+/* ----------------------------------------------------------- 2. Status bar */
+
+.os-status {
+  position: relative;
+  z-index: 40;
+  flex: 0 0 auto;
+  height: 20px;
+  padding: 0 7px;
+  padding-top: env(safe-area-inset-top);
+  box-sizing: content-box;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  background: linear-gradient(#2b2d31 0%, #0a0a0b 55%, #000 100%);
+  border-bottom: 1px solid #000;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.7);
+}
+.os-status--clear { background: linear-gradient(rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.3)); border-bottom-color: transparent; }
+.os-status__left { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.os-status__mid { font-size: 12.5px; font-weight: 700; }
+.os-status__right { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.os-status__carrier { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+
+/* --------------------------------------------------------- 3. Home screen */
+
+.os-home { position: absolute; inset: 0; display: flex; flex-direction: column; }
+
+.os-now {
+  margin: 10px 12px 0;
+  padding: 9px 12px 10px;
+  border-radius: 10px;
+  background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.06) 50%, rgba(0, 0, 0, 0.14) 51%), rgba(8, 24, 58, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 6px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+}
+.os-now__label { font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.72); letter-spacing: 0.04em; text-transform: uppercase; }
+.os-now__line { font-size: 15px; font-weight: 500; line-height: 1.25; margin-top: 2px; color: #fff; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4); }
+
+.os-grid {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-content: start;
+  row-gap: 16px;
+  padding: 20px 10px 0;
+}
+
+.os-icon {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.os-icon__art {
+  position: relative;
+  display: block;
+  line-height: 0;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
+  transition: scale 120ms ease-out, filter 120ms ease-out;
+}
+.os-icon:active .os-icon__art { scale: 0.95; filter: brightness(0.6) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5)); }
+.os-icon__label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+  white-space: nowrap;
+}
+
+/* The red notification badge: white rim, a lit glass bead. */
+.os-badge {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  z-index: 2;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 52%), linear-gradient(#ff5a4e, #c91a10);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4);
+}
+.os-badge--inline { position: static; border-width: 1.5px; height: 20px; min-width: 20px; font-size: 12px; padding: 0 5px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); }
+
+.os-dots { display: flex; justify-content: center; gap: 8px; padding: 8px 0 10px; }
+.os-dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, 0.35); box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.4); }
+.os-dots i.on { background: #fff; }
+
+/* The glass shelf: iOS's dock, a lit ledge under the four icons you use all night. */
+.os-dock {
+  position: relative;
+  margin: 0;
+  padding: 12px 10px 8px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+.os-dock::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.1) 45%, rgba(0, 0, 0, 0.32) 46%, rgba(0, 0, 0, 0.5));
+  border-top: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(10px) saturate(1.2);
+  z-index: -1;
+}
+
+/* ------------------------------------------------------------ 4. App frame */
+
+.os-app {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-os-navy);
+  z-index: 10;
+}
+.os-app--light { background: var(--color-os-mist); color: var(--color-os-ink); }
+.os-app--dark { background: #15181e; }
+
+.os-app-enter { animation: os-app-open 300ms cubic-bezier(0.2, 0.9, 0.25, 1) both; transform-origin: var(--os-origin, 50% 50%); }
+.os-app-exit { animation: os-app-close 240ms cubic-bezier(0.4, 0, 0.8, 0.4) both; transform-origin: var(--os-origin, 50% 50%); pointer-events: none; }
+@keyframes os-app-close {
+  from { opacity: 1; scale: 1; }
+  to { opacity: 0; scale: 0.2; }
+}
+
+/* Drill-down inside an app: push from the right, pop from the left. */
+.os-nav-push { animation: os-nav-push 300ms cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+.os-nav-pop { animation: os-nav-pop 300ms cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+@keyframes os-nav-push { from { translate: 45% 0; opacity: 0.3; } to { translate: 0 0; opacity: 1; } }
+@keyframes os-nav-pop { from { translate: -30% 0; opacity: 0.3; } to { translate: 0 0; opacity: 1; } }
+@keyframes os-app-open {
+  from { opacity: 0; scale: 0.2; }
+  to { opacity: 1; scale: 1; }
+}
+
+/* The navigation bar: a lit, glossy steel-blue with an engraved title. */
+.os-nav {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 5;
+  height: 44px;
+  display: grid;
+  grid-template-columns: minmax(70px, 1fr) auto minmax(70px, 1fr);
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.12) 50%, rgba(0, 0, 0, 0.06) 51%, rgba(0, 0, 0, 0)),
+    linear-gradient(#6f99d6, #2f5fae);
+  border-top: 1px solid rgba(255, 255, 255, 0.5);
+  border-bottom: 1px solid #1b3a74;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+.os-nav--dark {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.05) 50%, rgba(0, 0, 0, 0.1) 51%, rgba(0, 0, 0, 0)),
+    linear-gradient(#4a4e57, #1b1d22);
+  border-top-color: rgba(255, 255, 255, 0.3);
+  border-bottom-color: #000;
+}
+.os-nav--red {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.1) 50%, rgba(0, 0, 0, 0.08) 51%, rgba(0, 0, 0, 0)),
+    linear-gradient(#e2574c, #a3180f);
+  border-top-color: rgba(255, 255, 255, 0.45);
+  border-bottom-color: #5e0a05;
+}
+.os-nav__title {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: #fff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  text-wrap: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  text-align: center;
+}
+.os-nav__side { display: flex; align-items: center; min-width: 0; }
+.os-nav__side--right { justify-content: flex-end; }
+
+/* Bar buttons: a bordered pill; the back button keeps iOS's pointed end. */
+.os-barbtn {
+  position: relative;
+  height: 30px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5);
+  background: linear-gradient(rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.08) 50%, rgba(0, 0, 0, 0.1) 51%, rgba(0, 0, 0, 0)), #3a69b8;
+  border: 1px solid rgba(8, 28, 72, 0.85);
+  border-radius: 5px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 0 rgba(255, 255, 255, 0.22);
+  white-space: nowrap;
+  max-width: 130px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.os-barbtn__label { overflow: hidden; text-overflow: ellipsis; }
+.os-barbtn:active, .os-barhit:active .os-barbtn { filter: brightness(0.7); }
+
+/* A 44px-tall touch target around the 30px pill. */
+.os-barhit {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 4px 0 14px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.os-barbtn--back { padding-left: 6px; border-left-width: 0; border-radius: 0 5px 5px 0; }
+/* The arrow's point: a rotated square, clipped to its left half so its border
+   doesn't draw a line through the button. 21.2px is 30px / sqrt(2). */
+.os-barbtn__tip { position: absolute; left: -14px; top: -1px; width: 15px; height: 30px; overflow: hidden; pointer-events: none; }
+.os-barbtn__tip::before {
+  content: '';
+  position: absolute;
+  left: 4.4px;
+  top: 4.4px;
+  width: 21.2px;
+  height: 21.2px;
+  border-radius: 3px;
+  rotate: 45deg;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0.08) 50%, rgba(0, 0, 0, 0.1) 51%, rgba(0, 0, 0, 0)), #3a69b8;
+  border: 1px solid rgba(8, 28, 72, 0.85);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* ------------------------------------------------------------ 5. Home bar */
+
+/* The iPhone's one physical button, drawn under every screen. */
+.os-homebar {
+  flex: 0 0 auto;
+  z-index: 40;
+  height: 58px;
+  padding-bottom: env(safe-area-inset-bottom);
+  box-sizing: content-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(#17181c, #050506);
+  border-top: 1px solid #000;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.os-homebtn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 30%, #3a3d45, #0a0b0e 72%);
+  border: 1px solid #000;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.22), 0 0 0 2px #23252b, 0 1px 0 2px rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.os-homebtn::after {
+  content: '';
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: 4.5px;
+}
+.os-homebtn:active { background: radial-gradient(circle at 50% 45%, #1a1c20, #050608 72%); }
+
+/* ------------------------------------------------------- 6. Grouped lists */
+
+.os-pinstripe {
+  background-color: #cbd2d9;
+  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.34) 0 2px, rgba(60, 80, 110, 0.05) 2px 4px);
+}
+
+.os-section { margin: 20px 10px 0; }
+.os-section__head {
+  padding: 0 10px 7px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #4c566c;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.os-app:not(.os-app--light) .os-section__head { color: rgba(214, 226, 247, 0.9); text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.7); }
+.os-section__foot { padding: 7px 10px 0; font-size: 14px; color: #4c566c; line-height: 1.3; text-align: center; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7); }
+.os-app:not(.os-app--light) .os-section__foot { color: rgba(214, 226, 247, 0.8); text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.6); }
+
+.os-group {
+  background: #fff;
+  border: 1px solid #a7adb6;
+  border-radius: 10px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), 0 1px 0 rgba(255, 255, 255, 0.7);
+  overflow: hidden;
+  color: #0b0d12;
+}
+.os-group--dark { background: #1d2733; border-color: rgba(0, 0, 0, 0.7); box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.07); color: var(--color-os-foam); }
+
+.os-cell {
+  position: relative;
+  min-height: 46px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+}
+.os-cell + .os-cell { border-top: 1px solid #d0d3d9; }
+.os-group--dark .os-cell + .os-cell { border-top-color: rgba(255, 255, 255, 0.09); }
+button.os-cell { cursor: pointer; touch-action: manipulation; }
+button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6fe3); color: #fff; }
+.os-cell__main { flex: 1 1 auto; min-width: 0; }
+.os-cell__title { font-size: 17px; font-weight: 700; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.os-cell__sub { font-size: 13.5px; line-height: 1.25; color: #6d7380; margin-top: 1px; }
+.os-group--dark .os-cell__sub { color: #9eaec6; }
+.os-cell--on .os-cell__sub, button.os-cell:active .os-cell__sub { color: rgba(255, 255, 255, 0.88); }
+.os-cell__value { flex: 0 0 auto; font-size: 16px; color: #385487; }
+.os-group--dark .os-cell__value { color: #8fb4f0; }
+.os-cell--on .os-cell__value { color: #fff; }
+.os-cell__chev { flex: 0 0 auto; opacity: 0.45; display: flex; }
+.os-cell[disabled] { opacity: 0.4; cursor: default; }
+
+/* ----------------------------------------------------------- 7. Controls */
+
+.os-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.45);
+  background: linear-gradient(rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.1) 50%, rgba(0, 0, 0, 0.06) 51%, rgba(0, 0, 0, 0)), linear-gradient(#5e9cec, #1a5cc6);
+  border: 1px solid #0f3b8c;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45), 0 1px 3px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: filter 80ms ease-out, scale 80ms ease-out;
+}
+.os-btn:active { filter: brightness(0.78); scale: 0.99; }
+.os-btn[disabled] { opacity: 0.45; cursor: default; }
+.os-btn--green { background: linear-gradient(rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.1) 50%, rgba(0, 0, 0, 0.06) 51%, rgba(0, 0, 0, 0)), linear-gradient(#78e08a, #25a03c); border-color: #167a2a; }
+.os-btn--red { background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1) 50%, rgba(0, 0, 0, 0.06) 51%, rgba(0, 0, 0, 0)), linear-gradient(#f26a5f, #b81a10); border-color: #6e0c07; }
+.os-btn--grey { color: #2a2f3a; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7); background: linear-gradient(#ffffff, #d6dce5 50%, #c9d0da 51%, #dfe4eb); border-color: #8d95a3; box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0, 0, 0, 0.3); }
+.os-btn--dark { background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.04) 50%, rgba(0, 0, 0, 0.1) 51%, rgba(0, 0, 0, 0)), linear-gradient(#4a5160, #1a1e28); border-color: #000; }
+.os-btn--sm { min-height: 36px; width: auto; font-size: 15px; padding: 0 14px; border-radius: 8px; }
+
+/* The iOS 6 switch: a pill with ON / OFF written in it. */
+.os-switch {
+  position: relative;
+  width: 78px;
+  height: 29px;
+  flex: 0 0 auto;
+  border-radius: 15px;
+  border: 1px solid rgba(0, 0, 0, 0.5);
+  background: linear-gradient(#d3d7de, #f6f7f9);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  overflow: hidden;
+  transition: background 160ms ease-out;
+}
+.os-switch::before {
+  content: 'OFF';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 11px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #8a909b;
+  text-shadow: 0 1px 0 #fff;
+}
+.os-switch[aria-checked='true'] { background: linear-gradient(#1c63c9, #4f9bf0); }
+.os-switch[aria-checked='true']::before { content: 'ON'; justify-content: flex-start; padding: 0 0 0 12px; color: #fff; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.35); }
+.os-switch::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 29px;
+  height: 27px;
+  border-radius: 14px;
+  background: linear-gradient(#fdfdfd, #d3d7de);
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45), inset 0 1px 0 #fff;
+  transition: translate 160ms cubic-bezier(0.3, 1.2, 0.5, 1);
+}
+.os-switch[aria-checked='true']::after { translate: 48px 0; }
+
+.os-input {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #9aa1ad;
+  background: #fff;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+  color: var(--color-os-ink);
+  font-family: var(--font-pixel);
+  font-size: 18px;
+  outline: none;
+  user-select: text;
+}
+.os-input:focus { border-color: #3d8bf2; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2), 0 0 0 3px rgba(61, 139, 242, 0.4); }
+
+.os-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 10px 0;
+  padding: 0 11px;
+  height: 32px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid #a2a9b4;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.22);
+  color: #8a909b;
+}
+.os-search input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-family: var(--font-pixel); font-size: 16px; color: var(--color-os-ink); user-select: text; }
+
+/* ---------------------------------------------------------- 8. Messages */
+
+.os-thread { display: flex; flex-direction: column; gap: 6px; padding: 12px 10px; }
+.os-bubble-row { display: flex; flex-direction: column; align-items: flex-start; max-width: 100%; }
+.os-bubble-row--me { align-items: flex-end; }
+.os-bubble-name { font-size: 12px; font-weight: 700; color: #5b6475; margin: 4px 0 2px 12px; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6); }
+.os-bubble {
+  position: relative;
+  max-width: 78%;
+  padding: 8px 13px 9px;
+  border-radius: 18px;
+  font-size: 16px;
+  line-height: 1.27;
+  overflow-wrap: anywhere;
+  color: #0b0d12;
+  background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 52%), #e3e7ee;
+  border: 1px solid #a2a9b4;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  user-select: text;
+}
+.os-bubble--me {
+  color: #04290c;
+  background: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 52%), #7fe48e;
+  border-color: #3f9a4d;
+}
+.os-bubble--sys {
+  color: var(--color-os-foam);
+  background: linear-gradient(rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 52%), #1f3d78;
+  border-color: rgba(0, 0, 0, 0.5);
+}
+.os-bubble--alert { color: #fff; background: linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 52%), #c71c12; border-color: #6e0c07; }
+.os-event {
+  align-self: center;
+  max-width: 88%;
+  margin: 6px 0;
+  padding: 4px 11px;
+  border-radius: 10px;
+  background: rgba(60, 80, 110, 0.16);
+  font-size: 13px;
+  line-height: 1.3;
+  text-align: center;
+  color: #4c566c;
+}
+.os-receipt { align-self: flex-end; margin: -2px 6px 0 0; font-size: 11px; font-weight: 600; color: #6d7380; }
+.os-stamp-time { align-self: center; margin: 8px 0 2px; font-size: 12px; font-weight: 600; color: #6d7380; }
+
+.os-compose {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 7px 7px;
+  background: linear-gradient(#e9edf3, #bcc5d2);
+  border-top: 1px solid #8991a0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.os-compose input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 18px;
+  border: 1px solid #8991a0;
+  background: #fff;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.22);
+  font-family: var(--font-pixel);
+  font-size: 16px;
+  color: var(--color-os-ink);
+  outline: none;
+  user-select: text;
+}
+
+.os-pinned {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: linear-gradient(#fff8dc, #ffeaa5);
+  border-bottom: 1px solid rgba(120, 90, 0, 0.35);
+  color: var(--color-os-ink);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------- 9. Banner */
+
+.os-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: linear-gradient(rgba(70, 74, 82, 0.97), rgba(8, 9, 12, 0.97) 52%, rgba(0, 0, 0, 0.97));
+  border-bottom: 1px solid #000;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  color: #fff;
+  cursor: pointer;
+  animation: os-banner 3.4s steps(1, end) both, os-banner-slide 3.4s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+.os-banner__title { font-size: 14px; font-weight: 700; }
+.os-banner__text { font-size: 14px; line-height: 1.2; color: #dfe7f3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@keyframes os-banner { 0%, 100% { visibility: visible; } }
+@keyframes os-banner-slide {
+  0% { translate: 0 -110%; }
+  7%, 90% { translate: 0 0; }
+  100% { translate: 0 -110%; }
+}
+
+/* -------------------------------------------------------- 10. Lock screen */
+
+.os-lock { position: absolute; inset: 0; display: flex; flex-direction: column; z-index: 30; }
+.os-lock__clockbar {
+  padding: 12px 0 14px;
+  text-align: center;
+  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.3));
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+.os-lock__time { font-size: 72px; font-weight: 200; line-height: 1; letter-spacing: -0.03em; color: #fff; font-variant-numeric: tabular-nums; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5); }
+.os-lock__date { font-size: 17px; font-weight: 500; margin-top: 6px; color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6); }
+.os-lock__notes { flex: 1; padding: 14px 12px; display: flex; flex-direction: column; gap: 8px; overflow: auto; }
+.os-lock__slider {
+  margin: 0 0 14px;
+  padding: 14px 16px 16px;
+  background: linear-gradient(rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.65));
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.os-notif {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: linear-gradient(rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04) 50%, rgba(0, 0, 0, 0.12) 51%), rgba(12, 18, 32, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 2px 6px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(6px);
+}
+.os-notif__title { font-size: 14px; font-weight: 700; color: #fff; }
+.os-notif__text { font-size: 15px; line-height: 1.25; color: #e3eaf6; margin-top: 2px; }
+
+/* Slide to unlock: a well, a thumb, and the shimmering words. */
+.os-slide {
+  position: relative;
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(#12151c, #2a3142);
+  border: 1px solid #000;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.85), 0 1px 0 rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+  touch-action: none;
+}
+.os-slide__text {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-left: 62px;
+  font-size: 24px;
+  font-weight: 300;
+  letter-spacing: -0.01em;
+  color: transparent;
+  background: linear-gradient(90deg, #7a8296 0%, #7a8296 40%, #fff 50%, #7a8296 60%, #7a8296 100%) 0 0 / 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: os-shimmer 2.6s linear infinite;
+  pointer-events: none;
+}
+@keyframes os-shimmer { from { background-position: 100% 0; } to { background-position: -150% 0; } }
+.os-slide__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 64px;
+  height: 48px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  color: #5d6578;
+  background: linear-gradient(#fdfdfd, #c3cad6 50%, #b1b9c7 51%, #d3d9e2);
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 1px 0 #fff, 0 2px 3px rgba(0, 0, 0, 0.5);
+  cursor: grab;
+  touch-action: none;
+}
+.os-slide--red .os-slide__thumb { color: #fff; background: linear-gradient(#ff7a70, #c71c12 50%, #b01409 51%, #d6281c); }
+.os-slide--green .os-slide__thumb { color: #fff; background: linear-gradient(#80e892, #2ea844 50%, #229638 51%, #3cb852); }
+
+/* ------------------------------------------------------------- 11. Alarm */
+
+.os-alarm {
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+}
+.os-alarm--light { background-color: #cbd2d9; color: var(--color-os-ink); }
+.os-alarm__flash { position: absolute; inset: 0; background: var(--color-os-red); opacity: 0; animation: os-flash 1.4s ease-in-out infinite; pointer-events: none; }
+@keyframes os-flash { 0%, 60% { opacity: 0; } 75% { opacity: 0.32; } 90%, 100% { opacity: 0; } }
+.os-alarm__ring { animation: os-ring 0.16s ease-in-out infinite alternate; transform-origin: 50% 10%; }
+@keyframes os-ring { 0% { rotate: -12deg; } 100% { rotate: 12deg; } }
+
+/* ------------------------------------------------------------- 12. Reveal */
+
+.os-hold { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; }
+/* The old iOS activity indicator: a ring that fades behind its own head. */
+.os-spinner {
+  width: 24px;
+  height: 24px;
+  margin: 0 auto;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.95));
+  mask: radial-gradient(circle, transparent 6px, #000 7px, #000 11px, transparent 12px);
+  animation: os-spin 0.9s linear infinite;
+}
+@keyframes os-spin { to { rotate: 1turn; } }
+
+.os-pop { animation: os-pop 300ms cubic-bezier(0.34, 1.6, 0.5, 1) both; }
+@keyframes os-pop { from { opacity: 0; scale: 0.6; } to { opacity: 1; scale: 1; } }
+
+.os-rise { animation: os-rise 320ms cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+@keyframes os-rise { from { opacity: 0; translate: 0 12px; } to { opacity: 1; translate: 0 0; } }
+
+/* The board's bottom row corrupts before it says TAKEN. */
+.os-glitch { position: relative; animation: os-glitch 0.9s steps(9) both; }
+@keyframes os-glitch {
+  0% { clip-path: inset(0 0 0 0); translate: 0 0; filter: none; }
+  15% { clip-path: inset(20% 0 55% 0); translate: -4px 0; filter: hue-rotate(90deg); }
+  30% { clip-path: inset(60% 0 10% 0); translate: 5px 0; }
+  45% { clip-path: inset(5% 0 70% 0); translate: -3px 0; filter: invert(1); }
+  60% { clip-path: inset(40% 0 30% 0); translate: 3px 0; filter: none; }
+  75% { clip-path: inset(0 0 0 0); translate: -2px 0; }
+  100% { clip-path: inset(0 0 0 0); translate: 0 0; }
+}
+.os-rgb { text-shadow: 2px 0 0 rgba(255, 59, 48, 0.8), -2px 0 0 rgba(61, 139, 242, 0.8); }
+
+.os-taken {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 52%), var(--color-os-red);
+  padding: 3px 8px;
+  border-radius: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* Leaderboard rows */
+.os-board-row {
+  display: grid;
+  grid-template-columns: 34px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 6px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.os-board-rank { font-size: 14px; font-weight: 700; color: var(--color-os-chrome); font-variant-numeric: tabular-nums; }
+.os-board-score { font-size: 17px; font-weight: 800; color: var(--color-os-gold); font-variant-numeric: tabular-nums; }
+.os-board-row--me { background: rgba(61, 139, 242, 0.22); }
+.os-board-row--top .os-board-rank { color: var(--color-os-gold); }
+.os-board-row--dead { background: rgba(255, 59, 48, 0.2); }
+.os-board-row--dead .os-board-score { color: var(--color-os-red); }
+
+/* A stamped verdict (banish / finale). */
+.os-verdict {
+  display: inline-block;
+  padding: 10px 16px;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  border: 3px solid currentColor;
+  border-radius: 8px;
+  rotate: -3deg;
+  animation: os-stamp 420ms cubic-bezier(0.34, 1.6, 0.5, 1) both;
+}
+@keyframes os-stamp { from { opacity: 0; scale: 2.2; } to { opacity: 1; scale: 1; } }
+
+/* --------------------------------------------------------- 13. Documents */
+
+/* The Notes app's legal pad. */
+.os-legal {
+  background-color: #fff6b8;
+  background-image:
+    linear-gradient(90deg, transparent 30px, rgba(220, 60, 50, 0.45) 30px 32px, transparent 32px),
+    repeating-linear-gradient(transparent 0 25px, rgba(61, 139, 242, 0.35) 25px 26px);
+  color: #2a2208;
+}
+
+.os-paper {
+  background: #fbf8f0;
+  color: var(--color-os-ink);
+  border: 1px solid rgba(74, 91, 122, 0.35);
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.os-label { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; }
+.os-arcade { font-weight: 800; letter-spacing: -0.01em; }
+.os-pixel-shadow { text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55); }
+
+/* ---------------------------------------------------------- 14. Setup */
+
+.os-hello {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: #fff;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.55);
+}
+
+.os-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 50px;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 17px;
+  font-weight: 600;
+  background: #fff;
+  color: var(--color-os-ink);
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.os-choice + .os-choice { border-top: 1px solid #d0d3d9; }
+.os-choice:active, .os-choice[aria-pressed='true'] { background: linear-gradient(#4a9bf5, #0b6fe3); color: #fff; }
+
+/* ---------------------------------------------------------- 15. Motion off */
+
+@media (prefers-reduced-motion: reduce) {
+  .os-app-enter, .os-pop, .os-rise, .os-glitch, .os-verdict { animation: none !important; }
+  .os-banner { animation: os-banner 3.4s steps(1, end) both; }
+  .os-alarm__ring, .os-alarm__flash, .os-slide__text { animation: none !important; }
+  .os-slide__text { color: #c9d1dc; background: none; }
+  .os-spinner { animation-duration: 2s; }
+}
+
+
+/* =============================================================================
+   16. THE WORLD
+   Everything that makes the phone feel like it lives inside the game.
+   ========================================================================== */
+
+/* --- Light: the wallpaper follows the game's time of day. ------------------- */
+.os-wall { transition: filter 1.4s ease; }
+.os-root[data-time='night'] .os-wall { filter: brightness(0.5) saturate(0.75) hue-rotate(18deg); }
+.os-root[data-time='dawn'] .os-wall { filter: brightness(1.18) saturate(1.15); }
+.os-root[data-time='dusk'] .os-wall { filter: brightness(0.8) sepia(0.25) hue-rotate(-18deg) saturate(1.2); }
+.os-stars {
+  position: absolute;
+  inset: 0 0 45% 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, #fff 99%, transparent),
+    radial-gradient(1.5px 1.5px at 72% 9%, #fff 99%, transparent),
+    radial-gradient(1px 1px at 38% 30%, #cfe0ff 99%, transparent),
+    radial-gradient(1px 1px at 88% 36%, #cfe0ff 99%, transparent),
+    radial-gradient(1.5px 1.5px at 55% 22%, #fff 99%, transparent),
+    radial-gradient(1px 1px at 22% 44%, #cfe0ff 99%, transparent),
+    radial-gradient(1px 1px at 64% 48%, #fff 99%, transparent);
+}
+.os-root[data-time='night'] .os-stars { opacity: 0.85; animation: os-twinkle 3.2s ease-in-out infinite; }
+@keyframes os-twinkle { 50% { opacity: 0.55; } }
+
+/* The home screen assembles itself on unlock, the way iOS flew the icons in. */
+.os-home--enter .os-icon { animation: os-icon-in 420ms cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+.os-home--enter .os-grid .os-icon:nth-child(2) { animation-delay: 30ms; }
+.os-home--enter .os-grid .os-icon:nth-child(3) { animation-delay: 60ms; }
+.os-home--enter .os-grid .os-icon:nth-child(4) { animation-delay: 90ms; }
+.os-home--enter .os-grid .os-icon:nth-child(5) { animation-delay: 120ms; }
+.os-home--enter .os-dock .os-icon { animation-delay: 150ms; }
+.os-home--enter .os-now { animation: os-rise 340ms cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+@keyframes os-icon-in { from { opacity: 0; scale: 1.35; } to { opacity: 1; scale: 1; } }
+
+/* --- Chapter cards between phases. ------------------------------------------- */
+.os-chapter {
+  position: absolute;
+  inset: 0;
+  z-index: 65;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  background: rgba(2, 6, 18, 0.9);
+  pointer-events: none;
+  animation: os-chapter 2.4s ease both;
+}
+.os-chapter__title { font-size: 40px; font-weight: 200; line-height: 1.1; letter-spacing: -0.02em; color: #fff; text-shadow: 0 1px 10px rgba(0, 0, 0, 0.6); }
+.os-chapter__sub { margin-top: 14px; padding: 0 32px; font-size: 18px; font-weight: 500; color: var(--color-os-chrome); }
+.os-chapter__rule { width: 0; height: 2px; margin: 18px auto 0; background: currentColor; border-radius: 1px; animation: os-rule 900ms 200ms cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+@keyframes os-rule { to { width: 120px; } }
+@keyframes os-chapter {
+  0% { opacity: 0; }
+  12%, 72% { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+/* --- The Night app: every role's Night app wears the same dark skin, so a
+       glance across the table can't tell a Killer's screen from anyone's. ---- */
+.os-term {
+  position: relative;
+  min-height: 100%;
+  padding-bottom: 24px;
+  background-color: #111721;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 4px),
+    radial-gradient(120% 60% at 50% 0%, #1b2740 0%, #111721 70%);
+  color: #dbe6f7;
+}
+.os-term__head { padding: 16px 16px 4px; font-size: 13px; font-weight: 700; line-height: 1.6; color: #7fe48e; }
+.os-term__head b { color: #fff; font-weight: 700; }
+.os-cursor::after { content: ''; display: inline-block; width: 7px; height: 14px; margin-left: 4px; vertical-align: -2px; background: #7fe48e; border-radius: 1px; animation: os-blink 1s ease-in-out infinite; }
+@keyframes os-blink { 50% { opacity: 0.1; } }
+.os-term .os-section__head { color: #9fb6d9 !important; text-shadow: 0 -1px 0 #000 !important; }
+.os-term .os-section__foot { color: #8da2c3 !important; }
+.os-term .os-group { background: #1c2535; border-color: #000; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.06); color: #e6eefb; }
+.os-term .os-cell + .os-cell { border-top-color: rgba(255, 255, 255, 0.08); }
+.os-term .os-cell__sub { color: #8da2c3; }
+.os-term button.os-cell:active, .os-term .os-cell--on { background: linear-gradient(#5ee079, #1f9d38); color: #03210b; }
+.os-term .os-cell--on .os-cell__sub, .os-term button.os-cell:active .os-cell__sub { color: #0a3a17; }
+.os-term .os-search { background: #0c121b; border-color: #000; color: #8da2c3; }
+.os-term .os-search input { color: #e6eefb; }
+.os-term .os-btn:not(.os-btn--dark) { background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.08) 50%, rgba(0, 0, 0, 0.06) 51%, rgba(0, 0, 0, 0)), linear-gradient(#5ee079, #1f9d38); border-color: #11691f; color: #03210b; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3); }
+.os-term .os-bubble { background: #26344d; border-color: #000; color: #e6eefb; }
+.os-term .os-bubble--me { background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 52%), #6bdc7e; color: #03210b; }
+.os-term .os-bubble-name, .os-term .os-stamp-time { color: #7fe48e; text-shadow: none; }
+.os-term .os-compose { background: linear-gradient(#2b3548, #151c29); border-top-color: #000; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12); }
+.os-term .os-compose input { background: #0c121b; border-color: #000; color: #e6eefb; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6); }
+.os-term__log { padding: 18px 16px 0; font-size: 15px; font-weight: 500; line-height: 1.6; color: #9fb6d9; }
+
+/* --- Taken: the signal dies. ------------------------------------------------- */
+.os-static {
+  position: absolute;
+  inset: -20%;
+  background:
+    repeating-radial-gradient(circle at 17% 32%, #fff 0 1px, transparent 1px 3px),
+    repeating-radial-gradient(circle at 71% 63%, #999 0 1px, transparent 1px 4px);
+  opacity: 0.35;
+  animation: os-static 180ms steps(3) infinite;
+  pointer-events: none;
+}
+@keyframes os-static {
+  0% { translate: 0 0; }
+  33% { translate: -6% 4%; }
+  66% { translate: 5% -3%; }
+}
+.os-haunt { animation: os-haunt 9s steps(1) infinite; }
+/* Opacity and a nudge only: a filter here would override the ghost's greyscale (animations beat inline styles). */
+@keyframes os-haunt {
+  0%, 91%, 93%, 100% { opacity: 1; translate: 0 0; }
+  92% { opacity: 0.7; translate: 2px 0; }
+}
+
+/* --- Boot. -------------------------------------------------------------------- */
+.os-boot-bar { width: 160px; height: 8px; margin: 26px auto 0; border: 1px solid rgba(255, 255, 255, 0.45); border-radius: 4px; padding: 1px; overflow: hidden; background: rgba(0, 0, 0, 0.35); }
+.os-boot-bar i { display: block; height: 100%; width: 0; border-radius: 3px; background: linear-gradient(#fff, #b9cdee); animation: os-boot 2.1s ease-in-out forwards; }
+@keyframes os-boot { to { width: 100%; } }
+
+/* --- Refusal shake (Disagree, Snooze). Only on a tap, never on its own. ------- */
+.os-shake { animation: os-shake 360ms ease-in-out both; }
+@keyframes os-shake { 20% { translate: -6px 0; } 40% { translate: 6px 0; } 60% { translate: -4px 0; } 80% { translate: 4px 0; } }
+
+/* --- The keyboard is open: give the thread the room. ------------------------ */
+.os-root--kbd .os-homebar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .os-nav-push, .os-nav-pop, .os-app-exit, .os-home--enter .os-icon, .os-home--enter .os-now, .os-chapter__rule,
+  .os-static, .os-haunt, .os-shake, .os-cursor::after { animation: none !important; }
+  .os-chapter { animation: os-chapter 2.4s steps(1) both; }
+  .os-chapter__rule { width: 120px; }
+  .os-boot-bar i { animation-timing-function: steps(1); }
+  .os-root[data-time='night'] .os-stars { animation: none; }
+}
+
+/* =============================================================================
+   17. NEWS: the paper
+   A cream broadsheet inside the blue phone. Serif is the one place the phone
+   leaves Helvetica: iOS 6 itself used Georgia for reading surfaces.
+   ========================================================================== */
+
+.os-app--paper { background: #e8e3d2; color: var(--color-os-ink); }
+.os-news { --paper: #fbf8f0; --rule: rgba(14, 22, 38, 0.18); --serif: Georgia, 'Times New Roman', Times, serif; color: var(--color-os-ink); }
+
+.os-news__mast { text-align: center; padding: 14px 14px 10px; background: var(--paper); border-bottom: 3px double rgba(14, 22, 38, 0.5); }
+.os-news__kick { font-size: 10.5px; font-weight: 800; letter-spacing: 0.14em; color: var(--color-os-steel); }
+.os-news__title { font-family: var(--serif); font-size: 36px; font-weight: 800; line-height: 1.05; letter-spacing: -0.01em; margin-top: 4px; }
+.os-news__tag { font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--color-os-steel); margin-top: 3px; }
+.os-news__dek { font-family: var(--serif); font-size: 15px; line-height: 1.4; color: #3a4558; }
+.os-news__head { margin: 18px 14px 6px; font-size: 12px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-os-steel); border-bottom: 1px solid var(--rule); padding-bottom: 4px; }
+
+/* Sections: an iOS 6 bar-style segmented control, pinned under the nav bar. */
+.os-seg-wrap { position: sticky; top: 0; z-index: 5; padding: 8px 12px; background: linear-gradient(#efebdc, #e3decb); border-bottom: 1px solid var(--rule); }
+.os-seg { display: flex; border: 1px solid #1d2c48; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7); }
+.os-seg button {
+  position: relative; flex: 1 1 0; min-height: 32px; font-size: 13.5px; font-weight: 700; color: #fff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.45); cursor: pointer; touch-action: manipulation;
+  background: linear-gradient(#92aad2, #6482b4 50%, #50709f 51%, #6c8ab9);
+}
+.os-seg button + button { border-left: 1px solid #243a5e; }
+.os-seg button[aria-selected='true'] { background: linear-gradient(#1f3050, #2f4a78); box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.55); }
+.os-seg__dot { position: absolute; top: 5px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--color-os-red); border: 1px solid #fff; }
+
+/* The crawl. Moves only with the motion preference off; otherwise it stands still on its first line. */
+.os-ticker { display: flex; align-items: stretch; height: 30px; background: var(--color-os-navy); color: var(--color-os-foam); border-bottom: 1px solid #000; overflow: hidden; }
+.os-ticker__chip { flex: 0 0 auto; display: grid; place-items: center; padding: 0 9px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: #fff; background: linear-gradient(#ff6a5f, #c71c12); text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4); }
+.os-ticker__view { flex: 1 1 auto; min-width: 0; overflow: hidden; display: flex; align-items: center; }
+.os-ticker__track { display: flex; flex: 0 0 auto; white-space: nowrap; animation: os-ticker var(--os-ticker-s, 48s) linear infinite; will-change: transform; }
+.os-ticker__item { padding: 0 20px 0 0; font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; }
+.os-ticker__item::before { content: '\25CF'; font-size: 6px; margin-right: 20px; vertical-align: 2px; color: var(--color-os-sea); }
+@keyframes os-ticker { to { transform: translateX(-50%); } }
+
+/* "Just in": the room's newest event, as a breaking strip. */
+.os-justin { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 12px; text-align: left; background: #fff1ef; border-bottom: 1px solid rgba(199, 28, 18, 0.35); cursor: pointer; touch-action: manipulation; }
+.os-justin:active { background: #ffdcd8; }
+.os-justin__tag { flex: 0 0 auto; padding: 3px 6px; border-radius: 3px; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; color: #fff; background: var(--color-os-red); }
+.os-justin__head { flex: 1 1 auto; min-width: 0; font-family: var(--serif); font-size: 15px; font-weight: 700; line-height: 1.2; color: var(--color-os-ink); }
+.os-justin svg { flex: 0 0 auto; opacity: 0.5; }
+
+/* The lead story. */
+.os-lead { display: block; width: calc(100% - 24px); margin: 12px; text-align: left; background: var(--paper); border: 1px solid rgba(74, 91, 122, 0.35); border-radius: 4px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); overflow: hidden; cursor: pointer; touch-action: manipulation; }
+.os-lead:active { filter: brightness(0.95); }
+.os-lead__art { display: block; aspect-ratio: 16 / 9; background: var(--color-os-abyss); }
+.os-lead__text { display: block; padding: 12px 14px 14px; }
+.os-lead__head { display: block; margin-top: 4px; font-family: var(--serif); font-size: 25px; font-weight: 800; line-height: 1.13; letter-spacing: -0.01em; text-wrap: balance; }
+.os-lead__dek { display: block; margin-top: 8px; font-family: var(--serif); font-size: 15.5px; line-height: 1.38; color: #3a4558; }
+
+/* Story rows. */
+.os-storylist { margin: 0 12px; background: var(--paper); border: 1px solid rgba(74, 91, 122, 0.35); border-radius: 4px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2); overflow: hidden; }
+.os-story { display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 12px; text-align: left; cursor: pointer; touch-action: manipulation; }
+.os-story + .os-story { border-top: 1px solid var(--rule); }
+.os-story:active { background: rgba(14, 22, 38, 0.07); }
+.os-story__text { flex: 1 1 auto; min-width: 0; }
+.os-story__kicker { display: flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-os-ocean); }
+.os-story__kicker--live { color: #c71c12; }
+.os-story__dot { flex: 0 0 auto; width: 8px; height: 8px; border-radius: 50%; background: var(--color-os-sea); box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.9); }
+.os-story__headline { display: block; margin-top: 3px; font-family: var(--serif); font-size: 17px; font-weight: 700; line-height: 1.2; text-wrap: balance; }
+.os-story__meta { display: block; margin-top: 5px; font-size: 12px; color: #6d7380; }
+.os-story__thumb { flex: 0 0 auto; width: 76px; height: 76px; margin-top: 2px; border: 1px solid rgba(14, 22, 38, 0.35); border-radius: 3px; overflow: hidden; background: var(--color-os-abyss); }
+
+/* The article. */
+.os-article { background: var(--paper); min-height: 100%; padding-bottom: 20px; }
+.os-article__top { padding: 16px 16px 12px; }
+.os-article__head { margin-top: 6px; font-family: var(--serif); font-size: 27px; font-weight: 800; line-height: 1.12; letter-spacing: -0.015em; text-wrap: balance; }
+.os-article__dek { margin-top: 10px; font-family: var(--serif); font-size: 17px; font-style: italic; line-height: 1.38; color: #3a4558; }
+.os-article__by { display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--rule); font-size: 12.5px; color: #6d7380; }
+.os-article__by b { color: var(--color-os-ink); font-weight: 700; }
+.os-article__fig { margin: 0; }
+.os-article__art { aspect-ratio: 16 / 9; background: var(--color-os-abyss); }
+.os-article__fig figcaption { padding: 8px 16px 0; font-family: var(--serif); font-size: 12.5px; font-style: italic; line-height: 1.35; color: var(--color-os-steel); }
+.os-article__body { padding: 16px 16px 6px; }
+.os-article__body p { margin: 0 0 15px; font-family: var(--serif); font-size: 17.5px; line-height: 1.52; color: #1c2434; }
+.os-article--cap .os-article__body p:first-child::first-letter { float: left; margin: 3px 7px 0 0; font-size: 3.1em; line-height: 0.82; font-weight: 800; }
+
+@media (prefers-reduced-motion: reduce) {
+  .os-ticker__track { animation: none; }
+}
