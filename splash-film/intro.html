@@ -1,0 +1,483 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Intro · The first one taken</title>
+<style>body{margin:0;background:#242321;display:grid;place-items:center;min-height:100vh}canvas{max-width:100vw;max-height:100vh;object-fit:contain}</style>
+<canvas id="c"></canvas>
+<script src="core.js"></script>
+<script src="studio.js"></script>
+<script src="cels.js"></script>
+<script>
+'use strict';
+/* ------------------------------------------------------------------------
+Film brief
+  Subject: the cold open after the title film. A guest drawn the way the
+    contact-photo creator draws people walks a city street at night, eyes on
+    the phone. The morning game is on it. She gets stressed, taps faster,
+    sees she has the lowest score, and is taken: she collapses, the phone
+    skids away, the camera goes into its screen, "Who did this?", and the
+    light of the screen fills the frame with white. The game starts there.
+  Tone: dark and grown-up, never graphic. No method, no blood on her, no
+    self-harm: she is taken because her score was the lowest, which is the
+    game's own premise. An adult.
+  Duration 13.1 s; 9:19.5 portrait, 720 px wide, same frame as the title
+    film (keep the action in y 300..2040 for 9:16 phones).
+  Look: the creator's ink-and-watercolour fashion sketch (os/art/portraitArt.js):
+    paper skin, pencil-grey hair, tapered ink contours, granulating washes
+    sitting a hair off the line, form hatching on the shadow side. The city
+    is watercolour washes on the same paper.
+  Cast: one creator preset, picked once: woman (fem cut), bob, glasses,
+    yellow top, denim trousers, white sneakers. Side-on, facing right.
+    Drawings: an 8-drawing walk (two steps), a stand, a stressed tap pair,
+    six collapse keys (freeze, jolt, buckle, kneel, tip, down) and a settle.
+  Exposure: the walk and the street are a twos scene (camera included), so a
+    planted foot never slides. Everything else draws on twos and moves on ones.
+  Beat sheet
+    0.0  walk     4.2  an iris opens on a rainy street; she walks, lit by her
+                        phone; it buzzes at 2.2; she slows and stops by 4.2
+    4.2  stress   2.2  closer: thumbs hammer the screen, sweat, a scribble of
+                        dread over her head
+    6.4  screen   1.9  her phone: the run, a crash, the board, YOU at the
+                        bottom, LOWEST; the screen glitches at 1.6
+    8.3  taken    2.6  wide: she freezes, clutches her chest, buckles, falls;
+                        the phone skids away, still lit; the lamp flickers
+   10.9  phone    2.2  the camera goes into the phone: "Who did this?"; its
+                        light fills the frame with white
+  Closing beat: pure white (the phone fades to the role text).
+  Sources: none; everything is drawn here.
+------------------------------------------------------------------------- */
+
+// ---------------------------------------------------------------- palette (the creator's)
+const INK = '#2a2622', SKIN = '#f6f1e6', PAPER = '#ffffff', HAIR = '#bdb7ae';
+const TOP = '#f0b043', DENIM = '#4d6488', SHOE = '#fbfaf6', STRIPE = '#3f62a3';
+const SKY = '#1b2340', SKY2 = '#2c3560', FAR = ['#2b3352', '#323b5e', '#262d47'], NEAR = ['#3b4a5e', '#5a3f4f', '#2f4a4f', '#4a4560'];
+const WARM = '#ffcf6b', CYAN = '#7fe7ff', NEON = '#ff4f8b', RED = '#c8102e', ROAD = '#262a35', WALK = '#454b5a';
+
+// ---------------------------------------------------------------- marks
+const tw = i => boil(i, 1);   // a new drawing every 12 Hz frame
+const rot2 = (p, a) => [p[0] * Math.cos(a) - p[1] * Math.sin(a), p[0] * Math.sin(a) + p[1] * Math.cos(a)];
+const put = (pts, x, y, a = 0, s = 1) => pts.map(p => { const q = rot2([p[0] * s, p[1] * s], a); return [x + q[0], y + q[1]]; });
+const add = (a, b) => [a[0] + b[0], a[1] + b[1]], sub = (a, b) => [a[0] - b[0], a[1] - b[1]], mul = (a, k) => [a[0] * k, a[1] * k];
+const norm = v => { const l = Math.hypot(v[0], v[1]) || 1; return [v[0] / l, v[1] / l]; };
+function line(c, pts, w, seed, close = false, col = INK) {
+  c.save(); c.strokeStyle = col; c.lineWidth = w; c.lineJoin = 'round'; c.lineCap = 'round';
+  wob(c, pts, 1.1, seed, close, { pressure: .6 }); c.restore();
+}
+// Opaque under the wash, so a figure reads over a night street: paper first, colour on top.
+function body(c, pts, col, seed, o = {}) {
+  const { w = 2.4, hatchSide = null, al = .9 } = o, path = curvePath(pts, true);
+  gouache(c, path, SKIN, 1);
+  if (col) wash(c, path, col, { al, off: 1.2, seed, rim: true });
+  if (hatchSide) { const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), box = [Math.min(...xs), Math.min(...ys), Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)];
+    c.save(); c.clip(path); c.beginPath(); c.rect(hatchSide[0], hatchSide[1], hatchSide[2], hatchSide[3]); c.clip(); hatch(c, path, box, { angle: .9, gap: 3.6, len: 9, color: INK, alpha: .35, width: .8, seed: seed + 3 }); c.restore(); }
+  line(c, pts, w, seed + 1, true);
+}
+// A limb as one continuous outline along a bent path: the contour is redrawn at the bend.
+function tube(pts, widths) {
+  const q = smoothPts(pts, false, 3, Math.PI), L = [0];
+  for (let k = 1; k < q.length; k++) L.push(L[k - 1] + Math.hypot(q[k][0] - q[k - 1][0], q[k][1] - q[k - 1][1]));
+  const tot = L[L.length - 1] || 1, wAt = u => { const f = u * (widths.length - 1), k = Math.min(widths.length - 2, Math.floor(f)); return lerp(widths[k], widths[k + 1], f - k); };
+  const left = [], right = [];
+  q.forEach((p, k) => { const a = q[Math.max(0, k - 1)], b = q[Math.min(q.length - 1, k + 1)], t = norm(sub(b, a)), n = [-t[1], t[0]], w = wAt(L[k] / tot); left.push(add(p, mul(n, w))); right.push(sub(p, mul(n, w))); });
+  return [...left, ...right.reverse()];
+}
+
+// ---------------------------------------------------------------- the figure
+// Figure units: about 290 tall, facing right, origin on the ground under the hip, y down.
+const BONE = { thigh: 70, shin: 68, upper: 54, fore: 50 };   // a standing leg (hip -150, ankle -10) is straight
+function shoe(c, ankle, ang, seed) {
+  const pts = put([[-15, -4], [-12, -14], [4, -15], [14, -8], [30, -4], [33, 6], [-16, 6]], ankle[0], ankle[1] + 4, ang);
+  body(c, pts, null, seed, { w: 2 });
+  gouache(c, curvePath(put([[-16, 3], [33, 3], [33, 7], [-16, 7]], ankle[0], ankle[1] + 4, ang), true), '#d9d4ca', 1);
+  line(c, put([[-3, -9], [12, -3]], ankle[0], ankle[1] + 4, ang), 3, seed + 5, false, STRIPE);
+  line(c, put([[-16, 6], [33, 6]], ankle[0], ankle[1] + 4, ang), 1.6, seed + 6);
+}
+function leg(c, hip, ankle, footAng, bend, seed, far) {
+  const s = solveLimb(hip, ankle, BONE.thigh, BONE.shin, bend);
+  if (far) c.globalAlpha = 1;
+  body(c, tube([hip, s.joint, s.end], [11, 8.5, 7]), far ? shade(DENIM, .25) : DENIM, seed, { hatchSide: far ? null : [s.end[0] - 30, hip[1], 18, 200] });
+  shoe(c, s.end, footAng, seed + 10);
+  return s;
+}
+function arm(c, shoulder, hand, seed, far, sleeve = true) {
+  const s = solveLimb(shoulder, hand, BONE.upper, BONE.fore, 1);
+  body(c, tube([shoulder, s.joint, s.end], [6.5, 5.2, 4.2]), null, seed, { w: 2 });
+  if (sleeve) { const mid = add(shoulder, mul(sub(s.joint, shoulder), .5)); body(c, tube([add(shoulder, [0, -2]), mid], [11, 9]), far ? shade(TOP, .2) : TOP, seed + 4); }
+  const d = norm(sub(s.end, s.joint)), hp = add(s.end, mul(d, 6));
+  body(c, put(blob(0, 0, 8, 6, seed + 7, { amp: .08 }), hp[0], hp[1], Math.atan2(d[1], d[0])), null, seed + 8, { w: 1.8 });
+  return s;
+}
+function torso(c, H, N, seed) {
+  const u = norm(sub(N, H)), n = [-u[1], u[0]], L = Math.hypot(N[0] - H[0], N[1] - H[1]);
+  const at = (a, x) => add(add(H, mul(u, a * L / 86)), mul(n, x));
+  const shirt = [at(-12, -21), at(10, -19), at(42, -21), at(74, -18), at(84, -8), at(86, 4), at(80, 12), at(62, 22), at(30, 19), at(4, 21), at(-12, 20)];
+  body(c, shirt, TOP, seed, { hatchSide: null });
+  // the shadow side: hatching along the back
+  c.save(); c.clip(curvePath(shirt, true)); const back = [at(-14, -24), at(86, -24), at(86, -8), at(-14, -8)]; c.clip(curvePath(back, true)); hatch(c, curvePath(shirt, true), [H[0] - 100, N[1] - 40, 200, 200], { angle: 1.1, gap: 3.4, len: 10, color: INK, alpha: .3, width: .8, seed: seed + 9 }); c.restore();
+  line(c, [at(84, 4), at(76, 10), at(80, 13)], 1.6, seed + 4);
+  return { u, n, at };
+}
+// The head, 3/4 to the right. ang tips it (positive looks down).
+function head(c, C, ang, face, seed) {
+  const P = pts => put(pts, C[0], C[1], ang);
+  // hair behind
+  body(c, P([[10, -18], [-2, -25], [-16, -20], [-23, -6], [-22, 10], [-20, 18], [-8, 19], [-6, 4], [4, -10], [14, -13]]), HAIR, seed, { w: 2 });
+  const skull = P(ellPts(2, 0, 17, 21, 0, 30).map(([x, y]) => [x + (y > 0 && x > 0 ? -x * .12 * y / 21 : 0), y]));
+  body(c, skull, null, seed + 1, { w: 2.2 });
+  body(c, P([[-9, -2], [-13, -1], [-13, 7], [-9, 8]]), null, seed + 2, { w: 1.6 });
+  // fringe and hair over the top
+  body(c, P([[18, -14], [10, -24], [-6, -26], [-20, -18], [-16, -10], [-4, -14], [8, -8], [16, -6]]), HAIR, seed + 3, { w: 2 });
+  c.save(); c.clip(curvePath(P([[18, -14], [10, -24], [-6, -26], [-20, -18], [-23, -6], [-22, 10], [-20, 18], [-8, 19], [-6, 4], [4, -10], [16, -6]]), true));
+  hatch(c, curvePath(P([[18, -14], [10, -24], [-6, -26], [-20, -18], [-23, 18], [16, -6]]), true), [C[0] - 30, C[1] - 30, 60, 60], { angle: 1.9 + ang, gap: 2.6, len: 8, color: '#6b665f', alpha: .55, width: .8, seed: seed + 4 }); c.restore();
+  // cheek
+  c.save(); c.globalCompositeOperation = 'multiply'; const ch = rot2([6, 9], ang); const g = c.createRadialGradient(C[0] + ch[0], C[1] + ch[1], 0, C[0] + ch[0], C[1] + ch[1], 6); g.addColorStop(0, 'rgba(232,128,120,.4)'); g.addColorStop(1, 'rgba(232,128,120,0)'); c.fillStyle = g; c.fillRect(C[0] + ch[0] - 7, C[1] + ch[1] - 7, 14, 14); c.restore();
+  // eyes
+  const eyes = [[6, 0, .8], [13, -1, 1]];
+  eyes.forEach(([x, y, s], k) => {
+    const e = rot2([x, y], ang), ex = C[0] + e[0], ey = C[1] + e[1];
+    if (face === 'closed') line(c, P([[x - 3, y + .5], [x, y + 1.6], [x + 3, y + .5]]), 1.2, seed + 10 + k);
+    else if (face === 'pain') line(c, P([[x - 3, y - 1.5], [x + 1, y], [x - 3, y + 1.5]]), 1.3, seed + 10 + k);
+    else if (face === 'shock') { c.save(); c.fillStyle = SKIN; c.strokeStyle = INK; c.lineWidth = 1.1; c.beginPath(); c.ellipse(ex, ey, 2.8 * s, 3.2 * s, ang, 0, TAU); c.fill(); c.stroke(); c.fillStyle = INK; c.beginPath(); c.arc(ex + 1, ey, .9, 0, TAU); c.fill(); c.restore(); }
+    else { c.save(); c.fillStyle = INK; c.beginPath(); c.ellipse(ex, ey, 1.3 * s, 1.7 * s, ang, 0, TAU); c.fill(); c.restore(); }
+    // brows
+    const bt = face === 'stress' || face === 'pain' ? [[x - 3, y - 6], [x + 2.5, y - 4.2]] : face === 'shock' ? [[x - 3, y - 7.5], [x + 2.5, y - 8]] : [[x - 3, y - 5.5], [x + 2.5, y - 6]];
+    line(c, P(bt), 1.1, seed + 14 + k);
+  });
+  // glasses
+  c.save(); c.strokeStyle = INK; c.lineWidth = 1.5; [[6, 0, 4.6], [13.5, -1, 5]].forEach(([x, y, r]) => c.stroke(curvePath(P([[x - r, y - 3.4], [x + r, y - 3.4], [x + r, y + 3.6], [x - r, y + 3.6]]), true, 1.2))); line(c, P([[1.4, -2.5], [-10, -1]]), 1.4, seed + 18); c.restore();
+  // nose and mouth
+  line(c, P([[17, 1], [20.5, 6.5], [17.5, 8]]), 1.1, seed + 19);
+  const mouth = { calm: [[10, 13.5], [15, 13.2]], stress: [[9, 14], [11, 13], [13, 14.2], [15, 13.2]], shock: null, pain: [[9, 13], [12, 15.5], [15.5, 13]], closed: [[11, 14], [14, 14.2]] }[face];
+  if (mouth) line(c, P(mouth), 1.2, seed + 20);
+  else { c.save(); c.fillStyle = INK; const m = rot2([12.5, 14.5], ang); c.beginPath(); c.ellipse(C[0] + m[0], C[1] + m[1], 2.2, 3, ang, 0, TAU); c.fill(); c.restore(); }
+}
+function phoneInHand(c, p, ang, lit, seed) {
+  const pts = put([[-4, -21], [4, -21], [4, 21], [-4, 21]], p[0], p[1], ang);
+  c.save(); c.fillStyle = '#16171c'; c.fill(curvePath(pts, true, .5)); c.restore(); line(c, pts, 1.6, seed, true);
+  if (lit > 0) { const f = rot2([-5, 0], ang); glow(c, p[0] + f[0] - 10, p[1] + f[1] - 8, 60, CYAN, .7 * lit); }
+}
+// A whole pose. Every field is a joint or a choice the drawing makes.
+function figure(c, P, seed) {
+  const { H, N, headAng = .2, nA, fA, nFoot = 0, fFoot = 0, nHand, fHand, face = 'calm', phone = null, bendN = -1, bendF = -1, lit = 0 } = P;
+  const u = norm(sub(N, H)), n = [-u[1], u[0]];
+  const shoulderF = add(add(N, mul(u, -10)), mul(n, -9)), shoulderN = add(add(N, mul(u, -10)), mul(n, -1));
+  arm(c, shoulderF, fHand, seed + 100, true);
+  leg(c, add(H, mul(n, -3)), fA, fFoot, bendF, seed + 200, true);
+  leg(c, add(H, mul(n, 4)), nA, nFoot, bendN, seed + 300, false);
+  torso(c, H, N, seed + 400);
+  // neck, then the head
+  const hc = add(add(N, mul(u, 26)), mul(n, 5));
+  body(c, tube([add(N, mul(u, -4)), add(N, mul(u, 10))], [6.5, 6]), null, seed + 450, { w: 1.6 });
+  head(c, hc, headAng + Math.atan2(u[0], -u[1]), face, seed + 500);
+  if (phone) phoneInHand(c, phone.p, phone.ang, lit, seed + 600);
+  arm(c, shoulderN, nHand, seed + 700, false);
+}
+
+// ---------------------------------------------------------------- the walk (8 drawings, two steps)
+const SL = 64;   // a step, in figure units
+function walkPose(k, stress = 0) {
+  const ph = k / 8, foot = (q) => {
+    const u = (ph + q) % 1;
+    if (u < .5) return { p: [SL / 2 - SL * (u / .5), -10], a: 0 };                 // planted, sliding back under the hip
+    const v = (u - .5) / .5;
+    return { p: [-SL / 2 + SL * easeInOutSine(v), -10 - 20 * Math.sin(Math.PI * v)], a: Math.sin(Math.PI * v) * -.35 + (v < .3 ? .25 : 0) };
+  };
+  const nF = foot(0), fF = foot(.5), bob = 4 * Math.cos(ph * TAU * 2);
+  const H = [0, -150 + bob], N = [8, -236 + bob], j = stress ? (hash(k, 3) - .5) * 3 : 0;
+  return { H, N, headAng: .32, nA: nF.p, fA: fF.p, nFoot: nF.a, fFoot: fF.a, nHand: [34 + j, -198 + bob], fHand: [28, -202 + bob], face: stress ? 'stress' : 'calm', phone: { p: [40, -207 + bob], ang: -.45 }, lit: 1 };
+}
+const STAND = { H: [0, -152], N: [8, -237], headAng: .34, nA: [10, -10], fA: [-8, -10], nHand: [34, -199], fHand: [28, -203], face: 'stress', phone: { p: [40, -208], ang: -.45 }, lit: 1 };
+
+// ---------------------------------------------------------------- the collapse keys
+const FALL = {
+  freeze: { ...STAND, face: 'shock', headAng: .1, phone: { p: [42, -204], ang: -.25 } },
+  jolt: { H: [-4, -150], N: [-12, -235], headAng: -.35, nA: [10, -10], fA: [-8, -10], nHand: [6, -210], fHand: [36, -180], face: 'pain', phone: { p: [42, -186], ang: .15 }, lit: .8 },
+  buckle: { H: [6, -116], N: [30, -198], headAng: .45, nA: [12, -10], fA: [-12, -10], nHand: [10, -192], fHand: [52, -128], face: 'pain' },
+  kneel: { H: [-8, -84], N: [40, -152], headAng: .7, nA: [-74, -8], fA: [-66, -10], nFoot: .2, fFoot: .2, nHand: [52, -76], fHand: [38, -84], face: 'closed' },
+  tip: { H: [8, -62], N: [92, -112], headAng: .8, nA: [-62, -8], fA: [-56, -10], nFoot: .3, fFoot: .3, nHand: [122, -34], fHand: [104, -42], face: 'closed' },
+  down: { H: [40, -18], N: [128, -24], headAng: 1.25, nA: [-104, -10], fA: [-96, -14], nFoot: 1.2, fFoot: 1.1, nHand: [176, -10], fHand: [124, -8], face: 'closed', bendN: 1, bendF: 1 },
+  settle: { H: [40, -16], N: [128, -20], headAng: 1.3, nA: [-104, -10], fA: [-96, -12], nFoot: 1.2, fFoot: 1.1, nHand: [180, -9], fHand: [124, -7], face: 'closed', bendN: 1, bendF: 1 },
+};
+const FALL_SHEET = drawingTrack([{ at: 0, id: 'freeze' }, { at: .5, id: 'jolt' }, { at: .75, id: 'buckle' }, { at: 1.0, id: 'kneel' }, { at: 1.25, id: 'tip' }, { at: 1.42, id: 'down' }, { at: 1.54, id: 'settle' }]);
+
+// ---------------------------------------------------------------- the city (cached once)
+const GROUND = 1780;
+let FARL = null, NEARL = null;
+const STREET_W = 4200;
+function strip(w, draw) { const cv = document.createElement('canvas'); cv.width = Math.round(w * S); cv.height = Math.round(H * S); const g = cv.getContext('2d'); g.setTransform(S, 0, 0, S, 0, 0); draw(g); return cv; }
+function buildCity() {
+  FARL = strip(STREET_W * .4 + W + 200, g => {
+    const r = rng(11);
+    for (let x = -40; x < STREET_W * .4 + W + 200;) {
+      const w = 110 + r() * 160, h = 500 + r() * 700, top = 1520 - h, pts = warp(rectPts(x, top, w, h + 300), 20 + x, 3);
+      wash(g, curvePath(pts, true, .4), FAR[Math.floor(r() * 3)], { al: .95, off: 1, seed: 30 + x, blend: 'source-over' });
+      line(g, pts, 2, 40 + x, true, '#11152a');
+      for (let wy = top + 30; wy < 1480; wy += 46) for (let wx = x + 16; wx < x + w - 20; wx += 30) if (r() < .32) { g.fillStyle = r() < .8 ? WARM : '#b9e3ff'; g.globalAlpha = .55 + r() * .4; g.fillRect(wx, wy, 13, 20); g.globalAlpha = 1; }
+      if (r() < .25) { g.fillStyle = '#11152a'; g.fillRect(x + w * .4, top - 60, 4, 60); }
+      x += w + 6 + r() * 30;
+    }
+  });
+  NEARL = strip(STREET_W + W, g => {
+    const r = rng(21);
+    for (let x = -60; x < STREET_W + W;) {
+      const w = 300 + r() * 240, top = 520 + r() * 260, col = NEAR[Math.floor(r() * NEAR.length)], pts = warp(rectPts(x, top, w, GROUND - top + 10), 60 + x, 3);
+      wash(g, curvePath(pts, true, .4), col, { al: 1, off: 1, seed: 70 + x, blend: 'source-over' });
+      line(g, pts, 3, 80 + x, true, '#141826');
+      // upper windows
+      for (let wy = top + 50; wy < GROUND - 420; wy += 120) for (let wx = x + 30; wx < x + w - 70; wx += 90) {
+        const lit = r() < .45, wp = warp(rectPts(wx, wy, 52, 72), wx + wy, 1.5);
+        wash(g, curvePath(wp, true, .4), lit ? WARM : '#1d2236', { al: lit ? .85 : 1, off: 1, seed: wx + wy, blend: 'source-over' }); line(g, wp, 1.8, wx * 3 + wy, true, '#141826');
+      }
+      // the shopfront: a lit window, an awning, a door
+      const sw = w - 140, sx = x + 30, sy = GROUND - 330;
+      const win = warp(rectPts(sx, sy, sw, 250), sx, 2);
+      wash(g, curvePath(win, true, .4), r() < .5 ? '#ffd98a' : '#bfe8ff', { al: .8, off: 1, seed: sx, blend: 'source-over' }); line(g, win, 2.4, sx + 1, true, '#141826');
+      for (let q = 0; q < 3; q++) { g.save(); g.globalAlpha = .4; line(g, [[sx + 20 + q * sw / 3, sy + 230], [sx + 30 + q * sw / 3, sy + 150]], 2, sx + q, false, '#141826'); g.restore(); }
+      const aw = [[sx - 14, sy - 70], [sx + sw + 14, sy - 70], [sx + sw + 30, sy - 10], [sx - 30, sy - 10]], ac = [NEON, '#3ba07a', '#e0784f', '#5f86a8'][Math.floor(r() * 4)];
+      wash(g, curvePath(aw, true, .4), ac, { al: .95, off: 1, seed: sx + 5, blend: 'source-over' }); line(g, aw, 2.4, sx + 6, true, '#141826');
+      for (let q = 0; q < 6; q++) line(g, [[sx - 14 + q * (sw + 28) / 6 + 20, sy - 70], [sx - 30 + q * (sw + 60) / 6 + 26, sy - 10]], 2, sx + 30 + q, false, '#141826');
+      const door = warp(rectPts(x + w - 98, GROUND - 260, 74, 260), x, 1.5); wash(g, curvePath(door, true, .4), '#1d2236', { al: 1, off: 1, seed: x + 7, blend: 'source-over' }); line(g, door, 2.4, x + 8, true, '#141826');
+      if (r() < .55) { g.save(); g.font = '700 46px "Segoe Print", cursive'; g.fillStyle = r() < .5 ? NEON : CYAN; g.shadowColor = g.fillStyle; g.shadowBlur = 18; g.fillText(['open', 'bar', '24h', 'café', 'noodles', 'late'][Math.floor(r() * 6)], sx + 20, sy - 100); g.restore(); }
+      x += w + 4;
+    }
+    // pavement and road
+    const pave = warp([[-60, GROUND - 4], [STREET_W + W, GROUND - 4], [STREET_W + W, GROUND + 120], [-60, GROUND + 120]], 5, 2);
+    wash(g, curvePath(pave, true, .4), WALK, { al: 1, off: 1, seed: 9, blend: 'source-over' }); line(g, [[-60, GROUND - 4], [STREET_W + W, GROUND - 4]], 3, 10, false, '#141826');
+    for (let x = 0; x < STREET_W + W; x += 160) line(g, [[x, GROUND + 4], [x - 30, GROUND + 116]], 1.6, 11 + x, false, '#2d3240');
+    const road = [[-60, GROUND + 120], [STREET_W + W, GROUND + 120], [STREET_W + W, H + 40], [-60, H + 40]];
+    wash(g, curvePath(road, true, .2), ROAD, { al: 1, off: 1, seed: 12, blend: 'source-over' }); line(g, [[-60, GROUND + 124], [STREET_W + W, GROUND + 124]], 4, 13, false, '#11141d');
+    for (let x = 0; x < STREET_W + W; x += 260) { g.fillStyle = '#d8d2c4'; g.globalAlpha = .55; g.fillRect(x, GROUND + 330, 130, 12); g.globalAlpha = 1; }
+  });
+}
+function sky(c) { resetT(c); const g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#11152a'); g.addColorStop(.6, SKY2); g.addColorStop(1, SKY); c.fillStyle = g; c.fillRect(0, 0, W, H); }
+const LAMPS = Array.from({ length: 10 }, (_, k) => 260 + k * 560);
+function lamp(c, x, on = 1, seed = 1) {
+  line(c, [[x, GROUND + 20], [x, GROUND - 860], [x + 10, GROUND - 900], [x + 70, GROUND - 900]], 9, seed, false, '#141826');
+  const head = [[x + 50, GROUND - 905], [x + 110, GROUND - 905], [x + 100, GROUND - 880], [x + 60, GROUND - 880]];
+  c.save(); c.fillStyle = '#141826'; c.fill(curvePath(head, true, .4)); c.restore();
+  if (on > 0) {
+    c.save(); c.globalCompositeOperation = 'screen'; const g = c.createLinearGradient(0, GROUND - 880, 0, GROUND); g.addColorStop(0, alpha('#ffd98a', .38 * on)); g.addColorStop(1, alpha('#ffd98a', 0));
+    c.fillStyle = g; c.beginPath(); c.moveTo(x + 62, GROUND - 880); c.lineTo(x + 98, GROUND - 880); c.lineTo(x + 280, GROUND + 60); c.lineTo(x - 120, GROUND + 60); c.closePath(); c.fill(); c.restore();
+    glow(c, x + 80, GROUND - 878, 120, '#ffd98a', .9 * on);
+  }
+}
+function rain(c, i, k = 1, x0 = 0) {
+  const r = rng(900 + tw(i)); c.save(); c.strokeStyle = '#b8c8ea'; c.lineWidth = 2; c.globalAlpha = .38 * k; c.lineCap = 'round'; c.beginPath();
+  for (let q = 0; q < 140; q++) { const x = r() * (W + 200) - 100, y = r() * H, l = 30 + r() * 40; c.moveTo(x, y); c.lineTo(x - l * .25, y + l); }
+  c.stroke(); c.restore();
+}
+// The iris the title film closed with opens again here.
+function irisOpen(c, tau, i) {
+  const k = sm(0, .55, tau, easeOutQuint); if (k >= 1) return;
+  const R = lerp(0, 1600, k), cx = CX, cy = 860, ring = put(blob(0, 0, Math.max(1, R), Math.max(1, R), 950, { amp: .03, n: 72 }), cx, cy);
+  resetT(c); c.save(); c.fillStyle = PAPER; const hole = new Path2D(); hole.rect(0, 0, W, H); hole.addPath(curvePath(ring.slice().reverse(), true)); c.fill(hole, 'evenodd'); c.restore();
+  if (R > 4) { line(c, ring, 10, 951 + tw(i), true); line(c, put(blob(0, 0, R + 16, R + 16, 952, { amp: .03, n: 72 }), cx, cy), 8, 953 + tw(i), true, RED); }
+}
+function street(c, camX, zoom = 1, cy = 1400) {
+  // far skyline at .4 parallax, the street at 1, both around the camera
+  resetT(c); c.translate(CX, cy); c.scale(zoom, zoom); c.translate(-CX, -cy);
+  c.drawImage(FARL, -camX * .4 - 100, 0, FARL.width / S, H);
+  c.drawImage(NEARL, -camX + 60, 0, NEARL.width / S, H);
+}
+function vibes(c, p, i, k = 1) {
+  c.save(); c.strokeStyle = CYAN; c.lineWidth = 3; c.lineCap = 'round'; c.globalAlpha = k;
+  for (const s of [-1, 1]) for (let q = 0; q < 2; q++) wob(c, [[p[0] + s * (36 + q * 14), p[1] - 18], [p[0] + s * (42 + q * 14), p[1]], [p[0] + s * (36 + q * 14), p[1] + 18]], 1, 960 + q + s + tw(i));
+  c.restore();
+}
+
+// ---------------------------------------------------------------- scene 1: the walk
+const FIG_W = 2.7, SPEED = (2 * SL * FIG_W) / (16 / 24);   // two steps every 16 frames: a planted foot stays put
+function sWalk(c, tau, i) {
+  if (!FARL) buildCity();
+  const stop = 3.55, walkT = Math.min(tau, stop) + (tau > stop ? 0 : 0);
+  const x = 300 + SPEED * walkT, camX = x - CX + 140;
+  sky(c); street(c, camX);
+  resetT(c);
+  LAMPS.forEach(lx => { const sx = lx - camX + 60; if (sx > -300 && sx < W + 300) lamp(c, sx, 1, lx); });
+  // the walk: drawing k of 8, or the stand once she stops
+  const k = Math.floor(walkT * 12) % 8, P = tau < stop ? walkPose(k, tau > 2.4 ? 1 : 0) : { ...STAND, face: 'stress' };
+  c.save(); c.translate(x - camX, GROUND); c.scale(FIG_W, FIG_W);
+  c.save(); c.globalAlpha = .35; c.fillStyle = '#0b0e18'; c.beginPath(); c.ellipse(0, 0, 60, 7, 0, 0, TAU); c.fill(); c.restore();
+  figure(c, P, 1000 + (tau < stop ? k : 20) * 31);
+  c.restore();
+  // the buzz
+  const bz = sm(2.15, 2.25, tau, x => x) * (1 - sm(2.9, 3.0, tau, x => x));
+  if (bz > 0) vibes(c, [x - camX + P.phone.p[0] * FIG_W, GROUND + P.phone.p[1] * FIG_W], i, bz);
+  rain(c, i);
+  irisOpen(c, tau, i);
+}
+
+// ---------------------------------------------------------------- scene 2: stress
+function scribbleCloud(c, x, y, r, i, k) {
+  if (k <= 0) return;
+  const rr = rng(980 + tw(i)), pts = [];
+  for (let q = 0; q < 60; q++) { const a = q * .9 + rr() * .6, d = r * (.35 + rr() * .65) * k; pts.push([x + Math.cos(a) * d * 1.3, y + Math.sin(a) * d * .7]); }
+  c.save(); c.strokeStyle = INK; c.lineWidth = 4; c.lineCap = 'round'; c.lineJoin = 'round'; wob(c, pts, 2, 981 + tw(i)); c.restore();
+}
+function sweat(c, x, y, t, seed) {
+  const r = rng(seed);
+  for (let q = 0; q < 4; q++) { const u = ((t * 1.6 + q * .25) % 1), vx = (r() - .2) * 120, px = x + vx * u, py = y - 40 * u + 160 * u * u, s = 9 * (1 - u * .5);
+    const d = put([[0, -s * 1.4], [s * .8, 0], [0, s * .8], [-s * .8, 0]], px, py); c.save(); c.fillStyle = '#cfefff'; c.fill(curvePath(d, true)); c.restore(); line(c, d, 2, seed + q, true); }
+}
+function sStress(c, tau, i) {
+  const Z = 7, fx = 330, camX = 300 + SPEED * 3.55 - CX + 140;
+  sky(c); c.save(); c.filter = 'blur(5px)'; street(c, camX + 60, 1.35, 1250); c.restore(); c.filter = 'none';
+  resetT(c); c.save(); c.filter = 'blur(4px)'; lamp(c, 900, 1, 3); c.restore(); c.filter = 'none';
+  resetT(c);
+  // thumbs hammering: two drawings on ones, a tiny shake on twos
+  const tap = Math.floor(tau * 24) % 2, sh = (hash(tw(i), 7) - .5) * 4;
+  const P = { ...STAND, face: tau > 1.2 ? 'stress' : 'stress', headAng: .42, nHand: [34 + tap * 2, -199 + tap * 3], fHand: [28 - tap * 2, -203 - tap * 2], phone: { p: [40 + tap * .6, -208], ang: -.45 } };
+  const push = sm(0, 2.2, tau, easeInOutSine), z = Z * (1 + .08 * push);
+  const base = 2834 - 90 * push;
+  c.save(); c.translate(fx + sh, base); c.scale(z, z);
+  figure(c, P, 2000 + Math.floor(tau * 12) % 2 * 31);
+  c.restore();
+  const headAt = [fx + 22 * z, base - 262 * z];
+  scribbleCloud(c, headAt[0] - 20, headAt[1] - 300, 170, i, sm(.4, 1.0, tau, easeOutBack));
+  sweat(c, headAt[0] + 40, headAt[1] - 40, tau, 990);
+  // little tap marks at the screen
+  if (tap) { c.save(); c.strokeStyle = CYAN; c.lineWidth = 4; c.lineCap = 'round'; const px = fx + 46 * z, py = base - 210 * z; for (let q = 0; q < 3; q++) { const a = -2.4 + q * .7; c.beginPath(); c.moveTo(px + Math.cos(a) * 34, py + Math.sin(a) * 34); c.lineTo(px + Math.cos(a) * 56, py + Math.sin(a) * 56); c.stroke(); } c.restore(); }
+  rain(c, i, .6);
+}
+
+// ---------------------------------------------------------------- scene 3: her screen
+const SCR = { x: 190, y: 420, w: 700, h: 1440 };
+function screenGame(c, t, i) {
+  const { x, y, w, h } = SCR, g = c.createLinearGradient(0, y, 0, y + h); g.addColorStop(0, '#0b1530'); g.addColorStop(1, '#1c3a7a');
+  c.fillStyle = g; c.fillRect(x, y, w, h);
+  c.save(); c.beginPath(); c.rect(x, y, w, h); c.clip();
+  // coral pillars slide past; the whale flaps between them
+  for (let q = 0; q < 4; q++) { const px = x + w + 80 + q * 330 - t * 520, gy = y + 420 + hash(q, 4) * 520;
+    for (const [top, bot] of [[y - 20, gy - 170], [gy + 170, y + h + 20]]) { const pts = warp(rectPts(px, top, 120, bot - top), q * 7 + top, 3); c.save(); c.fillStyle = '#ff7a59'; c.fill(curvePath(pts, true, .4)); c.restore(); line(c, pts, 4, q * 11 + top + tw(i), true); } }
+  const crash = t > .78, wy = y + 760 + (crash ? (t - .78) * 1600 : -120 * Math.abs(Math.sin(t * 9))), wa = crash ? (t - .78) * 9 : -.25 * Math.cos(t * 9);
+  const wh = put(blob(0, 0, 64, 40, 31, { amp: .04 }), x + 260, wy, wa);
+  c.save(); c.fillStyle = '#3d8bf2'; c.fill(curvePath(wh, true)); c.restore(); line(c, wh, 4, 32 + tw(i), true);
+  line(c, put([[-60, 0], [-92, -24], [-86, 0], [-92, 24]], x + 260, wy, wa), 4, 33, true);
+  c.save(); c.fillStyle = INK; const e = rot2([30, -10], wa); c.beginPath(); c.arc(x + 260 + e[0], wy + e[1], 6, 0, TAU); c.fill(); c.restore();
+  c.restore();
+  c.save(); c.fillStyle = '#ffffff'; c.font = '700 64px "Helvetica Neue", Arial, sans-serif'; c.textAlign = 'center'; c.fillText(String(crash ? 3 : Math.min(3, Math.floor(t * 4))), x + w / 2, y + 150); c.font = '600 30px "Helvetica Neue", Arial'; c.globalAlpha = .7; c.fillText('SCORE', x + w / 2, y + 90); c.restore();
+}
+function screenBoard(c, t) {
+  const { x, y, w, h } = SCR;
+  c.fillStyle = '#eef1f6'; c.fillRect(x, y, w, h);
+  c.save(); c.font = '700 44px "Helvetica Neue", Arial, sans-serif'; c.fillStyle = INK; c.textAlign = 'center'; c.fillText('THE BOARD', x + w / 2, y + 120); c.restore();
+  const rows = [['#1', 21], ['#2', 17], ['#3', 12], ['#4', 9], ['#5', 8], ['YOU', 3]];
+  rows.forEach(([n, s], q) => {
+    const ry = y + 170 + q * 130, a = clamp((t - q * .05) / .12, 0, 1); if (a <= 0) return;
+    const me = n === 'YOU';
+    c.save(); c.globalAlpha = a; c.fillStyle = me ? RED : '#ffffff'; c.fillRect(x + 40, ry, w - 80, 120); c.strokeStyle = '#c9cfda'; c.lineWidth = 2; c.strokeRect(x + 40, ry, w - 80, 120);
+    c.fillStyle = me ? '#ffffff' : INK; c.font = `${me ? 800 : 600} 50px "Helvetica Neue", Arial, sans-serif`; c.textBaseline = 'middle'; c.fillText(n, x + 80, ry + 62); c.textAlign = 'right'; c.fillText(String(s), x + w - 80, ry + 62); c.restore();
+  });
+  const st = clamp((t - .28) / .15, 0, 1);
+  if (st > 0) { c.save(); c.translate(x + w / 2, y + 1110); c.rotate(-.14); c.scale(lerp(2, 1, easeIn(st)), lerp(2, 1, easeIn(st))); c.globalAlpha = st; c.strokeStyle = RED; c.lineWidth = 10; c.strokeRect(-250, -80, 500, 160); c.fillStyle = RED; c.font = '900 110px Impact, "Arial Black"'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('LOWEST', 0, 6); c.restore(); }
+}
+function hands(c, i, tap) {
+  // palms below, and two thumbs over the bottom of the screen: one presses while the other lifts
+  const thumb = (base, tip, seed) => {
+    const mid = [lerp(base[0], tip[0], .55), lerp(base[1], tip[1], .55) + 30];
+    body(c, tube([base, mid, tip], [96, 78, 58]), null, seed, { w: 5 });
+    const d = norm(sub(tip, mid)), nail = put([[-40, -34], [10, -32], [10, 32], [-40, 34]], tip[0] - d[0] * 8, tip[1] - d[1] * 8, Math.atan2(d[1], d[0]));
+    body(c, nail, '#f2d9cf', seed + 3, { w: 2.5, al: .6 });
+  };
+  body(c, put(blob(0, 0, 320, 230, 1230, { amp: .05 }), 20, 2260), null, 1231 + tw(i), { w: 5 });
+  body(c, put(blob(0, 0, 320, 230, 1232, { amp: .05 }), 1060, 2260), null, 1233 + tw(i), { w: 5 });
+  thumb([170, 2120], [340, 1740 - tap * 50], 1240 + tw(i));
+  thumb([910, 2120], [740, 1755 - (1 - tap) * 50], 1250 + tw(i));
+}
+function sScreen(c, tau, i) {
+  resetT(c); c.fillStyle = '#0d1120'; c.fillRect(0, 0, W, H);
+  // street lights out of focus behind the phone
+  const r = rng(5); for (let q = 0; q < 18; q++) { const bx = r() * W, by = r() * H, br = 40 + r() * 90; glow(c, bx, by, br, r() < .5 ? WARM : r() < .5 ? NEON : CYAN, .35); }
+  const shake = tau > .78 && tau < 1.0 ? (hash(tw(i), 2) - .5) * 26 : 0;
+  c.save(); c.translate(shake, 0);
+  const body0 = warp(rectPts(SCR.x - 40, SCR.y - 110, SCR.w + 80, SCR.h + 220), 8, 2);
+  c.save(); c.fillStyle = '#16171c'; c.fill(roundRectPath(SCR.x - 40, SCR.y - 110, SCR.w + 80, SCR.h + 220, 70)); c.restore(); line(c, body0, 5, 9 + tw(i), true);
+  if (tau < .95) screenGame(c, tau, i); else screenBoard(c, tau - .95);
+  if (tau > 1.0 && tau < .95 + .2) { c.save(); c.globalAlpha = .4; c.fillStyle = RED; c.fillRect(SCR.x, SCR.y, SCR.w, SCR.h); c.restore(); }
+  // the glitch: slices of the screen torn sideways
+  if (tau > 1.6) { const r2 = rng(40 + Math.floor(tau * 24)); for (let q = 0; q < 7; q++) { const sy = SCR.y + r2() * SCR.h, sh = 20 + r2() * 70, dx = (r2() - .5) * 120; c.save(); resetT(c); c.drawImage(c.canvas, 0, sy * S, c.canvas.width, sh * S, dx, sy, W, sh); c.globalCompositeOperation = 'screen'; c.fillStyle = q % 2 ? 'rgba(255,0,60,.35)' : 'rgba(0,220,255,.3)'; c.fillRect(0, sy, W, sh); c.restore(); } }
+  c.restore();
+  hands(c, i, tau < .78 ? Math.floor(tau * 24) % 2 : 0);
+}
+
+// ---------------------------------------------------------------- scene 4: taken
+const FIG_C = 3.0, CX0 = 290, PH_REST = [CX0 + 610, GROUND - 8];
+function phoneOnGround(tau) {
+  // leaves her hand at .8, falls, bounces, skids and lies still, screen up
+  const from = [CX0 + 46 * FIG_C, GROUND - 128 * FIG_C], hit = 1.1, rest = PH_REST;
+  if (tau < .8) return null;
+  if (tau < hit) { const u = (tau - .8) / (hit - .8); return { p: arc(from, [CX0 + 330, GROUND - 8], u, 80), ang: u * 4 }; }
+  const v = sm(hit, 1.75, tau, easeOutQuint), b = Math.max(0, Math.sin(clamp((tau - hit) / .18, 0, 1) * Math.PI)) * 40;
+  return { p: [lerp(CX0 + 330, rest[0], v), GROUND - 8 - b], ang: lerp(4, TAU + .02, sm(hit, 1.4, tau, easeOut)) };
+}
+function groundPhone(c, ph, i, lit = 1) {
+  const { p, ang } = ph, sl = put([[-58, -8], [58, -8], [58, 8], [-58, 8]], p[0], p[1], ang);
+  c.save(); c.fillStyle = '#16171c'; c.fill(curvePath(sl, true, .4)); c.restore(); line(c, sl, 4, 1300 + tw(i), true);
+  if (lit > 0) { const top = put([[-50, -9], [50, -9]], p[0], p[1], ang); c.save(); c.strokeStyle = CYAN; c.lineWidth = 5; c.globalAlpha = lit; c.beginPath(); c.moveTo(...top[0]); c.lineTo(...top[1]); c.stroke(); c.restore(); glow(c, p[0], p[1] - 40, 220, CYAN, .55 * lit); }
+}
+function sTaken(c, tau, i) {
+  sky(c); const camX = 900; street(c, camX);
+  resetT(c);
+  // the lamp over her stutters as she goes
+  const fl = tau > .5 && tau < 1.6 ? (hash(Math.floor(tau * 14), 3) < .45 ? .15 : 1) : 1;
+  lamp(c, CX0 + 120, fl, 77);
+  const id = FALL_SHEET(twos(tau)), P = FALL[id];
+  const hit = tau > 1.42 ? Math.exp(-(tau - 1.42) * 14) * 8 * Math.sin(tau * 90) : 0;
+  c.save(); c.translate(CX0, GROUND + hit); c.scale(FIG_C, FIG_C);
+  c.save(); c.globalAlpha = .35; c.fillStyle = '#0b0e18'; c.beginPath(); c.ellipse(id === 'down' || id === 'settle' ? 50 : 0, 0, id === 'down' || id === 'settle' ? 150 : 60, 8, 0, 0, TAU); c.fill(); c.restore();
+  figure(c, P, 3000 + Object.keys(FALL).indexOf(id) * 37);
+  c.restore();
+  const ph = phoneOnGround(twos(tau)); if (ph) groundPhone(c, ph, i);
+  if (id === 'jolt' || id === 'freeze') { c.save(); c.strokeStyle = INK; c.lineWidth = 4; for (let q = 0; q < 5; q++) { const a = -2.2 + q * .35; const hx = CX0 + 10 * FIG_C, hy = GROUND - 265 * FIG_C; c.beginPath(); c.moveTo(hx + Math.cos(a) * 70, hy + Math.sin(a) * 70); c.lineTo(hx + Math.cos(a) * 100, hy + Math.sin(a) * 100); c.stroke(); } c.restore(); }
+  rain(c, i);
+}
+
+// ---------------------------------------------------------------- scene 5: into the phone
+function sPhone(c, tau, i) {
+  const ph = { p: PH_REST, ang: TAU + .02 };
+  const go = sm(0, 1.0, tau, easeInOutQuint);
+  if (tau < 1.0) {
+    const z = lerp(1, 9, go), cx = lerp(CX, ph.p[0], go), cy = lerp(CY, ph.p[1] - 30, go);
+    c.save(); resetT(c); c.translate(CX, CY); c.scale(z, z); c.translate(-cx, -cy);
+    c.save(); c.setTransform(c.getTransform()); sTakenStill(c, i); c.restore();
+    c.restore();
+    // the light of the screen washes up as we arrive
+    resetT(c); c.save(); c.globalAlpha = sm(.6, 1.0, tau, easeIn); c.fillStyle = '#0a1028'; c.fillRect(0, 0, W, H); c.restore();
+    return;
+  }
+  // the screen, face on
+  const t = tau - 1.0;
+  resetT(c); c.fillStyle = '#0a1028'; c.fillRect(0, 0, W, H);
+  const g = c.createRadialGradient(CX, 900, 0, CX, 900, 900); g.addColorStop(0, '#16306b'); g.addColorStop(1, '#0a1028'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+  // the whale icon, drawn in light
+  const wh = put(blob(0, 0, 120, 74, 31, { amp: .04 }), CX + 20, 760, -.1);
+  c.save(); c.globalAlpha = sm(0, .25, t, x => x); line(c, wh, 7, 1400 + tw(i), true, '#7fb8ff'); line(c, put([[-110, 0], [-170, -44], [-160, 0], [-170, 44]], CX + 20, 760, -.1), 7, 1401 + tw(i), true, '#7fb8ff'); c.fillStyle = '#7fb8ff'; c.beginPath(); c.arc(CX + 80, 735, 10, 0, TAU); c.fill(); c.restore();
+  const msg = 'Who did this?', n = Math.floor(clamp((t - .2) / .55, 0, 1) * msg.length);
+  c.save(); c.fillStyle = '#ffffff'; c.font = '300 92px "Helvetica Neue", Arial, sans-serif'; c.textAlign = 'center'; c.fillText(msg.slice(0, n), CX, 1060); c.restore();
+  if (n < msg.length && Math.floor(t * 4) % 2 === 0) { c.save(); c.fillStyle = '#ffffff'; c.font = '300 92px "Helvetica Neue", Arial'; c.textAlign = 'left'; const wTxt = c.measureText(msg.slice(0, n)).width, wAll = c.measureText(msg).width; c.fillRect(CX - wAll / 2 + wTxt + 6, 990, 5, 84); c.restore(); }
+  // and the light takes the frame
+  const wk = sm(.95, 1.15, t, easeIn);
+  if (wk > 0) { resetT(c); c.save(); c.globalAlpha = wk; c.fillStyle = PAPER; c.fillRect(0, 0, W, H); c.restore(); }
+}
+// The last drawing of the fall, held, for the push-in.
+function sTakenStill(c, i) {
+  const keep = c.getTransform();
+  sky(c); c.setTransform(keep); c.save(); c.setTransform(keep);
+  c.drawImage(FARL, -900 * .4 - 100, 0, FARL.width / S, H); c.drawImage(NEARL, -900 + 60, 0, NEARL.width / S, H);
+  lamp(c, CX0 + 120, 1, 77);
+  c.save(); c.translate(CX0, GROUND); c.scale(FIG_C, FIG_C); figure(c, FALL.settle, 3000 + 6 * 37); c.restore();
+  groundPhone(c, { p: PH_REST, ang: TAU + .02 }, i);
+  c.restore();
+}
+
+defineFilm({
+  palette: makePalette({ paper: PAPER, ink: INK, finish: 'flat', washBlend: 'multiply' }, 'doodlePastel'),
+  format: { ar: '9:19.5', width: 720 },
+  timeline: [
+    { name: 'walk', dur: 4.2, fn: sWalk, twos: true },
+    { name: 'stress', dur: 2.2, fn: sStress },
+    { name: 'screen', dur: 1.9, fn: sScreen },
+    { name: 'taken', dur: 2.6, fn: sTaken },
+    { name: 'phone', dur: 2.2, fn: sPhone },
+  ],
+});
+</script>

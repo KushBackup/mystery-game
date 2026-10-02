@@ -26,7 +26,10 @@ export function threadsFor(ctx, seen) {
   const denOk = role?.role === 'killer' && me.status === 'alive' && Array.isArray(ctx.mates);
   // The role message from casting stays at the top of the DEEP BLUE thread, sealed (RoleMessage).
   const roleMsg = role?.role ? [{ id: 'role', kind: 'role', at: 1, cycle: 0 }] : [];
-  const sys = [...roleMsg, ...inbox.filter((d) => SYSTEM_KINDS.has(d.kind)), ...(ctx.voice ?? [])].sort(byAt);
+  // The manifesto (voice.js) is dated years before tonight, so it leads the thread by its own date and is never unread.
+  const voice = ctx.voice ?? [];
+  const old = voice.filter((d) => d.old);
+  const sys = [...old, ...[...roleMsg, ...inbox.filter((d) => SYSTEM_KINDS.has(d.kind)), ...voice.filter((d) => !d.old)].sort(byAt)];
   const unk = inbox.filter((d) => UNKNOWN_KINDS.has(d.kind)).sort(byAt);
   const unread = (list, key, mine = (m) => m.pid === me.pid) => list.filter((m) => (m.at ?? 0) > (seen[key] ?? 0) && !mine(m));
   const row = (id, title, list, unreadList, icon) => ({ id, title, list, unread: unreadList.length, unreadList, icon });
@@ -35,7 +38,7 @@ export function threadsFor(ctx, seen) {
     row('room', 'The Room', chat ?? [], unread(chat ?? [], 'room'), 'messages'),
     ...(denOk ? [row('den', groupTitle(ctx), den, unread(den, 'den'), null)] : []),
     ...(spiritsOk ? [row('spirits', 'Spirits', spirits ?? [], unread(spirits ?? [], 'spirits'), 'night')] : []),
-    row('deepblue', 'DEEP BLUE', sys, unread(sys, 'deepblue', () => false), 'deepblue'),
+    row('deepblue', 'DEEP BLUE', sys, unread(sys, 'deepblue', (m) => m.old), 'deepblue'),
     ...(unk.length ? [row('unknown', 'Unknown', unk, unread(unk, 'unknown', () => false), null)] : []),
   ];
 }

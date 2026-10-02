@@ -28,6 +28,17 @@ export const GAME = {
   with: 'Greenr',
 };
 
+/**
+ * What the title film at the deal says (os/Splash.jsx), before the story's own
+ * title (the pack's `caseTitle`). The film draws these itself
+ * (splash-film/splash.html); here they are its screen-reader label, and must
+ * match it.
+ */
+export const SPLASH = [
+  [{ big: GAME.by }, { small: 'presents' }],
+  [{ small: 'in collaboration with' }, { big: GAME.with }],
+];
+
 /** The role text at casting: who you are, in one line. How the role works is for the player to find. */
 export const ROLE_CARD = {
   killer: { title: 'Killer', line: 'Don’t get caught.' },

@@ -230,7 +230,7 @@ function SystemThread({ list, ctx }) {
         const alert = (d.kind === 'check' && d.team === 'killers') || (d.kind === 'trace' && d.hit) || d.kind === 'recruited' || (d.kind === 'watch' && d.seen);
         return (
           <React.Fragment key={d.id}>
-            {day && <p className="os-stamp-time">DAY {d.cycle}</p>}
+            {day && <p className="os-stamp-time">{d.old ? oldStamp(new Date(d.at)) : `DAY ${d.cycle}`}</p>}
             <div className="os-bubble-row">
               <div className={`os-bubble ${alert ? 'os-bubble--alert' : d.kind === 'voice' ? 'os-bubble--voice' : 'os-bubble--sys'}`}>
                 {systemText(d, ctx)}
@@ -246,6 +246,10 @@ function SystemThread({ list, ctx }) {
     </div>
   );
 }
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/** A message from years ago, dated the old iPhone way: "Nov 3, 2023 03:33". */
+const oldStamp = (d) => `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} ${hhmm(d)}`;
 
 /** The compose bar: a rounded field and a glossy Send. */
 export function Compose({ gid, channel, me, placeholder = 'Message' }) {

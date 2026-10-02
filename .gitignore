@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# The splash film renderer: frames, previews and the master mp4 (public/splash/deal.mp4 is the shipped copy)
+splash-film/out

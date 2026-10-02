@@ -23,7 +23,7 @@
  * null everywhere, and the phone falls back to its fixed table (os/words.js).
  */
 
-import { PHASE, DEFAULT_DURATIONS, REVEALS, REVEAL_LEAD_MS, ENDGAME_ROUNDS, gameSpan } from './phases.js';
+import { PHASE, DEFAULT_DURATIONS, ENDGAME_ROUNDS, gameSpan, revealLead } from './phases.js';
 import { gameOfDay } from './minigames.js';
 
 const MIN = 60 * 1000;
@@ -44,7 +44,7 @@ const STRETCH = [0.25, 4];
 /** A phase's real length in ms, reveal hold included (phases.js phaseTiming). */
 function lengthOf(phase, durations, kind) {
   const ms = phase === PHASE.GAME ? gameSpan(kind, durations) : durations[phase] ?? 0;
-  return ms + (REVEALS.has(phase) ? REVEAL_LEAD_MS : 0);
+  return ms + revealLead(phase);
 }
 
 /** One day from the alarm to the verdict, in real ms, with the day's game. */

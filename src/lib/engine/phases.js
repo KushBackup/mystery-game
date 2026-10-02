@@ -73,6 +73,11 @@ export const ENDGAME_ROUNDS = 2;
 // How long every phone holds "…" before a reveal flips, so the room gasps together.
 export const REVEAL_LEAD_MS = 4 * SEC;
 
+// The deal holds longer: every phone plays the title film and the intro first
+// (os/Splash.jsx, splash-film/), and the role arrives as they end. Together they
+// are 22.27 s; this is that plus a white frame. Change both together.
+export const SPLASH_MS = 22300;
+
 // The day's run stops this long before the game phase ends, so the last score
 // write lands before the host locks the phase and the rules refuse it.
 export const GAME_GRACE_MS = 2 * SEC;
@@ -84,6 +89,9 @@ export const LOCKED = new Set([
 // Phases that end in a reveal, so they open with a held beat.
 // The alarm and the run start on the same instant on every phone, like a reveal.
 export const REVEALS = new Set([PHASE.CASTING, PHASE.ALARM, PHASE.GAME, PHASE.DAWN, PHASE.BANISH, PHASE.FINALE]);
+
+/** How long a phase holds before its reveal flips: the title cards at the deal, a beat elsewhere. */
+export const revealLead = (phase) => (phase === PHASE.CASTING ? SPLASH_MS : REVEALS.has(phase) ? REVEAL_LEAD_MS : 0);
 
 /** The locked beat that closes an action phase, or null if none. */
 export function lockFor(phase) {
@@ -132,10 +140,11 @@ export function gameSpan(kind, durations = DEFAULT_DURATIONS) {
 /** Timing fields to write alongside a new phase. `kind` is the day's game, for the game phase. */
 export function phaseTiming(phase, now, durations = DEFAULT_DURATIONS, kind = 'run') {
   const ms = phase === PHASE.GAME && kind && kind !== 'run' ? gameSpan(kind, durations) : durations[phase] ?? 0;
-  const revealAt = REVEALS.has(phase) ? now + REVEAL_LEAD_MS : 0;
+  const lead = revealLead(phase);
+  const revealAt = lead ? now + lead : 0;
   return {
     phaseStartedAt: now,
-    phaseEndsAt: ms ? now + ms + (revealAt ? REVEAL_LEAD_MS : 0) : 0,
+    phaseEndsAt: ms ? now + ms + lead : 0,
     revealAt,
   };
 }

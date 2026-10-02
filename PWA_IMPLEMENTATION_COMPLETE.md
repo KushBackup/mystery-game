@@ -236,6 +236,10 @@ Generated PNG icons:
 
 ---
 
+## 🎬 The deal's title film (2026-10-02)
+
+`public/splash/deal.mp4` (2.5 MB, the title film and the intro) is **not precached**: `globPatterns` in [vite.config.js](vite.config.js) doesn't match mp4, so the install stays small. Each phone fetches it into a blob URL while the guest waits in the lobby (`preloadSplash` in [src/os/splashFilm.js](src/os/splashFilm.js)) and plays it from memory at the deal. Offline, or if the fetch fails, the video falls back to the network URL; if that fails too the splash hides itself and the role text appears at its usual time.
+
 ## 🐛 Troubleshooting
 
 ### **PWA Not Installing**

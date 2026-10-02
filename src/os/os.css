@@ -1103,6 +1103,21 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   100% { opacity: 0; visibility: hidden; }
 }
 
+/* --- The title film at the deal (Splash.jsx): a hand-drawn film on white,
+       above everything, status bar included. It lifts when Splash.jsx adds
+       --lift on the room's clock. `cover`, so a 9:16 phone loses only the
+       film's empty top and bottom. */
+.os-splash {
+  position: absolute;
+  inset: 0;
+  z-index: 90;
+  background: #fff;
+  pointer-events: auto;
+  transition: opacity var(--lift) ease-in-out, visibility 0s var(--lift);
+}
+.os-splash--lift { opacity: 0; visibility: hidden; }
+.os-splash__film { width: 100%; height: 100%; object-fit: cover; display: block; background: #fff; }
+
 /* --- The Night app: every role's Night app wears the same dark skin, so a
        glance across the table can't tell a Killer's screen from anyone's. ---- */
 .os-term {
@@ -1210,6 +1225,7 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   .os-nav-push, .os-nav-pop, .os-app-exit, .os-home--enter .os-icon, .os-home--enter .os-now, .os-chapter__rule,
   .os-static, .os-haunt, .os-shake { animation: none !important; }
   .os-chapter { animation: os-chapter 2.4s steps(1) both; }
+  .os-splash { transition: none; }
   .os-chapter__rule { width: 120px; }
   .os-boot-bar i { animation-timing-function: steps(1); }
   .os-root[data-time='night'] .os-stars { animation: none; }

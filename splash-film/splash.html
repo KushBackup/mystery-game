@@ -1,0 +1,462 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Splash · The Deep Blue Case</title>
+<style>body{margin:0;background:#242321;display:grid;place-items:center;min-height:100vh}canvas{max-width:100vw;max-height:100vh;object-fit:contain}</style>
+<canvas id="c"></canvas>
+<script src="core.js"></script>
+<script src="studio.js"></script>
+<script src="cels.js"></script>
+<script src="logos.js"></script>
+<script>
+'use strict';
+/* ------------------------------------------------------------------------
+Film brief
+  Subject: the title cards every guest's phone plays when the roles are dealt.
+    Astral Project presents, in collaboration with Greenr, The Deep Blue Case.
+    Fast, feel-good, a little trippy: one ink drop becomes a cosmos, the cosmos
+    collapses to a seed, the seed grows Greenr's leaves, a leaf drips into the
+    sea, a whale leaps for the title, and an iris closes on white.
+  Duration 8.65 s; 9:19.5 portrait (a modern phone, played object-fit: cover,
+    so a 9:16 phone loses the top and bottom 210 units: keep the action in
+    y 300..2040); delivered 720 px wide.
+  Look: riso-pop ink on pure white paper (the user asked for a white background).
+    Brush contours on twos, flat fills, misregistered pink/yellow copies.
+    The logos are the user's PNGs, recoloured (prep-logos.py), slapped on as
+    stickers with an offset colour shadow.
+  Exposure: everything that is drawn boils on twos (a new stroke seed every
+    12 Hz frame); camera, rings and travel run on ones. The whale's pose and
+    position are on twos.
+  Beat sheet
+    0.00 drop     0.60  an ink drop falls, splats, swells and pops into rings
+    0.60 astral   2.55  a ring tunnel and orbiting doodles; ASTRAL sticker pops
+                         at 0.25, "presents" writes on at 0.95, a rocket zips
+                         across at 1.1; from 2.05 everything spirals into a dot
+    3.15 seed     0.40  the dot becomes a seed and drops to the ground
+    3.55 greenr   2.40  a vine curls up; a leaf mandala spins out; "in
+                         collaboration with" at 0.2; GREENR sticker at 0.45;
+                         flowers pop; at 1.95 it shrinks away and a drop falls
+    5.95 deep     2.70  the drop splashes, waves rise, letters of the title
+                         drop in and bob, a whale leaps through and spouts
+                         hearts; iris closes from 2.2; white at the end
+  Closing beat: pure white, so the phone's fade to the role text is seamless.
+  Sources: Astral Project and Greenr logos supplied by the user. No other media.
+------------------------------------------------------------------------- */
+
+const INK = '#1b2340', BLU = '#2f6bff', SKY = '#7cc4ff', PNK = '#ff5ca8', YEL = '#ffd23f',
+  GRN = '#149a4f', LIM = '#8fdc5a', ORG = '#ff8a3d', MNT = '#c9f2d8', LIL = '#c9b8ff';
+const FONT = '"Segoe Print", "Ink Free", "Comic Sans MS", cursive';
+const PAPER = '#ffffff';
+
+const LOGOS = {
+  astral: { ...LOGO_ASTRAL, img: registerPhoto('astral', { src: LOGO_ASTRAL.src }).img, sil: registerPhoto('astralSil', { src: LOGO_ASTRAL.sil }).img },
+  greenr: { ...LOGO_GREENR, img: registerPhoto('greenr', { src: LOGO_GREENR.src }).img, sil: registerPhoto('greenrSil', { src: LOGO_GREENR.sil }).img },
+};
+
+// ---------------------------------------------------------------- marks
+const blank = c => { resetT(c); c.fillStyle = PAPER; c.fillRect(0, 0, W, H); };
+const twosSeed = i => boil(i, 1);   // a new drawing every 12 Hz frame
+function stroke(c, pts, w, col, seed, close = false, al = 1) {
+  c.save(); c.strokeStyle = col; c.lineWidth = w; c.lineJoin = 'round'; c.lineCap = 'round'; c.globalAlpha *= al;
+  wob(c, pts, 2.2, seed, close, { pressure: .55 }); c.restore();
+}
+function fillShape(c, pts, col, al = 1) { c.save(); c.globalAlpha *= al; c.fillStyle = col; c.fill(curvePath(pts, true)); c.restore(); }
+const rot2 = (p, a) => [p[0] * Math.cos(a) - p[1] * Math.sin(a), p[0] * Math.sin(a) + p[1] * Math.cos(a)];
+const put = (pts, x, y, a = 0, s = 1) => pts.map(p => { const q = rot2([p[0] * s, p[1] * s], a); return [x + q[0], y + q[1]]; });
+
+const starPts = (r, n = 5, inner = .46) => Array.from({ length: n * 2 }, (_, k) => { const a = k * Math.PI / n - Math.PI / 2, rr = k % 2 ? r * inner : r; return [Math.cos(a) * rr, Math.sin(a) * rr]; });
+const heartPts = r => Array.from({ length: 36 }, (_, k) => { const t = k / 36 * TAU, s = r / 17; return [16 * Math.pow(Math.sin(t), 3) * s, -(13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * s]; });
+const leafPts = (len, wid) => { const p = []; for (let k = 0; k <= 12; k++) { const u = k / 12; p.push([u * len, -Math.sin(Math.PI * u) * wid * (1 - .25 * u)]); } for (let k = 11; k > 0; k--) { const u = k / 12; p.push([u * len, Math.sin(Math.PI * u) * wid * (1 - .25 * u)]); } return p; };
+const dropPts = r => Array.from({ length: 28 }, (_, k) => { const t = k / 28 * TAU; return [Math.sin(t) * r * (1 - .5 * (1 + Math.cos(t)) / 2) * 1, -Math.cos(t) * r * 1.35 + (Math.cos(t) < 0 ? 0 : 0)]; });
+
+// A filled shape with a riso shadow and a boiling ink contour.
+function bit(c, pts, x, y, a, s, fill, seed, o = {}) {
+  const { shadow = PNK, w = 5, line = INK, sh = 7 } = o, P = put(pts, x, y, a, s);
+  if (shadow) fillShape(c, P.map(p => [p[0] + sh, p[1] + sh * .7]), shadow, .9);
+  if (fill) fillShape(c, P, fill);
+  if (line) stroke(c, P, w, line, seed, true);
+}
+function sparkle(c, x, y, r, col, seed, a = 0) {
+  c.save(); c.strokeStyle = col; c.lineWidth = Math.max(3, r * .16); c.lineCap = 'round';
+  for (let k = 0; k < 4; k++) { const d = rot2([0, -1], a + k * Math.PI / 2); wob(c, [[x + d[0] * r * .25, y + d[1] * r * .25], [x + d[0] * r, y + d[1] * r]], 1.2, seed + k); }
+  c.restore();
+}
+function spiral(c, x, y, r, col, seed, a = 0, w = 5) {
+  const p = []; for (let k = 0; k <= 40; k++) { const t = k / 40, ang = a + t * TAU * 2.2; p.push([x + Math.cos(ang) * r * t, y + Math.sin(ang) * r * t]); }
+  c.save(); c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; wob(c, p, 1.4, seed); c.restore();
+}
+function squiggle(c, x, y, len, col, seed, a = 0, w = 6) {
+  const p = []; for (let k = 0; k <= 16; k++) { const u = k / 16; p.push(put([[u * len - len / 2, Math.sin(u * TAU * 2) * len * .12]], x, y, a)[0]); }
+  c.save(); c.strokeStyle = col; c.lineWidth = w; c.lineCap = 'round'; wob(c, p, 1.6, seed); c.restore();
+}
+// One of the confetti doodles, chosen by kind.
+function confetti(c, kind, x, y, s, a, col, seed) {
+  switch (kind % 6) {
+    case 0: return bit(c, starPts(1), x, y, a, s, col, seed, { shadow: kind % 12 < 6 ? PNK : YEL, w: 4, sh: 5 });
+    case 1: return bit(c, heartPts(1), x, y, a, s, col, seed, { shadow: YEL, w: 4, sh: 5 });
+    case 2: return sparkle(c, x, y, s * 1.2, col, seed, a);
+    case 3: return spiral(c, x, y, s, col, seed, a, 5);
+    case 4: return squiggle(c, x, y, s * 2.2, col, seed, a, 6);
+    default: return bit(c, ellPts(0, 0, 1, 1, 0, 18), x, y, a, s * .7, col, seed, { shadow: null, w: 4 });
+  }
+}
+
+// Hand lettering: letters written on one after another, each one popping in.
+function letters(c, text, x, y, size, tau, o = {}) {
+  const { t0 = 0, stagger = .045, dur = .32, fill = INK, ink2 = PNK, stroke = null, sw = 6, seed = 1, bob = 0, drop = 0, i = 0, weight = 700 } = o;
+  c.save(); c.font = `${weight} ${size}px ${FONT}`; c.textAlign = 'center'; c.textBaseline = 'alphabetic'; c.lineJoin = 'round';
+  const total = c.measureText(text).width, x0 = x - total / 2;
+  [...text].forEach((ch, k) => {
+    if (ch === ' ') return;
+    const a = t0 + k * stagger, u = clamp((tau - a) / dur, 0, 1); if (u <= 0) return;
+    const cx = x0 + c.measureText(text.slice(0, k)).width + c.measureText(ch).width / 2;
+    const pop = easeOutBack(u, 2.6), jit = hash(k * 7 + boil(i, 1), seed);   // the letter's wobble is a drawing: it changes on twos
+    const dy = -drop * (1 - easeOutBack(u, 1.4)) + bob * Math.sin(tau * TAU * 1.6 + k * .9);
+    const r = (hash(k, seed) - .5) * .16 + (jit - .5) * .05 + bob * .004 * Math.sin(tau * TAU * 1.6 + k * .9 + 1);
+    c.save(); c.translate(cx, y + dy); c.rotate(r); c.scale(pop, pop);
+    if (ink2) { c.fillStyle = ink2; c.globalAlpha = .9; c.fillText(ch, size * .045, size * .035); c.globalAlpha = 1; }
+    if (stroke) { c.strokeStyle = stroke; c.lineWidth = sw; c.strokeText(ch, 0, 0); }
+    c.fillStyle = fill; c.fillText(ch, 0, 0);
+    c.restore();
+  });
+  c.restore();
+}
+
+// A logo slapped on as a sticker: a colour shadow, white backing with a boiling
+// contour, two misregistered tinted copies settling into register.
+const _tints = {};
+function tinted(name, col) {
+  const k = name + col; if (_tints[k]) return _tints[k];
+  const L = LOGOS[name], cv = document.createElement('canvas'); cv.width = L.w; cv.height = L.h;
+  const g = cv.getContext('2d'); g.drawImage(L.sil, 0, 0); g.globalCompositeOperation = 'source-in'; g.fillStyle = col; g.fillRect(0, 0, L.w, L.h);
+  return (_tints[k] = cv);
+}
+function sticker(c, name, x, y, w, tau, i, o = {}) {
+  const { t0 = 0, shadow = YEL, seed = 3, tilt = -.05, pad = 56 } = o, L = LOGOS[name], h = w * L.h / L.w;
+  const u = tau - t0; if (u <= 0) return;
+  const s = easeOutElastic(clamp(u / .75, 0, 1)), a = tilt + settle(u, 0, { amp: .32, freq: 1.6, decay: 4.2, phase: Math.PI / 2 }) * .9;
+  const mis = 3 + 37 * Math.exp(-u * 5);
+  c.save(); c.translate(x, y); c.rotate(a); c.scale(s, s);
+  const bw = w + pad * 2, bh = h + pad * 2, back = blob(0, 0, bw / 2, bh / 2, seed, { amp: .035, n: 64 }).map(p => [Math.sign(p[0]) * Math.pow(Math.abs(p[0]) / (bw / 2), .55) * bw / 2, Math.sign(p[1]) * Math.pow(Math.abs(p[1]) / (bh / 2), .55) * bh / 2]);
+  fillShape(c, back.map(p => [p[0] + 18, p[1] + 16]), shadow);
+  fillShape(c, back, PAPER);
+  stroke(c, back, 7, INK, seed * 31 + twosSeed(i), true);
+  const j = (k) => (hash(k + boil(i, 1), seed) - .5) * 3;
+  c.drawImage(tinted(name, PNK), -w / 2 + mis + j(1), -h / 2 + mis * .6 + j(2), w, h);
+  c.drawImage(tinted(name, SKY), -w / 2 - mis * .8 + j(3), -h / 2 - mis * .4 + j(4), w, h);
+  c.drawImage(L.img, -w / 2, -h / 2, w, h);
+  c.restore();
+}
+
+// Droplets thrown up from (x, y): ballistic, shrinking, pointed along their flight.
+function splashDrops(c, x, y, t, o = {}) {
+  const { n = 12, seed = 1, spread = 1, vy = 900, col = BLU, size = 16, life = .7, i = 0 } = o;
+  if (t <= 0 || t > life) return;
+  const r = rng(seed);
+  for (let k = 0; k < n; k++) {
+    const ang = -Math.PI / 2 + (r() - .5) * 2.2 * spread, v = vy * (.55 + r() * .6), vx = Math.cos(ang) * v, vy0 = Math.sin(ang) * v, sz = size * (.6 + r() * .7);
+    const px = x + vx * t, py = y + vy0 * t + 1700 * t * t, dir = Math.atan2(vy0 + 3400 * t, vx) + Math.PI / 2, k2 = 1 - t / life;
+    bit(c, dropPts(1), px, py, dir, sz * (.5 + .5 * k2), k % 3 ? col : SKY, seed + k * 7 + twosSeed(i), { shadow: null, w: 3 });
+  }
+}
+
+// ---------------------------------------------------------------- scene 1: the drop
+function sDrop(c, tau, i) {
+  blank(c);
+  const fall = sm(0, .22, tau, easeIn), land = .22;
+  if (tau < land) {   // falling, stretched along the fall
+    const y = lerp(-140, CY, fall), st = 1 + 1.4 * fall;
+    bit(c, dropPts(1), CX, y, Math.PI, 34, INK, 11 + twosSeed(i), { shadow: PNK, w: 0.1 });
+    speedLines(c, CX, y - 120, -Math.PI / 2, 7, 5, .5 * fall, INK);
+    return;
+  }
+  const u = tau - land;
+  // squash on the impact frame, then swell into a fat dot that rings out
+  const sq = Math.exp(-u * 14) * Math.cos(u * 40), R = lerp(34, 150, easeOutBack(clamp(u / .3, 0, 1), 2.2));
+  const rx = R * (1 + .9 * sq), ry = R * (1 - .6 * sq);
+  ripples(c, CX, CY, [R + u * 900, R + u * 600].filter(r => r < 900), PNK, 40 + twosSeed(i), 6);
+  splashDrops(c, CX, CY, u, { n: 14, seed: 4, spread: 1.4, vy: 1300, col: INK, size: 18, i, life: .45 });
+  const k = sm(.22, .38, u, easeIn);   // the pop: the dot hollows into the first ring
+  fillShape(c, put(blob(0, 0, rx, ry, 9, { amp: .06 }), CX, CY), k > 0 ? mix(INK, BLU, k) : INK, 1);
+  if (k > 0) fillShape(c, put(blob(0, 0, rx * k * .92, ry * k * .92, 12, { amp: .06 }), CX, CY), PAPER);
+  stroke(c, put(blob(0, 0, rx, ry, 9, { amp: .06 }), CX, CY), 6, INK, 77 + twosSeed(i), true);
+}
+
+// ---------------------------------------------------------------- scene 2: astral
+const RING_COLS = [PNK, BLU, YEL, LIM, ORG, SKY, LIL];
+function tunnel(c, tau, i, k = 1) {
+  const speed = 360, gap = 120, born = gap / speed;
+  for (let j = Math.floor((tau - 3.2) / born); j <= Math.floor(tau / born); j++) {
+    const age = tau - j * born; if (age < 0) continue;
+    const r = Math.pow(age * speed, 1.18) * .62 + 12; if (r > 1500) continue;
+    const lobes = 5 + (j % 3), pts = Array.from({ length: 90 }, (_, q) => { const a = q / 90 * TAU; const rr = r * (1 + .07 * Math.sin(lobes * a + tau * 3.4 + j)); return [CX + Math.cos(a) * rr, CY + Math.sin(a) * rr * .96]; });
+    c.save(); c.globalAlpha = clamp(r / 160, 0, 1) * k; c.strokeStyle = RING_COLS[((j % 7) + 7) % 7]; c.lineWidth = 4 + r * .03; c.lineJoin = 'round';
+    wob(c, pts, 2.5, j * 13 + twosSeed(i), true); c.restore();
+  }
+}
+function planet(c, x, y, s, a, i) {
+  c.save(); c.translate(x, y); c.rotate(a); c.scale(s, s);
+  fillShape(c, ellPts(10, 8, 72, 72, 0, 40), PNK);
+  fillShape(c, ellPts(0, 0, 72, 72, 0, 40), YEL);
+  c.save(); c.clip(curvePath(ellPts(0, 0, 72, 72, 0, 40))); [-30, 0, 30].forEach((d, k) => { c.strokeStyle = ORG; c.lineWidth = 9; wob(c, [[-90, d - 14], [90, d + 14]], 2, 50 + k + twosSeed(i)); }); c.restore();
+  stroke(c, ellPts(0, 0, 72, 72, 0, 40), 5, INK, 51 + twosSeed(i), true);
+  c.strokeStyle = INK; c.lineWidth = 6; c.lineCap = 'round';
+  wob(c, ellPts(0, 0, 130, 34, -.25, 50).slice(26, 50).concat(ellPts(0, 0, 130, 34, -.25, 50).slice(0, 2)), 2, 52 + twosSeed(i));
+  c.strokeStyle = BLU; c.lineWidth = 5; wob(c, ellPts(0, 0, 112, 26, -.25, 50).slice(27, 49), 2, 53 + twosSeed(i));
+  c.restore();
+}
+function rocket(c, x, y, a, s, i) {
+  c.save(); c.translate(x, y); c.rotate(a); c.scale(s, s);
+  const fl = 1 + .35 * (hash(boil(i, 1), 8) - .5);
+  bit(c, [[0, 40], [-22, 70 * fl], [-8, 62], [0, 110 * fl], [8, 62], [22, 70 * fl]], 0, 8, 0, 1, ORG, 60 + twosSeed(i), { shadow: YEL, w: 4, sh: 6 });
+  bit(c, [[-30, 20], [-52, 52], [-24, 44]], 0, 0, 0, 1, PNK, 61 + twosSeed(i), { shadow: null, w: 4 });
+  bit(c, [[30, 20], [52, 52], [24, 44]], 0, 0, 0, 1, PNK, 62 + twosSeed(i), { shadow: null, w: 4 });
+  bit(c, [[0, -78], [22, -46], [28, 0], [24, 40], [-24, 40], [-28, 0], [-22, -46]], 0, 0, 0, 1, PAPER, 63 + twosSeed(i), { shadow: BLU, w: 5, sh: 6 });
+  bit(c, ellPts(0, -8, 12, 12, 0, 16), 0, 0, 0, 1, SKY, 64 + twosSeed(i), { shadow: null, w: 4 });
+  c.restore();
+}
+function sAstral(c, tau, i) {
+  blank(c);
+  const out = sm(2.05, 2.55, tau, easeIn);   // the spiral exit
+  c.save();
+  c.translate(CX, CY); c.rotate(out * 4.2 + tau * .05); c.scale(1 - out * .985, 1 - out * .985); c.translate(-CX, -CY);
+  tunnel(c, tau + .45, i);
+  // doodles on two tilted orbits
+  for (let k = 0; k < 9; k++) {
+    const orbit = k % 2, R = orbit ? 470 : 330, ang = tau * (orbit ? -1.1 : 1.5) + k * TAU / 9, appear = easeOutBack(sm(.05 + k * .04, .35 + k * .04, tau, x => x), 2);
+    const x = CX + Math.cos(ang) * R, y = CY + Math.sin(ang) * R * .55 + (orbit ? 60 : -40);
+    if (appear > 0) confetti(c, k, x, y, 30 * appear, tau * 2 + k, [YEL, LIM, SKY, PNK, ORG, LIL][k % 6], 80 + k * 5 + twosSeed(i));
+  }
+  planet(c, CX + 300, CY - 560 + 14 * Math.sin(tau * 5), easeOutBack(sm(.2, .55, tau, x => x), 2), .2 + .1 * Math.sin(tau * 3), i);
+  // the rocket zips across, bottom left to top right
+  const ru = sm(1.1, 1.75, tau, easeInOutSine);
+  if (ru > 0 && ru < 1) { const p = arc([-160, CY + 700], [W + 160, CY + 180], ru, 260), p2 = arc([-160, CY + 700], [W + 160, CY + 180], ru + .02, 260), ang = Math.atan2(p2[1] - p[1], p2[0] - p[0]) + Math.PI / 2;
+    speedLines(c, p[0] - Math.cos(ang - Math.PI / 2) * 120, p[1] - Math.sin(ang - Math.PI / 2) * 120, ang + Math.PI / 2, 66 + twosSeed(i), 6, .55, INK); rocket(c, p[0], p[1], ang, 1.15, i); }
+  sticker(c, 'astral', CX, CY - 40, 780, tau, i, { t0: .25, shadow: YEL, seed: 5, tilt: -.06 });
+  letters(c, 'presents', CX, CY + 300, 104, tau, { t0: .95, stagger: .05, fill: INK, ink2: PNK, seed: 3, bob: 6, drop: 60, i });
+  sparkle(c, CX - 400, CY - 260, 46 * easeOutBack(sm(.6, .8, tau, x => x)), PNK, 90 + twosSeed(i), tau);
+  sparkle(c, CX + 420, CY + 230, 36 * easeOutBack(sm(.7, .9, tau, x => x)), BLU, 91 + twosSeed(i), -tau);
+  c.restore();
+  // what's left of the vortex: one dot in the middle
+  if (out > .6) fillShape(c, put(blob(0, 0, 26, 26, 7, { amp: .08 }), CX, CY), INK, sm(.6, .9, out, x => x));
+}
+
+// ---------------------------------------------------------------- scene 3: the seed
+const GROUND = 1990;
+function seedPts() { return [[0, -34], [18, -16], [22, 10], [10, 30], [-10, 30], [-22, 10], [-18, -16]]; }
+function sSeed(c, tau, i) {
+  blank(c);
+  const f = sm(.08, .32, tau, easeIn), y = lerp(CY, GROUND, f), st = tau < .32 ? 1 + .5 * f : 1 - .35 * Math.exp(-(tau - .32) * 18);
+  if (tau < .08) { const m = tau / .08; fillShape(c, put(blob(0, 0, 26, 26 + 10 * m, 7, { amp: .08 }), CX, CY), INK); return; }
+  c.save(); c.translate(CX, y); c.scale(1 / st, st);
+  bit(c, seedPts(), 0, 0, 0, 1.3, '#8a5a2b', 120 + twosSeed(i), { shadow: ORG, w: 5, sh: 6 }); c.restore();
+  if (f < 1) speedLines(c, CX, y - 110, -Math.PI / 2, 121, 5, .5, INK);
+  if (tau > .32) splashDrops(c, CX, GROUND + 10, tau - .32, { n: 7, seed: 8, spread: 1.3, vy: 600, col: '#8a5a2b', size: 10, i, life: .3 });
+}
+
+// ---------------------------------------------------------------- scene 4: greenr
+const VINE = [[540, GROUND], [490, 1910], [600, 1830], [470, 1740], [600, 1650], [520, 1560], [540, 1470]];
+const LEAVES = [[.14, 1], [.3, -1], [.45, 1], [.6, -1], [.74, 1], [.88, -1]];
+function mandala(c, tau, i, k) {
+  const cx = CX, cy = 1130;
+  for (let q = 0; q < 10; q++) {
+    const a = q * TAU / 10 + tau * .9, pop = easeOutBack(sm(.12 + q * .035, .42 + q * .035, tau, x => x), 2.2) * k, pulse = 1 + .08 * Math.sin(tau * TAU * 2 + q);
+    if (pop <= 0) continue;
+    const p = rot2([300, 0], a);
+    c.save(); c.translate(cx + p[0], cy + p[1] * .95); c.rotate(a); c.scale(pop * pulse, pop * pulse);
+    bit(c, leafPts(170, 52), -10, 0, 0, 1, q % 2 ? MNT : '#fff2b3', 200 + q * 3 + twosSeed(i), { shadow: q % 2 ? LIM : YEL, w: 4, sh: 6 });
+    c.strokeStyle = INK; c.lineWidth = 3; wob(c, [[0, 0], [150, 0]], 1.5, 230 + q + twosSeed(i)); c.restore();
+  }
+  for (let q = 0; q < 16; q++) {
+    const a = q * TAU / 16 - tau * .6, pop = easeOutBack(sm(.3 + q * .025, .55 + q * .025, tau, x => x), 2.2) * k;
+    if (pop <= 0) continue;
+    const p = rot2([520, 0], a);
+    confetti(c, q % 2 ? 1 : 5, cx + p[0], cy + p[1] * .95, 22 * pop * (1 + .15 * Math.sin(tau * TAU * 2 + q)), a, [PNK, YEL, LIM, SKY][q % 4], 260 + q * 3 + twosSeed(i));
+  }
+}
+function bloom(c, x, y, s, a, col, seed) {
+  for (let q = 0; q < 5; q++) { const d = rot2([0, -s * .62], a + q * TAU / 5); bit(c, ellPts(0, 0, s * .42, s * .3, 0, 18), x + d[0], y + d[1], a + q * TAU / 5 + Math.PI / 2, 1, col, seed + q, { shadow: null, w: 3.5 }); }
+  bit(c, ellPts(0, 0, s * .32, s * .32, 0, 18), x, y, 0, 1, ORG, seed + 9, { shadow: null, w: 3.5 });
+}
+const FLOWERS = [[150, 640, PNK], [930, 700, YEL], [120, 1560, YEL], [960, 1540, PNK], [250, 420, LIL], [840, 1820, PNK], [230, 1830, LIL], [880, 420, SKY]];
+function sGreenr(c, tau, i) {
+  blank(c);
+  const gone = sm(1.95, 2.3, tau, easeIn);   // everything shrinks away; the drop is left
+  const k = 1 - gone;
+  c.save(); c.translate(CX, 1130); c.scale(1 - .25 * gone, 1 - .25 * gone); c.rotate(gone * .5); c.translate(-CX, -1130);
+  mandala(c, tau, i, k);
+  // the vine grows up from the seed and its leaves pop as it passes them
+  const g = sm(0, .55, tau, easeOut), path = spline(VINE, 5);
+  c.save(); c.globalAlpha = k;
+  brush(c, path, { w: 13, color: GRN, p: g, seed: 300 + twosSeed(i), amp: 2.2, taper: .4 });
+  LEAVES.forEach(([u, side], q) => {
+    const pop = easeOutBack(clamp((g - u) / .12, 0, 1), 3); if (pop <= 0) return;
+    const at = path[Math.floor(u * (path.length - 1))], wig = .18 * Math.sin(tau * TAU * 1.5 + q);
+    c.save(); c.translate(at[0], at[1]); c.rotate((side > 0 ? -.5 : Math.PI + .5) + wig); c.scale(pop, pop * side);
+    bit(c, leafPts(110, 38), 0, 0, 0, 1, q % 2 ? LIM : GRN, 310 + q * 4 + twosSeed(i), { shadow: YEL, w: 4, sh: 5 }); c.restore();
+  });
+  c.restore();
+  bit(c, seedPts(), CX, GROUND, 0, 1.3 * k, '#8a5a2b', 120 + twosSeed(i), { shadow: ORG, w: 5, sh: 6 });
+  FLOWERS.forEach(([x, y, col], q) => { const pop = easeOutBack(sm(.75 + q * .11, 1.0 + q * .11, tau, x => x), 2.4) * k; if (pop > 0) bloom(c, x, y, 54 * pop, tau * 1.2 + q, col, 400 + q * 11 + twosSeed(i)); });
+  letters(c, 'in collaboration with', CX, 730, 70, tau, { t0: .18, stagger: .022, fill: INK, ink2: LIM, seed: 7, bob: 4, drop: 40, i });
+  c.restore();
+  // the sticker pops on its own beat and leaves with the rest
+  c.save(); c.translate(CX, 1130); c.scale(k, k); c.translate(-CX, -1130);
+  sticker(c, 'greenr', CX, 1130, 520, tau, i, { t0: .45, shadow: LIM, seed: 9, tilt: .05 });
+  c.restore();
+  // a drop gathers under the sticker and falls
+  const grow = sm(1.85, 2.05, tau, easeOutBack), fall = sm(2.05, 2.4, tau, easeIn);
+  if (grow > 0) { const y = lerp(1370, H + 140, fall); bit(c, dropPts(1), CX, y, 0, 30 * grow * (1 + .4 * fall), BLU, 500 + twosSeed(i), { shadow: SKY, w: 4, sh: 5 }); if (fall > 0) speedLines(c, CX, y - 110, -Math.PI / 2, 501, 5, .5, INK); }
+}
+
+// ---------------------------------------------------------------- scene 5: the deep blue case
+// The tone turns here: the drop lands in a black sea under a red moon, crime-scene
+// tape snaps across, CASE is stamped on like a file, the title bleeds, something
+// big passes under the water and looks up, and a magnifier finds a print.
+const SEA = 1720, RED = '#c8102e', BLOOD = '#9e0f24';
+const WAVES = [[SEA - 70, '#3a4a78', .9], [SEA, '#26335c', .95], [SEA + 120, '#182344', 1], [SEA + 250, '#0b1226', 1]];
+function wavePts(base, tau, k, amp = 24) {
+  const p = []; for (let x = -40; x <= W + 40; x += 30) p.push([x, base + amp * Math.sin(x * .011 + tau * 2.2 * (k % 2 ? -1 : 1) + k * 1.7) + amp * .4 * Math.sin(x * .027 - tau * 1.4 + k)]);
+  return p;
+}
+function wave(c, k, tau, i, rise) {
+  const [y0, col, al] = WAVES[k], base = lerp(H + 80, y0, rise);
+  const top = wavePts(base, tau, k);
+  fillShape(c, [...top, [W + 40, H + 40], [-40, H + 40]], col, al);
+  c.save(); c.strokeStyle = INK; c.lineWidth = 6; c.lineCap = 'round'; wob(c, top, 2, 600 + k * 7 + twosSeed(i)); c.restore();
+  // the moon's red path on the water
+  if (k >= 1) {
+    c.save(); c.strokeStyle = RED; c.lineCap = 'round'; c.globalAlpha = .75;
+    for (let q = 0; q < 3; q++) { const y = base + 40 + q * 34 + k * 6, w = 120 - q * 26 - k * 10, x = 820 + 14 * Math.sin(tau * 3 + q + k); c.lineWidth = 7 - q; wob(c, [[x - w / 2, y], [x + w / 2, y]], 1.5, 620 + q + k * 5 + twosSeed(i)); }
+    c.restore();
+  }
+}
+function moon(c, tau, i, k) {
+  if (k <= 0) return;
+  const x = 860, y = 330, r = 78 * k, disc = ellPts(x, y, r, r, 0, 40);
+  fillShape(c, ellPts(x + 8, y + 6, r, r, 0, 40), BLOOD);
+  fillShape(c, disc, RED);
+  c.save(); c.clip(curvePath(disc)); fillShape(c, ellPts(x + r * .55, y + r * .15, r * .95, r * 1.05, 0, 40), BLOOD, .8); c.restore();
+  stroke(c, disc, 5, INK, 641 + twosSeed(i), true);
+}
+// Crime-scene tape: unrolls along its length, then flutters.
+function tape(c, a, b, tau, t0, i, seed) {
+  const u = easeOutExpo(clamp((tau - t0) / .35, 0, 1)); if (u <= 0) return;
+  const len = Math.hypot(b[0] - a[0], b[1] - a[1]) * u, ang = Math.atan2(b[1] - a[1], b[0] - a[0]), hw = 34;
+  const fl = x => 5 * Math.sin(x * .012 + tau * 6 + seed);
+  c.save(); c.translate(a[0], a[1]); c.rotate(ang);
+  const edge = (s) => Array.from({ length: 30 }, (_, q) => { const x = q / 29 * len; return [x, s * hw + fl(x)]; });
+  const top = edge(-1), bot = edge(1).reverse(), band = [...top, ...bot];
+  fillShape(c, band.map(p => [p[0] + 8, p[1] + 9]), INK, .35);
+  fillShape(c, band, YEL);
+  c.save(); c.clip(curvePath(band)); c.fillStyle = INK; c.font = '900 40px "Arial Black", Impact, sans-serif'; c.textBaseline = 'middle';
+  const words = 'CRIME SCENE  ●  DO NOT CROSS  ●  ', step = c.measureText(words).width;
+  for (let x = -((tau * 60) % step); x < len; x += step) c.fillText(words, x, 2 + fl(x));
+  c.restore();
+  c.save(); c.strokeStyle = INK; c.lineWidth = 4; wob(c, top, 1.5, seed + twosSeed(i)); wob(c, bot, 1.5, seed + 1 + twosSeed(i)); c.restore();
+  c.restore();
+}
+// CASE, slammed on like a rubber stamp on a file.
+function stamp(c, x, y, tau, t0, i) {
+  const u = tau - t0; if (u <= 0) return;
+  const fall = clamp(u / .2, 0, 1), s = lerp(2.4, 1, easeIn(fall)), al = lerp(.2, 1, fall);
+  c.save(); c.translate(x, y); c.rotate(-.12); c.scale(s, s); c.globalAlpha = al;
+  c.font = '900 170px Impact, "Arial Black", sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+  const w = c.measureText('CASE').width + 70, h = 200;
+  c.strokeStyle = RED; c.lineWidth = 12; c.strokeRect(-w / 2, -h / 2, w, h); c.lineWidth = 4; c.strokeRect(-w / 2 + 16, -h / 2 + 16, w - 32, h - 32);
+  c.fillStyle = RED; c.fillText('CASE', 0, 8);
+  // worn rubber: paper specks knocked out of the ink (a fixed pattern: it is one stamp)
+  const r = rng(77); c.fillStyle = PAPER; for (let q = 0; q < 260; q++) { const px = (r() - .5) * w, py = (r() - .5) * h, sz = 1 + r() * 4; c.fillRect(px, py, sz, sz * (.5 + r())); }
+  c.restore();
+  // the impact throws ink off the edges
+  const k = u - .2;
+  if (k >= 0 && k < .5) {
+    const rr = rng(78); c.save(); c.fillStyle = RED;
+    for (let q = 0; q < 14; q++) { const a = rr() * TAU, d = 180 + rr() * 140 + k * 260, sz = (4 + rr() * 9) * (1 - k * 1.6); if (sz > 0) { c.beginPath(); c.arc(x + Math.cos(a) * d * 1.3, y + Math.sin(a) * d * .55, sz, 0, TAU); c.fill(); } }
+    c.restore();
+  }
+}
+// Drips running down from under the title's letters.
+const DRIPS = [[300, .1], [395, .25], [560, 0], [655, .35], [770, .15]];
+function drips(c, tau, t0) {
+  DRIPS.forEach(([x, d], q) => {
+    const u = clamp((tau - t0 - d) / 1.1, 0, 1); if (u <= 0) return;
+    const len = 40 + 120 * easeOut(u) * (.6 + hash(q, 5) * .6), y0 = 852, w = 9 + hash(q, 6) * 6;
+    fillShape(c, [[x - w / 2, y0], [x + w / 2, y0], [x + w * .35, y0 + len], [x - w * .35, y0 + len]], BLOOD);
+    fillShape(c, ellPts(x, y0 + len + 4, w * .75, w * .95, 0, 18), BLOOD);
+  });
+}
+// A fingerprint: whorled ridges with gaps.
+function print(c, x, y, s, col, seed) {
+  c.save(); c.translate(x, y); c.rotate(.4); c.strokeStyle = col; c.lineWidth = 4; c.lineCap = 'round';
+  for (let q = 0; q < 11; q++) {
+    const rx = (8 + q * 7) * s / 2, ry = rx * 1.35, gap = .5 + hash(q, seed) * .8, a0 = hash(q, seed + 1) * TAU, pts = [];
+    for (let k = 0; k <= 30; k++) { const a = a0 + gap / 2 + k / 30 * (TAU - gap); pts.push([Math.cos(a) * rx, Math.sin(a) * ry]); }
+    wob(c, pts, 1, seed + q);
+  }
+  c.restore();
+}
+function magnifier(c, tau, t0, i) {
+  const u = easeOutBack(clamp((tau - t0) / .7, 0, 1), 1.2); if (u <= 0) return;
+  const x = lerp(-200, 850, u), y = lerp(1700, 1280, u) + 8 * Math.sin(tau * 4), R = 110;
+  c.save(); c.beginPath(); c.arc(x, y, R, 0, TAU); c.clip(); c.fillStyle = '#eef2ff'; c.fillRect(x - R, y - R, 2 * R, 2 * R); print(c, 860, 1278, 2.4, BLOOD, 660); c.restore();
+  c.save(); c.translate(x, y); c.rotate(.75); fillShape(c, [[R - 4, -18], [R + 150, -22], [R + 154, 22], [R - 4, 18]], INK); c.restore();
+  stroke(c, ellPts(x, y, R, R, 0, 50), 14, INK, 670 + twosSeed(i), true);
+  c.save(); c.strokeStyle = PAPER; c.lineWidth = 6; c.lineCap = 'round'; wob(c, ellPts(x, y, R * .72, R * .72, 0, 50).slice(30, 38), 1, 671); c.restore();
+}
+// Something under the water: a long shadow, and an eye that opens.
+function shadowWhale(c, tau) {
+  const u = sm(.3, 3.4, tau, x => x); if (u <= 0 || u >= 1) return;
+  const x = lerp(-380, 1300, u), y = SEA + 150 - 30 * Math.sin(u * Math.PI);
+  const body = blob(0, 0, 330, 95, 690, { amp: .05 }).map(([px, py]) => [px, py * (px > 0 ? 1 : .55 + .45 * (1 + px / 330))]);
+  c.save(); c.globalAlpha = .85; fillShape(c, put(body, x, y), '#05070f'); fillShape(c, put([[0, 0], [-90, -70], [-70, 0], [-90, 70]], x - 320, y), '#05070f'); c.restore();
+  const eye = sm(1.45, 1.6, tau, x => x) * (1 - sm(2.55, 2.65, tau, x => x));
+  if (eye > 0) {
+    glow(c, x + 230, y - 28, 70, RED, .8 * eye);
+    fillShape(c, ellPts(x + 230, y - 28, 22, 22 * eye, 0, 20), RED); fillShape(c, ellPts(x + 234, y - 28, 6, 14 * eye, 0, 12), '#05070f');
+  }
+}
+function sDeep(c, tau, i) {
+  blank(c);
+  const rise = easeOutBack(sm(0, .5, tau, x => x), 1.2);
+  const hit = tau > 1.25 ? Math.exp(-(tau - 1.25) * 12) * 10 * Math.sin(tau * 95) : 0;
+  c.save(); c.translate(hit * .6, hit);
+  moon(c, tau, i, easeOutBack(sm(.15, .5, tau, x => x), 1.6));
+  for (let q = 0; q < 10; q++) {
+    const t0 = .45 + q * .17, u = tau - t0; if (u <= 0) continue;
+    const y = SEA - u * (300 + hash(q, 2) * 200), x = 80 + hash(q, 3) * 920 + 24 * Math.sin(u * 6 + q), r = 8 + hash(q, 4) * 16;
+    if (y < 1200) continue;
+    c.save(); c.strokeStyle = q % 3 ? INK : RED; c.lineWidth = 3.5; wob(c, ellPts(x, y, r, r, 0, 18), 1, 700 + q + twosSeed(i), true); c.restore();
+  }
+  letters(c, 'The', CX, 600, 104, tau, { t0: .12, stagger: .06, fill: INK, ink2: RED, seed: 21, bob: 2, drop: 260, i });
+  drips(c, tau, 1.3);
+  letters(c, 'Deep Blue', CX, 840, 164, tau, { t0: .3, stagger: .06, fill: '#1c2c63', ink2: RED, stroke: INK, sw: 9, seed: 22, bob: 3, drop: 380, i });
+  stamp(c, CX, 1075, tau, 1.05, i);
+  tape(c, [-120, 440], [1200, 250], tau, .8, i, 630);
+  for (const k of [0, 1, 2]) wave(c, k, tau, i, rise);
+  shadowWhale(c, tau);
+  splashDrops(c, CX, H - 40, tau, { n: 12, seed: 33, vy: 1500, i, life: .55, spread: .9, col: '#26335c' });
+  wave(c, 3, tau, i, rise);
+  tape(c, [-120, 1530], [1200, 1400], tau, .95, i, 632);
+  magnifier(c, tau, 1.55, i);
+  c.restore();
+  // the iris closes on the title and leaves white paper
+  const ir = sm(2.75, 3.2, tau, easeInBack);
+  if (ir > 0) {
+    const R = lerp(1500, 0, ir), cx = CX, cy = 860, ring = put(blob(0, 0, R, R, 950, { amp: .03, n: 72 }), cx, cy);
+    resetT(c); c.save(); c.fillStyle = PAPER; const hole = new Path2D(); hole.rect(0, 0, W, H); hole.addPath(curvePath(ring.slice().reverse(), true)); c.fill(hole, 'evenodd'); c.restore();
+    if (R > 4) { stroke(c, ring, 10, INK, 951 + twosSeed(i), true); stroke(c, put(blob(0, 0, R + 16, R + 16, 952, { amp: .03, n: 72 }), cx, cy), 8, RED, 953 + twosSeed(i), true); }
+  }
+}
+
+defineFilm({
+  palette: makePalette({ paper: PAPER, ink: INK, accents: [PNK, BLU, YEL, LIM], inks: [BLU, PNK, YEL, INK], finish: 'flat' }, 'risoPop'),
+  format: { ar: '9:19.5', width: 720 },
+  timeline: [
+    { name: 'drop', dur: .6, fn: sDrop },
+    { name: 'astral', dur: 2.55, fn: sAstral },
+    { name: 'seed', dur: .4, fn: sSeed },
+    { name: 'greenr', dur: 2.4, fn: sGreenr },
+    { name: 'deep', dur: 3.2, fn: sDeep },
+  ],
+});
+</script>

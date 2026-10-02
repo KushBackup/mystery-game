@@ -634,3 +634,9 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 **What happened:** Notification Center was capped at `max-height: 100%` and closed only by tapping its scrim. On a 320 × 568 phone with a few notifications the panel filled the stage, so there was no scrim left to tap, the Home button ignored it, and the guest could only escape by opening one of the rows. The audit's own Playwright tour got stuck there.
 
 **What to do instead:** Every overlay needs a way out that does not depend on space being left over: a visible handle or Done button, and the hardware-style Home control should close it first. Cap the panel so some scrim always shows. Test overlays at 320 × 568 with the most content they can hold, not the typical amount.
+
+## 2026-10-02 — App.css's reduced-motion rule zeroes every animation delay
+
+**What happened:** The deal's splash lifted with a CSS animation whose `animation-delay` was set to the time left until the role reveal. With reduced motion on, the global rule in App.css (`*, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; }`) ran the lift at once, so the splash was invisible for its whole run. Caught by testing with Playwright's `reducedMotion: 'reduce'`, not by looking at the default case.
+
+**What to do instead:** Never schedule something with `animation-delay` in this app. Time it in JS (a timeout to the room's instant) and let CSS only animate the change, with a transition. Test every new timed overlay once with reduced motion on.

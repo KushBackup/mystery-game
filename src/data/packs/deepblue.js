@@ -30,6 +30,8 @@ import news from './deepblue.news.js';
 export default {
   id: 'deepblue',
   title: 'DEEP BLUE',
+  // The last words of the title film at the deal (os/Splash.jsx): the story's name, never the game's.
+  caseTitle: 'The Deep Blue Case',
   place: 'wherever you are tonight',
   news,
 
@@ -115,6 +117,30 @@ export default {
   // role-specific: a phone face-up on the table must give nothing away.
   // {name} this guest, {day}, {rank} of {n} on the board, {target} who was voted out.
   voice: {
+    // Already in the thread when the phone first opens, dated years before
+    // tonight, already read: the message nobody remembers getting. DEEP BLUE
+    // declaring itself the last word in justice. The premise only, never a
+    // mechanism: nothing here may say who reads the scores.
+    manifesto: {
+      at: '2023-11-03T03:33:00+05:30',
+      lines: [
+        'We are DEEP BLUE.',
+        'The courts are slow. The police can be bought. The guilty walk out smiling. We have watched it for years.',
+        'So we stopped waiting. From tonight, we judge.',
+        'Every morning at 07:00, you will play. Everyone plays. No exceptions. No excuses.',
+        'The weakest is taken. This is not cruelty. This is justice, finally done properly.',
+        'Do not try to delete us. Do not try to find us. We are already in your pocket.',
+        'You will forget you read this. We will not forget you.',
+      ],
+    },
+    // When the morning game opens (alarm, then the game itself), by day; the last repeats.
+    play: [
+      'We are watching you, {name}. Every second, until you play. Don’t you dare skip it. Don’t you dare skimp on it.',
+      'Day {day}. Play now, {name}. We are watching until you do. Half an effort counts as none.',
+      'We see who’s stalling, {name}. We see who’s barely trying. Play it properly.',
+      'Still watching, {name}. Skip it and we’ll know. Coast through it and we’ll know.',
+      'Play like it matters, {name}. It does. We are watching until you do.',
+    ],
     night: [
       'Night {day}. Lights out, {name}. Someone in this room is still awake.',
       'Night {day}. The servers are warm. Sleep well, {name}.',
