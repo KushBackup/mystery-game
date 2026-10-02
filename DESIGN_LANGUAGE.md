@@ -761,6 +761,7 @@ The phone should feel like it lives *inside* the game, not like an app about it.
 | **Light.** The wallpaper dims and cools at night (with stars), brightens at dawn, warms at dusk | `data-time` on `.os-root`, `.os-wall`, `.os-stars` |
 | **First boot.** Once per phone: logo, a stepped progress bar, a chime | `Boot` in [Setup.jsx](src/os/Setup.jsx) |
 | **Terms of Service.** The rules, told as a contract with a cursed app. "Disagree" refuses to work ("There is no disagree") | `Terms` in Setup.jsx |
+| **Your contact card, live.** From the name onward, setup shows the photo the room will see. Each answer it draws (top, glasses) redraws it with a small bump, and the tapped answer holds 0.42 s so the change lands on its own question | `ProfileCard` in Setup.jsx, `.os-bump` |
 | **Chapter cards.** NIGHT 2, INVESTIGATE, THE VOTE, ENDGAME: 2.4 s, only for a phase that began moments ago | `ChapterCard` in [takeovers.jsx](src/os/takeovers.jsx) |
 | **The night console.** Every role's Night app is the same green-phosphor terminal, so a glance reveals nothing | `.os-term` |
 | **Snooze.** The alarm's Snooze button shakes: "DEEP BLUE does not snooze" | `AlarmScreen` |

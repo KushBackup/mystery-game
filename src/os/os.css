@@ -983,10 +983,14 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 .os-choice + .os-choice { border-top: 1px solid #d0d3d9; }
 .os-choice:active, .os-choice[aria-pressed='true'] { background: linear-gradient(#4a9bf5, #0b6fe3); color: #fff; }
 
+/* Setup's live contact photo: a small bump when an answer changes the picture. */
+.os-bump { animation: os-bump 320ms cubic-bezier(0.34, 1.6, 0.5, 1) both; }
+@keyframes os-bump { 0% { scale: 0.9; } 100% { scale: 1; } }
+
 /* ---------------------------------------------------------- 15. Motion off */
 
 @media (prefers-reduced-motion: reduce) {
-  .os-app-enter, .os-pop, .os-rise, .os-glitch, .os-verdict { animation: none !important; }
+  .os-app-enter, .os-pop, .os-rise, .os-bump, .os-glitch, .os-verdict { animation: none !important; }
   .os-banner { animation: os-banner 3.4s steps(1, end) both; }
   .os-alarm__ring, .os-alarm__flash, .os-slide__text { animation: none !important; }
   .os-slide__text { color: #c9d1dc; background: none; }

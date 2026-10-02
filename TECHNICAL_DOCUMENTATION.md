@@ -126,7 +126,7 @@ The user wanted players to discover the mechanics rather than be told them. Rule
 | [seen.js](src/os/seen.js) | Read marks behind every badge, in localStorage only (`deepblue.seen.*`), never Firestore; also `booted` (first boot shown) and `taken` (death screen shown) |
 | [beats.js](src/os/beats.js) | When each reveal's beats land, and `useMaskedPlayers`: a player who dies in the reveal still playing reads as alive until its beat, so no phone (or Contacts, or the group chat) spoils it |
 | [nav.js](src/os/nav.js), [hooks.js](src/os/hooks.js) | `useStack` (push/pop inside an app); `useWorldClock`, `useOnline` |
-| [Setup.jsx](src/os/Setup.jsx) | Arrival as a phone setup assistant |
+| [Setup.jsx](src/os/Setup.jsx) | Arrival as a phone setup assistant, with a live preview of the guest's contact photo (`ProfileCard`, drawn by [Portrait.jsx](src/os/art/Portrait.jsx)) |
 
 The styling is its own system: `--color-os-*` and `--font-pixel/screen/arcade` in `@theme` (all Helvetica Neue / Inter), `.os-*` classes in [src/os/os.css](src/os/os.css), imported into the components layer like App.css. See [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) Part II.
 

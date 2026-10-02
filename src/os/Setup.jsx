@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { TRAITS } from '../data/traits';
 import { GAME } from '../data/killersCopy';
 import { arrive } from '../firebase/game';
 import Wallpaper from './art/Wallpaper';
+import Portrait from './art/Portrait';
 import { SlideToUnlock } from './chrome';
 import { AppFrame, Section, Btn } from './ui';
 import { useSeen, markSeen } from './seen';
@@ -13,6 +14,10 @@ import { primeSfx, sfxTap, sfxDeny, sfxBoot } from './sfx';
  * game it boots (the logo, a filling bar); then "hello" in a few languages,
  * slide to set up, the Terms of Service (which are the rules, told in the
  * fiction), your name, six one-tap questions, "your phone is ready".
+ *
+ * From the name onward a small contact card sits at the top: the photo the
+ * other guests will see (art/Portrait.jsx), redrawn as each answer lands, so
+ * tapping "Yes" to glasses puts glasses on it before the next question.
  *
  * The questions come before anyone has a role, which is the point
  * (data/traits.js): nobody knows yet whether they'll want to lie, so they
@@ -25,6 +30,13 @@ const finishBoot = () => markSeen('booted', true);
 
 const HELLOS = ['hello', 'namaste', 'hola', 'bonjour', 'ciao', 'olá', 'hallo'];
 
+// How long a tapped answer stays on screen before the next question, so the
+// photo visibly changes on the question that changed it.
+const ANSWER_HOLD_MS = 420;
+
+// The answers Portrait actually draws. Keep in step with art/Portrait.jsx.
+const DRAWN = ['top', 'glasses'];
+
 export default function Setup({ gid, uid, late }) {
   const booted = useSeen('booted', false);
   const [step, setStep] = useState('hello'); // (boot) | hello | terms | name | 0..5 | review
@@ -32,6 +44,9 @@ export default function Setup({ gid, uid, late }) {
   const [answers, setAnswers] = useState({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [holding, setHolding] = useState(false);
+  const hold = useRef(0);
+  useEffect(() => () => clearTimeout(hold.current), []);
 
   if (!booted) return <Boot onDone={finishBoot} />;
   if (step === 'hello') return <Hello onDone={() => { primeSfx(); setStep('terms'); }} late={late} />;
@@ -46,7 +61,8 @@ export default function Setup({ gid, uid, late }) {
             if (name.trim()) setStep(0);
           }}
         >
-          <div className="px-5 pt-6">
+          <ProfileCard name={name} answers={answers} />
+          <div className="px-5 pt-4">
             <p className="text-[24px] leading-tight text-os-ink">{late ? 'You made it.' : `Welcome to ${GAME.title}.`}</p>
             <p className="text-[16px] mt-2 text-os-steel">What should the group call you?</p>
           </div>
@@ -65,7 +81,8 @@ export default function Setup({ gid, uid, late }) {
     const trait = TRAITS[step];
     return (
       <AppFrame key={trait.id} title={`${step + 1} of ${TRAITS.length}`} onBack={() => setStep(step === 0 ? 'name' : step - 1)} backLabel="Back" light enter="push">
-        <div className="px-5 pt-6">
+        <ProfileCard name={name} answers={answers} />
+        <div className="px-5 pt-4">
           <p className="os-label text-[12px] text-os-steel">{trait.visible ? 'OTHERS CAN SEE THIS' : 'ONLY YOU KNOW THIS'}</p>
           <p className="text-[24px] leading-tight mt-2 text-os-ink">{trait.prompt}</p>
         </div>
@@ -78,9 +95,14 @@ export default function Setup({ gid, uid, late }) {
                 className="os-choice"
                 aria-pressed={answers[trait.id] === o.id}
                 onClick={() => {
+                  if (holding) return;
                   sfxTap();
                   setAnswers((a) => ({ ...a, [trait.id]: o.id }));
-                  setStep(step + 1 < TRAITS.length ? step + 1 : 'review');
+                  setHolding(true);
+                  hold.current = setTimeout(() => {
+                    setHolding(false);
+                    setStep(step + 1 < TRAITS.length ? step + 1 : 'review');
+                  }, ANSWER_HOLD_MS);
                 }}
               >
                 <span className="flex-1">{o.label}</span>
@@ -106,10 +128,7 @@ export default function Setup({ gid, uid, late }) {
 
   return (
     <AppFrame title="Almost done" onBack={() => setStep(TRAITS.length - 1)} light>
-      <div className="px-5 pt-6">
-        <p className="text-[26px] leading-tight text-os-ink">{name.trim()}</p>
-        <p className="text-[15px] text-os-steel mt-1">{GAME.title}</p>
-      </div>
+      <ProfileCard name={name} answers={answers} caption={GAME.title} />
       <Section head="Your answers" foot="These lock when the roles are dealt. Tap one to change it.">
         <div className="os-group">
           {TRAITS.map((t, i) => (
@@ -126,6 +145,28 @@ export default function Setup({ gid, uid, late }) {
       </Section>
       <div className="h-8" />
     </AppFrame>
+  );
+}
+
+/**
+ * The guest's contact card as it is being made: the photo the room will see
+ * and the name. The photo bumps only when a drawn answer changes it, so a
+ * birthday or a drink never pretends to alter the picture.
+ */
+function ProfileCard({ name, answers, caption = 'How the others will see you' }) {
+  const drawn = DRAWN.map((t) => answers[t] ?? '').join('|');
+  // Each question is a fresh screen; bump on a change, not on arrival.
+  const [arrived] = useState(drawn);
+  return (
+    <div className="flex items-center gap-4 px-5 pt-5">
+      <div key={drawn} className={drawn !== arrived ? 'os-bump' : ''}>
+        <Portrait traits={answers} size={64} rounded={6} className="os-face" />
+      </div>
+      <div className="min-w-0">
+        <p className={`text-[22px] leading-tight truncate ${name.trim() ? 'text-os-ink' : 'text-os-steel/60'}`}>{name.trim() || 'Your name'}</p>
+        <p className="text-[14px] text-os-steel mt-0.5">{caption}</p>
+      </div>
+    </div>
   );
 }
 

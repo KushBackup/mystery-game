@@ -9,6 +9,9 @@ import React, { useId } from 'react';
  *
  * The top colours are the clothes themselves, so they are drawn as clothes,
  * not as UI colour. A ghost's photo is the same picture, faded to grey.
+ *
+ * It draws two answers, top and glasses. Setup's live preview bumps when one
+ * of those changes (DRAWN in os/Setup.jsx); add a drawn answer there too.
  */
 
 const TOPS = {
