@@ -6,9 +6,9 @@ import { SlideToUnlock } from './chrome';
 import { useWorldClock } from './hooks';
 import { hhmm } from './words';
 import { Btn } from './ui';
-import { useSyncedReveal, useKillerIds, useMyAction } from '../hooks/useKillers';
+import { useSyncedReveal, useMyAction } from '../hooks/useKillers';
 import { submitAction } from '../firebase/game';
-import { ROLE_CARD } from '../data/killersCopy';
+import RoleMessage from './RoleMessage';
 import { alarmLine, narrate, dayKit } from '../data/packs/index.js';
 import { weatherLine } from './weather';
 import { startAlarm, stopAlarm, sfxSting, sfxPing, sfxDeny, sfxNightfall, sfxDaybreak, sfxStatic } from './sfx';
@@ -65,7 +65,7 @@ export function AlarmScreen({ game, pack, onStop }) {
           </div>
         )}
         <SlideToUnlock label="slide to stop" tone="red" glyph="cross" onDone={() => { stopAlarm(); onStop(); }} />
-        <p className="os-label text-[11px] text-os-chrome text-center mt-3">{(today?.title ?? 'THE RUN')} STARTS WHEN THE ALARM ENDS</p>
+        <p className="os-label text-[11px] text-os-chrome text-center mt-3">TODAY · {today?.title ?? 'THE RUN'}</p>
       </div>
     </div>
   );
@@ -74,15 +74,13 @@ export function AlarmScreen({ game, pack, onStop }) {
 /**
  * Casting: the role arrives as a text from DEEP BLUE. The lock-screen beat
  * before it holds every phone on the same second, so a table flips together.
+ * It says who you are and nothing about how: a Killer finds their partners
+ * when the group appears in Messages (threads.js), not here. The role itself
+ * is sealed until tapped, and looks the same on every phone (RoleMessage).
  */
-/** The emblem on the role text: private to this screen, never on the home screen. */
-const ROLE_GLYPH = { killer: 'skull', faithful: 'heart', doctor: 'shield', detective: 'eye', medium: 'ghost' };
-
-export function RoleText({ game, gid, role, nameOf, onDone }) {
+export function RoleText({ game, role, onDone }) {
   const phase = useSyncedReveal(game.revealAt);
   const shown = phase === 'show' && Boolean(role);
-  const isKiller = role?.role === 'killer';
-  const mates = useKillerIds(gid, isKiller);
 
   useEffect(() => {
     if (shown) sfxSting();
@@ -102,8 +100,6 @@ export function RoleText({ game, gid, role, nameOf, onDone }) {
     );
   }
 
-  const card = ROLE_CARD[role.role] ?? ROLE_CARD.faithful;
-  const partners = (mates ?? []).filter((p) => p !== role.id);
   return (
     <div className="os-alarm os-alarm--light os-pinstripe">
       <header className="os-nav"><span /><h1 className="os-nav__title">DEEP BLUE</h1><span /></header>
@@ -111,22 +107,10 @@ export function RoleText({ game, gid, role, nameOf, onDone }) {
         <p className="os-stamp-time">Today {hhmm(new Date())}</p>
         <div className="os-bubble-row os-rise"><div className="os-bubble">Welcome to DEEP BLUE. Read this alone.</div></div>
         <div className="os-bubble-row os-rise" style={{ animationDelay: '500ms' }}>
-          <div className={`os-bubble ${isKiller ? 'os-bubble--alert' : ''}`} style={{ maxWidth: '88%' }}>
-            <span className={`os-role-emblem os-role-emblem--${role.role}`} aria-hidden="true"><Glyph name={ROLE_GLYPH[role.role] ?? 'heart'} size={30} /></span>
-            <p className="os-label text-[12px] opacity-80">YOU ARE</p>
-            <p className="os-arcade text-[29px] leading-tight my-2">{card.title.toUpperCase()}</p>
-            <p className="text-[17px] leading-snug">{card.line}</p>
-          </div>
+          <RoleMessage role={role} />
         </div>
-        <div className="os-bubble-row os-rise" style={{ animationDelay: '1000ms' }}><div className="os-bubble">{card.tip}</div></div>
-        {isKiller && partners.length > 0 && (
-          <div className="os-bubble-row os-rise" style={{ animationDelay: '1400ms' }}>
-            <div className="os-bubble os-bubble--alert">Your partners: <b>{partners.map(nameOf).join(', ')}</b>. Find them in the Night app.</div>
-          </div>
-        )}
-        <div className="px-2 pt-6 pb-4 os-rise" style={{ animationDelay: '1700ms' }}>
+        <div className="px-2 pt-6 pb-4 os-rise" style={{ animationDelay: '1100ms' }}>
           <Btn onClick={onDone}>Got it. Tell no one.</Btn>
-          <p className="text-center text-[13px] text-os-steel mt-2">You can reread it any time in Notes.</p>
         </div>
       </div>
     </div>
@@ -187,9 +171,9 @@ export const GoneScreen = () => (
  */
 const CHAPTERS = {
   night: (g, pack) => ({ title: `NIGHT ${g.cycle}`, sub: narrate(pack, 'night')[0], glyph: 'moon', sound: sfxNightfall }),
-  investigation: () => ({ title: 'INVESTIGATE', sub: 'Check your photos. Ask about shoes, tops, glasses, drinks.', glyph: 'eye', sound: sfxDaybreak }),
+  investigation: (g, pack) => ({ title: 'DAYLIGHT', sub: narrate(pack, 'investigation')[0], glyph: 'eye', sound: sfxDaybreak }),
   roundtable: () => ({ title: 'THE VOTE', sub: 'Who gets logged out?', glyph: 'vote', sound: sfxDaybreak }),
-  endgame: (g) => ({ title: 'ENDGAME', sub: `Final vote ${g.endgameRound ?? 1}. The dead vote too.`, glyph: 'skull', sound: sfxNightfall }),
+  endgame: (g) => ({ title: 'ENDGAME', sub: `Final vote ${g.endgameRound ?? 1}.`, glyph: 'skull', sound: sfxNightfall }),
 };
 
 export function ChapterCard({ game, pack }) {
@@ -214,8 +198,10 @@ export function ChapterCard({ game, pack }) {
 
 /**
  * Taken. The moment your own phone finds out you're dead: the signal dies in
- * static, then it tells you what a ghost can still do. Shown once per death,
- * only after the room has seen it on the board (beats.js), never before.
+ * static, and that is all it says. What a ghost can still do, the phone shows
+ * by doing it (Spirits appears in Messages, Night lights up at night). Shown
+ * once per death, only after the room has seen it on the board (beats.js),
+ * never before.
  */
 export function TakenScreen({ me, onDone }) {
   const [lost, setLost] = useState(true);
@@ -236,14 +222,9 @@ export function TakenScreen({ me, onDone }) {
             <div className="inline-grid place-items-center w-20 h-20 rounded-2xl bg-os-steel/40 text-os-foam"><Glyph name="ghost" size={44} /></div>
             <p className="os-arcade text-[23px] leading-snug mt-6 text-white">{banished ? 'LOGGED OUT' : 'TAKEN BY THE DEEP'}</p>
             <p className="text-[18px] leading-snug mt-4 text-os-foam os-balance">
-              {banished ? 'The group voted you out.' : me.cause === 'deep' ? 'Yours was the lowest honest score.' : 'Someone rigged your score to the bottom.'} Your phone is haunted now.
+              {banished ? 'The group voted you out. ' : ''}Your phone is haunted now.
             </p>
-            <ul className="mt-5 space-y-2 text-left text-[16px] text-os-chrome">
-              <li className="flex gap-3"><Glyph name="moon" size={16} /> Each night, whisper one word to one living guest.</li>
-              <li className="flex gap-3"><Glyph name="chat" size={16} /> Talk to the Medium in Spirits. Read The Room.</li>
-              <li className="flex gap-3"><Glyph name="vote" size={16} /> Vote in the Endgame. Your team still wins with you.</li>
-            </ul>
-            <div className="mt-7"><Btn tone="dark" onClick={onDone}>Continue as a ghost</Btn></div>
+            <div className="mt-7"><Btn tone="dark" onClick={onDone}>Continue</Btn></div>
           </div>
         )}
       </div>

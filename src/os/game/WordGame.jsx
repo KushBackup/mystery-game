@@ -54,7 +54,6 @@ export default function WordGame({ ctx, onClose, dayGame }) {
       </div>
 
       {step === 'clue' && alive && card && !mine && <ClueForm gid={gid} c={c} me={me} card={card} players={players} />}
-      {step === 'clue' && mine && <p className="px-4 mt-3 text-[15px] text-os-chrome">Posted. Now read the wall. Who is guessing?</p>}
 
       {(step === 'clue' || step === 'pick' || step === 'done' || after) && (
         <Section head={after ? `The wall · ${wall.length} clues` : step === 'pick' ? `Tap ${WORD_PICKS} · ${picks.length} picked` : `The wall · ${wall.length} so far`}>
@@ -83,11 +82,10 @@ export default function WordGame({ ctx, onClose, dayGame }) {
               })}
             </ol>
           ) : (
-            <Empty glyph="dots" title="NOTHING YET" line="Clues appear here the moment they are posted." />
+            <Empty glyph="dots" title="NOTHING YET" />
           )}
         </Section>
       )}
-      {after && <p className="px-4 pb-6 text-[14px] text-os-chrome os-balance">Numbers show the order clues landed in. Late posters had time to read everyone else.</p>}
     </AppFrame>
   );
 }
@@ -108,7 +106,6 @@ function WordCard({ word, hint, after, watching, ghost, compact }) {
     return (
       <div className="os-daycard">
         <p className="os-label text-[11px] text-os-chrome">{ghost ? 'GHOSTS WATCH THIS ONE' : 'YOU’RE WATCHING TODAY'}</p>
-        <p className="text-[16px] mt-2 os-balance">Read the wall. Then pick the clues that fit best.</p>
       </div>
     );
   }
@@ -117,7 +114,7 @@ function WordCard({ word, hint, after, watching, ghost, compact }) {
       <div className="os-daycard os-daycard--hint">
         <p className="os-label text-[11px]">YOUR HINT</p>
         <p className={big}>{hint}</p>
-        {!compact && <p className="text-[15px] mt-1 os-balance">You don’t know the word. Read the wall, then blend in.</p>}
+        {!compact && <p className="text-[15px] mt-1 os-balance">You don’t have the word.</p>}
       </div>
     );
   }
@@ -125,7 +122,7 @@ function WordCard({ word, hint, after, watching, ghost, compact }) {
     <div className="os-daycard">
       <p className="os-label text-[11px] text-os-chrome">THE WORD</p>
       <p className={big}>{word}</p>
-      {!compact && <p className="text-[14px] text-os-chrome mt-1">Never say it. The Killers only see: {hint}</p>}
+      {!compact && <p className="text-[14px] text-os-chrome mt-1">The Killers only see: {hint}</p>}
     </div>
   );
 }
@@ -170,7 +167,6 @@ function ClueForm({ gid, c, me, card, players }) {
       />
       {error && <p className="text-[14px] text-os-red mt-2">{error}</p>}
       <Btn type="submit" className="mt-3" busy={busy} disabled={!text.trim()}>Post to the wall</Btn>
-      <p className="text-[13px] text-os-chrome mt-2">You get one. Everyone sees it, and when you posted it.</p>
     </form>
   );
 }

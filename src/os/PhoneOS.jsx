@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow, useAllTraits } from '../hooks/useKillers';
+import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow, useAllTraits, useKillerGroup } from '../hooks/useKillers';
 import { serverNow } from '../lib/clockSkew';
 import { nowLine, PHASE_LABEL, deliveryLine } from '../data/killersCopy';
+import { dayKit } from '../data/packs/index.js';
 import { StatusBar, HomeBar, HomeScreen, LockScreen, Banner, NotificationCenter, NCTile } from './chrome';
 import { AlarmScreen, RoleText, IncomingCall, GoneScreen, ChapterCard, TakenScreen } from './takeovers';
 import { threadsFor, preview as threadPreview } from './threads';
@@ -27,31 +28,50 @@ import WeatherApp from './apps/WeatherApp';
 /**
  * The DEEP BLUE phone: a guest's whole game, as an iPhone-era home screen.
  *
- * The phase drives the phone the way the host drives the room. Each phase
- * opens the app it belongs to (the Night app at night, the day's game in the morning,
- * News for the board, the poll for the vote), a chapter card marks the turn
- * of the day, and a few moments take the whole screen: the role text at
- * casting, the alarm every morning, the recruit call, and your own death.
- * The Home button always goes home; the next phase change always brings the
- * right app back. A guest who never touches the home screen still plays the
- * whole game.
+ * The phone never opens an app by itself, and never explains a rule
+ * (decided 2026-10-02: players discover the game). A phase change nudges
+ * instead: a chapter card marks the turn of the day, a banner says something
+ * happened ("The board is up."), a badge sits on the app that wants you, and
+ * the NowCard at the top of the home screen opens it if tapped. A few
+ * moments still take the whole screen, because a real phone does that too:
+ * the role text at casting, the alarm every morning, the recruit call, and
+ * your own death.
  *
  * What the room hasn't been told yet, this phone doesn't show: a death lands
  * in the data a few seconds before the reveal plays, so the roster (and your
  * own status) is masked until the reveal's beat (beats.js).
  */
 
-const AUTO = {
+/** The app a phase is about. Only ever opened by a tap: the NowCard, a banner, a badge. */
+const SUGGEST = {
+  lobby: 'deepblue',
   night: 'night',
   recruit: 'night',
+  alarm: 'deepblue',
   game: 'deepblue',
   game_locked: 'deepblue',
   dawn: 'news',
+  investigation: 'gallery',
   roundtable: 'vote',
   revote: 'vote',
   endgame: 'vote',
   banish: 'news',
   finale: 'news',
+};
+
+/**
+ * The banner a phase start drops on every phone. No names, ever: a banner
+ * lands with the phase, which for the board and the verdict is seconds
+ * before the reveal says who (beats.js).
+ */
+const PHASE_BANNER = {
+  game: (g, pack) => ({ icon: 'deepblue', title: 'DEEP BLUE', text: `${dayKit(pack).dayGames[g.minigame ?? 'run']?.title ?? 'The run'} has started.`, app: 'deepblue' }),
+  dawn: () => ({ icon: 'news', title: 'News', text: 'The board is up.', app: 'news' }),
+  banish: () => ({ icon: 'news', title: 'News', text: 'The verdict is in.', app: 'news' }),
+  finale: () => ({ icon: 'news', title: 'News', text: 'It’s over.', app: 'news' }),
+  roundtable: () => ({ icon: 'messages', title: 'The Room', text: 'DEEP BLUE created a poll', app: 'vote' }),
+  revote: () => ({ icon: 'messages', title: 'The Room', text: 'DEEP BLUE created a new poll', app: 'vote' }),
+  endgame: () => ({ icon: 'messages', title: 'The Room', text: 'DEEP BLUE created a poll', app: 'vote' }),
 };
 
 /** Phases that open with a chapter card (takeovers.jsx). */
@@ -103,6 +123,40 @@ export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = 
     return () => {
       vv.removeEventListener('resize', fit);
       vv.removeEventListener('scroll', fit);
+    };
+  }, []);
+
+  // Pin the page itself. iOS Safari ignores `overscroll-behavior` on the
+  // document and rubber-bands the whole fixed phone, so the CSS lock
+  // (`html.os-locked`) is paired with a touchmove veto: a drag is allowed only
+  // inside an element that can really scroll that way (an `.os-scroll` list,
+  // a textarea); anywhere else it is cancelled.
+  useEffect(() => {
+    const html = document.documentElement;
+    html.classList.add('os-locked');
+    const canScroll = (el, dy) => {
+      for (let n = el; n && n !== html; n = n.parentElement) {
+        const oy = getComputedStyle(n).overflowY;
+        if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight) {
+          if (dy > 0 && n.scrollTop > 0) return true; // finger down: content moves down, needs room above
+          if (dy < 0 && n.scrollTop + n.clientHeight < n.scrollHeight - 1) return true;
+        }
+      }
+      return false;
+    };
+    let startY = 0;
+    const onStart = (e) => { startY = e.touches[0]?.clientY ?? 0; };
+    const onMove = (e) => {
+      if (e.touches.length > 1) { e.preventDefault(); return; } // pinch
+      const dy = (e.touches[0]?.clientY ?? 0) - startY;
+      if (!canScroll(e.target, dy)) e.preventDefault();
+    };
+    document.addEventListener('touchstart', onStart, { passive: true });
+    document.addEventListener('touchmove', onMove, { passive: false });
+    return () => {
+      html.classList.remove('os-locked');
+      document.removeEventListener('touchstart', onStart);
+      document.removeEventListener('touchmove', onMove);
     };
   }, []);
 
@@ -163,6 +217,8 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const chat = useChannel(gid, 'chat');
   const spirits = useChannel(gid, 'mediumChat', spiritsOk);
   const den = useChannel(gid, 'denChat', isKiller);
+  // The Killers' group: who is in it, and when DEEP BLUE added them (threads.js).
+  const mates = useKillerGroup(gid, isKiller);
   const myVote = useMyVote(gid, game.ballot, me.pid);
   const myScore = useMyScore(gid, game.cycle, me.pid);
   const action = useMyAction(gid, game.cycle, me.pid);
@@ -170,27 +226,29 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   // Everyone's arrival answers (Contacts, Notes). Frozen at the deal, so this listener is nearly silent.
   const traits = useAllTraits(gid);
 
-  // --- Which app is open: the phase's app on every phase change, the guest's
-  // choice in between. A phase change also decides whether a chapter card
-  // plays: only for a phase that began moments ago.
+  // --- Which app is open: only ever the guest's choice. A phase change leaves
+  // it alone and decides whether a chapter card plays: only for a phase that
+  // began moments ago.
   const phaseKey = `${phase}:${game.cycle}:${game.ballot ?? ''}`;
-  const freshPhase = () => serverNow() - Math.max(game.revealAt || 0, game.phaseStartedAt || 0) < 3500;
-  const [nav, setNav] = useState({ app: AUTO[phase] ?? null, key: phaseKey, origin: '50% 50%', chapter: null });
+  const phaseAt = Math.max(game.revealAt || 0, game.phaseStartedAt || 0);
+  const freshPhase = () => serverNow() - phaseAt < 3500;
+  const [nav, setNav] = useState({ app: null, key: phaseKey, origin: '50% 50%', chapter: null, thread: null });
   if (nav.key !== phaseKey) {
-    setNav({ app: phase in AUTO ? AUTO[phase] : nav.app, key: phaseKey, origin: '50% 50%', chapter: CHAPTERS.has(phase) && freshPhase() ? phaseKey : null });
+    setNav({ ...nav, key: phaseKey, chapter: CHAPTERS.has(phase) && freshPhase() ? phaseKey : null });
   }
-  const current = nav.key === phaseKey ? nav : { ...nav, app: phase in AUTO ? AUTO[phase] : nav.app, chapter: null };
+  const current = nav.key === phaseKey ? nav : { ...nav, chapter: null };
   const app = current.app;
 
   // Closing an app zooms it back into its icon; the element stays mounted until the zoom ends.
   const [closing, setClosing] = useState(null);
   const stageRef = useRef(null);
-  const open = (name, point) => {
+  // `thread` opens Messages straight into one conversation (a banner from it).
+  const open = (name, point, thread = null) => {
     let origin = '50% 50%';
     const r = stageRef.current?.getBoundingClientRect();
     if (point && r) origin = `${((point.x - r.left) / r.width) * 100}% ${((point.y - r.top) / r.height) * 100}%`;
     setClosing(null);
-    setNav({ ...current, app: name, key: phaseKey, origin });
+    setNav({ ...current, app: name, key: phaseKey, origin, thread });
   };
   const home = () => {
     if (!app) return;
@@ -219,6 +277,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const seen = {
     room: useSeen(`${gid}.read.room`, 0),
     spirits: useSeen(`${gid}.read.spirits`, 0),
+    den: useSeen(`${gid}.read.den`, 0),
     deepblue: useSeen(`${gid}.read.deepblue`, 0),
     unknown: useSeen(`${gid}.read.unknown`, 0),
   };
@@ -235,7 +294,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   // DEEP BLUE's own lines to this guest (voice.js), shown in its Messages thread.
   const voice = useVoice(gid, game, me, pack, nameOf);
 
-  const ctxBase = { gid, uid, game, me, role, players, inbox, pack, nameOf, chat, spirits, den, myVote, myScore, news, traits, voice };
+  const ctxBase = { gid, uid, game, me, role, players, inbox, pack, nameOf, chat, spirits, den, mates: isKiller ? mates : null, myVote, myScore, news, traits, voice };
   const threads = threadsFor(ctxBase, seen);
   const acted = isKiller ? (denPicks ?? []).some((d) => d.pid === me.pid && (d.victim || d.recruit)) : Boolean(action);
   const needsNight = phase === 'night' && ['alive', 'ghost'].includes(me.status) && !acted;
@@ -287,11 +346,17 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   ];
 
   // --- Banner: the newest arrival since this phone opened, unless you're
-  // looking at it. A burst (the morning's photos) reads as one line.
+  // looking at it. A burst (the morning's photos) reads as one line. A phase
+  // start is an arrival too (PHASE_BANNER): it is how the board, the vote and
+  // the morning game find a guest, now that nothing opens by itself.
   const [mountAt] = useState(() => serverNow());
   const myPid = me.pid;
   const banner = (() => {
     const fresh = [];
+    const phaseNote = PHASE_BANNER[phase]?.(game, pack);
+    if (phaseNote && phaseAt > mountAt && app !== phaseNote.app) {
+      fresh.push({ id: `phase:${phaseKey}`, at: phaseAt, kind: 'phase', ...phaseNote });
+    }
     for (const d of inbox) {
       // The day's word arrives with the alarm and is shown in the game itself, never on a banner.
       if ((d.at ?? 0) <= mountAt || ['recruitOffer', 'word', 'draw'].includes(d.kind)) continue;
@@ -300,10 +365,11 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
       fresh.push({ id: d.id, at: d.at, icon: photo ? 'gallery' : 'messages', title: photo ? 'Photos' : 'DEEP BLUE', text: photo ? `New photo · ${photoSource(d)}` : deliveryLine(d, nameOf), app: photo ? 'gallery' : 'messages', kind: photo ? 'photo' : 'system' });
     }
     if (app !== 'messages') {
-      for (const [list, title] of [[chat, 'The Room'], [spirits, 'Spirits']]) {
-        for (const m of list ?? []) {
-          if ((m.at ?? 0) <= mountAt || m.pid === myPid) continue;
-          fresh.push({ id: m.id, at: m.at, icon: 'messages', title, text: `${m.name}: ${m.text}`, app: 'messages', kind: title });
+      for (const t of threads) {
+        if (!['room', 'spirits', 'den'].includes(t.id)) continue;
+        for (const m of t.list) {
+          if ((m.at ?? 0) <= mountAt || (m.pid && m.pid === myPid)) continue;
+          fresh.push({ id: m.id, at: m.at, icon: 'messages', title: t.title, text: threadPreview(t.id, m, ctxBase), app: 'messages', thread: t.id === 'room' ? null : t.id, kind: t.id });
         }
       }
     }
@@ -316,11 +382,17 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
     return { ...top, text: `${burst} ${what}` };
   })();
 
-  const lastBanner = useRef(null);
+  // Each banner plays once. Leaving the app that hid it (Messages, say) must
+  // not replay an old one, so the shown ids are remembered and only a new
+  // one takes the slot. Adjusted during render, like `wasLocked` above.
+  const [shownBanner, setShownBanner] = useState({ ids: [], current: null });
+  if (banner && !shownBanner.ids.includes(banner.id)) {
+    setShownBanner({ ids: [...shownBanner.ids.slice(-60), banner.id], current: banner });
+  }
+  const bannerNow = shownBanner.current;
   useEffect(() => {
-    if (banner && banner.id !== lastBanner.current) sfxPing();
-    lastBanner.current = banner?.id ?? null;
-  }, [banner]);
+    if (bannerNow) sfxPing();
+  }, [bannerNow]);
 
   // Browsers only let audio start from a gesture: the first tap anywhere unlocks it.
   useEffect(() => {
@@ -331,17 +403,16 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const ctx = { ...ctxBase, open: (name) => open(name), close: home };
   const ghost = me.status === 'ghost';
   const label = (PHASE_LABEL[phase] ?? '').toUpperCase();
-  const line = phase === 'lobby'
-    ? 'You’re in. While you wait for the host, practise DEEP BLUE.'
-    : nowLine({ phase, role: role?.role, status: me.status, isRecruitTarget: offered, hasActed: acted && phase === 'night', minigame: game.minigame ?? 'run' });
-  const suggested = AUTO[phase] ?? (phase === 'lobby' ? 'deepblue' : phase === 'investigation' ? 'gallery' : null);
+  // Role-neutral on purpose: the home screen is what the guest beside you sees.
+  const line = nowLine({ phase, status: me.status, hasActed: acted && phase === 'night', cycle: game.cycle, minigame: game.minigame ?? 'run', pack });
+  const suggested = SUGGEST[phase] ?? null;
 
   // --- What takes the whole screen right now.
   let takeover = null;
   if (me.status === 'vanished') takeover = <GoneScreen />;
   else if (showTaken) takeover = <TakenScreen me={realMe} onDone={() => { markSeen(`${gid}.taken`, realMe.diedCycle); setHomeIn((n) => n + 1); }} />;
-  else if (phase === 'casting' && !roleRead) takeover = <RoleText game={game} gid={gid} role={role} nameOf={nameOf} onDone={() => { setRoleRead(true); setHomeIn((n) => n + 1); }} />;
-  else if (phase === 'alarm' && alarmOff !== game.cycle) takeover = <AlarmScreen game={game} pack={pack} onStop={() => { setAlarmOff(game.cycle); open('deepblue'); }} />;
+  else if (phase === 'casting' && !roleRead) takeover = <RoleText game={game} role={role} onDone={() => { setRoleRead(true); setHomeIn((n) => n + 1); }} />;
+  else if (phase === 'alarm' && alarmOff !== game.cycle) takeover = <AlarmScreen game={game} pack={pack} onStop={() => { setAlarmOff(game.cycle); setHomeIn((n) => n + 1); }} />;
   else if (phase === 'recruit' && offered && me.status === 'alive') takeover = <IncomingCall gid={gid} game={game} me={me} />;
   else if (phase === 'lobby' && !unlocked) {
     const here = players.filter((p) => p.status === 'alive').length;
@@ -382,13 +453,13 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
           style={{ '--os-origin': current.origin }}
           onAnimationEnd={(e) => { if (!app && e.target === e.currentTarget) setClosing(null); }}
         >
-          <App ctx={ctx} onClose={home} />
+          <App ctx={ctx} onClose={home} thread={current.thread} />
         </div>
       )}
       {!takeover && current.chapter && <ChapterCard key={current.chapter} game={game} pack={pack} />}
       {takeover}
-      {!takeover && banner && (
-        <Banner key={banner.id} icon={banner.icon} title={banner.title} text={banner.text} onOpen={() => open(banner.app)} />
+      {!takeover && bannerNow && (
+        <Banner key={bannerNow.id} icon={bannerNow.icon} title={bannerNow.title} text={bannerNow.text} onOpen={() => open(bannerNow.app, null, bannerNow.thread ?? null)} />
       )}
     </PhoneFrame>
   );

@@ -3,7 +3,6 @@ import { AppFrame, Section, Group, Cell } from '../ui';
 import { useStack } from '../nav';
 import { ROLE_CARD } from '../../data/killersCopy';
 import { TRAITS } from '../../data/traits';
-import { useKillerIds } from '../../hooks/useKillers';
 import { useSeen, markSeen, noteKey } from '../seen';
 
 /**
@@ -60,7 +59,7 @@ function TraitsNote({ ctx, onBack }) {
   const traits = ctx.traits?.[ctx.me.pid];
   return (
     <AppFrame title="My answers" onBack={onBack} backLabel="Notes" light enter="push">
-      <Section head="What I answered at the door" foot="Clues describe the killer in these terms. Killers answered too, before they knew. Every phone can read these in Contacts, so a lie has to beat the file.">
+      <Section head="What I answered at the door">
         <Group>
           {TRAITS.map((t) => (
             <Cell
@@ -75,21 +74,16 @@ function TraitsNote({ ctx, onBack }) {
   );
 }
 
-/** The role, on a legal pad. Killers see their partners; the Detective their checks. */
+/** The role, on a legal pad: the same one line the role text said. */
 function RoleNote({ ctx, onBack }) {
-  const { role, gid, nameOf } = ctx;
-  const isKiller = role?.role === 'killer';
-  const mates = useKillerIds(gid, isKiller);
+  const { role } = ctx;
   const card = ROLE_CARD[role?.role] ?? ROLE_CARD.faithful;
-  const partners = (mates ?? []).filter((p) => p !== role?.id && p !== ctx.me.pid);
   return (
     <AppFrame title="Who I am" onBack={onBack} backLabel="Notes" bodyClass="os-legal" enter="push">
       <div className="pl-10 pr-4 pt-[3px] text-[18px] leading-[26px] text-[#2a2208]">
         <p>You are</p>
-        <p className={`os-arcade text-[26px] leading-[26px] ${isKiller ? 'text-os-red' : ''}`}>{card.title.toUpperCase()}</p>
+        <p className="os-arcade text-[26px] leading-[26px]">{card.title.toUpperCase()}</p>
         <p className="mt-[26px]">{card.line}</p>
-        <p className="mt-[26px] opacity-80">{card.tip}</p>
-        {isKiller && partners.length > 0 && <p className="mt-[26px]">Partners: <b>{partners.map(nameOf).join(', ')}</b></p>}
       </div>
     </AppFrame>
   );

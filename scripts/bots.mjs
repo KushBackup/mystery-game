@@ -105,8 +105,8 @@ async function act(bot, gid, game) {
   if (bot.role === 'killer') {
     const mates = (await getDocs(collection(bot.db, 'games', gid, 'killers'))).docs.map((d) => d.id);
     const faithful = alive.filter((p) => !mates.includes(p.pid));
-    const choice = { victim: rnd(faithful)?.pid ?? null, hand: rnd(mates), rig: rnd(['zero', 'under']), pid: bot.pid, cycle: c };
-    if (c === 2) choice.frame = rnd(faithful)?.pid ?? null;
+    // Only what the phone's poll sends (KillPoll): the engine picks the hand and the rig.
+    const choice = { victim: rnd(faithful)?.pid ?? null, pid: bot.pid, cycle: c };
     if (Math.random() < 0.5) choice.recruit = rnd(faithful)?.pid ?? null;
     return setDoc(G(bot, gid, 'den', `${c}_${bot.pid}`), choice);
   }

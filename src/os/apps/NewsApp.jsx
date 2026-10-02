@@ -118,7 +118,7 @@ function BoardReveal({ ctx }) {
             <p className="os-arcade text-[18px] text-white">…and last place</p>
           ) : takenPid ? (
             <div className="os-glitch">
-              {d.cause === 'deep' && <p className="text-[14px] text-os-chrome mb-2">A firewall blocked the rig on {nameOf(d.attempted)}. So the deep took the lowest honest score.</p>}
+              {d.cause === 'deep' && <p className="text-[14px] text-os-chrome mb-2">Someone was after {nameOf(d.attempted)}. They missed.</p>}
               <div className="flex items-center justify-center gap-3">
                 <Face traits={ctx.traits} pid={takenPid} ghost size={48} round />
                 <div className="text-left">
@@ -145,9 +145,9 @@ function BoardReveal({ ctx }) {
             <div className="mx-3 mt-4 rounded-lg bg-os-red/90 p-4 text-white">
               <p className="os-label text-[12px]">YOU WERE TAKEN</p>
               {d.cause === 'rig' ? (
-                <p className="text-[22px] mt-2">{myScore ? <>Your real best was <b className="os-arcade text-[17px]">{myScore.best ?? 0}</b>. </> : 'You played. '}The board says <b className="os-arcade text-[17px]">{lastRow?.score ?? 0}</b>. Someone rigged it. You're a ghost now: you still whisper, and you vote at the end.</p>
+                <p className="text-[22px] mt-2">{myScore ? <>Your real best was <b className="os-arcade text-[17px]">{myScore.best ?? 0}</b>. </> : 'You played. '}The board says <b className="os-arcade text-[17px]">{lastRow?.score ?? 0}</b>.</p>
               ) : (
-                <p className="text-[17px] mt-2">Yours was the lowest honest score. You're a ghost now: you still whisper, and you vote at the end.</p>
+                <p className="text-[17px] mt-2">You came last.</p>
               )}
             </div>
           )}

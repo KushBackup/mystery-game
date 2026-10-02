@@ -45,10 +45,10 @@ export default function DrawGame({ ctx, onClose, dayGame }) {
       )}
       {step === 'draw' && (card && me.status === 'alive'
         ? <DrawStep gid={gid} c={c} me={me} word={card.word} />
-        : <div className="px-4 pt-4"><div className="os-daycard"><p className="os-label text-[11px] text-os-chrome">{me.status === 'ghost' ? 'GHOSTS DON’T DRAW' : 'YOU’RE NOT DRAWING TODAY'}</p><p className="text-[16px] mt-2">Get ready to guess.</p></div></div>)}
+        : <div className="px-4 pt-4"><div className="os-daycard"><p className="os-label text-[11px] text-os-chrome">{me.status === 'ghost' ? 'GHOSTS DON’T DRAW' : 'YOU’RE NOT DRAWING TODAY'}</p></div></div>)}
       {step === 'guess' && (canGuess
         ? <GuessStep gid={gid} game={game} me={me} drawings={drawings} nameOf={nameOf} />
-        : <Empty glyph="dots" title="WATCHING" line="Only guests in the game guess." />)}
+        : <Empty glyph="dots" title="WATCHING" />)}
       {(step === 'done' || after) && <Gallery drawings={drawings} words={after ? dayGame?.words : null} me={me} nameOf={nameOf} after={after} />}
     </AppFrame>
   );

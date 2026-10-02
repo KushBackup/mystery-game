@@ -156,8 +156,8 @@ function ContactCard({ ctx, p, onBack }) {
       <Section
         head="Their answers"
         foot={self
-          ? (canFix ? 'Wrong? Tap one to fix it. Answers lock when the roles are dealt.' : 'Locked since the roles were dealt. Every phone in the room can read this.')
-          : 'Tap one to mark whether it matches what you see or what they tell you.'}
+          ? (canFix ? 'Wrong? Tap one to fix it.' : 'Locked since the roles were dealt.')
+          : 'Tap an answer to mark it.'}
       >
         <Group>{TRAITS.map(field)}</Group>
       </Section>

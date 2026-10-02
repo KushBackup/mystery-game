@@ -85,6 +85,14 @@
   - ghosts may pick and guess but never post a clue or draw (ghosts are muted in the room, and a free-text clue would be a channel);
   - the wall and the drawings staying up after the board until the next night.
 
+- **Players discover the game (decided 2026-10-02).** The user said the game "feels too forced": the Killer's role text explained the admin password, the rig and the hacker; the Night app opened by itself; every screen explained its mechanic. They want players to work the mechanics out from natural cues, without being treated as dumb. Their own example: a Killers group chat appears in Messages and the Killers realise who their partners are. Choices they made when asked:
+  - **Nothing opens by itself**, not even the board reveal, the verdict or the finale (they chose this over keeping the shared reveals automatic). Phones get a banner instead.
+  - **The Killers vote in a poll inside their group chat**; the Night app shows the same poll. No rig style, no picking the hacker.
+  - **The frame:** they chose "the engine does it on its own" to keep balance. But with the hand rotating, the sim showed any automatic frame drops the Faithful to 27–49%, while no frame keeps 45–61% (baseline 47–60%). So it shipped **off** (`autoFrameFrom: null`), with the switch kept. Tell the user if it comes up; they may want it back.
+  - **The role message is sealed (same day, user's ask):** blurred until tapped, kept in the DEEP BLUE thread, and identical in colour, font and layout for every role so a peek at a neighbour's phone shows nothing. No red for Killers.
+  - Kept on purpose: the premise ("some of you are Killers", "the lowest score is taken"), input rules, DEEP BLUE's taunts ("Nobody honest scored lower"), clue captions, the Finale's full explanation.
+  - Offered, not built: removing the Gallery's hand sketch (an auto-solver), removing looks from the vote list, "X left" events in the Killers' group.
+
 ### Greenr: Last Seating (2609-G, the retiring case)
 
 - **Cast and setting:** 26 playable, first-name-only guests at Greenr, Assagao, Goa, on 19 September 2026.

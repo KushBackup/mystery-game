@@ -63,7 +63,7 @@ export default function GalleryApp({ ctx, onClose }) {
   return (
     <AppFrame title="Camera Roll" onBack={onClose} tone="dark" dark enter={dir === 'pop' ? 'pop' : undefined}>
       {photos.length === 0 ? (
-        <Empty glyph="photo" title="No photos yet" line="Clue photos arrive with the morning board. Finish top 3 in the morning game to earn one." />
+        <Empty glyph="photo" title="No photos yet" />
       ) : (
         <>
           <HandProfiles photos={photos} />
@@ -102,12 +102,10 @@ function HandProfiles({ photos }) {
 
 function HandProfile({ cycle, facts }) {
   const known = [];
-  let clash = false;
   for (const t of TRAITS) {
     const groups = facts.filter((f) => f.trait === t.id).map((f) => t.groups.find((g) => g.id === f.group)).filter(Boolean);
     if (!groups.length) continue;
     const left = t.options.filter((o) => groups.every((g) => g.members.includes(o.id)));
-    if (!left.length) clash = true;
     known.push({ t, left });
   }
   const one = (id) => {
@@ -131,7 +129,6 @@ function HandProfile({ cycle, facts }) {
             </li>
           ))}
         </ul>
-        {clash && <p className="text-[13px] mt-1 text-os-chrome">Two photos can’t both be true. One of them may be a frame.</p>}
       </div>
     </div>
   );

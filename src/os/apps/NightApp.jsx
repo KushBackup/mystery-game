@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { AppFrame, Section, Group, Cell, GuestPicker } from '../ui';
-import { Thread, Compose } from './MessagesApp';
-import { submitAction, submitDen } from '../../firebase/game';
-import { useDen, useDenMeta, useMyAction, useKillerIds } from '../../hooks/useKillers';
+import KillPoll from './KillPoll';
+import { pollQuestion } from '../threads';
+import { submitAction } from '../../firebase/game';
+import { useDen, useDenMeta, useMyAction } from '../../hooks/useKillers';
 import { sfxSent } from '../sfx';
 
 /**
@@ -15,8 +16,11 @@ import { sfxSent } from '../sfx';
  * is treated as digging through the logs (engine/night.js), so a distracted
  * phone never wastes a role.
  *
- * Killers keep their den here all game, day or night: it is their only safe
- * channel.
+ * Nothing here explains a rule. Each screen is the choice and nothing else;
+ * what a choice does arrives as its result with the board. A Killer sees only
+ * the poll from their group chat (KillPoll): the rest of a kill is automatic.
+ * The app never opens itself: the Night icon's badge and the chapter card are
+ * the only nudges.
  */
 
 const save = (fn) => fn().then(sfxSent).catch((e) => console.warn('[night] not saved:', e.code ?? e.message));
@@ -29,10 +33,10 @@ export default function NightApp({ ctx, onClose }) {
   const isKiller = role?.role === 'killer' && me.status === 'alive';
 
   let body;
-  if (me.status === 'ghost') body = night ? <GhostNight {...props} /> : <Sleeping line="Ghosts whisper at night. One word, to one living guest." />;
-  else if (!role) body = <Sleeping line="Your role arrives when the host deals." />;
-  else if (isKiller) body = <KillerDen {...props} night={night} />;
-  else if (!night) body = <Sleeping line="Nothing to do until night falls. Go and talk to people." />;
+  if (!night) body = <Sleeping />;
+  else if (me.status === 'ghost') body = <GhostNight {...props} />;
+  else if (!role) body = <Sleeping />;
+  else if (isKiller) body = <KillerNight ctx={ctx} />;
   else if (role.role === 'doctor') body = <DoctorNight {...props} />;
   else body = <FaithfulNight {...props} />;
 
@@ -62,9 +66,8 @@ function ConsoleHead({ me, game, night, players }) {
   );
 }
 
-const Sleeping = ({ line }) => (
+const Sleeping = () => (
   <div className="os-term__log">
-    <p>{line}</p>
     <p className="os-cursor" />
   </div>
 );
@@ -82,18 +85,18 @@ function FaithfulNight({ gid, game, me, role, living, nameOf, players }) {
   const choose = (k, target = null) => save(() => submitAction(gid, game.cycle, me.pid, { kind: k, target }));
 
   const options = [
-    ...(detective ? [['trace', 'Trace two phones', 'Did either of them do tonight’s hacking?']] : []),
-    ...(medium ? [['seance', 'Hold a séance', 'See a ghost’s clue, and learn if they were a Killer']] : []),
-    ['watch', 'Watch a guest', 'See if they slip away tonight'],
-    ['scour', 'Dig through the logs', 'A clue photo arrives with the board'],
+    ...(detective ? [['trace', 'Trace two phones']] : []),
+    ...(medium ? [['seance', 'Hold a séance']] : []),
+    ['watch', 'Watch a guest'],
+    ['scour', 'Dig through the logs'],
   ];
 
   return (
     <>
       <Section head="Tonight I will…">
         <Group dark>
-          {options.map(([k, title, sub]) => (
-            <Cell key={k} title={title} sub={sub} on={kind === k} onClick={() => { setMode(k); if (k === 'scour') choose('scour'); }} />
+          {options.map(([k, title]) => (
+            <Cell key={k} title={title} on={kind === k} onClick={() => { setMode(k); if (k === 'scour') choose('scour'); }} />
           ))}
         </Group>
       </Section>
@@ -103,7 +106,7 @@ function FaithfulNight({ gid, game, me, role, living, nameOf, players }) {
         </Section>
       )}
       {kind === 'seance' && (
-        <Section head="Summon which ghost?" foot="Their clue tonight is always true. They can still lie to you in Spirits.">
+        <Section head="Summon which ghost?">
           <GuestPicker guests={ghosts} value={action?.kind === 'seance' ? action.target : null} onPick={(pid) => choose('seance', pid)} />
         </Section>
       )}
@@ -124,7 +127,7 @@ function TracePick({ gid, game, me, others, action }) {
     if (next.length === 2) save(() => submitAction(gid, game.cycle, me.pid, { kind: 'trace', targets: next, target: null }));
   };
   return (
-    <Section head={`Trace whose phones? ${current.length}/2`} foot="“Neither” clears them of tonight only, not of being a Killer.">
+    <Section head={`Trace whose phones? ${current.length}/2`}>
       <Group dark>
         {others.map((g) => <Cell key={g.pid} title={g.name} sub={g.table ? `Table ${g.table}` : null} on={current.includes(g.pid)} onClick={() => toggle(g.pid)} />)}
       </Group>
@@ -151,7 +154,7 @@ function DoctorNight({ gid, game, me, living, nameOf }) {
   const barred = last?.kind === 'protect' ? last.target : null;
   return (
     <>
-      <Section head="Firewall whose score tonight?" foot="If the Killers rig them, the rig bounces. But the deep still takes someone: the lowest honest score.">
+      <Section head="Firewall whose score tonight?">
         <GuestPicker
           guests={living}
           value={action?.target}
@@ -167,86 +170,18 @@ function DoctorNight({ gid, game, me, living, nameOf }) {
 
 // --- Killers ----------------------------------------------------------------------------
 
-function KillerDen({ gid, game, me, living, nameOf, den: denChat, night }) {
-  const mates = useKillerIds(gid, true) ?? [];
+function KillerNight({ ctx }) {
+  const { gid, game, me, nameOf } = ctx;
   const den = useDen(gid, game.cycle, true) ?? [];
   const meta = useDenMeta(gid, true);
   const mine = den.find((d) => d.pid === me.pid) ?? {};
-  const livingMates = living.filter((g) => mates.includes(g.pid));
-  const targets = living.filter((g) => !mates.includes(g.pid));
-  const recruitNight = Boolean(meta?.recruitDue && meta?.cycle === game.cycle);
-  const canFrame = meta && !meta.plantUsed && !recruitNight;
-  const [framing, setFraming] = useState(false);
-  const [tab, setTab] = useState('plan');
-
-  const pickCount = (key) => (g) => {
-    const n = den.filter((d) => d[key] === g.pid).length;
-    return n ? `${n} of ${livingMates.length} chose` : null;
-  };
-  const set = (patch) => save(() => submitDen(gid, game.cycle, me.pid, patch));
-  const rigCount = (v) => den.filter((d) => (d.rig ?? null) === v).length;
-
+  const pick = mine.victim ?? mine.recruit;
   return (
     <>
-      <div className="flex gap-1 p-2 bg-black/40 border-b border-white/10">
-        {[['plan', night ? 'Tonight' : 'Plan'], ['den', 'Admins chat']].map(([k, label]) => (
-          <button key={k} type="button" onClick={() => setTab(k)} className={`flex-1 os-btn os-btn--sm ${tab === k ? '' : 'os-btn--dark'}`}>{label}</button>
-        ))}
-      </div>
-
-      {tab === 'den' ? (
-        <div className="flex flex-col" style={{ minHeight: 'calc(100% - 52px)' }}>
-          <Thread messages={denChat ?? []} me={me} empty="Only Killers can read this. Plan here." />
-          <Compose gid={gid} channel="denChat" me={me} placeholder="Only Killers see this" />
-        </div>
-      ) : !night ? (
-        <>
-          <Sleeping line="Admin tools open at nightfall. Still play the morning game: last place is dangerous for you too." />
-        </>
-      ) : (
-        <>
-          {recruitNight ? (
-            <Section head="Recruit night: who joins you?" foot="A Killer went home. Call one guest. If they refuse, their score sinks.">
-              <GuestPicker guests={targets} value={mine.recruit} note={pickCount('recruit')} onPick={(pid) => set({ recruit: pid })} />
-            </Section>
-          ) : (
-            <Section head="Sink whose score?" foot="Tomorrow they finish last on the board, whatever they really scored.">
-              <GuestPicker guests={targets} value={mine.victim} note={pickCount('victim')} onPick={(pid) => set({ victim: pid })} />
-            </Section>
-          )}
-
-          <Section head="Who does the hacking?" foot="Tonight's clue photos will describe them. Take turns.">
-            <GuestPicker guests={livingMates} value={mine.hand} note={pickCount('hand')} onPick={(pid) => set({ hand: pid })} />
-          </Section>
-
-          {!recruitNight && (
-            <Section head="Rig it to…">
-              <Group dark>
-                <Cell title="Zero" sub={`Blatant. Everyone sees the zero.${rigCount('zero') ? ` · ${rigCount('zero')} chose` : ''}`} on={(mine.rig ?? 'zero') === 'zero'} onClick={() => set({ rig: 'zero' })} />
-                <Cell title="Just below last place" sub={`Subtle. Looks like a bad morning.${rigCount('under') ? ` · ${rigCount('under')} chose` : ''}`} on={mine.rig === 'under'} onClick={() => set({ rig: 'under' })} />
-              </Group>
-            </Section>
-          )}
-
-          {canFrame && !framing && !mine.frame && (
-            <div className="px-4 mt-5">
-              <button type="button" className="os-btn os-btn--dark os-btn--sm" onClick={() => setFraming(true)}>Frame someone tonight (once per game)</button>
-            </div>
-          )}
-          {canFrame && (framing || mine.frame) && (
-            <Section head="Frame someone (once per game)" foot="One of tonight's photos will fit them instead. Tap them again to cancel.">
-              <GuestPicker
-                guests={targets.filter((g) => g.pid !== mine.victim)}
-                value={mine.frame}
-                note={pickCount('frame')}
-                onPick={(pid) => set({ frame: mine.frame === pid ? null : pid })}
-              />
-            </Section>
-          )}
-
-          <Locked text={mine.victim || mine.recruit ? `Your pick: ${nameOf(mine.victim ?? mine.recruit)}. The majority decides; ties break by fate.` : null} />
-        </>
-      )}
+      <Section head={pollQuestion(meta, game.cycle)}>
+        <KillPoll ctx={ctx} dark />
+      </Section>
+      <Locked text={pick ? `${nameOf(pick)}. You can change it.` : null} />
     </>
   );
 }
@@ -277,10 +212,9 @@ function GhostNight({ gid, game, me, living, pack, nameOf }) {
   );
 }
 
-/** What the console has logged for you tonight, and the one thing to do next: nothing. */
+/** What the console has logged for you tonight. */
 const Locked = ({ text }) => (text ? (
   <div className="os-term__log pb-6">
-    <p>Logged: {text}</p>
-    <p className="os-cursor">Put your phone face down. Wait for the alarm.</p>
+    <p className="os-cursor">Logged: {text}</p>
   </div>
 ) : <div className="h-8" />);

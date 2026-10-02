@@ -10,9 +10,11 @@
  *   1. Victim: the Killers' majority pick; ties break by seed. If no Killer
  *      chose anyone, fate picks a living Faithful guest, so a quiet den never
  *      stalls the room.
- *   2. The hand: the Killer who strikes, by majority. If nobody chose, it's
- *      whoever proposed the chosen victim. The hand's traits are what tonight's
- *      clues describe.
+ *   2. The hand: the Killer who strikes. The phone no longer asks (players
+ *      discover that the photos describe one of them), so it rotates: the
+ *      living Killer with the fewest past strikes, ties by seed. A den vote
+ *      for a hand still wins if one is sent. The hand's traits are what
+ *      tonight's clues describe.
  *   3. Doctors protect; a protected victim survives, and dawn says an attempt
  *      was made. Clues still drop, since the hand was still there.
  *   4. Watchers: whoever watched the hand spots them with probability `watchP`;
@@ -35,8 +37,16 @@
  * `deaths` are what *would* happen if the rig lands; the host stashes the
  * result and hands it to resolveMorning (morning.js) once the day's scores
  * are in, which is where a Firewall save turns into "the deep takes the
- * lowest honest score". `rig` is how the Killers dress the victim's score:
- * 'zero' (blatant) or 'under' (one below last place).
+ * lowest honest score". `rig` is how the victim's score is dressed: 'zero'
+ * (blatant, the default now that the phone doesn't ask) or 'under' (one below
+ * last place).
+ *
+ * The frame can be automatic too: on night `autoFrameFrom` (one night, once
+ * per game), that night's clues are bent towards a random living Faithful
+ * (clues.js). It is off by default. With the hand rotating, the sim
+ * (2026-10-02) put the Faithful at 44-61% without it and 27-49% with it on any
+ * night, so it would hand the game to the Killers. A den vote for a frame
+ * still wins if one is sent.
  */
 
 import { makeRng, pick, chance } from './rng.js';
@@ -53,6 +63,9 @@ export const DEFAULT_NIGHT_CONFIG = Object.freeze({
   sizePivot: 35,
   sizeStep: 20,
   watchP: 0.6,
+  // The night the engine frames someone on the Killers' behalf, or null for never.
+  // Off: see the header for the sim numbers. Try it with `sim-balance.mjs --frame 2`.
+  autoFrameFrom: null,
 });
 
 const sorted = (xs) => [...xs].sort();
@@ -64,6 +77,15 @@ function majority(votes, valid, rng) {
   if (max === 0) return null;
   const top = sorted(Object.keys(tally).filter((k) => tally[k] === max));
   return top.length === 1 ? top[0] : pick(top, rng);
+}
+
+/** The Killer who strikes when the den didn't say: whoever has struck least, ties by seed. */
+function rotateHand(killers, hands, rng) {
+  if (!killers.length) return null;
+  const struck = Object.fromEntries(killers.map((k) => [k, 0]));
+  for (const h of Object.values(hands ?? {})) if (h in struck) struck[h] += 1;
+  const least = Math.min(...Object.values(struck));
+  return pick(killers.filter((k) => struck[k] === least), rng);
 }
 
 /** Who is alive, who is a ghost, split by team. Sorted, for determinism. */
@@ -137,7 +159,7 @@ const strip = ({ trait, group }) => ({ trait, group });
  * @param ctx.roles     { [pid]: role }
  * @param ctx.actions   { [pid]: { kind: 'watch'|'scour'|'protect'|'check'|'whisper', target, word } }
  * @param ctx.den       { [killerPid]: { victim, hand, frame, recruit } }
- * @param ctx.secret    { lastProtected, checksLeft, plantUsed, recruitDue }
+ * @param ctx.secret    { lastProtected, checksLeft, plantUsed, recruitDue, hands }
  */
 export function resolveNight(ctx) {
   const { seed, cycle, players, roles, actions = {}, den = {}, secret = {}, config = DEFAULT_NIGHT_CONFIG } = ctx;
@@ -175,8 +197,7 @@ export function resolveNight(ctx) {
   let hand = null;
   if (!recruitTarget && killers.length && faithful.length) {
     victim = majority(denVotes('victim'), faithfulSet, rng) ?? pick(faithful, rng);
-    const proposer = killers.find((t) => den[t]?.victim === victim);
-    hand = handVote ?? proposer ?? pick(killers, rng);
+    hand = handVote ?? rotateHand(killers, secret.hands, rng);
   }
 
   // --- Faithful night actions ---------------------------------------------
@@ -224,7 +245,7 @@ export function resolveNight(ctx) {
   // --- A recruit night: no murder yet ---------------------------------------
   if (recruitTarget) {
     return {
-      recruit: { target: recruitTarget, hand: handVote ?? pick(killers, rng), rig },
+      recruit: { target: recruitTarget, hand: handVote ?? rotateHand(killers, secret.hands, rng), rig },
       deaths: [],
       facts: [],
       deliveries: [
@@ -246,7 +267,10 @@ export function resolveNight(ctx) {
   }
 
   // --- The murder ------------------------------------------------------------
-  const framePid = secret.plantUsed ? null : majority(denVotes('frame'), new Set(faithful.filter((p) => p !== victim)), rng);
+  const frameable = faithful.filter((p) => p !== victim);
+  const framePid = secret.plantUsed ? null
+    : majority(denVotes('frame'), new Set(frameable), rng)
+      ?? (config.autoFrameFrom != null && cycle === config.autoFrameFrom && frameable.length ? pick(frameable, rng) : null);
   const out = murderOutcome(full, { victim, hand, framePid, protectedSet, scourers, extraFactTo: watchedVictim });
   if (out.plantUsed) secretPatch.plantUsed = true;
   // A séance copies what the summoned Ghost learned tonight.

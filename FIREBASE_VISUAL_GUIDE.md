@@ -15,8 +15,8 @@ The new game uses authentication and locked-down rules ([firestore.rules](firest
 | `traits/{pid}` | the six arrival answers, frozen once dealt (a guest can fix their own until they have a role) | self | everyone (public since 2026-10-02: every phone's Contacts card shows them) |
 | `roles/{pid}` | `role, team, checksLeft` | host | self, host |
 | `killers/{pid}` | membership marker | host | Killers, host |
-| `den/{cycle}_{pid}`, `den/meta` | a Killer's night pick (victim, hand, rig, frame, recruit); tonight's den status | that Killer, only during `night` / host | Killers, host |
-| `denChat/*` | Killer chat | Killers | Killers, host |
+| `den/{cycle}_{pid}`, `den/meta` | a Killer's night pick. The phone's poll sends only `victim` or `recruit` (since 2026-10-02); `hand`, `rig`, `frame` are still honoured if present. Tonight's den status | that Killer, only during `night` / host | Killers, host |
+| `denChat/*` | the Killers' group chat (a Messages thread titled with their names) | Killers | Killers, host |
 | `actions/{cycle}_{pid}` | one night action (watch, scour, protect, trace, seance, whisper, recruitAnswer) | self, only during `night` / `recruit` | self, host |
 | `scores/{cycle}_{pid}` | `{pid, cycle, best, runs, at}`: the day's best run, an int 0–999 that can only go up | self, only during `game` | self, host (private until the board) |
 | `clues/{cycle}_{pid}` | `{pid, cycle, clue, at}`: one word on the Word game's wall. Created once, never edited, so its order is the order it landed | self, alive, only during `game` on a Word day | everyone |

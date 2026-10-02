@@ -1,96 +1,64 @@
 /**
  * Every word a player reads in Killers Night that isn't the story pack's.
  *
- * The rule, from the feedback that started the rebuild: nobody should have to
- * read to play. Each line here is 25 words or fewer, and the NowCard (one line,
- * top of every screen) is the only instruction a player ever needs. If a
- * line needs a second sentence to be understood, the mechanic is too
- * complicated, not the copy too short.
+ * Two rules. From the feedback that started the rebuild: nobody should have
+ * to read to play, so each line is 25 words or fewer. And from 2026-10-02:
+ * players discover the game. Copy states the premise and what just happened;
+ * it never explains how a mechanic works (the rig, who strikes, the firewall).
+ * The board, the photos and the room teach that. If a screen seems to need
+ * an explanation, give it a cue instead: a badge, a banner, a result.
  */
 
+/** The role text at casting: who you are, in one line. How the role works is for the player to find. */
 export const ROLE_CARD = {
-  killer: {
-    title: 'Killer',
-    line: 'You have the admin password. Each night, pick whose score sinks to the bottom, and who does the hacking.',
-    tip: 'Whoever hacks leaves clues. Take turns. Still play each morning’s game: last place is dangerous for you too.',
-  },
-  faithful: {
-    title: 'Faithful',
-    line: 'Each night, watch a guest or dig through the logs. By day, find the Killers and vote them out.',
-    tip: 'Clues describe whoever hacked. Look at shoes, tops, glasses. The top 3 each morning earn a photo.',
-  },
-  doctor: {
-    title: 'Doctor',
-    line: 'Each night, put a firewall on one guest’s score. Never the same guest two nights running.',
-    tip: 'If your firewall stops a rig, the lowest honest score is taken instead.',
-  },
-  detective: {
-    title: 'Detective',
-    line: 'Each night, trace two guests’ phones against the server log. Learn if either of them did tonight’s hacking.',
-    tip: 'Claim it and the Killers will come for you.',
-  },
-  medium: {
-    title: 'Medium',
-    line: 'Each night, summon one ghost. You see their clue, and learn if they were a Killer. They talk to you in Spirits.',
-    tip: 'You play for the Faithful. Ghosts can lie in Spirits. A séance can’t.',
-  },
+  killer: { title: 'Killer', line: 'Don’t get caught.' },
+  faithful: { title: 'Faithful', line: 'Someone here is a Killer. Find them.' },
+  doctor: { title: 'Doctor', line: 'Each night, you can keep one person safe.' },
+  detective: { title: 'Detective', line: 'Each night, you can look into two people.' },
+  medium: { title: 'Medium', line: 'The dead talk to you.' },
 };
 
-/** The one line at the top of the screen. `ctx` = { phase, role, status, cycle, ... } */
-export function nowLine({ phase, role, status, isRecruitTarget, hasActed, minigame = 'run' }) {
+/**
+ * The one line on the home screen's NowCard: what is happening, never what to
+ * do or how. It must not depend on the guest's role: the home screen is what
+ * the person beside you can see.
+ */
+export function nowLine({ phase, status, hasActed, cycle, minigame = 'run', pack }) {
   if (status === 'vanished') return 'You left the game. Thanks for playing.';
-  if (status === 'ghost') {
-    if (phase === 'night') return hasActed ? 'Whisper sent. Wait for dawn.' : 'Send one word to one living guest.';
-    if (phase === 'endgame') return 'Final vote. The dead vote too.';
-    if (phase === 'game') return minigame === 'word' ? 'Ghosts watch the wall, and pick the best clues.' : 'Ghosts can still play. Your score can’t hurt you now.';
-    return 'You are a ghost. Talk to the Medium in Spirits. Vote in the Endgame.';
-  }
+  if (status === 'ghost' && !['night', 'endgame', 'finale'].includes(phase)) return 'No signal.';
+  const title = pack?.dayGames?.[minigame]?.title ?? 'The run';
   switch (phase) {
     case 'lobby':
-      return 'You’re in. Wait for the host to deal the roles.';
+      return 'You’re in. Waiting for the host.';
     case 'casting':
-      return 'Read your role. Tell no one.';
+      return 'A message is on its way.';
     case 'night':
-      if (hasActed) return 'Done. Keep your phone close until dawn.';
-      if (role === 'killer') return 'Choose tonight’s victim, and who strikes.';
-      if (role === 'doctor') return 'Choose one guest to protect tonight.';
-      if (role === 'detective') return 'Trace two guests, or dig through the logs.';
-      if (role === 'medium') return 'Summon a ghost, or dig through the logs.';
-      return 'Watch a guest, or dig through the logs.';
     case 'recruit':
-      return isRecruitTarget ? 'The Killers want you. Decide.' : 'The night is long. Wait.';
+      return hasActed ? 'Done for tonight.' : `Night ${cycle}.`;
     case 'alarm':
-      return GAME_LINE[minigame]?.alarm ?? GAME_LINE.run.alarm;
+      return 'Wake up.';
     case 'game':
-      if (minigame === 'word') return role === 'killer' ? 'You only have the hint. Read the wall. Blend in.' : GAME_LINE.word.game;
-      return GAME_LINE[minigame]?.game ?? GAME_LINE.run.game;
+      return `${title} has started.`;
     case 'game_locked':
-      return 'Time. The board is being posted…';
+      return 'Time.';
     case 'dawn':
-      return 'The board is up. See who was taken.';
+      return 'The board is up.';
     case 'investigation':
-      return 'Check Gallery and Messages. Compare. Look at people.';
+      return 'Daylight.';
     case 'roundtable':
-      return 'Vote someone out in the group.';
+      return 'The room is voting.';
     case 'revote':
-      return 'A tie. Vote again, between these guests only.';
+      return 'A tie. The room votes again.';
     case 'banish':
-      return 'Look at who voted for whom. Remember it.';
+      return 'The verdict is in.';
     case 'endgame':
-      return 'Final vote. Ghosts vote too. Any Killer left wins it.';
+      return 'The final vote.';
     case 'finale':
-      return 'The gate opens.';
+      return 'It’s over.';
     default:
       return 'Hold on…';
   }
 }
-
-/** The morning, by the day's game (engine/minigames.js). */
-const GAME_LINE = {
-  run: { alarm: 'Wake up. The run starts in a moment.', game: 'Tap to swim. Your best run counts. Don’t come last.' },
-  word: { alarm: 'Wake up. Today’s game is WORD.', game: 'Post one word that fits. Don’t say the word itself.' },
-  draw: { alarm: 'Wake up. Today’s game is SKETCH.', game: 'Draw your word. Then guess everyone else’s, fast.' },
-};
 
 export const PHASE_LABEL = {
   lobby: 'Arrivals',
@@ -127,7 +95,7 @@ export function deliveryLine(d, nameOf) {
       return d.via === 'top' ? `You finished #${d.rank ?? 1}. DEEP BLUE sent you a photo.` : 'A photo arrived.';
     case 'trace': {
       const [a, b] = (d.targets ?? []).map(nameOf);
-      return d.hit ? `TRACE: ${a} or ${b} did tonight’s hacking. At least one of them is a KILLER.` : `Trace: neither ${a} nor ${b} did tonight’s hacking.`;
+      return d.hit ? `TRACE: ${a} or ${b} did tonight’s hacking.` : `Trace: neither ${a} nor ${b} did tonight’s hacking.`;
     }
     case 'seance':
       return d.team === 'killers' ? `${nameOf(d.ghost)} came through. They were a KILLER.` : `${nameOf(d.ghost)} came through. They were innocent.`;
@@ -138,7 +106,7 @@ export function deliveryLine(d, nameOf) {
     case 'quiet':
       return 'You searched. Nothing tonight.';
     case 'recruited':
-      return 'You are a KILLER now. Your new partners are waiting.';
+      return 'You’re one of them now.';
     case 'recruitOffer':
       return 'The Killers made you an offer.';
     default:

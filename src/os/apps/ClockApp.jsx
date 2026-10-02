@@ -9,14 +9,15 @@ import { PHASE_LABEL } from '../../data/killersCopy';
  * where a guest checks what comes next.
  */
 
+// The day as the phone's clock keeps it (words.js WORLD): times, not rules.
 const DAY = [
-  ['night', 'Night', 'Killers rig a score. Everyone else acts.'],
-  ['alarm', 'Alarm', 'Every phone rings at once.'],
-  ['game', 'Morning game', 'Word, Sketch or the run. Everyone plays.'],
-  ['dawn', 'The board', 'Last place is taken.'],
-  ['investigation', 'Investigate', 'Photos, messages, talk.'],
-  ['roundtable', 'Vote', 'The group logs someone out.'],
-  ['banish', 'Verdict', 'Killer or innocent?'],
+  ['night', 'Night', '01:00'],
+  ['alarm', 'Alarm', '07:00'],
+  ['game', 'Morning game', '07:01'],
+  ['dawn', 'The board', '07:05'],
+  ['investigation', 'Daylight', '09:00'],
+  ['roundtable', 'Vote', '18:00'],
+  ['banish', 'Verdict', '19:30'],
 ];
 const PART_OF = { night_locked: 'night', recruit: 'night', recruit_locked: 'night', game_locked: 'game', roundtable_locked: 'roundtable', revote: 'roundtable', revote_locked: 'roundtable' };
 

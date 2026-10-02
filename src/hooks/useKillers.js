@@ -55,7 +55,8 @@ export const useMyVote = (gid, ballot, pid) => useSub((cb) => subscribeMyVote(gi
 export const useMyTraits = (gid, pid) => useSub((cb) => subscribeMyTraits(gid, pid, cb), [gid, pid]);
 export const useAllTraits = (gid) => useSub((cb) => subscribeAllTraits(gid, cb), [gid]);
 export const useMyScore = (gid, cycle, pid) => useSub((cb) => subscribeMyScore(gid, cycle, pid, cb), [gid, cycle, pid]);
-export const useKillerIds = (gid, isKiller) => useSub((cb) => subscribeKillers(gid, cb), [gid, isKiller || null]);
+/** The Killers' group (`[{ id, at, recruited }]`). Only subscribes for a Killer; the rules refuse anyone else. */
+export const useKillerGroup = (gid, isKiller) => useSub((cb) => subscribeKillers(gid, cb), [gid, isKiller || null]);
 export const useDen = (gid, cycle, isKiller) => useSub((cb) => subscribeDen(gid, cycle, cb), [gid, cycle, isKiller || null]);
 /** The morning games: a public wall (`clues`, `drawings`) and this guest's own doc (`picks`, `guesses`). */
 export const useDayWall = (gid, name, cycle, enabled = true) =>

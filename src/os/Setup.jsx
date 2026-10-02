@@ -187,11 +187,11 @@ function Boot({ onDone }) {
  */
 const CLAUSES = [
   'DEEP BLUE rings every morning. You will wake up.',
-  'Every morning, everyone plays a game: a word, a sketch, or the run. Everyone gets a score.',
+  'Every morning, everyone plays.',
   'The lowest score on the board is taken by the deep.',
-  'Some of you have the admin password. They choose whose score sinks. Find them, and vote them out.',
-  'The taken keep their phones. They can still whisper.',
-  'The next six questions are about you. Answer truthfully: the clues about the killer will describe these answers.',
+  'Some of you are Killers. Find them, and vote them out.',
+  'The taken keep their phones.',
+  'The next six questions are about you. Answer truthfully.',
 ];
 
 function Terms({ onAgree }) {

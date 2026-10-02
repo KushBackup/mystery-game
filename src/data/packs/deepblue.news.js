@@ -389,25 +389,25 @@ export const LIVE = {
   dawn: {
     rig: {
       kicker: 'THE BOARD',
-      head: '{name} finishes last. Score: {score}. Rigged?',
+      head: '{name} finishes last. Score: {score}.',
       dek: 'The deep takes a name on day {day}.',
       tail: ['Someone in this room may know why that number is so low.'],
     },
     deep: {
       kicker: 'THE BOARD',
-      head: 'A firewall blocks a rig. The deep takes {name}.',
-      dek: 'Somebody tried to sink a different name on day {day}.',
-      tail: ['Someone tried to push another score to the bottom. It did not hold.'],
+      head: 'The deep takes {name}.',
+      dek: 'Somebody was after a different name on day {day}.',
+      tail: ['Whatever was meant for them missed.'],
     },
     saved: {
       kicker: 'THE BOARD',
-      head: 'A firewall holds. Nobody taken.',
-      dek: 'Someone tried to sink {name} on day {day}.',
-      tail: ['Somebody wanted that score gone. Somebody else stopped them.'],
+      head: 'Nobody taken.',
+      dek: 'Someone was after {name} on day {day}.',
+      tail: ['Somebody wanted that score gone. It stayed.'],
     },
     recruit: {
       kicker: 'THE BOARD',
-      head: 'Nobody taken. Someone joined the Killers.',
+      head: 'Nobody taken this morning.',
       dek: 'The board is clean on day {day}. The room is not.',
       tail: ['The deep did not take anyone. Someone said yes to something.'],
     },
@@ -415,7 +415,7 @@ export const LIVE = {
       kicker: 'THE BOARD',
       head: 'Nobody taken this morning.',
       dek: 'The board posted and nobody went under on day {day}.',
-      tail: ['Nobody was taken. Check the photos, and look at each other.'],
+      tail: ['The deep went hungry.'],
     },
   },
   banish: {
@@ -423,7 +423,7 @@ export const LIVE = {
       kicker: 'THE VOTE',
       head: '{name} logged out: a KILLER.',
       dek: 'The group got it right on day {day}.',
-      tail: ['One fewer hand on the admin password.'],
+      tail: ['One fewer of them in the room.'],
     },
     innocent: {
       kicker: 'THE VOTE',

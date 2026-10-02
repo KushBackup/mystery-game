@@ -10,7 +10,6 @@ export function fateLine(p) {
   if (p.status === 'vanished') return 'Went home';
   switch (p.cause) {
     case 'murdered':
-      return `Score rigged to the bottom${day}`;
     case 'deep':
       return `Taken by the deep${day}`;
     case 'banished':

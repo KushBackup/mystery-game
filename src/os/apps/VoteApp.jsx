@@ -24,16 +24,16 @@ export default function VoteApp({ ctx, onClose }) {
   return (
     <AppFrame title={title} onBack={onClose} tone="red" light>
       {!open ? (
-        <Empty glyph="vote" title="No vote open" line="The group votes after the investigation. The poll opens here." />
+        <Empty glyph="vote" title="No vote open" />
       ) : !canVote ? (
-        <Empty glyph="ghost" title="Ghosts watch this one" line="The dead vote only in the final Endgame." />
+        <Empty glyph="ghost" title="Ghosts watch this one" />
       ) : (
         <>
           <div className="px-4 pt-4">
-            <p className="os-label text-[12px] text-os-steel">{phase === 'revote' ? 'A TIE. CHOOSE BETWEEN THEM.' : phase === 'endgame' ? 'ANY KILLER LEFT WINS IT.' : 'POLL · THE GROUP'}</p>
+            <p className="os-label text-[12px] text-os-steel">{phase === 'revote' ? 'A TIE. CHOOSE BETWEEN THEM.' : phase === 'endgame' ? 'POLL · FINAL VOTE' : 'POLL · THE GROUP'}</p>
             <p className="text-[22px] leading-tight mt-1 text-os-ink">Who gets logged out?</p>
           </div>
-          <Section foot={myVote?.target ? `Your vote: ${nameOf(myVote.target)}. Tap another name to change it.` : 'Nobody chosen yet. Not voting wastes your voice.'}>
+          <Section foot={myVote?.target ? `Your vote: ${nameOf(myVote.target)}. Tap another name to change it.` : 'Nobody chosen yet.'}>
             <GuestPicker guests={targets} value={myVote?.target} onPick={vote} dark={false} traits={ctx.traits} />
           </Section>
           <div className="h-8" />

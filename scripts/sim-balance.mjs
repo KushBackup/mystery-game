@@ -5,13 +5,14 @@
  *   node scripts/sim-balance.mjs                    # sweep room sizes x killer ratios
  *   node scripts/sim-balance.mjs --n 35 --games 5000 --verbose
  *   node scripts/sim-balance.mjs --n 35 --watchP 0.5 --budget 2,2,2,3,3 --endgame 2
+ *   node scripts/sim-balance.mjs --frame 2                 # the engine frames someone on night 2
  *
  * Plays whole games with the real engine (src/lib/engine) and bot players:
  *
  *   Killers  murder a claimed Detective if one exists, otherwise at random;
- *             rotate the hand to whoever is least suspected; frame someone on
- *             night 2; sometimes fake a "I watched X and saw them" claim;
- *             vote as a bloc for the most-suspected Faithful.
+ *             vote as a bloc for the most-suspected Faithful. Like the real
+ *             phone, they send only a victim: the engine rotates the hand
+ *             (night.js). No frame unless --frame is given.
  *   Faithful  pool every clue fragment (fragments reach several people, so
  *             the room hears them), work out who fits each night's clues,
  *             watch people they already suspect, and vote for the most
@@ -53,6 +54,7 @@ const config = {
   watchP: Number(args.watchP ?? DEFAULT_NIGHT_CONFIG.watchP),
   sizeStep: Number(args.step ?? DEFAULT_NIGHT_CONFIG.sizeStep),
   clueBudget: args.budget ? args.budget.split(',').map(Number) : DEFAULT_NIGHT_CONFIG.clueBudget,
+  autoFrameFrom: args.frame ? Number(args.frame) : DEFAULT_NIGHT_CONFIG.autoFrameFrom, // --frame N: auto-frame on night N
 };
 
 // ---------------------------------------------------------------------------
@@ -101,6 +103,7 @@ function playGame(n, ratios, gameSeed) {
     lastProtected: {},
     checksLeft: Object.fromEntries(Object.keys(roles).filter((p) => roles[p] === ROLE.DETECTIVE).map((p) => [p, ratios.detectiveChecks ?? 2])),
     plantUsed: false,
+    hands: {},
   };
 
   const alive = () => Object.keys(players).filter((p) => players[p].status === 'alive').sort();
@@ -176,12 +179,10 @@ function playGame(n, ratios, gameSeed) {
 
     // --- Killer strategy
     const den = {};
-    const leastSuspected = [...killersAlive].sort((a, b) => suspicion(a) - suspicion(b))[0];
     const victim = detectiveClaimed && players[detectiveClaimed].status === 'alive' && chance(rng, 0.8)
       ? detectiveClaimed
       : pick(faithfulAlive, rng);
-    const frame = cycle === 2 && chance(rng, 0.8) ? pick(faithfulAlive.filter((p) => p !== victim), rng) : null;
-    for (const t of killersAlive) den[t] = { victim, hand: leastSuspected, frame };
+    for (const t of killersAlive) den[t] = { victim };
 
     // --- Faithful strategy
     const ranked = [...living].sort((a, b) => suspicion(b) - suspicion(a));
@@ -206,6 +207,7 @@ function playGame(n, ratios, gameSeed) {
 
     const out = resolveNight({ seed: gameSeed, cycle, players, roles, traitsByPid: traits, traitDefs: TRAITS, actions, den, secret, config });
     Object.assign(secret, out.secretPatch);
+    secret.hands = { ...secret.hands, [cycle]: out.hand ?? null };
     const scores = Object.fromEntries(alive().filter(() => chance(rng, 0.95)).map((p) => [p, { best: Math.floor(skill[p] * (0.5 + rng() * 0.5)) }]));
     const morning = resolveMorning({
       seed: gameSeed, cycle, players, roles, scores,

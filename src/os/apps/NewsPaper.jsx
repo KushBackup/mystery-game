@@ -95,7 +95,7 @@ export default function NewsPaper({ ctx, onBack, backLabel, onBoard }) {
 
         {tab === 'room' && (
           news.room.length === 0 ? (
-            <Quiet title="Nothing from the room yet" line="Each morning’s board and each vote are printed here. The first posts the morning after the first night." />
+            <Quiet title="Nothing from the room yet" line="Check back in the morning." />
           ) : (
             <>
               <p className="os-news__head">Every morning, every vote</p>

@@ -107,8 +107,9 @@ export const subscribeMyVote = (gid, ballot, pid, cb) => watchDoc('vote', sub(gi
 export const subscribeMyScore = (gid, cycle, pid, cb) => watchDoc('score', sub(gid, 'scores', `${cycle}_${pid}`), cb);
 
 // Killer-only. The rules deny these to everyone else, so only mount them for a Killer.
+/** The Killers' group, Killer-only: `[{ id, at, recruited }]`. `at` is when DEEP BLUE added them. */
 export const subscribeKillers = (gid, cb) =>
-  resilient('killers', (onError) => onSnapshot(col(gid, 'killers'), (s) => cb(s.docs.map((d) => d.id)), onError));
+  resilient('killers', (onError) => onSnapshot(col(gid, 'killers'), (s) => cb(s.docs.map((d) => ({ id: d.id, ...d.data() }))), onError));
 export const subscribeDen = (gid, cycle, cb) =>
   watchList('den', query(col(gid, 'den'), where('cycle', '==', cycle)), cb, (d) => d.id !== 'meta');
 /** Tonight's den status: is it a recruit night, is the frame spent. Killer-only. */

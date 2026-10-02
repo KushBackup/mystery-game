@@ -26,6 +26,14 @@ When the same lesson recurs, **edit the existing entry** rather than adding a du
 
 ## Entries
 
+### 2026-10-02 — The autopilot copy explained every mechanic, and the home screen leaked roles
+
+**What happened:** Over the DEEP BLUE builds I wrote role texts, footnotes, empty states and narration that explained each mechanism (the admin password, rigging a score, who hacks, the firewall, "the lowest honest score"), and made each phase open its app automatically. The user: the game "feels too forced... I don't want the player to think that we think that they are dumb." While fixing it I also found the home screen's NowCard was role-specific ("Choose tonight's victim, and who strikes"), visible to anyone beside a Killer, against the project's own rule.
+
+**Why it was wrong:** I took "nobody should have to read to play" to mean "tell them everything in short lines". Short is not the same as necessary. A social-deduction game is fun because the room works out how it is being played; explaining the mechanism removes the puzzle, and auto-opening screens removes the player's own move.
+
+**What to do instead:** State the premise and what just happened, never how a mechanic works. Nudge with cues a real phone would give (a badge, a banner, a group appearing, a result) and let the player open things. Before shipping any line on a home screen, check it reads the same on every role's phone. When cutting player choices (the Killers' hand and frame), rerun the sim: the automatic frame I was asked for turned out to wreck the balance, which I reported instead of shipping.
+
 ### 2026-10-02 — "Make the Contacts app more detailed" was over-read as "add every adjacent feature"
 
 **What happened:** Asked to make Contacts detailed (show each guest's arrival answers, let players check an answer against what they see or hear), I also added list views (Everyone/Tables/Marked), a private Suspect/Not sure/Trusted read, free-text notes, a vote-from-card button, and a public per-guest record of board places and votes — none of which were asked for. The user: "this is too detailed for the players... let's just keep the contacts very simple. Name, avatar, their answers. I like the functionality where the player can select what the other person said, I think that's cool, let's keep that."

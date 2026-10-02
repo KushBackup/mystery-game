@@ -45,6 +45,16 @@
   user-select: none;
   isolation: isolate;
 }
+/* Set on <html> while the phone is mounted (PhoneFrame): the page never moves. */
+html.os-locked,
+html.os-locked body {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
 .os-root p { text-wrap: pretty; }
 .os-balance { text-wrap: balance; }
 
@@ -235,7 +245,9 @@
   z-index: 5;
   height: 44px;
   display: grid;
-  grid-template-columns: minmax(70px, 1fr) auto minmax(70px, 1fr);
+  /* The sides never shrink under their buttons; a long title gives way and
+     ellipses instead (a group named after three people, on a 320px phone). */
+  grid-template-columns: minmax(max-content, 1fr) minmax(0, max-content) minmax(max-content, 1fr);
   align-items: center;
   gap: 6px;
   padding: 0 8px;
@@ -583,6 +595,42 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   text-align: center;
   color: #4c566c;
 }
+/* The role message (RoleMessage.jsx). One look for every role: neutral bubble,
+   fixed size, so a glance at a neighbour's phone shows nothing. Sealed, the
+   stand-in text is blurred under a lock; the real role isn't rendered. */
+.os-role-msg {
+  position: relative;
+  display: block;
+  width: 88%;
+  max-width: 88%;
+  min-height: 150px;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+}
+.os-role-msg__body { display: block; transition: filter 220ms ease; }
+.os-role-msg--sealed .os-role-msg__body { filter: blur(9px); }
+.os-role-msg__seal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #2d3646;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.os-role-msg__hint { display: block; margin-top: 8px; font-size: 12px; font-weight: 600; color: #6d7380; }
+@media (prefers-reduced-motion: reduce) { .os-role-msg__body { transition: none; } }
+
+/* A poll DEEP BLUE posts into a group: a bubble wide enough for a guest list. */
+.os-poll { width: 94%; max-width: 94%; padding: 10px 8px 8px; }
+.os-poll__q { padding: 0 6px 8px; font-size: 17px; font-weight: 700; line-height: 1.2; }
+.os-poll .os-search { margin: 0 0 8px; }
 .os-receipt { align-self: flex-end; margin: -2px 6px 0 0; font-size: 11px; font-weight: 600; color: #6d7380; }
 .os-stamp-time { align-self: center; margin: 8px 0 2px; font-size: 12px; font-weight: 600; color: #6d7380; }
 
@@ -1288,14 +1336,6 @@ button.os-field:active .os-field__label, button.os-field:active .os-field__ok, b
 }
 
 /* The role text's emblem (takeovers.jsx RoleText). Private to that screen. */
-.os-role-emblem {
-  float: right; display: grid; place-items: center; width: 52px; height: 52px; margin: 0 0 6px 10px; border-radius: 12px; color: #fff;
-  background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 52%), linear-gradient(#5d9bf0, #1f56b3);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0, 0, 0, 0.35);
-}
-.os-role-emblem--killer { background: linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 52%), linear-gradient(#ff6a5f, #9e130b); }
-.os-role-emblem--doctor { background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 52%), linear-gradient(#6fe08a, #1f8a3a); }
-.os-role-emblem--medium { background: linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 52%), linear-gradient(#7a86a8, #2c3550); }
 .os-term__dim { color: #4fae63; font-weight: 600; }
 
 /* ------------------------------------------------- 21. The morning games */
