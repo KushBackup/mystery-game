@@ -9,6 +9,18 @@
  * an explanation, give it a cue instead: a badge, a banner, a result.
  */
 
+/**
+ * The game's own name. DEEP BLUE is an app on the phone, inside the game, and
+ * never the name of the game itself (user's call, 2026-10-02). Anything that
+ * names the whole experience (boot, invite, lock screen, Settings, the PWA
+ * manifest and page title) reads it from here or repeats it word for word.
+ */
+export const GAME = {
+  title: 'The Murder Mystery Experience',
+  by: 'Astral Project',
+  with: 'Greenr',
+};
+
 /** The role text at casting: who you are, in one line. How the role works is for the player to find. */
 export const ROLE_CARD = {
   killer: { title: 'Killer', line: 'Don’t get caught.' },

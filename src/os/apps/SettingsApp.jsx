@@ -3,6 +3,7 @@ import { AppFrame, Section, Group, Cell, Switch, Btn } from '../ui';
 import { requestLeave, cancelLeave } from '../../firebase/game';
 import { isSoundOn, isVibeOn, setSoundOn, setVibeOn, sfxPing, primeSfx } from '../sfx';
 import { setTypeSoundOn } from '../../lib/typeSound';
+import { GAME } from '../../data/killersCopy';
 
 /**
  * Settings: sound, vibration, who this phone is, and leaving early. The device
@@ -54,7 +55,7 @@ export default function SettingsApp({ ctx, onClose }) {
 
       <Section head="About">
         <Group>
-          <Cell title="DEEP BLUE" sub="Every morning, everyone plays. The lowest score is taken. A game by Astral Project." />
+          <Cell title={GAME.title} sub={`By ${GAME.by}, in collaboration with ${GAME.with}.`} />
         </Group>
       </Section>
       <div className="h-8" />

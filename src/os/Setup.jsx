@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { TRAITS } from '../data/traits';
+import { GAME } from '../data/killersCopy';
 import { arrive } from '../firebase/game';
 import Wallpaper from './art/Wallpaper';
 import { SlideToUnlock } from './chrome';
 import { AppFrame, Section, Btn } from './ui';
-import AppIcon from './icons/AppIcon';
 import { useSeen, markSeen } from './seen';
 import { primeSfx, sfxTap, sfxDeny, sfxBoot } from './sfx';
 
@@ -25,7 +25,7 @@ const finishBoot = () => markSeen('booted', true);
 
 const HELLOS = ['hello', 'namaste', 'hola', 'bonjour', 'ciao', 'olá', 'hallo'];
 
-export default function Setup({ gid, uid, pack, late }) {
+export default function Setup({ gid, uid, late }) {
   const booted = useSeen('booted', false);
   const [step, setStep] = useState('hello'); // (boot) | hello | terms | name | 0..5 | review
   const [name, setName] = useState('');
@@ -47,7 +47,7 @@ export default function Setup({ gid, uid, pack, late }) {
           }}
         >
           <div className="px-5 pt-6">
-            <p className="text-[24px] leading-tight text-os-ink">{late ? 'You made it.' : 'Welcome to DEEP BLUE.'}</p>
+            <p className="text-[24px] leading-tight text-os-ink">{late ? 'You made it.' : `Welcome to ${GAME.title}.`}</p>
             <p className="text-[16px] mt-2 text-os-steel">What should the group call you?</p>
           </div>
           <Section head="Your first name">
@@ -108,7 +108,7 @@ export default function Setup({ gid, uid, pack, late }) {
     <AppFrame title="Almost done" onBack={() => setStep(TRAITS.length - 1)} light>
       <div className="px-5 pt-6">
         <p className="text-[26px] leading-tight text-os-ink">{name.trim()}</p>
-        <p className="text-[15px] text-os-steel mt-1">{pack.title}</p>
+        <p className="text-[15px] text-os-steel mt-1">{GAME.title}</p>
       </div>
       <Section head="Your answers" foot="These lock when the roles are dealt. Tap one to change it.">
         <div className="os-group">
@@ -148,7 +148,7 @@ function Hello({ onDone, late }) {
       <div className="relative flex-1 grid place-items-center text-center px-6">
         <div className="rounded-xl bg-os-abyss/75 border border-os-chrome/25 px-6 py-7 shadow-[0_3px_0_rgba(0,0,0,0.5)]">
           <p key={i} className="os-hello os-pop">{HELLOS[i]}</p>
-          <p className="text-[17px] mt-5 text-os-foam">{late ? 'The game has started. You can still join.' : 'You’ve been invited to DEEP BLUE.'}</p>
+          <p className="text-[17px] mt-5 text-os-foam">{late ? 'The game has started. You can still join.' : `You’ve been invited to ${GAME.title}.`}</p>
         </div>
       </div>
       <div className="relative os-lock__slider">
@@ -159,8 +159,9 @@ function Hello({ onDone, late }) {
 }
 
 /**
- * First power-on: black, the logo, a bar that fills in steps, a chime. Once
- * per phone (seen.js), so a reload mid-game never replays it.
+ * First power-on: black, the game's title card (the game, not the DEEP BLUE
+ * app: that is one app on this phone), a bar that fills in steps, a chime.
+ * Once per phone (seen.js), so a reload mid-game never replays it.
  */
 function Boot({ onDone }) {
   useEffect(() => {
@@ -171,10 +172,11 @@ function Boot({ onDone }) {
   return (
     <div className="os-alarm grid place-items-center" onClick={onDone} role="presentation">
       <div className="text-center os-rise">
-        <div className="flex justify-center"><AppIcon name="deepblue" size={88} /></div>
-        <p className="os-arcade text-[21px] mt-6 text-white tracking-[0.1em]">DEEP BLUE</p>
+        <p className="os-label text-[12px] text-os-steel">{GAME.by.toUpperCase()} PRESENTS</p>
+        <p className="os-arcade text-[26px] leading-tight mt-3 px-8 text-white">{GAME.title}</p>
+        <p className="os-label text-[12px] mt-3 text-os-steel">IN COLLABORATION WITH {GAME.with.toUpperCase()}</p>
         <div className="os-boot-bar"><i /></div>
-        <p className="os-label text-[11px] mt-4 text-os-steel">INSTALLING… DO NOT TURN OFF</p>
+        <p className="os-label text-[11px] mt-4 text-os-steel">SETTING UP… DO NOT TURN OFF</p>
       </div>
     </div>
   );

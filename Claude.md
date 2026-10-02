@@ -20,6 +20,8 @@ The folder lives at `d:\Unity Projects\mystery-game` for historical reasons, but
 
 > **Rebuild in progress (2026-09-26): Killers Night.** The authored case is being replaced by a Killers/Mafia hybrid. Roles are dealt live from whoever is present; clues describe the killer's real traits, answered at arrival; the dead play on as Ghosts. `/` opens the new game and `?classic` the retiring Greenr case. Start with the Killers Night sections of [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) and [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md), and the plan named in [memory.md](memory.md). Everything below about rounds, clue codes, riddles and pods describes the retiring game.
 >
+> **Naming (2026-10-02).** Players see the game as **The Murder Mystery Experience, by Astral Project, in collaboration with Greenr** (`GAME` in [src/data/killersCopy.js](src/data/killersCopy.js)). DEEP BLUE is one app on the phone, never the game's name on screen; "the DEEP BLUE phone" below is an internal code name.
+>
 > **DEEP BLUE (2026-09-30).** The player's phone is now a retro iPhone-era (iOS 6) OS, drawn smooth in Helvetica-style type (it was 8-bit pixel art until 2026-10-01; only the run mini-game's canvas is still pixel) ([src/os/](src/os/), design in [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) Part II). Every morning the whole room plays a Flappy-style run, and Killers murder by rigging a score to the bottom of the board ([src/lib/engine/morning.js](src/lib/engine/morning.js)). **Evidence Room now covers only the host console, `?classic` and marketing**; the colour rules below apply there, and the phone has its own palette.
 
 ---

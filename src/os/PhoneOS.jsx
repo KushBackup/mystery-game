@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow, useAllTraits, useKillerGroup } from '../hooks/useKillers';
 import { serverNow } from '../lib/clockSkew';
-import { nowLine, PHASE_LABEL, deliveryLine } from '../data/killersCopy';
+import { nowLine, PHASE_LABEL, deliveryLine, GAME } from '../data/killersCopy';
 import { dayKit } from '../data/packs/index.js';
 import { StatusBar, HomeBar, HomeScreen, LockScreen, Banner, NotificationCenter, NCTile } from './chrome';
 import { AlarmScreen, RoleText, IncomingCall, GoneScreen, ChapterCard, TakenScreen } from './takeovers';
@@ -419,7 +419,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
     takeover = (
       <LockScreen
         game={game}
-        title={pack.title.toUpperCase()}
+        title={GAME.title}
         subtitle={`Hi ${me.name}.`}
         notes={[
           { key: 'in', icon: 'deepblue', title: 'DEEP BLUE', text: 'You’re in. The host will deal the roles soon.' },

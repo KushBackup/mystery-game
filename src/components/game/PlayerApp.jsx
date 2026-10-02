@@ -45,7 +45,7 @@ export default function PlayerApp() {
     if (game.phase === 'finale') return <Boot label="THIS GAME HAS ENDED." />;
     return (
       <PhoneFrame>
-        <Setup gid={gid} uid={uid} pack={pack} late={game.phase !== 'lobby'} />
+        <Setup gid={gid} uid={uid} late={game.phase !== 'lobby'} />
       </PhoneFrame>
     );
   }

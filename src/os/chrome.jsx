@@ -39,7 +39,7 @@ export function StatusBar({ game, ghost = false, clear = false, drag }) {
         ) : ghost ? <span className="os-status__carrier opacity-80">No Service</span> : (
           <>
             <Glyph name="signal" size={10} />
-            <span className="os-status__carrier">DEEP BLUE</span>
+            <span className="os-status__carrier">ASTRAL</span>
             <Glyph name="wifi" size={11} />
           </>
         )}

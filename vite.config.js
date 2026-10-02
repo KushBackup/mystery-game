@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'DEEP BLUE · The Murder Mystery Experience',
-        short_name: 'DEEP BLUE',
-        description: 'Every morning everyone plays. The lowest score is taken. Find the Killers rigging the board. A party game by Astral Project.',
+        name: 'The Murder Mystery Experience',
+        short_name: 'Murder Mystery',
+        description: 'The Murder Mystery Experience: a live party game by Astral Project, in collaboration with Greenr. Some of you are Killers. Find them.',
         // The phone's status bar is black and its world is abyss (DESIGN_LANGUAGE.md
         // Part II), so the splash and installed chrome open on the same colours.
         theme_color: '#000000',

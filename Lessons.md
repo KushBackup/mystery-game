@@ -586,3 +586,9 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 **What happened:** The user's own edit, used as a master, alternated footage with black every 0.5s for its first 8s, and had a single black frame at 38.0s. The scan's contact sheets showed every other shot as black, and the render first opened a shot on that black frame. `verify.mjs`'s dropout check caught it (min YAVG 6.1).
 
 **What to do instead:** Run `blackdetect` on any master before planning shots, and pick clip in-points after its black frames. On a frame-locked reel, shift the shots after it by a frame rather than stretch a clip.
+
+### 2026-10-02 — The app's name became the game's name
+
+**What happened:** The phone's cursed app, DEEP BLUE, also titled the boot screen, the invite, the lock screen, Settings → About, the status-bar carrier, the page title and the PWA manifest. Players could not tell the game from the app inside it. The user corrected it: the game is The Murder Mystery Experience, by Astral Project, in collaboration with Greenr.
+
+**What to do instead:** Keep in-fiction names (an app, a pack's `title`) off anything that names the whole experience. Those surfaces read `GAME` in `src/data/killersCopy.js`. A story pack's `title` names the story, not the product.
