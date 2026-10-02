@@ -7,7 +7,7 @@ import Glyph from '../icons/Glyph';
 import AppIcon from '../icons/AppIcon';
 import { Avatar } from './ContactsApp';
 import { sendToChannel } from '../../firebase/game';
-import { useSeen, markSeen } from '../seen';
+import { useSeen, markSeen, useDraft } from '../seen';
 import { sfxSent } from '../sfx';
 import { hhmm } from '../words';
 import { threadsFor, preview, systemText, pollQuestion } from '../threads';
@@ -31,7 +31,7 @@ import { useDenMeta } from '../../hooks/useKillers';
  */
 
 export default function MessagesApp({ ctx, onClose, thread: initial }) {
-  const { top: open, dir, push, pop } = useStack(initial ?? null);
+  const { top: open, dir, push, pop } = useStack(initial ?? null, `${ctx.gid}.page.messages`);
   const seen = {
     room: useSeen(`${ctx.gid}.read.room`, 0),
     spirits: useSeen(`${ctx.gid}.read.spirits`, 0),
@@ -249,7 +249,7 @@ function SystemThread({ list, ctx }) {
 
 /** The compose bar: a rounded field and a glossy Send. */
 export function Compose({ gid, channel, me, placeholder = 'Message' }) {
-  const [text, setText] = useState('');
+  const [text, setText] = useDraft(`${gid}.draft.${channel}`); // a half-typed message survives a reload
   const [error, setError] = useState('');
   const send = async (e) => {
     e.preventDefault();
@@ -265,9 +265,11 @@ export function Compose({ gid, channel, me, placeholder = 'Message' }) {
       setError(err.code === 'permission-denied' ? 'You can’t post here.' : 'Not sent. Try again.');
     }
   };
+  // The failed message goes back in the field, so the reason sits above it, not in the (hidden) placeholder.
   return (
-    <form className="os-compose" onSubmit={send}>
-      <input value={text} maxLength={280} onChange={(e) => setText(e.target.value)} placeholder={error || placeholder} aria-label={placeholder} enterKeyHint="send" />
+    <form className="os-compose flex-wrap" onSubmit={send}>
+      {error && <p className="os-compose__error" role="alert">{error}</p>}
+      <input value={text} maxLength={280} onChange={(e) => { setText(e.target.value); setError(''); }} placeholder={placeholder} aria-label={placeholder} enterKeyHint="send" />
       <button type="submit" className="os-btn os-btn--sm" style={{ minHeight: 36 }} disabled={!text.trim()}>Send</button>
     </form>
   );

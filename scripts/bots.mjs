@@ -24,7 +24,7 @@ import {
 } from 'firebase/auth';
 import {
   initializeFirestore, connectFirestoreEmulator, memoryLocalCache, doc, collection, getDoc, getDocs, setDoc, updateDoc,
-  onSnapshot, query, where, serverTimestamp, addDoc,
+  onSnapshot, query, where, serverTimestamp, addDoc, writeBatch, deleteDoc,
 } from 'firebase/firestore';
 import { TRAITS, GENDER } from '../src/data/traits.js';
 import { PACKS, DEFAULT_PACK_ID, dayKit } from '../src/data/packs/index.js';
@@ -74,7 +74,7 @@ async function arrive(bot, gid) {
   const traits = { ...Object.fromEntries(TRAITS.map((t) => [t.id, rnd(t.options).id])), gender: rnd(GENDER.options).id };
   bot.traits = traits;
   await setDoc(G(bot, gid, 'bindings', bot.uid), { pid: bot.uid });
-  await setDoc(G(bot, gid, 'players', bot.uid), { name: bot.name, table: String(1 + (bot.i % 5)), status: 'alive', joinedAt: Date.now() });
+  await setDoc(G(bot, gid, 'players', bot.uid), { name: bot.name, status: 'alive', joinedAt: Date.now() });
   await setDoc(G(bot, gid, 'traits', bot.uid), traits);
 }
 
@@ -237,6 +237,47 @@ async function expectAllowed(label, fn, results) {
   }
 }
 
+/**
+ * Before the deal: answers are written once and never edited. The only ways to
+ * change them are leaving (the phone unbinds and sets up again) or the host
+ * removing the guest. Every bot ends these checks arrived again.
+ */
+async function lobbyChecks(bots, gid, host) {
+  const results = [];
+  const [a, b, c] = bots;
+  await expectDenied('guest edits their own traits before the deal', () => updateDoc(G(a, gid, 'traits', a.pid), { top: a.traits.top === 'red' ? 'blue' : 'red' }), results);
+  await expectDenied('guest rewrites their own traits before the deal', () => setDoc(G(a, gid, 'traits', a.pid), a.traits), results);
+  await expectDenied('guest deletes another guest before the deal', () => deleteDoc(G(a, gid, 'players', b.pid)), results);
+  await expectDenied('guest unbinds another phone', () => deleteDoc(G(a, gid, 'bindings', b.uid)), results);
+  // Leave before the deal, then join again with new answers.
+  await expectAllowed('guest leaves before the deal (leaveBeforeStart)', async () => {
+    const batch = writeBatch(b.db);
+    batch.delete(G(b, gid, 'players', b.pid));
+    batch.delete(G(b, gid, 'traits', b.pid));
+    batch.delete(G(b, gid, 'bindings', b.uid));
+    await batch.commit();
+  }, results);
+  await expectAllowed('the guest who left joins again', () => arrive(b, gid), results);
+  // The host removes a guest before the deal: the binding goes too, so their phone can set up again.
+  await host.removePlayer(gid, c.pid, 'lobby');
+  const gone = await getDoc(G(c, gid, 'bindings', c.uid)).then((d) => !d.exists(), () => false);
+  results.push([gone ? 'ok' : 'FAIL', 'host removal before the deal unbinds the phone', gone ? 'unbound' : 'binding left']);
+  await expectAllowed('the removed guest joins again', () => arrive(c, gid), results);
+
+  // A phone that lost the game asks to be signed back in; the host binds it to the guest it was.
+  const lost = await makeBot(900);
+  const knockOf = (bot, name) => setDoc(G(bot, gid, 'knocks', bot.uid), { name, code: bot.uid.slice(0, 6).toUpperCase(), at: Date.now() });
+  await expectAllowed('a signed-out phone asks to be signed back in', () => knockOf(lost, a.name), results);
+  await expectDenied('a guest still in the game knocks', () => knockOf(a, a.name), results);
+  await expectDenied('a guest reads another phone\'s knock', () => getDoc(G(a, gid, 'knocks', lost.uid)), results);
+  await expectDenied('a phone binds itself to another guest', () => setDoc(G(lost, gid, 'bindings', lost.uid), { pid: a.pid }), results);
+  await expectAllowed('host signs the phone back in (relink)', () => host.relink(gid, lost.uid, a.pid), results);
+  const knockGone = await getDoc(G(lost, gid, 'knocks', lost.uid)).then((d) => !d.exists(), () => false);
+  results.push([knockGone ? 'ok' : 'FAIL', 'signing in clears the knock', knockGone ? 'cleared' : 'still there']);
+  await expectAllowed('the signed-back-in phone acts as its guest', () => updateDoc(G(lost, gid, 'players', a.pid), { table: '3' }), results);
+  return results;
+}
+
 async function securityChecks(bots, gid) {
   const results = [];
   const faithful = bots.find((b) => b.role !== 'killer');
@@ -357,12 +398,14 @@ async function selftest(n) {
   const { db } = await import('../src/firebase/app.js');
   const game = async () => (await getDoc(doc(db, 'games', gid))).data();
 
+  const lobby = await lobbyChecks(bots, gid, host);
+
   await host.advance(gid); // deal
   await Promise.all(bots.map((b) => readSelf(b, gid)));
   const counts = bots.reduce((acc, b) => ({ ...acc, [b.role]: (acc[b.role] ?? 0) + 1 }), {});
   console.log('dealt:', counts);
 
-  const security = await securityChecks(bots, gid);
+  const security = [...lobby, ...await securityChecks(bots, gid)];
 
   const log = [];
   let guard = 0;

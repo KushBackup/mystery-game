@@ -4,6 +4,7 @@ import { useDayWall, useMyPlay } from '../../hooks/useKillers';
 import { postClue, savePicks } from '../../firebase/game';
 import { normalize, spoils, WORD_PICKS, CLUE_MAX } from '../../lib/engine/minigames.js';
 import { sfxSent, sfxDeny, sfxTap } from '../sfx';
+import { useDraft } from '../seen';
 import { StepBar } from './dayParts';
 import { useDayStep } from './dayStep';
 
@@ -58,7 +59,7 @@ export default function WordGame({ ctx, onClose, dayGame }) {
       {(step === 'clue' || step === 'pick' || step === 'done' || after) && (
         <Section head={after ? `The wall · ${wall.length} clues` : step === 'pick' ? `Tap ${WORD_PICKS} · ${picks.length} picked` : `The wall · ${wall.length} so far`}>
           {wall.length ? (
-            <ol className="os-wall">
+            <ol className="os-cluewall">
               {wall.map((w, i) => {
                 const on = picks.includes(w.pid);
                 const own = w.pid === me.pid;
@@ -68,14 +69,14 @@ export default function WordGame({ ctx, onClose, dayGame }) {
                   <li key={w.id}>
                     <button
                       type="button"
-                      className={`os-wall__row ${on ? 'os-wall__row--on' : ''} ${own ? 'os-wall__row--own' : ''}`}
+                      className={`os-cluewall__row ${on ? 'os-cluewall__row--on' : ''} ${own ? 'os-cluewall__row--own' : ''}`}
                       disabled={!canPick}
                       aria-pressed={on}
                       onClick={() => togglePick(w.pid)}
                     >
-                      <span className="os-wall__n">{i + 1}</span>
-                      <span className="os-wall__clue">{w.clue}{spoiled && <span className="os-wall__flag"> gave it away</span>}</span>
-                      <span className="os-wall__who">{own ? 'you' : nameOf(w.pid)}</span>
+                      <span className="os-cluewall__n">{i + 1}</span>
+                      <span className="os-cluewall__clue">{w.clue}{spoiled && <span className="os-cluewall__flag"> gave it away</span>}</span>
+                      <span className="os-cluewall__who">{own ? 'you' : nameOf(w.pid)}</span>
                     </button>
                   </li>
                 );
@@ -111,10 +112,11 @@ function WordCard({ word, hint, after, watching, ghost, compact }) {
   }
   if (!word) {
     return (
-      <div className="os-daycard os-daycard--hint">
-        <p className="os-label text-[11px]">YOUR HINT</p>
+      // Same colours and type as the word card below: only the words differ.
+      <div className="os-daycard">
+        <p className="os-label text-[11px] text-os-chrome">YOUR HINT</p>
         <p className={big}>{hint}</p>
-        {!compact && <p className="text-[15px] mt-1 os-balance">You don’t have the word.</p>}
+        {!compact && <p className="text-[14px] text-os-chrome mt-1 os-balance">You don’t have the word.</p>}
       </div>
     );
   }
@@ -128,7 +130,7 @@ function WordCard({ word, hint, after, watching, ghost, compact }) {
 }
 
 function ClueForm({ gid, c, me, card, players }) {
-  const [text, setText] = useState('');
+  const [text, setText, clearText] = useDraft(`${gid}.draft.clue.${c}`); // survives a reload until posted
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const names = players.map((p) => normalize(p.name)).filter(Boolean);
@@ -144,6 +146,7 @@ function ClueForm({ gid, c, me, card, players }) {
     setBusy(true);
     try {
       await postClue(gid, c, me.pid, clue);
+      clearText();
       sfxSent();
     } catch (err) {
       setError(err.code === 'permission-denied' ? 'Too late, or already posted.' : 'Not sent. Try again.');

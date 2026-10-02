@@ -13,7 +13,7 @@
 
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import {
-  doc, collection, query, where, orderBy, limit, onSnapshot, setDoc, updateDoc, writeBatch, serverTimestamp, addDoc,
+  doc, collection, query, where, orderBy, limit, onSnapshot, setDoc, updateDoc, deleteDoc, writeBatch, serverTimestamp, addDoc,
 } from 'firebase/firestore';
 import { auth, authReady, db } from './app.js';
 import { measureOffset } from '../lib/clockSkew.js';
@@ -98,7 +98,7 @@ export const subscribeBinding = (gid, uid, cb) =>
 export const subscribePlayers = (gid, cb) => watchList('players', col(gid, 'players'), cb);
 export const subscribeMyRole = (gid, pid, cb) => watchDoc('role', sub(gid, 'roles', pid), cb);
 export const subscribeMyTraits = (gid, pid, cb) => watchDoc('traits', sub(gid, 'traits', pid), cb);
-/** Every guest's arrival answers, as { pid: answers }. Public; frozen at the deal. */
+/** Every guest's arrival answers, as { pid: answers }. Public; written once at arrival, never edited. */
 export const subscribeAllTraits = (gid, cb) =>
   resilient('traits', (onError) => onSnapshot(col(gid, 'traits'), (s) => cb(Object.fromEntries(s.docs.map((d) => [d.id, d.data()]))), onError));
 export const subscribeInbox = (gid, pid, cb) => watchList('inbox', query(col(gid, 'inbox'), where('to', '==', pid)), cb);
@@ -134,8 +134,20 @@ export async function arrive(gid, uid, { name, traits }) {
   await batch.commit();
 }
 
-/** Fix one of your own answers. The rules allow it only until you have a role. */
-export const updateMyTrait = (gid, pid, trait, value) => updateDoc(sub(gid, 'traits', pid), { [trait]: value });
+/**
+ * Leave before the game starts: this guest is gone entirely (binding, player,
+ * answers), so the phone goes back to set-up and they can join again as a new
+ * guest. Answers are written once at arrival and never edited (firestore.rules),
+ * so this, or the host removing them, is the only way to change them. After
+ * the deal, leaving is `requestLeave`: they vanish at the next dawn.
+ */
+export async function leaveBeforeStart(gid, uid, pid) {
+  const batch = writeBatch(db);
+  batch.delete(sub(gid, 'players', pid));
+  batch.delete(sub(gid, 'traits', pid));
+  batch.delete(sub(gid, 'bindings', uid));
+  await batch.commit();
+}
 
 export const submitAction = (gid, cycle, pid, action) =>
   setDoc(sub(gid, 'actions', `${cycle}_${pid}`), { ...action, pid, cycle, at: serverTimestamp() });
@@ -174,6 +186,19 @@ export const saveGuesses = (gid, cycle, pid, answers) =>
 
 export const sendToChannel =(gid, channel, pid, name, text) =>
   addDoc(col(gid, channel), { pid, name, text: text.trim().slice(0, 280), at: Date.now() });
+
+/** What the host reads off a phone to sign it back in: the first six of its uid. */
+export const deviceCode = (uid) => (uid ?? '').slice(0, 6).toUpperCase();
+
+/**
+ * Signed out (cleared data, a new phone, the home-screen app, which keeps its
+ * own storage): ask the host to sign this phone back in as the guest it was.
+ * The host sees the name and the code and binds this uid to that guest
+ * (host.js `relink`); the phone's binding listener then opens the game.
+ */
+export const knock = (gid, uid, name) =>
+  setDoc(sub(gid, 'knocks', uid), { name: name.trim().slice(0, 24), code: deviceCode(uid), at: Date.now() });
+export const cancelKnock = (gid, uid) => deleteDoc(sub(gid, 'knocks', uid));
 
 export const requestLeave = (gid, pid) => updateDoc(sub(gid, 'players', pid), { leaveRequestedAt: Date.now() });
 

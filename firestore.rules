@@ -57,8 +57,21 @@ service cloud.firestore {
       // --- Identity ----------------------------------------------------------
       match /bindings/{uid} {
         allow read: if request.auth.uid == uid || isHost();
-        allow create: if request.auth.uid == uid && request.resource.data.pid == uid;
-        allow update, delete: if isHost();
+        // Self on arrival; the host when signing a phone back in as an existing guest (relink).
+        allow create: if isHost() || (request.auth.uid == uid && request.resource.data.pid == uid);
+        allow update: if isHost();
+        // Leaving before the deal unbinds the phone, so it can set up again (leaveBeforeStart).
+        allow delete: if isHost() || (request.auth.uid == uid && game().phase == 'lobby');
+      }
+
+      // A signed-out phone asking the host to sign it back in (game.js knock).
+      // Only an unbound phone can knock; only it and the host can see it.
+      match /knocks/{uid} {
+        allow read: if request.auth.uid == uid || isHost();
+        allow create, update: if request.auth.uid == uid && !hasBinding()
+          && request.resource.data.keys().hasOnly(['name', 'code', 'at'])
+          && shortText(request.resource.data.name) && request.resource.data.name.size() <= 24;
+        allow delete: if request.auth.uid == uid || isHost();
       }
 
       // Public: name, table, status. Status is the host's alone to change.
@@ -71,17 +84,19 @@ service cloud.firestore {
           && request.resource.data.name.size() <= 24;
         allow update: if isHost() || (isMe(pid)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'table', 'leaveRequestedAt']));
-        allow delete: if isHost();
+        allow delete: if isHost() || (isMe(pid) && game().phase == 'lobby');
       }
 
       // The six arrival answers, plus `gender` (it draws the contact photo and
       // is never a clue). Public (every guest's Contacts card shows the six,
-      // since 2026-10-02), and frozen once roles are dealt. They are
+      // since 2026-10-02). Written once, at arrival, and never edited
+      // (2026-10-02): to change them a guest leaves before the deal, or the
+      // host removes them, and they set up again as a new guest. They are
       // given before roles exist, so they say nothing about anyone's role.
       match /traits/{pid} {
         allow read: if signedIn();
-        allow create, update: if (request.auth.uid == pid || isMe(pid)) && !exists(/databases/$(database)/documents/games/$(gid)/roles/$(pid));
-        allow delete: if isHost();
+        allow create: if (request.auth.uid == pid || isMe(pid)) && !exists(/databases/$(database)/documents/games/$(gid)/roles/$(pid));
+        allow delete: if isHost() || (isMe(pid) && game().phase == 'lobby');
       }
 
       // Written by its owner as a heartbeat, and read back once to measure the

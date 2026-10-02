@@ -120,6 +120,10 @@ html.os-locked body {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 2px 6px rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(6px);
 }
+.os-now { display: flex; align-items: center; gap: 10px; }
+.os-now--tap { cursor: pointer; touch-action: manipulation; transition: filter 100ms ease-out; }
+.os-now--tap:active { filter: brightness(0.75); }
+.os-now__chev { flex: 0 0 auto; display: flex; color: rgba(255, 255, 255, 0.6); }
 .os-now__label { font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.72); letter-spacing: 0.04em; text-transform: uppercase; }
 .os-now__line { font-size: 15px; font-weight: 500; line-height: 1.25; margin-top: 2px; color: #fff; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4); }
 
@@ -311,6 +315,8 @@ html.os-locked body {
   touch-action: manipulation;
 }
 .os-barbtn__label { overflow: hidden; text-overflow: ellipsis; }
+/* A bar button on its own (News "Paper", the viewer's "Done") reaches 44px tall like the back button's .os-barhit. */
+button.os-barbtn::after { content: ''; position: absolute; inset: -7px -4px; }
 .os-barbtn:active, .os-barhit:active .os-barbtn { filter: brightness(0.7); }
 
 /* A 44px-tall touch target around the 30px pill. */
@@ -341,6 +347,12 @@ html.os-locked body {
   border: 1px solid rgba(8, 28, 72, 0.85);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
+
+/* A bar button takes its bar's tint, as on iOS 6: black on the dark bar, red on the red one. */
+.os-nav--dark .os-barbtn { background: linear-gradient(rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.05) 50%, rgba(0, 0, 0, 0.12) 51%, rgba(0, 0, 0, 0)), #2c2f36; border-color: rgba(0, 0, 0, 0.9); }
+.os-nav--dark .os-barbtn__tip::before { background: linear-gradient(135deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.05) 50%, rgba(0, 0, 0, 0.12) 51%, rgba(0, 0, 0, 0)), #2c2f36; border-color: rgba(0, 0, 0, 0.9); }
+.os-nav--red .os-barbtn { background: linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.06) 50%, rgba(0, 0, 0, 0.1) 51%, rgba(0, 0, 0, 0)), #b4261c; border-color: rgba(70, 6, 3, 0.9); }
+.os-nav--red .os-barbtn__tip::before { background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.06) 50%, rgba(0, 0, 0, 0.1) 51%, rgba(0, 0, 0, 0)), #b4261c; border-color: rgba(70, 6, 3, 0.9); }
 
 /* ------------------------------------------------------------ 5. Home bar */
 
@@ -660,6 +672,9 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   user-select: text;
 }
 
+.os-compose__error { flex: 1 0 100%; padding: 0 8px 1px; font-size: 13px; font-weight: 600; color: #c71c12; }
+.os-term .os-compose__error { color: var(--color-os-red); }
+
 .os-pinned {
   flex: 0 0 auto;
   display: flex;
@@ -685,15 +700,20 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  background: linear-gradient(rgba(70, 74, 82, 0.97), rgba(8, 9, 12, 0.97) 52%, rgba(0, 0, 0, 0.97));
+  /* Opaque: the home screen's NowCard under it must not show through the words. */
+  background: linear-gradient(#464a52, #08090c 52%, #000);
   border-bottom: 1px solid #000;
   box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25);
   color: #fff;
   cursor: pointer;
+  touch-action: none;
   animation: os-banner 3.4s steps(1, end) both, os-banner-slide 3.4s cubic-bezier(0.2, 0.9, 0.25, 1) both;
 }
 .os-banner__title { font-size: 14px; font-weight: 700; }
 .os-banner__text { font-size: 14px; line-height: 1.2; color: #dfe7f3; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A banner that has to be read (the morning's deadline): it wraps and stays twice as long. */
+.os-banner--long { animation-duration: 7s, 7s; }
+.os-banner--long .os-banner__text { white-space: normal; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
 @keyframes os-banner { 0%, 100% { visibility: visible; } }
 @keyframes os-banner-slide {
   0% { translate: 0 -110%; }
@@ -724,18 +744,25 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   left: 0;
   right: 0;
   z-index: 62;
-  max-height: 100%;
+  /* Never the whole stage: a strip of scrim always stays below to tap. */
+  max-height: calc(100% - 56px);
   display: flex;
   flex-direction: column;
-  padding: 10px 10px 14px;
-  background: linear-gradient(rgba(44, 48, 58, 0.95), rgba(14, 16, 22, 0.97) 60%, rgba(8, 9, 13, 0.97));
+  padding: 10px 10px 0;
+  background: linear-gradient(rgba(44, 48, 58, 0.98), rgba(14, 16, 22, 0.99) 60%, rgba(8, 9, 13, 0.99));
   border-bottom: 1px solid rgba(0, 0, 0, 0.6);
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(14px);
   transform: translateY(-100%);
   transition: transform 280ms cubic-bezier(0.2, 0.9, 0.25, 1);
 }
 .os-nc--open { transform: translateY(0); }
-.os-nc__scroll { overflow-y: auto; max-height: 100%; display: flex; flex-direction: column; gap: 14px; }
+.os-nc__scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; }
+/* The grabber bar along the bottom edge: a 44px target around a small pill. */
+.os-nc__grip { flex: 0 0 auto; display: grid; place-items: center; height: 30px; margin: 0 -10px; background: none; border: 0; cursor: pointer; touch-action: manipulation; }
+.os-nc__grip::before { content: ''; width: 38px; height: 5px; border-radius: 3px; background: rgba(255, 255, 255, 0.4); box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.5); }
+.os-nc__grip::after { content: ''; position: absolute; left: 0; right: 0; bottom: -14px; height: 44px; }
+.os-nc__grip:active::before { background: rgba(255, 255, 255, 0.7); }
 .os-nc__empty { padding: 30px 8px; text-align: center; font-size: 15px; color: #9aa3b4; }
 .os-nc__head { padding: 0 6px 5px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; color: #9aa3b4; }
 .os-nc__card {
@@ -769,6 +796,8 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 .os-lock__time { font-size: 72px; font-weight: 200; line-height: 1; letter-spacing: -0.03em; color: #fff; font-variant-numeric: tabular-nums; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5); }
 .os-lock__date { font-size: 17px; font-weight: 500; margin-top: 6px; color: #fff; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6); }
 .os-lock__notes { flex: 1; padding: 14px 12px; display: flex; flex-direction: column; gap: 8px; overflow: auto; }
+/* Setup's hello: the way back in for a guest whose phone lost the game. */
+.os-signback { margin-top: 18px; padding: 10px 14px; min-height: 44px; font-size: 15px; font-weight: 600; color: #fff; text-decoration: underline; text-underline-offset: 3px; text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7); background: none; border: 0; cursor: pointer; touch-action: manipulation; }
 .os-lock__slider {
   margin: 0 0 14px;
   padding: 14px 16px 16px;
@@ -1005,6 +1034,7 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 @media (prefers-reduced-motion: reduce) {
   .os-app-enter, .os-pop, .os-rise, .os-glitch, .os-verdict { animation: none !important; }
   .os-banner { animation: os-banner 3.4s steps(1, end) both; }
+  .os-banner--long { animation: os-banner 7s steps(1, end) both; }
   .os-alarm__ring, .os-alarm__flash, .os-slide__text { animation: none !important; }
   .os-slide__text { color: #c9d1dc; background: none; }
   .os-spinner { animation-duration: 2s; }
@@ -1322,6 +1352,20 @@ button.os-field:active .os-field__label, button.os-field:active .os-field__ok, b
 /* A guest's drawn photo wherever a person appears (Portrait.jsx `Face`). */
 /* A contact photo shown whole (Setup, the contact card): a print with a white border, lying on the page. */
 .os-photo { padding: 4px; background: #fff; border-radius: 4px; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset, 0 1px 3px rgba(0, 0, 0, 0.35), 0 4px 10px rgba(14, 22, 38, 0.18); }
+.os-photo--tap { display: block; border: 0; cursor: zoom-in; touch-action: manipulation; }
+.os-photo--tap:active { filter: brightness(0.85); }
+
+/* A contact photo full screen (ContactsApp PhotoViewer): Photos on black, a glass bar on top. */
+.os-viewer { position: absolute; inset: 0; z-index: 50; display: flex; flex-direction: column; background: #000; animation: os-fade 200ms ease both; cursor: zoom-out; }
+.os-viewer__bar {
+  flex: 0 0 auto; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 44px; padding-right: 6px;
+  background: linear-gradient(rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 50%), rgba(0, 0, 0, 0.6);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.9); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.os-viewer__title { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 18px; font-weight: 700; color: #fff; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.6); }
+.os-barbtn--glass { background: linear-gradient(rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.06) 50%, rgba(0, 0, 0, 0.12) 51%, rgba(0, 0, 0, 0)), #2b2f36; border-color: rgba(0, 0, 0, 0.9); }
+.os-viewer__stage { flex: 1 1 auto; min-height: 0; display: grid; place-items: center; }
+@media (prefers-reduced-motion: reduce) { .os-viewer { animation: none; } }
 .os-face { flex: 0 0 auto; border: 1px solid rgba(0, 0, 0, 0.35); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); }
 .os-face--gold { border: 2px solid var(--color-os-gold); box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.45), 0 2px 10px rgba(255, 204, 51, 0.35); }
 .os-face--killer { border: 2px solid var(--color-os-red); box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5), 0 0 16px rgba(255, 59, 48, 0.45); }
@@ -1409,35 +1453,41 @@ button.os-field:active .os-field__label, button.os-field:active .os-field__ok, b
   background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 55%), var(--color-os-navy);
   border: 1px solid rgba(143, 163, 194, 0.35); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 6px rgba(0, 0, 0, 0.4);
 }
-.os-daycard--hint { background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 55%), #3a1420; border-color: rgba(255, 59, 48, 0.55); }
+/* The Killers' hint card wears the word card's colours: a glance across the
+   table must not tell a hint from a word (the same rule as the role message). */
 .os-daycard__word { font-size: 38px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em; margin-top: 4px; overflow-wrap: anywhere; }
 .os-daycard__word--inline { font-size: 26px; margin-top: 2px; }
 
 /* The wall: every clue in the order it landed. Tappable only while picking. */
-.os-wall { list-style: none; margin: 0; padding: 0 12px; display: grid; gap: 6px; }
-.os-wall__row {
+.os-cluewall { list-style: none; margin: 0; padding: 0 12px; display: grid; gap: 6px; }
+.os-cluewall__row {
   display: flex; align-items: center; gap: 10px; width: 100%; min-height: 46px; padding: 8px 12px; border-radius: 10px; text-align: left;
   color: var(--color-os-foam); background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(143, 163, 194, 0.25); font: inherit;
 }
-.os-wall__row:disabled { cursor: default; }
-.os-wall__row--own { border-style: dashed; }
-.os-wall__row--on { background: linear-gradient(rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0) 55%), var(--color-os-sea); border-color: #0b4fae; }
-.os-wall__n { flex: 0 0 26px; font-size: 13px; font-weight: 800; color: var(--color-os-chrome); font-variant-numeric: tabular-nums; }
-.os-wall__row--on .os-wall__n { color: #fff; }
-.os-wall__clue { flex: 1 1 auto; min-width: 0; font-size: 19px; font-weight: 700; overflow-wrap: anywhere; }
-.os-wall__flag { font-size: 12px; font-weight: 700; color: var(--color-os-red); }
-.os-wall__who { flex: 0 1 auto; min-width: 0; max-width: 40%; font-size: 13px; color: var(--color-os-chrome); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.os-wall__row--on .os-wall__who { color: #fff; }
+.os-cluewall__row:not(:disabled) { cursor: pointer; touch-action: manipulation; transition: background-color 100ms ease-out; }
+.os-cluewall__row:not(:disabled):not(.os-cluewall__row--on):active { background-color: rgba(255, 255, 255, 0.14); }
+.os-cluewall__row:disabled { cursor: default; }
+.os-cluewall__row--own { border-style: dashed; }
+.os-cluewall__row--on { background: linear-gradient(rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0) 55%), var(--color-os-sea); border-color: #0b4fae; }
+.os-cluewall__n { flex: 0 0 26px; font-size: 13px; font-weight: 800; color: var(--color-os-chrome); font-variant-numeric: tabular-nums; }
+.os-cluewall__row--on .os-cluewall__n { color: #fff; }
+.os-cluewall__clue { flex: 1 1 auto; min-width: 0; font-size: 19px; font-weight: 700; overflow-wrap: anywhere; }
+.os-cluewall__flag { font-size: 12px; font-weight: 700; color: var(--color-os-red); }
+.os-cluewall__who { flex: 0 1 auto; min-width: 0; max-width: 40%; font-size: 13px; color: var(--color-os-chrome); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.os-cluewall__row--on .os-cluewall__who { color: #fff; }
 
 /* Drawing: the pad, the inks, a drawing at any size. */
 .os-pad, .os-sketch { display: block; border-radius: 10px; background: var(--color-os-foam); box-shadow: 0 0 0 1px #000, 0 2px 8px rgba(0, 0, 0, 0.5); }
 .os-pad { touch-action: none; }
-.os-ink { width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.35); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); }
+.os-ink { position: relative; width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.35); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); cursor: pointer; touch-action: manipulation; }
+/* 42px to the finger: as big as the 8px gap allows without two swatches overlapping. */
+.os-ink::after { content: ''; position: absolute; inset: -6px; border-radius: 50%; }
 .os-ink--on { border-color: #fff; box-shadow: 0 0 0 3px var(--color-os-sea); }
 
 /* Guessing: the per-drawing timer and the "Correct!" stamp. */
 .os-guess-timer { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
-.os-guess-timer i { display: block; height: 100%; background: var(--color-os-sea); transition: width 250ms linear; }
+/* Shrinks by scale, not width: a compositor-only change ten times a second. */
+.os-guess-timer i { display: block; width: 100%; height: 100%; background: var(--color-os-sea); transform-origin: left center; transition: scale 250ms linear; }
 .os-guess-flash {
   position: absolute; top: 40%; left: 0; right: 0; width: max-content; margin: 0 auto; padding: 8px 16px; border-radius: 10px; white-space: nowrap;
   font-size: 22px; font-weight: 800; color: #fff; background: linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 52%), linear-gradient(#78e08a, #25a03c);

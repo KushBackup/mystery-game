@@ -2,17 +2,18 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow, useAllTraits, useKillerGroup } from '../hooks/useKillers';
 import { serverNow } from '../lib/clockSkew';
 import { nowLine, PHASE_LABEL, deliveryLine, GAME } from '../data/killersCopy';
-import { dayKit } from '../data/packs/index.js';
+import { dayKit, alarmLine } from '../data/packs/index.js';
 import { StatusBar, HomeBar, HomeScreen, LockScreen, Banner, NotificationCenter, NCTile } from './chrome';
-import { AlarmScreen, RoleText, IncomingCall, GoneScreen, ChapterCard, TakenScreen } from './takeovers';
+import { RoleText, IncomingCall, GoneScreen, ChapterCard, TakenScreen } from './takeovers';
 import { threadsFor, preview as threadPreview } from './threads';
-import { useSeen, markSeen } from './seen';
+import { useSeen, markSeen, peekSeen } from './seen';
 import { useNews } from './news';
 import { useVoice } from './voice';
 import { useMaskedPlayers, BOARD_BEAT, VERDICT_BEAT } from './beats';
 import { prefersLessMotion } from './nav';
 import { dayLabel, photoSource, timeOfDay } from './words';
-import { primeSfx, sfxPing, sfxLock } from './sfx';
+import { primeSfx, sfxPing, sfxLock, startAlarm, stopAlarm } from './sfx';
+import { daySchedule, fmtClock } from '../lib/engine/clock.js';
 import MessagesApp from './apps/MessagesApp';
 import GameApp from './apps/GameApp';
 import NewsApp from './apps/NewsApp';
@@ -35,8 +36,11 @@ import HelpApp from './apps/HelpApp';
  * happened ("The board is up."), a badge sits on the app that wants you, and
  * the NowCard at the top of the home screen opens it if tapped. A few
  * moments still take the whole screen, because a real phone does that too:
- * the role text at casting, the alarm every morning, the recruit call, and
- * your own death.
+ * the role text at casting, the recruit call, and your own death.
+ *
+ * The morning alarm is a notification, not a takeover (user's call,
+ * 2026-10-02): it rings briefly and says by when to play. Nobody is made to
+ * play; a guest who doesn't scores zero, and the banner says so.
  *
  * What the room hasn't been told yet, this phone doesn't show: a death lands
  * in the data a few seconds before the reveal plays, so the roster (and your
@@ -64,9 +68,28 @@ const SUGGEST = {
  * The banner a phase start drops on every phone. No names, ever: a banner
  * lands with the phase, which for the board and the verdict is seconds
  * before the reveal says who (beats.js).
+ *
+ * The morning's two say by when to play, on the game clock (`until`), and
+ * what skipping costs a living guest. The user asked for exactly that line.
  */
+const todayTitle = (g, pack) => dayKit(pack).dayGames[g.minigame ?? 'run']?.title ?? 'The run';
+const skipLine = (alive) => (alive ? ' Skip it and you score zero.' : '');
 const PHASE_BANNER = {
-  game: (g, pack) => ({ icon: 'deepblue', title: 'DEEP BLUE', text: `${dayKit(pack).dayGames[g.minigame ?? 'run']?.title ?? 'The run'} has started.`, app: 'deepblue' }),
+  alarm: (g, pack, { until, alive }) => ({
+    icon: 'clock',
+    // The pack's line for the day ("DAY 2. The board remembers yesterday."), as the alarm's label.
+    title: alarmLine(pack, g.cycle),
+    text: `${dayKit(pack).dayGames[g.minigame ?? 'run']?.alarm ?? `Today: ${todayTitle(g, pack)}.`}${until ? ` Play before ${until}.` : ''}${skipLine(alive)}`,
+    app: 'deepblue',
+    long: true,
+  }),
+  game: (g, pack, { until, alive }) => ({
+    icon: 'deepblue',
+    title: 'DEEP BLUE',
+    text: until ? `${todayTitle(g, pack)} is open until ${until}.${skipLine(alive)}` : `${todayTitle(g, pack)} has started.${skipLine(alive)}`,
+    app: 'deepblue',
+    long: true,
+  }),
   dawn: () => ({ icon: 'news', title: 'News', text: 'The board is up.', app: 'news' }),
   banish: () => ({ icon: 'news', title: 'News', text: 'The verdict is in.', app: 'news' }),
   finale: () => ({ icon: 'news', title: 'News', text: 'It’s over.', app: 'news' }),
@@ -79,6 +102,9 @@ const PHASE_BANNER = {
 const CHAPTERS = new Set(['night', 'investigation', 'roundtable', 'endgame']);
 
 const GRID = [['clock', 'Clock'], ['contacts', 'Contacts'], ['night', 'Night'], ['weather', 'Weather'], ['settings', 'Settings'], ['help', 'Help']];
+/** The Night app is on the phone only while it is night; by day it is gone, and an open one closes. */
+const NIGHTTIME = new Set(['night', 'night_locked', 'recruit', 'recruit_locked']);
+const gridFor = (phase) => (NIGHTTIME.has(phase) ? GRID : GRID.filter(([id]) => id !== 'night'));
 const DOCK = [['messages', 'Messages'], ['deepblue', 'DEEP BLUE'], ['news', 'News'], ['gallery', 'Photos']];
 
 const APPS = {
@@ -203,7 +229,8 @@ export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = 
         {children}
         <NotificationCenter sections={sections} open={ncOpen} pull={ncPull} onOpen={onOpenApp} onClose={ncClose} />
       </div>
-      <HomeBar onHome={onHome} />
+      {/* With the panel down, Home puts it away first, the way iOS did. */}
+      <HomeBar onHome={() => (ncOpen ? ncClose() : onHome())} />
     </div>
   );
 }
@@ -225,21 +252,32 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const myScore = useMyScore(gid, game.cycle, me.pid);
   const action = useMyAction(gid, game.cycle, me.pid);
   const denPicks = useDen(gid, game.cycle, isKiller && phase === 'night');
-  // Everyone's arrival answers (Contacts, Notes). Frozen at the deal, so this listener is nearly silent.
+  // Everyone's arrival answers (Contacts, Notes). Written once at arrival, so this listener is nearly silent.
   const traits = useAllTraits(gid);
 
   // --- Which app is open: only ever the guest's choice. A phase change leaves
-  // it alone and decides whether a chapter card plays: only for a phase that
-  // began moments ago.
+  // it alone (except the Night app, which closes at daybreak) and decides
+  // whether a chapter card plays: only for a phase that began moments ago.
   const phaseKey = `${phase}:${game.cycle}:${game.ballot ?? ''}`;
   const phaseAt = Math.max(game.revealAt || 0, game.phaseStartedAt || 0);
   const freshPhase = () => serverNow() - phaseAt < 3500;
-  const [nav, setNav] = useState({ app: null, key: phaseKey, origin: '50% 50%', chapter: null, thread: null });
+  // The open app is kept on the phone, so a reload or a reopened browser comes back to it.
+  const [nav, setNav] = useState(() => {
+    const last = peekSeen(`${gid}.app`);
+    const app = last?.app && APPS[last.app] && !(last.app === 'night' && !NIGHTTIME.has(phase)) ? last.app : null;
+    return { app, key: phaseKey, origin: '50% 50%', chapter: null, thread: app ? last.thread ?? null : null };
+  });
   if (nav.key !== phaseKey) {
-    setNav({ ...nav, key: phaseKey, chapter: CHAPTERS.has(phase) && freshPhase() ? phaseKey : null });
+    setNav({
+      ...nav,
+      app: nav.app === 'night' && !NIGHTTIME.has(phase) ? null : nav.app,
+      key: phaseKey,
+      chapter: CHAPTERS.has(phase) && freshPhase() ? phaseKey : null,
+    });
   }
   const current = nav.key === phaseKey ? nav : { ...nav, chapter: null };
   const app = current.app;
+  useEffect(() => { markSeen(`${gid}.app`, app ? { app, thread: current.thread ?? null } : null); }, [gid, app, current.thread]);
 
   // Closing an app zooms it back into its icon; the element stays mounted until the zoom ends.
   const [closing, setClosing] = useState(null);
@@ -260,9 +298,11 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   };
 
   // --- Takeovers, each dismissed per day (or per casting).
-  const [unlocked, setUnlocked] = useState(false);
-  const [alarmOff, setAlarmOff] = useState(null);
-  const [roleRead, setRoleRead] = useState(false);
+  // Kept on the phone, so a reload never asks for the slide or replays the role card.
+  const unlocked = useSeen(`${gid}.unlocked`, false);
+  const setUnlocked = (v) => markSeen(`${gid}.unlocked`, v);
+  const roleRead = useSeen(`${gid}.roleRead`, false);
+  const setRoleRead = (v) => markSeen(`${gid}.roleRead`, v);
   const [homeIn, setHomeIn] = useState(0); // bump to replay the home screen's entrance
   const offered = inbox.some((d) => d.kind === 'recruitOffer' && d.cycle === game.cycle);
 
@@ -300,6 +340,11 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const threads = threadsFor(ctxBase, seen);
   const acted = isKiller ? (denPicks ?? []).some((d) => d.pid === me.pid && (d.victim || d.recruit)) : Boolean(action);
   const needsNight = phase === 'night' && ['alive', 'ghost'].includes(me.status) && !acted;
+  // The morning game is never forced: a badge, a banner and this row say by when.
+  const plan = daySchedule(game, serverNow());
+  const dawnAt = plan?.parts.find((p) => p.id === 'dawn')?.at;
+  const until = dawnAt != null ? fmtClock(dawnAt) : '';
+  const needsGame = ['alarm', 'game'].includes(phase) && ['alive', 'ghost'].includes(me.status) && !myScore;
   const needsVote = ['roundtable', 'revote'].includes(phase) ? me.status === 'alive' && !myVote : phase === 'endgame' && ['alive', 'ghost'].includes(me.status) && !myVote;
   const newsSeenArr = Array.isArray(newsSeen) ? newsSeen : [];
   const badges = {
@@ -307,7 +352,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
     gallery: inbox.filter((d) => d.kind === 'fact' && !gallerySeen.includes(d.id)).length || null,
     news: news.ids.filter((id) => !newsSeenArr.includes(id)).length || null,
     night: needsNight ? '!' : null,
-    deepblue: phase === 'game' && !myScore ? '!' : null,
+    deepblue: needsGame ? '!' : null,
   };
 
   // --- Notification Center: unread only, grouped by app (chrome.jsx). Every
@@ -338,6 +383,15 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
     .map((s) => ({ id: s.id, icon: 'news', title: s.kicker || 'News', text: s.head, app: 'news' }));
   const ncAction = [
     needsNight && { id: 'need-night', icon: 'night', title: 'Night', text: 'Choose your move before it ends.', app: 'night' },
+    needsGame && {
+      id: 'need-game',
+      icon: 'deepblue',
+      title: todayTitle(game, pack),
+      text: me.status === 'alive'
+        ? `Play before ${until || 'the board goes up'}, or score zero. The lowest score can be taken.`
+        : `Play before ${until || 'the board goes up'}.`,
+      app: 'deepblue',
+    },
     needsVote && { id: 'need-vote', tile: <NCTile glyph="vote" bg="linear-gradient(#4a9bf5, #0b6fe3)" />, title: 'Vote', text: 'Cast your ballot before it closes.', app: 'vote' },
   ].filter(Boolean);
   const sections = [
@@ -355,7 +409,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const myPid = me.pid;
   const banner = (() => {
     const fresh = [];
-    const phaseNote = PHASE_BANNER[phase]?.(game, pack);
+    const phaseNote = PHASE_BANNER[phase]?.(game, pack, { until, alive: me.status === 'alive' });
     if (phaseNote && phaseAt > mountAt && app !== phaseNote.app) {
       fresh.push({ id: `phase:${phaseKey}`, at: phaseAt, kind: 'phase', ...phaseNote });
     }
@@ -395,6 +449,24 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   useEffect(() => {
     if (bannerNow) sfxPing();
   }, [bannerNow]);
+  // A banner that was tapped (or flicked away) leaves at once instead of hanging over the app it opened.
+  const [bannerGone, setBannerGone] = useState(null);
+  const bannerShown = bannerNow && bannerGone !== bannerNow.id ? bannerNow : null;
+
+  // The alarm rings for a few seconds when the morning starts, then leaves the
+  // guest alone. Only for a morning that began moments ago, never on a reload.
+  const alarmKey = phase === 'alarm' && freshPhase() && phaseAt > mountAt ? phaseKey : null;
+  const ringAt = useServerNow(alarmKey ? phaseAt : 0, 250);
+  const ringing = Boolean(alarmKey) && ringAt >= phaseAt;
+  useEffect(() => {
+    if (!ringing) return undefined;
+    startAlarm();
+    const id = setTimeout(stopAlarm, 3000);
+    return () => {
+      clearTimeout(id);
+      stopAlarm();
+    };
+  }, [ringing]);
 
   // Browsers only let audio start from a gesture: the first tap anywhere unlocks it.
   useEffect(() => {
@@ -406,7 +478,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const ghost = me.status === 'ghost';
   const label = (PHASE_LABEL[phase] ?? '').toUpperCase();
   // Role-neutral on purpose: the home screen is what the guest beside you sees.
-  const line = nowLine({ phase, status: me.status, hasActed: acted && phase === 'night', cycle: game.cycle, minigame: game.minigame ?? 'run', pack });
+  const line = nowLine({ phase, status: me.status, hasActed: acted && phase === 'night', cycle: game.cycle, minigame: game.minigame ?? 'run', pack, until });
   const suggested = SUGGEST[phase] ?? null;
 
   // --- What takes the whole screen right now.
@@ -414,7 +486,6 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   if (me.status === 'vanished') takeover = <GoneScreen />;
   else if (showTaken) takeover = <TakenScreen me={realMe} onDone={() => { markSeen(`${gid}.taken`, realMe.diedCycle); setHomeIn((n) => n + 1); }} />;
   else if (phase === 'casting' && !roleRead) takeover = <RoleText game={game} role={role} onDone={() => { setRoleRead(true); setHomeIn((n) => n + 1); }} />;
-  else if (phase === 'alarm' && alarmOff !== game.cycle) takeover = <AlarmScreen game={game} pack={pack} onStop={() => { setAlarmOff(game.cycle); setHomeIn((n) => n + 1); }} />;
   else if (phase === 'recruit' && offered && me.status === 'alive') takeover = <IncomingCall gid={gid} game={game} me={me} />;
   else if (phase === 'lobby' && !unlocked) {
     const here = players.filter((p) => p.status === 'alive').length;
@@ -441,12 +512,12 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
       <HomeScreen
         key={homeIn}
         entering={homeIn > 0}
-        grid={GRID}
+        grid={gridFor(phase)}
         dock={DOCK}
         badges={badges}
         ghost={ghost}
         onOpen={open}
-        now={{ label: dayLabel(game, label), line, urgent: needsNight || needsVote, onTap: () => suggested && open(suggested) }}
+        now={{ label: dayLabel(game, label), line, urgent: needsNight || needsVote || needsGame, onTap: suggested && (suggested !== 'night' || NIGHTTIME.has(phase)) ? () => open(suggested) : null }}
       />
       {App && (
         <div
@@ -460,8 +531,16 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
       )}
       {!takeover && current.chapter && <ChapterCard key={current.chapter} game={game} pack={pack} />}
       {takeover}
-      {!takeover && bannerNow && (
-        <Banner key={bannerNow.id} icon={bannerNow.icon} title={bannerNow.title} text={bannerNow.text} onOpen={() => open(bannerNow.app, null, bannerNow.thread ?? null)} />
+      {!takeover && bannerShown && (
+        <Banner
+          key={bannerShown.id}
+          icon={bannerShown.icon}
+          title={bannerShown.title}
+          text={bannerShown.text}
+          long={Boolean(bannerShown.long)}
+          onOpen={() => { setBannerGone(bannerShown.id); open(bannerShown.app, null, bannerShown.thread ?? null); }}
+          onDismiss={() => setBannerGone(bannerShown.id)}
+        />
       )}
     </PhoneFrame>
   );

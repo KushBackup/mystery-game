@@ -6,6 +6,7 @@ import { serverNow } from '../../lib/clockSkew';
 import { assignDrawings, checksOf, guessHits, shownWord, DRAW_SHOW_MS } from '../../lib/engine/minigames.js';
 import { BOARD, INKS, encode, paint } from './strokes';
 import { sfxPoint, sfxDeny, sfxTap, sfxSent } from '../sfx';
+import { markSeen, peekSeen } from '../seen';
 import { StepBar, Sketch } from './dayParts';
 import { useDayStep } from './dayStep';
 
@@ -57,12 +58,16 @@ export default function DrawGame({ ctx, onClose, dayGame }) {
 // --- Draw -------------------------------------------------------------------------------
 
 function DrawStep({ gid, c, me, word }) {
-  const [strokes, setStrokes] = useState([]);
+  // The drawing is kept on the phone as it grows, so a reload carries on from
+  // the same picture instead of autosaving a blank one over it.
+  const keepKey = `${gid}.draw.${c}`;
+  const [strokes, setStrokes] = useState(() => peekSeen(keepKey) ?? []);
   const [ink, setInk] = useState(0);
   const checks = useMemo(() => checksOf(word, `${c}:${me.pid}`), [word, c, me.pid]);
+  useEffect(() => { markSeen(keepKey, strokes.length ? strokes : null); }, [keepKey, strokes]);
 
   // The latest drawing, for the autosave, and whether it has changed since the last save.
-  const latest = useRef({ strokes, dirty: false });
+  const latest = useRef({ strokes, dirty: strokes.length > 0 });
   useEffect(() => {
     if (latest.current.strokes !== strokes) latest.current = { strokes, dirty: true };
   }, [strokes]);
@@ -192,15 +197,21 @@ function GuessStep({ gid, game, me, drawings, nameOf }) {
   const inked = useMemo(() => (drawings ?? []).filter((d) => (d.strokes ?? '').length > 4), [drawings]);
   const byPid = useMemo(() => Object.fromEntries(inked.map((d) => [d.pid, d])), [inked]);
   const list = useMemo(() => assignDrawings(inked.map((d) => d.pid), me.pid, `${game.courseSeed ?? 'deep'}:${c}`), [inked, me.pid, game.courseSeed, c]);
-  const [seen, setSeen] = useState([]);
+  // Which drawings you've been shown, and when the current one appeared, are
+  // kept on the phone: a reload neither replays a drawing nor restarts its clock.
+  const seenKey = `${gid}.guessSeen.${c}`;
+  const shownKey = `${gid}.guessShown.${c}`;
+  const [seen, setSeen] = useState(() => peekSeen(seenKey) ?? []);
+  useEffect(() => { markSeen(seenKey, seen.length ? seen : null); }, [seenKey, seen]);
   const current = list.find((p) => !seen.includes(p)) ?? null;
   const [answers, setAnswers] = useState(null);
   const got = answers ?? saved?.answers ?? {};
   const [text, setText] = useState('');
   const [flash, setFlash] = useState(null);
   // Each drawing gets its own clock, started the moment it is shown.
-  const [shown, setShown] = useState({ pid: null, at: 0 });
+  const [shown, setShown] = useState(() => peekSeen(shownKey) ?? { pid: null, at: 0 });
   if (current && shown.pid !== current) setShown({ pid: current, at: serverNow() });
+  useEffect(() => { if (shown.pid) markSeen(shownKey, shown); }, [shownKey, shown]);
   const shownAt = shown.pid === current ? shown.at : serverNow();
   const now = useServerNow(shownAt + DRAW_SHOW_MS, 250);
 
@@ -258,7 +269,7 @@ function GuessStep({ gid, game, me, drawings, nameOf }) {
         <Sketch strokes={d?.strokes ?? ''} size={260} className="os-pad" />
         {flash && <p className="os-guess-flash os-pop">{flash}</p>}
       </div>
-      <div className="os-guess-timer mt-2"><i style={{ width: `${(leftMs / DRAW_SHOW_MS) * 100}%` }} /></div>
+      <div className="os-guess-timer mt-2"><i style={{ scale: `${Math.max(0, leftMs / DRAW_SHOW_MS)} 1` }} /></div>
       <form className="flex gap-2 mt-3" onSubmit={submit}>
         <input className="os-input flex-1" value={text} maxLength={30} onChange={(e) => setText(e.target.value)} placeholder="What is it?" aria-label="Your guess" autoCapitalize="none" autoComplete="off" enterKeyHint="go" />
         <Btn small type="submit" disabled={!text.trim() || Boolean(flash)}>Guess</Btn>

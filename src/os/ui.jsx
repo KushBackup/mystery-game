@@ -127,11 +127,11 @@ export const Switch = ({ on, onChange, label }) => (
   <button type="button" role="switch" aria-checked={on} aria-label={label} className="os-switch" onClick={() => { sfxTap(); onChange(!on); }} />
 );
 
-/** The held beat: a pixel spinner and one line. */
-export const Hold = ({ label = 'Loading…', children }) => (
+/** The held beat: a spinner and one line. `still` drops the spinner for a state that waiting won't change. */
+export const Hold = ({ label = 'Loading…', still = false, children }) => (
   <div className="os-hold">
     <div>
-      <div className="os-spinner" />
+      {!still && <div className="os-spinner" />}
       <p className="os-label mt-4 text-os-chrome">{label}</p>
       {children}
     </div>
@@ -175,7 +175,7 @@ export function GuestPicker({ guests, value, onPick, disabled = () => false, not
             key={g.pid}
             title={g.name}
             icon={traits ? <Face traits={traits} pid={g.pid} size={36} /> : undefined}
-            sub={note(g) ?? (traits ? lookLine(traits[g.pid]) : null) ?? (g.table ? `Table ${g.table}` : null)}
+            sub={note(g) ?? (traits ? lookLine(traits[g.pid]) : null) ?? null}
             on={value === g.pid}
             disabled={disabled(g)}
             onClick={() => onPick(g.pid)}

@@ -58,7 +58,7 @@ function RunGame({ ctx, onClose }) {
   const seed = live || posting ? `${game.courseSeed ?? 'deep'}:${game.cycle}` : `${game.courseSeed ?? 'deep'}:practice`;
   return (
     <section className="os-app os-app--dark">
-      <NavBar title={live || posting ? `Day ${game.cycle} run` : 'DEEP BLUE'} onBack={onClose} tone="dark" right={<span className={`os-label text-[11px] pr-1 ${live ? 'text-os-red' : 'text-os-chrome'}`}>{live ? '● LIVE' : posting ? 'CLOSED' : 'PRACTICE'}</span>} />
+      <NavBar title={live || posting ? `Day ${game.cycle} run` : 'DEEP BLUE'} onBack={onClose} backLabel="Home" tone="dark" right={<span className={`os-label text-[11px] pr-1 ${live ? 'text-os-red' : 'text-os-chrome'}`}>{live ? '● LIVE' : posting ? 'CLOSED' : 'PRACTICE'}</span>} />
       <div className="relative flex-1 min-h-0">
         <DeepBlueGame
           key={`${seed}:${live || posting ? 'live' : 'practice'}`}

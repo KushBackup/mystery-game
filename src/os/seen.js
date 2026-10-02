@@ -52,3 +52,16 @@ export function useSeen(key, fallback = null) {
 
 /** Private notes, same store, so the Notes app keeps what you typed across reloads. */
 export const noteKey = (gid) => `${gid}.notes`;
+
+/** The stored value for `key` right now, outside React (a state's first value). */
+export const peekSeen = (key) => read(key);
+
+/**
+ * A text field that survives a reload: half-typed messages, clues and guesses
+ * are kept on this phone (same store) until sent. `key` is scoped by the
+ * caller (game id first). Call `clear()` once the text has gone.
+ */
+export function useDraft(key) {
+  const value = useSeen(key, '');
+  return [value, (v) => markSeen(key, v || null), () => markSeen(key, null)];
+}

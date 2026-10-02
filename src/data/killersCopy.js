@@ -39,9 +39,10 @@ export const ROLE_CARD = {
 /**
  * The one line on the home screen's NowCard: what is happening, never what to
  * do or how. It must not depend on the guest's role: the home screen is what
- * the person beside you can see.
+ * the person beside you can see. `until` is when the morning game closes, on
+ * the game clock (engine/clock.js), the one deadline the line names.
  */
-export function nowLine({ phase, status, hasActed, cycle, minigame = 'run', pack }) {
+export function nowLine({ phase, status, hasActed, cycle, minigame = 'run', pack, until = '' }) {
   if (status === 'vanished') return 'You left the game. Thanks for playing.';
   if (status === 'ghost' && !['night', 'endgame', 'finale'].includes(phase)) return 'No signal.';
   const title = pack?.dayGames?.[minigame]?.title ?? 'The run';
@@ -54,9 +55,9 @@ export function nowLine({ phase, status, hasActed, cycle, minigame = 'run', pack
     case 'recruit':
       return hasActed ? 'Done for tonight.' : `Night ${cycle}.`;
     case 'alarm':
-      return 'Wake up.';
+      return until ? `Wake up. Play ${title} before ${until}.` : 'Wake up.';
     case 'game':
-      return `${title} has started.`;
+      return until ? `${title} is open until ${until}.` : `${title} has started.`;
     case 'game_locked':
       return 'Time.';
     case 'dawn':

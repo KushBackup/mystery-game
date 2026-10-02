@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { TRAITS, GENDER } from '../data/traits';
 import { GAME } from '../data/killersCopy';
-import { arrive } from '../firebase/game';
+import { arrive, knock, cancelKnock, deviceCode } from '../firebase/game';
 import Wallpaper from './art/Wallpaper';
 import Portrait from './art/Portrait';
 import { ART_W, ART_H } from './art/portraitArt';
 import { SlideToUnlock } from './chrome';
-import { AppFrame, Section, Btn } from './ui';
-import { useSeen, markSeen } from './seen';
+import { AppFrame, Section, Btn, ActionSheet } from './ui';
+import { useSeen, markSeen, peekSeen } from './seen';
 import { primeSfx, sfxTap, sfxDeny, sfxBoot } from './sfx';
 
 /**
@@ -28,6 +28,18 @@ import { primeSfx, sfxTap, sfxDeny, sfxBoot } from './sfx';
  * (data/traits.js): nobody knows yet whether they'll want to lie, so they
  * answer straight. Nothing is written until the last tap; one batch registers
  * the guest, so a guest never exists without answers.
+ *
+ * The review ("Almost done") is the last chance to change an answer: a tap
+ * opens that question's options in a sheet and stays on the review. Once the
+ * phone is ready the answers are never edited (firestore.rules); leaving
+ * before the deal, or the host removing them, sends a guest back here.
+ *
+ * Progress is kept on the phone (seen.js, `<gid>.setup`), so a reload or a
+ * closed browser picks up at the same question with the same answers.
+ *
+ * A guest who is already playing but got signed out (cleared data, a new
+ * phone, the home-screen app) taps "Already playing?" on the hello screen
+ * instead: `SignBackIn` asks the host, who signs this phone in as them.
  */
 
 // Module-level so it is the same function every render: Boot's timer depends on it.
@@ -40,14 +52,20 @@ const QUESTIONS = [GENDER, ...TRAITS];
 
 export default function Setup({ gid, uid, late }) {
   const booted = useSeen('booted', false);
-  const [step, setStep] = useState('hello'); // (boot) | hello | terms | name | 0..5 | review
-  const [name, setName] = useState('');
-  const [answers, setAnswers] = useState({});
+  const saveKey = `${gid}.setup`;
+  const [resume] = useState(() => peekSeen(saveKey) ?? {});
+  const [step, setStep] = useState(resume.step ?? 'hello'); // (boot) | hello | back | terms | name | 0..5 | review
+  const [name, setName] = useState(resume.name ?? '');
+  const [answers, setAnswers] = useState(resume.answers ?? {});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [sheet, setSheet] = useState(null); // on the review: the question being changed in place
+
+  useEffect(() => { markSeen(saveKey, { step, name, answers }); }, [saveKey, step, name, answers]);
 
   if (!booted) return <Boot onDone={finishBoot} />;
-  if (step === 'hello') return <Hello onDone={() => { primeSfx(); setStep('terms'); }} late={late} />;
+  if (step === 'back') return <SignBackIn gid={gid} uid={uid} onCancel={() => setStep('hello')} />;
+  if (step === 'hello') return <Hello onDone={() => { primeSfx(); setStep('terms'); }} onBack={() => { primeSfx(); setStep('back'); }} late={late} />;
   if (step === 'terms') return <Terms onAgree={() => setStep('name')} />;
 
   if (step === 'name') {
@@ -125,25 +143,38 @@ export default function Setup({ gid, uid, late }) {
     setError('');
     try {
       await arrive(gid, uid, { name, traits: answers });
+      markSeen(saveKey, null);
     } catch (e) {
       setError(e.code === 'permission-denied' ? 'That didn’t go through. Ask the host.' : 'No connection. Try again.');
       setBusy(false);
     }
   };
 
+  // Changing an answer on the review stays on the review: a sheet of that
+  // question's options, and the photo brushes the new one on.
+  const asked = sheet ? QUESTIONS.find((t) => t.id === sheet) : null;
+  const overlay = asked ? (
+    <ActionSheet
+      title={asked.prompt}
+      options={asked.options.map((o) => ({ id: o.id, label: o.label, on: answers[asked.id] === o.id }))}
+      onPick={(v) => { setAnswers((a) => ({ ...a, [asked.id]: v })); setSheet(null); }}
+      onCancel={() => setSheet(null)}
+    />
+  ) : null;
+
   return (
-    <AppFrame title="Almost done" onBack={() => setStep(QUESTIONS.length - 1)} light>
+    <AppFrame title="Almost done" onBack={() => setStep(QUESTIONS.length - 1)} backLabel="Back" light overlay={overlay}>
       <div className="flex flex-col items-center px-5 pt-5">
         <div className="os-photo os-rise">
-          <Portrait traits={answers} seed={uid} full size={photoWidth(120)} rounded={3} />
+          <Portrait traits={answers} seed={uid} full size={photoWidth(120)} rounded={3} animate />
         </div>
         <p className="text-[22px] leading-tight mt-3 text-os-ink">{name.trim()}</p>
         <p className="text-[14px] text-os-steel mt-0.5">How the others will see you</p>
       </div>
-      <Section head="Your answers" foot="These lock when the roles are dealt. Tap one to change it.">
+      <Section head="Your answers" foot="Tap one to change it. Once your phone is ready, they can’t be changed.">
         <div className="os-group">
-          {QUESTIONS.map((t, i) => (
-            <button key={t.id} type="button" className="os-choice" onClick={() => setStep(i)}>
+          {QUESTIONS.map((t) => (
+            <button key={t.id} type="button" className="os-choice" onClick={() => { sfxTap(); setSheet(t.id); }}>
               <span className="flex-1 text-[14px] text-os-steel">{t.prompt.replace('?', '')}</span>
               <span className="shrink-0">{t.options.find((o) => o.id === answers[t.id])?.label}</span>
             </button>
@@ -196,7 +227,7 @@ const Dots = ({ n, at }) => (
 );
 
 /** The first screen: "hello" cycling through languages, and slide to set up. */
-function Hello({ onDone, late }) {
+function Hello({ onDone, onBack, late }) {
   const [i, setI] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setI((x) => (x + 1) % HELLOS.length), 1600);
@@ -206,15 +237,88 @@ function Hello({ onDone, late }) {
     <div className="os-lock">
       <Wallpaper variant="lock" />
       <div className="relative flex-1 grid place-items-center text-center px-6">
-        <div className="rounded-xl bg-os-abyss/75 border border-os-chrome/25 px-6 py-7 shadow-[0_3px_0_rgba(0,0,0,0.5)]">
-          <p key={i} className="os-hello os-pop">{HELLOS[i]}</p>
-          <p className="text-[17px] mt-5 text-os-foam">{late ? 'The game has started. You can still join.' : `You’ve been invited to ${GAME.title}.`}</p>
+        <div>
+          <div className="rounded-xl bg-os-abyss/75 border border-os-chrome/25 px-6 py-7 shadow-[0_3px_0_rgba(0,0,0,0.5)]">
+            <p key={i} className="os-hello os-pop">{HELLOS[i]}</p>
+            <p className="text-[17px] mt-5 text-os-foam">{late ? 'The game has started. You can still join.' : `You’ve been invited to ${GAME.title}.`}</p>
+          </div>
+          <button type="button" className="os-signback" onClick={() => { sfxTap(); onBack(); }}>Already playing? Sign back in</button>
         </div>
       </div>
       <div className="relative os-lock__slider">
         <SlideToUnlock label="slide to set up" onDone={onDone} />
       </div>
     </div>
+  );
+}
+
+/**
+ * Signed out mid-game: ask the host to sign this phone back in. The guest
+ * gives the name they joined with; the host sees it with this phone's code
+ * and picks who they are. Waiting is kept on the phone, so a reload keeps
+ * asking; once the host signs them in, PlayerApp's binding listener opens
+ * the game by itself.
+ */
+function SignBackIn({ gid, uid, onCancel }) {
+  const waitKey = `${gid}.knock`;
+  const asked = useSeen(waitKey, '');
+  const [name, setName] = useState(asked);
+  const [error, setError] = useState('');
+
+  // Asking again on every mount is harmless (one doc per phone), and it
+  // restores the request after a reload.
+  useEffect(() => {
+    if (!asked) return;
+    knock(gid, uid, asked).catch((e) => setError(e.code === 'permission-denied' ? 'This phone is already in the game.' : 'No connection. Try again.'));
+  }, [gid, uid, asked]);
+
+  const cancel = () => {
+    markSeen(waitKey, null);
+    cancelKnock(gid, uid).catch(() => {});
+    onCancel();
+  };
+
+  if (asked) {
+    return (
+      <AppFrame title="Sign Back In" onBack={cancel} backLabel="Cancel" light enter="push">
+        <div className="px-6 pt-8 text-center">
+          <p className="text-[17px] text-os-steel">Show the host this code</p>
+          <p className="os-arcade text-[34px] mt-3 text-os-ink tracking-[0.12em]">{deviceCode(uid)}</p>
+          <p className="text-[16px] mt-3 text-os-ink">Signing back in as <b>{asked}</b></p>
+        </div>
+        <div className="pt-8 text-center">
+          <div className="os-spinner mx-auto" />
+          <p className="os-label mt-4 text-[12px] text-os-steel">WAITING FOR THE HOST…</p>
+        </div>
+        {error && <p className="text-os-red text-[15px] px-6 text-center">{error}</p>}
+        <Section><Btn tone="grey" onClick={cancel}>Cancel</Btn></Section>
+      </AppFrame>
+    );
+  }
+
+  return (
+    <AppFrame title="Sign Back In" onBack={onCancel} backLabel="Back" light enter="push">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (!name.trim()) return;
+          sfxTap();
+          setError('');
+          markSeen(waitKey, name.trim());
+        }}
+      >
+        <div className="px-6 pt-6 text-center">
+          <p className="text-[22px] leading-tight text-os-ink">Already playing?</p>
+          <p className="text-[16px] mt-1 text-os-steel">If this phone lost the game, the host can sign you back in.</p>
+        </div>
+        <Section head="The name you joined with">
+          <input className="os-input" autoFocus value={name} maxLength={24} autoComplete="given-name" onChange={(e) => setName(e.target.value)} />
+        </Section>
+        <Section>
+          <Btn type="submit" disabled={!name.trim()}>Ask the host</Btn>
+        </Section>
+      </form>
+    </AppFrame>
   );
 }
 
@@ -248,11 +352,11 @@ function Boot({ onDone }) {
  * is the most important clause.
  */
 const CLAUSES = [
-  'DEEP BLUE rings every morning. You will wake up.',
-  'Every morning, everyone plays.',
-  'The lowest score on the board is taken by the deep.',
-  'Some of you are Killers. Find them, and vote them out.',
-  'The taken keep their phones.',
+  'Every morning, DEEP BLUE wakes you up.',
+  'Every morning, everyone plays a short game.',
+  'Whoever gets the lowest score dies.',
+  'Some of you are Killers. Find them and vote them out.',
+  'If you die or get voted out, keep your phone. You still play.',
   'The next questions are about you. Answer truthfully.',
 ];
 
@@ -283,7 +387,7 @@ function Terms({ onAgree }) {
               </li>
             ))}
           </ol>
-          <p className="text-[12px] mt-4 text-os-steel">By tapping Agree you accept that the board is final.</p>
+          <p className="text-[12px] mt-4 text-os-steel">By tapping Agree you accept that the scores are final.</p>
         </div>
       </div>
     </AppFrame>

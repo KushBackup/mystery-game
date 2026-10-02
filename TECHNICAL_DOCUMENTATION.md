@@ -31,12 +31,22 @@ The rationale and milestones are in the plan file named in [memory.md](memory.md
 - Every `*_locked` phase is the host's resolution beat. The rules refuse actions, scores and votes during it.
 - A host that crashes mid-resolution leaves the game locked. Pressing Next again finishes the job, and the marker keeps it single.
 
+### The game clock (2026-10-02)
+
+[src/lib/engine/clock.js](src/lib/engine/clock.js), pure like the rest of the engine.
+
+- **Planning.** `planEvening({ minutes, cycles, games, base })` runs at Setup. The fixed phases (casting, alarm, the day's game, dawn, banish, all with their reveal hold) are summed; the flexible ones (`night`, `investigation`, `roundtable`, `endgame`) are scaled by one factor, clamped to 0.25–4, so the total is `minutes` from the deal to the finale. Re-votes and recruit calls are not in the sum (about a minute each when they happen). It also picks `clock.speed` (game ms per real ms) so the average day fills 07:00 to 22:00. `minutes: null` keeps `base` as it is (the Quick test).
+- **Storage.** `config.durations`, `config.clock = { speed, castAt, nightAt, alarmAt }` and `config.minutes` on the game doc. Every phase write (`timed` in host.js) also writes `clockAt`, the game minute the phase starts at, counted from 00:00 on day 0. `clockAtStart` carries the clock on from the previous phase, except that casting starts at 21:00 on day 0, a night at 01:00 and an alarm at 07:00 of its day (never backwards).
+- **Reading.** `clockNow(game, now) = clockAt + (min(now, phaseEndsAt) − phaseStartedAt) × speed`. It stops at `phaseEndsAt`, so a host who advances late does not shift the schedule, and untimed phases hold still. Locked phases keep their parent's timing, so the clock carries on through them. `daySchedule` gives today's parts with their times (actual for parts already started, planned from now for the rest); the Clock app, the NowCard and the morning notification read it.
+- **Old games** have no `config.clock`; `clockNow` returns null and the phone falls back to the fixed `WORLD` table in [words.js](src/os/words.js).
+- **Autopilot** (`game.autopilot`) is on from `createGame`: the console presses Next 400 ms after `phaseEndsAt`. It lives in the console tab, so that tab must stay open.
+
 ### The morning (DEEP BLUE, 2026-09-30)
 
 Killers murder by rigging the morning run's leaderboard, so a day resolves in two halves.
 
 1. **Night locks.** `resolveNight` decides the victim, the hand, the rig value (`zero` or `under`), saves, traces, séances and the night's facts. Since 2026-10-02 the phone sends only the Killers' victim (or recruit) vote. The hand rotates (`rotateHand`: the living Killer with the fewest entries in `secret.hands`, ties by seed), the rig falls back to `zero`, and the frame is off (`DEFAULT_NIGHT_CONFIG.autoFrameFrom: null`; a number turns on an engine-chosen frame for that one night, but the sim puts the Faithful at 27–49% with it). A den doc that still carries `hand`, `rig` or `frame` wins over the automatic choice. Nothing is written for players except a recruit offer; the whole result is stashed in `secret.pendingMorning`.
-2. **Alarm** (20 s, synced ring) then **game** (90 s). Every phone plays the same seeded course (`game.courseSeed` + the day, attempt `n` → course `${seed}:${n}`). Each phone writes `scores/{cycle}_{pid}` only on a new best, and always on its first run.
+2. **Alarm** (20 s: a notification and a short ring, never a takeover) then **game** (90 s). Playing is optional; a guest without a score counts as 0 (`resolveMorning`). Every phone plays the same seeded course (`game.courseSeed` + the day, attempt `n` → course `${seed}:${n}`). Each phone writes `scores/{cycle}_{pid}` only on a new best, and always on its first run.
 3. **Game locks.** The host reads every score from the server and runs `resolveMorning` ([src/lib/engine/morning.js](src/lib/engine/morning.js)):
    - The rig lands: the target dies (`cause: 'murdered'`) and their row shows the rigged value, last.
    - The Firewall held (Doctor): the lowest living honest score dies instead (`cause: 'deep'`), protected guests excepted, ties by seed; a guest who never played scores 0. It can take a Killer, whose role stays hidden.
@@ -100,7 +110,7 @@ Added in one autopilot pass the user asked for ("make it feel detailed and rich"
 
 The user wanted players to discover the mechanics rather than be told them. Rules for anything on the phone:
 
-- **No auto-open.** A phase change never sets the open app. `SUGGEST` in PhoneOS maps a phase to its app for the NowCard tap only. The alarm takeover still rings; stopping it returns to the home screen.
+- **No auto-open.** A phase change never sets the open app. `SUGGEST` in PhoneOS maps a phase to its app for the NowCard tap only. The alarm is a notification (`PHASE_BANNER.alarm`, a `long` banner that wraps and stays 7 s) plus a 3 s ring; the morning game's deadline, on the game clock, is in that banner, the game banner, the NowCard and a "Needs You" row in Notification Center.
 - **Phase banners.** `PHASE_BANNER` adds a banner item at the phase start for the morning game, dawn, banish, finale and each vote. It is shown only if the phone was open before the phase began (the existing `mountAt` rule) and not while that app is open. Banners never carry a name, because a phase starts seconds before its reveal's beat. Each banner id plays once (`shownBanner`), so leaving the app that hid it doesn't replay it.
 - **The Killers' group** ([threads.js](src/os/threads.js)). A living Killer gets a `den` thread over `denChat`, titled with the other living Killers' names ("Maya & Arjun"; from the masked roster). Its list also carries synthetic items that count as unread: "DEEP BLUE added you" (at `killers/{pid}.at`, so it fires at the deal and again for a recruit), "DEEP BLUE added {name}" for a recruited partner, and tonight's poll while the phase is `night`. That is what raises the Messages badge and the banner. `subscribeKillers` now returns the docs (`{ id, at, recruited }`) instead of bare ids. No rule changed: Killers could already read `killers/` and read/write `denChat` and `den`.
 - **The poll** ([KillPoll.jsx](src/os/apps/KillPoll.jsx)). Living non-Killers through `GuestPicker`, each partner's pick named beside the guest, `submitDen({ victim })` (or `{ recruit }` on a recruit night, `pollQuestion` in threads.js). It is a bubble in the group with a pinned bar that scrolls to it, and the whole Night app for a Killer.
@@ -120,15 +130,15 @@ The user wanted players to discover the mechanics rather than be told them. Rule
 |---|---|
 | [PhoneOS.jsx](src/os/PhoneOS.jsx) | The shell. Owns the open app (only ever the guest's choice: no phase opens an app, see [Discovery](#discovery-the-phone-nudges-never-opens)), the takeovers, badges and banners (including one per phase start, `PHASE_BANNER`), and the phone's only chat listeners (`chat`, `spiritsChat`, `denChat`) plus the Killers' group (`useKillerGroup`, `ctx.mates`); apps get them through `ctx` |
 | [chrome.jsx](src/os/chrome.jsx) | Status bar (the battery is the phase timer), home screen and glass dock, home button, lock screen, slide to unlock, notification banner |
-| [takeovers.jsx](src/os/takeovers.jsx) | Full-screen moments synced to `revealAt`: the role text at casting, the alarm, the recruit "incoming call", the signed-out screen |
+| [takeovers.jsx](src/os/takeovers.jsx) | Full-screen moments synced to `revealAt`: the role text at casting, the recruit "incoming call", the signed-out screen. (The alarm was one until 2026-10-02.) |
 | [apps/](src/os/apps/) | Messages (The Room, the Killers' group, Spirits, DEEP BLUE with its voice, Unknown), `KillPoll.jsx` (the Killers' night poll, in their group and in Night), DEEP BLUE (the game), News (board reveal, verdict, finale in `Finale.jsx`, and the paper: see [The News app](#the-news-app)), Photos (clue photos and each night's hand), Clock, Contacts (every guest's answers: see [The Contacts app](#the-contacts-app)), Notes, Night (every role's night, same icon for all), Weather, Settings, Vote. `stage.js` holds the synced-beat hooks the reveals share |
 | [game/](src/os/game/) | `physics.js` (pure, fixed 60 Hz tick, seeded course) and `DeepBlueGame.jsx` (canvas at 144×256, integer-scaled; the one 8-bit thing left on the phone) |
 | [icons/](src/os/icons/), [art/](src/os/art/) | Smooth vector art: `AppIcon` (glossy iOS-style app icons), `Glyph` (UI glyphs, status-bar signal/wifi/battery), the `Wallpaper`, `CluePhoto` (one softened CCTV still per trait group, still drawn on a coarse grid) and `Portrait` (a contact photo drawn from a guest's answers: `portraitArt.js` paints a seeded, full-length hand-drawn canvas picture of the guest at home, 300 × 400; `Portrait.jsx` crops it for lists, caches static frames by guest + answers + pixel size, and in Setup brushes a changed answer on over 640 ms, held on twos, skipped under reduced motion) |
 | [sfx.js](src/os/sfx.js) | Every sound, synthesized (Web Audio); vibration patterns; the `astral.sfx` / `astral.vibe` preferences |
-| [seen.js](src/os/seen.js) | Read marks behind every badge, in localStorage only (`deepblue.seen.*`), never Firestore; also `booted` (first boot shown) and `taken` (death screen shown) |
+| [seen.js](src/os/seen.js) | Read marks behind every badge, in localStorage only (`deepblue.seen.*`), never Firestore; also `booted` (first boot shown) and `taken` (death screen shown). It is also **the phone's saved state** (2026-10-02): everything a reload or a reopened browser should come back to is kept here, per game id (see *What survives a reload*). `peekSeen` reads a value outside React (a state's first value); `useDraft` is a text field that survives a reload |
 | [beats.js](src/os/beats.js) | When each reveal's beats land, and `useMaskedPlayers`: a player who dies in the reveal still playing reads as alive until its beat, so no phone (or Contacts, or the group chat) spoils it |
 | [nav.js](src/os/nav.js), [hooks.js](src/os/hooks.js) | `useStack` (push/pop inside an app); `useWorldClock`, `useOnline` |
-| [Setup.jsx](src/os/Setup.jsx) | Arrival as a phone setup assistant, with the guest's full-length contact photo large above every question (sized to the screen, 120 to 280 px wide) (`ProfileCard`, [Portrait.jsx](src/os/art/Portrait.jsx) with `animate`); the first question is gender (`GENDER` in data/traits.js: photo only, outside `TRAITS` so the engine never clues it; own Contacts card can change it until the deal), then the six. It works like a character creator: options are two-to-a-row chips (`.os-chip`), a tap brushes that answer into the photo at once (a gender change fades the old figure off the new one), and a footer **Next** moves on, so a guest can try options on before choosing; and "Almost done" shows the finished photo large |
+| [Setup.jsx](src/os/Setup.jsx) | Arrival as a phone setup assistant, with the guest's full-length contact photo large above every question (sized to the screen, 120 to 280 px wide) (`ProfileCard`, [Portrait.jsx](src/os/art/Portrait.jsx) with `animate`); the first question is gender (`GENDER` in data/traits.js: photo only, outside `TRAITS` so the engine never clues it; never edited after arrival), then the six. It works like a character creator: options are two-to-a-row chips (`.os-chip`), a tap brushes that answer into the photo at once (a gender change fades the old figure off the new one), and a footer **Next** moves on, so a guest can try options on before choosing; and "Almost done" shows the finished photo large. Tapping an answer there opens that question's options in an `ActionSheet` and stays on the review (it used to jump back to that question and walk forward again). **My phone is ready** writes the answers once; they are never edited after (see Contacts) |
 
 The styling is its own system: `--color-os-*` and `--font-pixel/screen/arcade` in `@theme` (all Helvetica Neue / Inter), `.os-*` classes in [src/os/os.css](src/os/os.css), imported into the components layer like App.css. See [DESIGN_LANGUAGE.md](DESIGN_LANGUAGE.md) Part II.
 
@@ -151,10 +161,40 @@ Contacts is the room's directory and **the file on every guest** ([ContactsApp.j
 - **Deliberately plain (2026-10-02).** A first pass added search, a Tables view, a Marked view, a Suspect/Trusted read, private notes, a vote button and a public record. The user said it was too detailed for players and asked for name, photo, their answers, plus the one thing worth keeping. All of that was cut; see memory.md for why, before adding any of it back.
 - **The list.** Grouped by status only: In the room / Ghosts / Went home, alphabetical within each. Each row has the head-and-shoulders crop of the guest's `Portrait` (top colour and glasses read at that size) and their table. The card shows the whole photo.
 - **The card** (Info): the photo, name, status or fate, table. Then the six answers as plain iOS contact fields (no visible/hidden split in the UI — `trait.visible` only changes the sheet's wording). Tapping someone else's answer opens an action sheet to mark it: "Matches what I see" / "They said: Beer" / "Something not on the list", shown inline under the answer. At the finale, everyone's role is not shown (cut with the rest; the finale reveal screens already cover it).
-- **The file vs your marks.** The six answers are `traits/{pid}`, **public since 2026-10-02** and frozen at the deal, read by one listener in PhoneOS (`useAllTraits`, `ctx.traits`). They are what a guest *said*, so each answer can be checked from the card through an action sheet: "Matches what I see", "I see: grey", "Something not on the list" (for an answer the form didn't offer, or a lie). A mismatch shows as a red line on the card and an eye flag on the list. Reads, checks and notes live in localStorage only (`deepblue.seen.<gid>.contacts.{reads,checks,notes}`), never Firestore.
-- **My Card** shows your own file as every phone sees it. Until you have a role, its fields open an action sheet to fix an answer (`updateMyTrait`; the rules refuse it after the deal).
+- **The photo full screen.** Tapping someone else's photo on their card opens `PhotoViewer` (in ContactsApp.jsx, `.os-viewer` in os.css) as the card's `overlay`: black, like iOS 6 Photos, the whole drawing fitted to the phone, their name and Done in a glass bar. Tap anywhere or Done to close. The canvas is drawn at the fitted width (measured with a ResizeObserver), not scaled up from the card's 116 px print, so every answer reads sharp. Your own photo on My Card is not tappable.
+- **The file vs your marks.** The six answers are `traits/{pid}`, **public since 2026-10-02** and written once at arrival, never edited (2026-10-02), read by one listener in PhoneOS (`useAllTraits`, `ctx.traits`). They are what a guest *said*, so each answer can be checked from the card through an action sheet: "Matches what I see", "I see: grey", "Something not on the list" (for an answer the form didn't offer, or a lie). A mismatch shows as a red line on the card and an eye flag on the list. Reads, checks and notes live in localStorage only (`deepblue.seen.<gid>.contacts.{reads,checks,notes}`), never Firestore.
+- **My Card** shows your own file as every phone sees it, read-only. Answers (gender included) are locked from arrival (the user's call, 2026-10-02): the rules allow `traits` a `create` and no `update`. There are two ways to change them, both before the deal: the guest taps **Leave the game** in Settings (`leaveBeforeStart`: it deletes their player, traits and binding, and the phone goes back to set-up as a new guest), or the host removes them (`removePlayer` in the lobby, which now deletes the binding too, so the phone isn't stuck on "Finding your seat"). After the deal, leaving and removal mean vanishing at the next dawn, and that phone stays signed out.
 - **The record** reads `ctx.news.entries`: the raw `game.news` entries `useNews` has already released past `revealGate()`, so a card cannot show who was taken or banished before the reveal says so. The host's dawn entry carries `places` and the verdict entry `votes` for this.
 - **Shared pieces** it added to [ui.jsx](src/os/ui.jsx): `Seg` (segmented control, `plain` for the light in-list style), `ActionSheet` (passed to `AppFrame` as `overlay`).
+
+### What survives a reload (2026-10-02)
+
+The user asked that a refresh, or closing and reopening the browser, never lose a guest's place. Two layers do it:
+
+- **Who you are and the game itself.** The anonymous Firebase session is kept in IndexedDB (`browserLocalPersistence`), and Firestore keeps a persistent local cache (`persistentLocalCache`), both in [app.js](src/firebase/app.js). A reload is the same uid, so the same binding, role, votes, moves and scores, which all live in Firestore. `?tab=1` (testing only) keeps the session per tab instead.
+- **What only this phone knows.** These are kept in localStorage through seen.js, every key starting with the game id:
+
+| Key | What it keeps | Where |
+|---|---|---|
+| `<gid>.setup` | Setup's step, name and answers, cleared on arrival | Setup.jsx |
+| `<gid>.knock` | "Waiting for the host to sign me back in", and as whom | Setup.jsx `SignBackIn` |
+| `<gid>.unlocked`, `<gid>.roleRead` | The lobby lock screen was slid, and the role card was read, so neither replays | PhoneOS.jsx |
+| `<gid>.app` | The open app (and Messages thread); the Night app is dropped outside the night | PhoneOS.jsx |
+| `<gid>.page.{contacts,messages,notes}` | The open page inside an app (`useStack(initial, keep)` in nav.js) | the apps |
+| `<gid>.draft.<channel>`, `<gid>.draft.clue.<cycle>` | Half-typed messages and the Word clue, until sent | MessagesApp `Compose`, WordGame `ClueForm` |
+| `<gid>.draw.<cycle>` | The Sketch drawing so far. Without it a reload started a blank pad that the autosave then wrote over the real drawing | DrawGame `DrawStep` |
+| `<gid>.guessSeen.<cycle>`, `<gid>.guessShown.<cycle>` | Which drawings you have been shown, and when the current one appeared, so a reload neither replays one nor restarts its clock | DrawGame `GuessStep` |
+
+Not kept: a Run in progress (each finished run's score is already posted), and a Sketch guess half-typed (each drawing is on screen for seconds).
+
+### Signing a phone back in (2026-10-02)
+
+A guest whose phone lost the game (cleared data, a new phone, a private tab, or the home-screen app, which has its own storage separate from the browser's) is a new anonymous uid with no binding, so they land on Setup.
+
+- **Phone.** The hello screen has *Already playing? Sign back in*. The guest types the name they joined with; the phone writes `knocks/{uid}` (`knock` in game.js) and shows its code (`deviceCode`: the uid's first six characters, upper case) while it waits. The wait is kept in `<gid>.knock`, so a reload asks again.
+- **Host.** The console shows a *Sign back in* card when any knock is open (`subscribeKnocks`). Each row preselects the guest whose name matches and offers everyone not vanished; *Sign in* runs `relink`, which writes `bindings/{uid}` → that pid and deletes the knock. The phone's binding listener then opens the game by itself. *Ignore* deletes the knock.
+- **Leaving is final** (the user's call): a vanished guest is never offered, and a phone that left stays on *Signed out*.
+- **Rules.** Only an unbound phone can knock; only it and the host can read the knock. Before this, `relink` had no UI and would have been refused anyway, because only a phone could create its own binding. The host can now create a binding too.
 
 ### Listeners
 
@@ -165,7 +205,7 @@ Contacts is the room's directory and **the file on every guest** ([ContactsApp.j
 
 - `npm run emulators`: Auth and Firestore emulators under the `demo-killers` project. Needs JDK 21.
 - `npm run sim`: balance simulator. Plays thousands of games through the real engine.
-- `node scripts/bots.mjs --selftest --n 30 [--killer-leaves]`: a whole game, bots playing every morning game in the rotation (Word, Sketch, Run, Word, Sketch), plus privacy-rule checks against the emulator: 54 checks in all.
+- `node scripts/bots.mjs --selftest --n 30 [--killer-leaves]`: a whole game, bots playing every morning game in the rotation (Word, Sketch, Run, Word, Sketch), plus privacy-rule checks against the emulator: 74 checks in all at --n 30 (15 in the lobby: answers can't be edited, leaving or being removed lets a guest join again, and a signed-out phone can be signed back in).
   - 5 are on `scores`.
   - The `traits` checks assert that answers are readable by everyone, but writable only by their owner and only before the deal.
   - The Word and Sketch checks cover:

@@ -61,7 +61,7 @@ export default {
     finaleKillers: ['DEEP BLUE will ring again tomorrow.', 'A Killer is still logged in. The Killers win.'],
   },
 
-  // The alarm screen's headline, by day. The last one repeats.
+  // The morning alarm's headline (the notification's title), by day. The last one repeats.
   alarm: [
     'DAY 1. Everyone plays. Nobody is safe.',
     'DAY 2. The board remembers yesterday.',

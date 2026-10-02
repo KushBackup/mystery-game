@@ -27,7 +27,8 @@ export function StatusBar({ game, ghost = false, clear = false, drag }) {
   const level = ends && total > 0 ? Math.min(1, left / total) : 1;
   const low = Boolean(ends) && level < 0.2;
   const secs = Math.ceil(left / 1000);
-  const label = ends ? (secs >= 60 ? `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}` : `${secs}s`) : '';
+  // "15m", never "14:56": beside the game clock in the middle, a second m:ss reads as another time of day.
+  const label = ends ? (secs > 60 ? `${Math.ceil(secs / 60)}m` : `${secs}s`) : '';
   return (
     <div className={`os-status ${clear ? 'os-status--clear' : ''}`} role="status" {...drag}>
       <div className="os-status__left">
@@ -145,16 +146,31 @@ export function LockScreen({ game, title, subtitle, notes = [], onUnlock, slider
   );
 }
 
-/** A notification sliding down over whatever is open. It removes itself (os.css). */
-export const Banner = ({ icon = 'messages', title, text, onOpen }) => (
-  <button type="button" className="os-banner text-left" onClick={onOpen}>
-    <AppIcon name={icon} size={30} className="shrink-0" />
-    <span className="min-w-0 flex-1">
-      <span className="os-banner__title block">{title}</span>
-      <span className="os-banner__text block">{text}</span>
-    </span>
-  </button>
-);
+/**
+ * A notification sliding down over whatever is open. It removes itself
+ * (os.css). `long` wraps and stays longer. Tap opens its app; a flick up
+ * puts it away without opening anything, as on a real phone.
+ */
+export function Banner({ icon = 'messages', title, text, onOpen, onDismiss, long = false }) {
+  const startY = useRef(null);
+  const flicked = useRef(false);
+  return (
+    <button
+      type="button"
+      className={`os-banner text-left ${long ? 'os-banner--long' : ''}`}
+      onPointerDown={(e) => { startY.current = e.clientY; flicked.current = false; }}
+      onPointerMove={(e) => { if (startY.current != null && e.clientY - startY.current < -14) flicked.current = true; }}
+      onPointerUp={() => { startY.current = null; if (flicked.current) onDismiss?.(); }}
+      onClick={() => { if (flicked.current) return; onOpen(); }}
+    >
+      <AppIcon name={icon} size={30} className="shrink-0" />
+      <span className="min-w-0 flex-1">
+        <span className="os-banner__title block">{title}</span>
+        <span className="os-banner__text block">{text}</span>
+      </span>
+    </button>
+  );
+}
 
 /** One row of a Notification Center group: an icon, a bold title, one line of text. */
 function NCRow({ icon, tile, title, text, onTap }) {
@@ -210,12 +226,14 @@ export function NotificationCenter({ sections, open, pull, onOpen, onClose }) {
   return (
     <>
       {open && <button type="button" className="os-nc__scrim" aria-label="Close notifications" onClick={onClose} />}
-      <div className={`os-nc ${open ? 'os-nc--open' : ''}`} style={style}>
+      <div className={`os-nc ${open ? 'os-nc--open' : ''}`} style={style} aria-hidden={!open && pull == null}>
         <div className="os-nc__scroll os-scroll">
           {any
             ? sections.map((s) => <NCGroup key={s.key} title={s.title} rows={s.rows} onTap={go} />)
             : <p className="os-nc__empty">No New Notifications.</p>}
         </div>
+        {/* The grabber: iOS's way back out. A full panel on a small phone leaves no scrim to tap. */}
+        <button type="button" className="os-nc__grip" aria-label="Close notifications" onClick={onClose} />
       </div>
     </>
   );
@@ -250,15 +268,24 @@ export function HomeScreen({ grid, dock, badges, now, onOpen, ghost, entering })
     >
       <Wallpaper variant="home" className="os-wall" />
       <div className="os-stars" aria-hidden="true" />
-      {now && (
-        <button type="button" className="os-now relative text-left" onClick={now.onTap}>
-          <span className="os-now__label flex items-center gap-2">
-            {now.urgent && <span className="inline-block w-2 h-2 rounded-full bg-os-red" aria-label="Needs you" />}
-            {now.label}
-          </span>
-          <span className="os-now__line block">{now.line}</span>
-        </button>
-      )}
+      {now && (() => {
+        const body = (
+          <>
+            <span className="min-w-0 flex-1">
+              <span className="os-now__label flex items-center gap-2">
+                {now.urgent && <span className="inline-block w-2 h-2 rounded-full bg-os-red" aria-label="Needs you" />}
+                {now.label}
+              </span>
+              <span className="os-now__line block">{now.line}</span>
+            </span>
+            {now.onTap && <span className="os-now__chev" aria-hidden="true"><Glyph name="forward" size={12} /></span>}
+          </>
+        );
+        // A card that opens something looks like it does; one that doesn't is just a notice.
+        return now.onTap
+          ? <button type="button" className="os-now os-now--tap relative text-left" onClick={now.onTap}>{body}</button>
+          : <div className="os-now relative">{body}</div>;
+      })()}
       <div className="os-grid relative">
         {grid.map(([app, label]) => <HomeIcon key={app} app={app} label={label} badge={badges[app]} onOpen={onOpen} />)}
       </div>

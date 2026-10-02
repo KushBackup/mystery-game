@@ -11,7 +11,7 @@ import { useSeen, markSeen, noteKey } from '../seen';
  * truth they'll be asked about), and a notepad that stays on this phone.
  */
 export default function NotesApp({ ctx, onClose }) {
-  const { top: open, dir, push, pop } = useStack();
+  const { top: open, dir, push, pop } = useStack(null, `${ctx.gid}.page.notes`);
   const { role } = ctx;
   if (open === 'role') return <RoleNote ctx={ctx} onBack={pop} />;
   if (open === 'traits') return <TraitsNote ctx={ctx} onBack={pop} />;

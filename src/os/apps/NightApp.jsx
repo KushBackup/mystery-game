@@ -233,7 +233,7 @@ function TracePick({ others, traits, saved = [], onDone }) {
     <Section head={NIGHT.moves.trace.pick(picks.length)}>
       <Group dark>
         {others.map((g) => (
-          <Cell key={g.pid} title={g.name} icon={traits ? <Face traits={traits} pid={g.pid} size={36} /> : undefined} sub={g.table ? `Table ${g.table}` : null} on={picks.includes(g.pid)} onClick={() => toggle(g.pid)} />
+          <Cell key={g.pid} title={g.name} icon={traits ? <Face traits={traits} pid={g.pid} size={36} /> : undefined} on={picks.includes(g.pid)} onClick={() => toggle(g.pid)} />
         ))}
       </Group>
     </Section>

@@ -1,15 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { HOST_EMAILS, EMULATED } from '../../firebase/app';
 import {
-  signInHost, signOutHost, createGame, advance, setAutopilot, extendPhase, endPhaseNow, removePlayer, cancelRemove,
+  signInHost, signOutHost, createGame, advance, setAutopilot, extendPhase, endPhaseNow, removePlayer, cancelRemove, relink, subscribeKnocks,
   dealLateJoiners, syncHostClock, subscribeRoles, subscribePresence, subscribeNightActions,
   subscribeNightDen, subscribeBallot, subscribeSecret, subscribeScores, subscribeDayPlays, setDayGames,
 } from '../../firebase/host';
-import { useAuthUser, useActiveGameId, useGame, usePlayers } from '../../hooks/useKillers';
+import { useAuthUser, useActiveGameId, useGame, usePlayers, useServerNow } from '../../hooks/useKillers';
+import { cancelKnock } from '../../firebase/game';
 import { PACKS, packFor, narrate, dayKit } from '../../data/packs/index.js';
 import { DEFAULT_GAMES, gameOfDay } from '../../lib/engine/minigames.js';
 import { PHASE, DEFAULT_DURATIONS, DEFAULT_CYCLES, ENDGAME_ROUNDS, LOCKED } from '../../lib/engine/phases.js';
 import { ROLE_INFO, targetCounts } from '../../lib/engine/roles.js';
+import { planEvening, daySchedule, clockNow, fmtClock } from '../../lib/engine/clock.js';
 import { serverNow } from '../../lib/clockSkew';
 import { PHASE_LABEL } from '../../data/killersCopy';
 import { Screen, PhaseClock, Hold, Action } from '../game/parts';
@@ -19,14 +21,16 @@ import { Screen, PhaseClock, Hold, Action } from '../game/parts';
  * device that resolves anything (firebase/host.js), so it must not sleep.
  *
  * One button moves the evening on, and its label always says what it will
- * do next. Autopilot presses it when each phase's timer runs out. Everything
- * else here is either the host's script (narration to read aloud) or the
- * roster.
+ * do next. Autopilot presses it when each phase's timer runs out, which is
+ * how the game clock runs the evening (engine/clock.js): a new game starts
+ * with it on, so after the deal the host only watches. Everything else here
+ * is either the host's script (narration to read aloud) or the roster.
  */
 
 // A stable empty list, so a missing snapshot doesn't look like a new array every render.
 const EMPTY = [];
 
+const LENGTHS = [90, 120, 150, 180];
 const QUICK = { casting: 15_000, night: 45_000, recruit: 20_000, alarm: 10_000, game: 40_000, game_word: 50_000, game_draw: 55_000, dawn: 20_000, investigation: 60_000, roundtable: 60_000, revote: 30_000, banish: 15_000, endgame: 60_000 };
 
 export default function HostApp() {
@@ -62,14 +66,26 @@ export default function HostApp() {
 function Setup({ onCancel }) {
   const [packId, setPackId] = useState(Object.keys(PACKS)[0]);
   const [cycles, setCycles] = useState(DEFAULT_CYCLES);
-  const [pace, setPace] = useState('standard');
+  const [length, setLength] = useState(120);
   const [rotate, setRotate] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const quick = length === 'quick';
+  const games = rotate ? DEFAULT_GAMES : ['run'];
+  const base = quick ? { ...DEFAULT_DURATIONS, ...QUICK } : DEFAULT_DURATIONS;
+  const minutes = quick ? null : length;
+  const plan = planEvening({ minutes, cycles, games, base });
+  const day1 = daySchedule({ phase: PHASE.LOBBY, cycle: 1, config: { durations: plan.durations, clock: plan.clock, games } }, 0);
+  const at = (id) => fmtClock(day1.parts.find((p) => p.id === id).at);
+  const mins = (ms) => (ms >= 90_000 ? `${Math.round(ms / 60_000)} min` : `${Math.round(ms / 1000)} s`);
 
   const create = async () => {
     setBusy(true);
+    setError('');
     try {
-      await createGame({ packId, cycles, durations: pace === 'quick' ? QUICK : DEFAULT_DURATIONS, games: rotate ? DEFAULT_GAMES : ['run'] });
+      await createGame({ packId, cycles, minutes, durations: base, games });
+    } catch (e) {
+      setError(e.code ?? e.message ?? String(e));
     } finally {
       setBusy(false);
     }
@@ -94,11 +110,25 @@ function Setup({ onCancel }) {
           <Choice on={rotate} onClick={() => setRotate(true)}>Rotate Word · Sketch · Run</Choice>
           <Choice on={!rotate} onClick={() => setRotate(false)}>Run every day</Choice>
         </Field>
-        <Field label="Pace">
-          <Choice on={pace === 'standard'} onClick={() => setPace('standard')}>Standard (~2 h)</Choice>
-          <Choice on={pace === 'quick'} onClick={() => setPace('quick')}>Quick test (~10 min)</Choice>
+        <Field label="Length, from the deal to the finale">
+          {LENGTHS.map((m) => (
+            <Choice key={m} on={length === m} onClick={() => setLength(m)}>{m % 60 ? `${Math.floor(m / 60)} h ${m % 60}` : `${m / 60} h`}</Choice>
+          ))}
+          <Choice on={quick} onClick={() => setLength('quick')}>Quick test</Choice>
         </Field>
+        <section className="er-card mt-4">
+          <p className="er-mono">The plan · about {mins(plan.totalMs)}</p>
+          <p className="font-body text-[15px] text-bone mt-1">
+            Each day: night {mins(plan.durations.night)}, investigation {mins(plan.durations.investigation)}, vote {mins(plan.durations.roundtable)}. Final votes {mins(plan.durations.endgame)} each.
+          </p>
+          <p className="font-body text-[15px] text-bone mt-1">
+            Game clock runs {Math.round(plan.clock.speed)}× real time: night {at('night')}, alarm {at('alarm')}, board {at('dawn')}, vote {at('roundtable')}, verdict {at('banish')}.
+          </p>
+          {!plan.fits && <p className="er-mono er-mono--hot mt-2 normal-case tracking-normal">That length doesn't suit {cycles} days. This plan is as close as it gets.</p>}
+          <p className="font-body text-[13px] text-dim mt-2">Arrivals aren't counted: the clock starts when you deal. The console runs every phase on its own after that; keep it open.</p>
+        </section>
         <Action className="mt-8" busy={busy} onClick={create}>Open the doors</Action>
+        {error && <p className="er-mono er-mono--hot mt-2 normal-case tracking-normal" role="alert">The game wasn't created: {error}</p>}
         {onCancel && <Action tone="ghost" className="mt-3" onClick={onCancel}>Cancel</Action>}
       </div>
     </Screen>
@@ -188,6 +218,7 @@ function Console({ gid, game }) {
   const players = usePlayers(gid) ?? EMPTY;
   const roles = useHostSub((cb) => subscribeRoles(gid, cb), [gid]) ?? EMPTY;
   const presence = useHostSub((cb) => subscribePresence(gid, cb), [gid]) ?? EMPTY;
+  const knocks = useHostSub((cb) => subscribeKnocks(gid, cb), [gid]) ?? EMPTY;
   const secret = useHostSub((cb) => subscribeSecret(gid, cb), [gid]);
   const actions = useHostSub((cb) => subscribeNightActions(gid, game.cycle, cb), [gid, game.cycle]) ?? EMPTY;
   const den = useHostSub((cb) => subscribeNightDen(gid, game.cycle, cb), [gid, game.cycle]) ?? EMPTY;
@@ -280,7 +311,10 @@ function Console({ gid, game }) {
           <span className="er-mono er-mono--wide">{PHASE_LABEL[game.phase]}</span>
           {game.endgameRound ? <span className="er-mono">vote {game.endgameRound}</span> : null}
         </div>
-        <PhaseClock endsAt={game.phaseEndsAt} />
+        <div className="flex items-baseline gap-3 shrink-0">
+          <GameTime game={game} />
+          <PhaseClock endsAt={game.phaseEndsAt} />
+        </div>
       </header>
 
       {EMULATED && <p className="er-tag er-tag--mute mt-3">Emulator · not the live game</p>}
@@ -292,7 +326,7 @@ function Console({ gid, game }) {
         <div className="grid grid-cols-3 gap-2 mt-2">
           <Action tone="ghost" onClick={() => run(() => setAutopilot(gid, !game.autopilot))}>{game.autopilot ? 'Auto: on' : 'Auto: off'}</Action>
           <Action tone="ghost" disabled={!game.phaseEndsAt} onClick={() => run(() => extendPhase(gid, 60_000))}>+1 min</Action>
-          <Action tone="ghost" disabled={!game.phaseEndsAt} onClick={() => run(() => endPhaseNow(gid))}>Time up</Action>
+          <ArmedAction disabled={!game.phaseEndsAt} armedLabel="Sure? Tap again" onConfirm={() => run(() => endPhaseNow(gid))}>Time up</ArmedAction>
         </div>
       </div>
 
@@ -376,6 +410,25 @@ function Console({ gid, game }) {
         </section>
       )}
 
+      {/* Phones asking to be signed back in: the host picks who each one is */}
+      {knocks.length > 0 && (
+        <section className="er-card mt-6">
+          <p className="er-mono er-mono--hot">Sign back in · {knocks.length}</p>
+          <p className="font-body text-[13px] text-dim mt-1">A phone lost the game. Check the code on their screen, pick who they are, sign them in.</p>
+          <ul className="mt-2 divide-y divide-line-faint">
+            {knocks.map((k) => (
+              <KnockRow
+                key={k.id}
+                k={k}
+                players={players}
+                onSignIn={(pid) => run(() => relink(gid, k.id, pid))}
+                onDismiss={() => run(() => cancelKnock(gid, k.id))}
+              />
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* Roster */}
       <section className="mt-8">
         <div className="flex items-center justify-between">
@@ -424,6 +477,46 @@ function Console({ gid, game }) {
   );
 }
 
+/** The time on the game clock, as every phone shows it. */
+function GameTime({ game }) {
+  const now = useServerNow(game.phaseEndsAt, 1000);
+  const m = clockNow(game, now);
+  if (m == null) return null;
+  return <span className="er-mono er-mono--bone tabular-nums" aria-label="Game time">{fmtClock(m)}</span>;
+}
+
+/**
+ * Two taps for a control that can't be taken back mid-game. The first arms it
+ * and changes the label; it disarms on its own after a few seconds, so a
+ * stray tap minutes later never finds it still loaded.
+ */
+function useArmed(ms = 4000) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return undefined;
+    const id = setTimeout(() => setArmed(false), ms);
+    return () => clearTimeout(id);
+  }, [armed, ms]);
+  return [armed, setArmed];
+}
+
+function ArmedAction({ children, armedLabel, onConfirm, disabled }) {
+  const [armed, setArmed] = useArmed();
+  return (
+    <Action
+      tone={armed ? 'signal' : 'ghost'}
+      disabled={disabled}
+      onClick={() => {
+        if (!armed) { setArmed(true); return; }
+        setArmed(false);
+        onConfirm();
+      }}
+    >
+      {armed ? armedLabel : children}
+    </Action>
+  );
+}
+
 const Stat = ({ n, label }) => (
   <div className="er-stat">
     <span className="er-num text-[34px] block">{n}</span>
@@ -432,12 +525,12 @@ const Stat = ({ n, label }) => (
 );
 
 function RosterRow({ p, role, present, acted, phase, onRemove, onCancel }) {
-  const [confirm, setConfirm] = useState(false);
+  const [confirm, setConfirm] = useArmed();
   return (
     <li className={`py-3 flex items-center justify-between gap-3 ${p.status !== 'alive' ? 'opacity-60' : ''}`}>
       <div className="min-w-0">
         <p className="font-typewriter text-[17px] text-bone truncate">
-          {p.name} {p.table ? <span className="er-mono">T{p.table}</span> : null}
+          {p.name}
         </p>
         <p className="er-mono normal-case tracking-normal">
           {[
@@ -459,6 +552,39 @@ function RosterRow({ p, role, present, acted, phase, onRemove, onCancel }) {
       ) : (
         <button type="button" className="er-touch er-mono shrink-0" onClick={() => setConfirm(true)}>Remove</button>
       ))}
+    </li>
+  );
+}
+
+/**
+ * One phone asking to be signed back in. The best guess is the guest whose
+ * name matches what they typed; the host can pick anyone still in the game.
+ * Leaving is final, so a guest who left (vanished) is never offered.
+ */
+function KnockRow({ k, players, onSignIn, onDismiss }) {
+  const said = (k.name ?? '').trim().toLowerCase();
+  const options = players
+    .filter((p) => p.status !== 'vanished')
+    .sort((a, b) => (b.name.toLowerCase() === said) - (a.name.toLowerCase() === said) || a.name.localeCompare(b.name));
+  const [pid, setPid] = useState(options[0]?.name.toLowerCase() === said ? options[0].id : '');
+  return (
+    <li className="py-3">
+      <p className="font-typewriter text-[17px] text-bone">
+        {k.name} <span className="er-mono normal-case tracking-normal">· code {k.code}</span>
+      </p>
+      <div className="flex items-center gap-2 mt-2">
+        <select
+          className="er-touch min-w-0 flex-1 font-body text-[15px] bg-ink-raised text-bone border border-line px-2"
+          value={pid}
+          onChange={(e) => setPid(e.target.value)}
+          aria-label={`Who is ${k.name}?`}
+        >
+          <option value="">Who is this?</option>
+          {options.map((p) => <option key={p.id} value={p.id}>{p.name}{p.status === 'ghost' ? ' (ghost)' : ''}</option>)}
+        </select>
+        <button type="button" className="er-touch er-mono er-mono--hot shrink-0" disabled={!pid} onClick={() => onSignIn(pid)}>Sign in</button>
+        <button type="button" className="er-touch er-mono shrink-0" onClick={onDismiss}>Ignore</button>
+      </div>
     </li>
   );
 }

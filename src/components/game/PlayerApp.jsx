@@ -6,6 +6,7 @@ import PhoneOS, { PhoneFrame } from '../../os/PhoneOS';
 import Setup from '../../os/Setup';
 import { Hold } from '../../os/ui';
 import Wallpaper from '../../os/art/Wallpaper';
+import { markSeen } from '../../os/seen';
 
 /**
  * A guest's phone, from the door to the gate.
@@ -16,10 +17,11 @@ import Wallpaper from '../../os/art/Wallpaper';
  * itself (home screen, apps, the phase-driven takeovers) is src/os/PhoneOS.jsx.
  */
 
-const Boot = ({ label }) => (
+// `still`: a state that won't resolve by waiting (no game, game over, no connection) gets no spinner.
+const Boot = ({ label, still = false }) => (
   <PhoneFrame clear>
     <Wallpaper variant="lock" />
-    <Hold label={label} />
+    <Hold label={label} still={still} />
   </PhoneFrame>
 );
 
@@ -37,12 +39,12 @@ export default function PlayerApp() {
   const pid = useBinding(gid, uid);
   const pack = packFor(game?.packId);
 
-  if (authError) return <Boot label={`NO CONNECTION (${authError}). CHECK THE WIFI AND RELOAD.`} />;
+  if (authError) return <Boot still label={`NO CONNECTION (${authError}). CHECK THE WIFI AND RELOAD.`} />;
   if (!uid || gid === undefined) return <Boot label="CONNECTING…" />;
   if (!gid) return <Boot label="NO GAME TONIGHT YET. ASK THE HOST." />;
   if (!game || pid === undefined) return <Boot label="OPENING THE DOORS…" />;
   if (!pid) {
-    if (game.phase === 'finale') return <Boot label="THIS GAME HAS ENDED." />;
+    if (game.phase === 'finale') return <Boot still label="THIS GAME HAS ENDED." />;
     return (
       <PhoneFrame>
         <Setup gid={gid} uid={uid} late={game.phase !== 'lobby'} />
@@ -60,6 +62,9 @@ function InGame({ gid, uid, game, pid, pack }) {
   const inbox = useMemo(() => inboxSub ?? [], [inboxSub]);
   const names = useMemo(() => Object.fromEntries(players.map((p) => [p.id, p.name])), [players]);
   const nameOf = useMemo(() => (id) => names[id] ?? 'someone', [names]);
+
+  // Signed in: the half-done set-up and any request to be signed back in are spent.
+  useEffect(() => { markSeen(`${gid}.setup`, null); markSeen(`${gid}.knock`, null); }, [gid]);
 
   useEffect(() => {
     beat(gid, pid);

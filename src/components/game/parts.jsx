@@ -98,7 +98,7 @@ export function GuestPicker({ guests, value, onPick, disabled = () => false, not
                 aria-pressed={on}
               >
                 <span className="block font-typewriter text-[17px] text-bone truncate">{g.name}</span>
-                <span className="block er-mono mt-1 truncate">{note(g) ?? (g.table ? `Table ${g.table}` : ' ')}</span>
+                <span className="block er-mono mt-1 truncate">{note(g) ?? ' '}</span>
               </button>
             </li>
           );

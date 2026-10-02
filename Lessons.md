@@ -610,3 +610,27 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 **What happened:** Setup's photo was a 112 px thumbnail and a tap auto-advanced to the next question after 760 ms, so the guest only glimpsed their answer being drawn and could not compare options. The user asked for a bigger picture that updates as they click options, "not after the submit".
 
 **What to do instead:** In a creator, a tap is a try-on, not a submit: change the picture immediately, keep the guest on the question, and move on with an explicit Next. Give the picture the most space on the screen; the options can be compact chips.
+
+## 2026-10-02 — "Until the night falls" meant every night, not the first
+
+**What happened:** Asked not to show the Night app until night falls, I hid it only in the lobby and the casting, so it stayed on the home screen all day from the first night on. The user said the app should be visible only at night, not through the day or the whole game.
+
+**What to do instead:** Read a phase-bound visibility request as applying to every cycle of that phase unless the user says "first". The Night icon now shows only in `night`, `night_locked`, `recruit` and `recruit_locked` (`NIGHTTIME` in PhoneOS.jsx), and an open Night app closes at daybreak.
+
+## 2026-10-02 — Rules a guest reads first must use plain words
+
+**What happened:** The Terms screen in Setup said "The lowest score on the board is taken by the deep" and "The taken keep their phones". The user said guests can't tell what that means and asked for plain words like "dies" and "voted out".
+
+**What to do instead:** Story vocabulary ("the deep", "taken", "the board") is fine once a guest knows the game, but the first rules they read must say what happens in everyday words: lowest score dies; if you die or are voted out, you keep your phone and still play. Introduce the flavour words later, beside their plain meaning.
+
+## 2026-10-02 — Two components shared one class name, and the wallpaper wore the other one's padding
+
+**What happened:** In a UX audit, every home and lock screen had a dark strip down both edges and grey stubs of the dock showing past the wallpaper. The wallpaper SVG carries `className="os-wall"` (for its day/night filter), and the Word game's clue list had been given the same name, `.os-wall`, with `padding: 0 12px; display: grid`. The wallpaper inherited the padding and shrank 12 px on each side; the clue list inherited the wallpaper's night filter and its 1.4 s filter transition. Renamed the list to `.os-cluewall`.
+
+**What to do instead:** Before adding a class to `os.css`, grep the file for the exact selector (`grep -n "\.os-name\b"`). The phone has one flat namespace of about 300 `.os-*` classes, and a second definition merges silently. Look at the home screen at full bleed after any CSS change: a dark edge on a full-bleed picture is a box-model leak.
+
+## 2026-10-02 — An overlay you can only close by tapping outside it is a trap on a small phone
+
+**What happened:** Notification Center was capped at `max-height: 100%` and closed only by tapping its scrim. On a 320 × 568 phone with a few notifications the panel filled the stage, so there was no scrim left to tap, the Home button ignored it, and the guest could only escape by opening one of the rows. The audit's own Playwright tour got stuck there.
+
+**What to do instead:** Every overlay needs a way out that does not depend on space being left over: a visible handle or Done button, and the hardware-style Home control should close it first. Cap the panel so some scrim always shows. Test overlays at 320 × 568 with the most content they can hold, not the typical amount.

@@ -151,7 +151,7 @@ export const TRAIT_BY_ID = Object.fromEntries(TRAITS.map((t) => [t.id, t]));
  * it: nobody is ever accused, or outed, by a clue about their gender.
  *
  * It is stored on the guest's traits doc next to the six answers, so every
- * phone draws the same photo; their own card can change it until the deal.
+ * phone draws the same photo. Like the six, it is never edited after arrival.
  * Other guests' cards don't list it. Trans women and trans men are drawn as
  * women and men; every other answer gets the open figure.
  */

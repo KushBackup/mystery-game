@@ -4,72 +4,19 @@ import Glyph from './icons/Glyph';
 import Wallpaper from './art/Wallpaper';
 import { SlideToUnlock } from './chrome';
 import { useWorldClock } from './hooks';
-import { hhmm } from './words';
 import { Btn } from './ui';
 import { useSyncedReveal, useMyAction } from '../hooks/useKillers';
 import { submitAction } from '../firebase/game';
 import RoleMessage from './RoleMessage';
-import { alarmLine, narrate, dayKit } from '../data/packs/index.js';
-import { weatherLine } from './weather';
-import { startAlarm, stopAlarm, sfxSting, sfxPing, sfxDeny, sfxNightfall, sfxDaybreak, sfxStatic } from './sfx';
+import { narrate } from '../data/packs/index.js';
+import { sfxSting, sfxPing, sfxNightfall, sfxDaybreak, sfxStatic } from './sfx';
 
 /**
- * Moments that take the whole phone, over any app: the morning alarm, the
- * role arriving at casting, and the Killers' recruit offer as a phone call.
- * Each one is synced to the room's shared `revealAt` instant.
+ * Moments that take the whole phone, over any app: the role arriving at
+ * casting, and the Killers' recruit offer as a phone call. Each one is synced
+ * to the room's shared `revealAt` instant. (The morning alarm was one until
+ * 2026-10-02; it is a notification now, in PhoneOS.jsx.)
  */
-
-/**
- * The alarm. Every phone in the room rings on the same second, and the only
- * way out is to slide it off. It keeps vibrating even where the browser won't
- * let it make a sound yet (a phone nobody has touched since loading).
- */
-export function AlarmScreen({ game, pack, onStop }) {
-  const phase = useSyncedReveal(game.revealAt);
-  const ringing = phase === 'show';
-  const clock = useWorldClock(game);
-  const [snoozed, setSnoozed] = useState(0);
-  const today = dayKit(pack).dayGames[game.minigame ?? 'run'];
-
-  useEffect(() => {
-    if (!ringing) return undefined;
-    startAlarm();
-    return stopAlarm;
-  }, [ringing]);
-
-  return (
-    <div className="os-alarm">
-      {ringing && <div className="os-alarm__flash" />}
-      <div className="relative flex-1 flex flex-col items-center justify-center px-6 text-center">
-        <div className={ringing ? 'os-alarm__ring' : ''} style={{ opacity: ringing ? 1 : 0.6 }}>
-          <AppIcon name="clock" size={112} />
-        </div>
-        <p className="text-[84px] leading-none font-extralight tracking-tight tabular-nums mt-6 text-white os-pixel-shadow">{clock}</p>
-        <p className="os-label text-[12px] mt-3 text-os-chrome">ALARM · DAY {game.cycle}</p>
-        {weatherLine(pack, game) && <p className="text-[14px] mt-1 text-os-chrome">{weatherLine(pack, game)}</p>}
-        <p className="text-[21px] leading-snug mt-4 text-white max-w-[300px] os-balance">{ringing ? alarmLine(pack, game.cycle) : 'Wake up…'}</p>
-        {ringing && today?.alarm && <p className="text-[16px] font-bold leading-snug mt-3 text-os-foam max-w-[300px] os-balance">{today.alarm}</p>}
-      </div>
-      <div className="relative px-4 pb-5 pt-3 bg-gradient-to-b from-transparent to-black">
-        {ringing && (
-          <div className="text-center mb-4">
-            {/* The joke teaches the rule: there is no getting out of the morning game. */}
-            <button
-              key={snoozed}
-              type="button"
-              className={`os-btn os-btn--dark os-btn--sm ${snoozed ? 'os-shake' : ''}`}
-              onClick={() => { sfxDeny(); setSnoozed((n) => n + 1); }}
-            >
-              {snoozed ? 'DEEP BLUE does not snooze' : 'Snooze'}
-            </button>
-          </div>
-        )}
-        <SlideToUnlock label="slide to stop" tone="red" glyph="cross" onDone={() => { stopAlarm(); onStop(); }} />
-        <p className="os-label text-[11px] text-os-chrome text-center mt-3">TODAY · {today?.title ?? 'THE RUN'}</p>
-      </div>
-    </div>
-  );
-}
 
 /**
  * Casting: the role arrives as a text from DEEP BLUE. The lock-screen beat
@@ -80,6 +27,8 @@ export function AlarmScreen({ game, pack, onStop }) {
  */
 export function RoleText({ game, role, onDone }) {
   const phase = useSyncedReveal(game.revealAt);
+  // The stamp tells the game's time, like the status bar above it, not the room's.
+  const clock = useWorldClock(game);
   const shown = phase === 'show' && Boolean(role);
 
   useEffect(() => {
@@ -104,7 +53,7 @@ export function RoleText({ game, role, onDone }) {
     <div className="os-alarm os-alarm--light os-pinstripe">
       <header className="os-nav"><span /><h1 className="os-nav__title">DEEP BLUE</h1><span /></header>
       <div className="os-scroll flex-1 os-thread">
-        <p className="os-stamp-time">Today {hhmm(new Date())}</p>
+        <p className="os-stamp-time">Today {clock}</p>
         <div className="os-bubble-row os-rise"><div className="os-bubble">Welcome to DEEP BLUE. Read this alone.</div></div>
         <div className="os-bubble-row os-rise" style={{ animationDelay: '500ms' }}>
           <RoleMessage role={role} />

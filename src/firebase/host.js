@@ -47,6 +47,7 @@ import {
   makeRng, freshSeed, resolveNight, resolveRecruit, resolveMorning, DEFAULT_NIGHT_CONFIG,
   tallyBanish, breakTie, checkWin, applyLeaves, recruitNeed, fateRecruit,
   DEFAULT_GAMES, gameOfDay, pickWord, dealDrawWords, shownWord, scoreWordDay, scoreDrawDay,
+  planEvening, clockAtStart,
 } from '../lib/engine/index.js';
 
 // --- Auth ----------------------------------------------------------------------
@@ -91,6 +92,8 @@ function listen(ref, cb, label) {
 }
 
 export const subscribeRoles = (gid, cb) => listen(col(gid, 'roles'), cb, 'roles');
+/** Phones asking to be signed back in (game.js `knock`), oldest first. */
+export const subscribeKnocks = (gid, cb) => listen(col(gid, 'knocks'), (rows) => cb(rows.sort((a, b) => a.at - b.at)), 'knocks');
 export const subscribePresence = (gid, cb) => listen(col(gid, 'presence'), cb, 'presence');
 export const subscribeSecret = (gid, cb) => listen(sub(gid, 'secret', 'engine'), cb, 'secret');
 export const subscribeNightActions = (gid, cycle, cb) => listen(query(col(gid, 'actions'), where('cycle', '==', cycle)), cb, 'actions');
@@ -139,22 +142,31 @@ const votesFor = async (gid, ballot) =>
 
 // --- Setup -----------------------------------------------------------------------
 
-/** Start a fresh game and point every phone at it. Nothing old is deleted; a reset is just a new gid. */
-export async function createGame({ packId = DEFAULT_PACK_ID, durations = DEFAULT_DURATIONS, cycles = DEFAULT_CYCLES, ratios = DEFAULT_RATIOS, games = DEFAULT_GAMES } = {}) {
+/**
+ * Start a fresh game and point every phone at it. Nothing old is deleted; a reset is just a new gid.
+ *
+ * `minutes` is how long the evening should run from the deal to the finale;
+ * the open phases stretch to fit it and the game clock gets its speed
+ * (engine/clock.js). Without it, `durations` are used as they are. Autopilot
+ * starts on: the game clock runs the evening, the host only deals.
+ */
+export async function createGame({ packId = DEFAULT_PACK_ID, minutes = null, durations = DEFAULT_DURATIONS, cycles = DEFAULT_CYCLES, ratios = DEFAULT_RATIOS, games = DEFAULT_GAMES, autopilot = true } = {}) {
   const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
   const gid = `g${stamp}-${Math.random().toString(36).slice(2, 6)}`;
+  const plan = planEvening({ minutes, cycles, games, base: { ...DEFAULT_DURATIONS, ...durations } });
   await setDoc(gameRef(gid), {
     phase: PHASE.LOBBY,
     cycle: 0,
     packId,
     // Public on purpose: every phone builds the same run from it (os/game/course.js).
     courseSeed: freshSeed(),
-    config: { durations: { ...DEFAULT_DURATIONS, ...durations }, cycles, ratios: { ...DEFAULT_RATIOS, ...ratios }, games: [...games] },
-    autopilot: false,
+    config: { durations: plan.durations, clock: plan.clock, minutes, cycles, ratios: { ...DEFAULT_RATIOS, ...ratios }, games: [...games] },
+    autopilot,
     createdAt: Date.now(),
     phaseStartedAt: Date.now(),
     phaseEndsAt: 0,
     revealAt: 0,
+    clockAt: null,
   });
   await setDoc(doc(db, 'meta', 'active'), { gameId: gid, at: Date.now() });
   return gid;
@@ -167,12 +179,19 @@ export const updateConfig = (gid, config) => updateDoc(gameRef(gid), { config })
 /** The morning games' rotation. Takes effect at the next alarm. */
 export const setDayGames = (gid, games) => updateDoc(gameRef(gid), { 'config.games': [...games] });
 
-/** Before the deal: drop a no-show entirely. After it: they vanish at the next dawn. */
+/**
+ * Before the deal: drop the guest entirely, binding included, so their phone
+ * goes back to set-up and they can join again with new answers (the only way
+ * answers change: the rules never let a guest edit them). After the deal: they
+ * vanish at the next dawn.
+ */
 export async function removePlayer(gid, pid, phase) {
   if (phase === PHASE.LOBBY) {
+    const bindings = await getDocsFromServer(query(col(gid, 'bindings'), where('pid', '==', pid)));
     const batch = writeBatch(db);
     batch.delete(sub(gid, 'players', pid));
     batch.delete(sub(gid, 'traits', pid));
+    bindings.forEach((b) => batch.delete(b.ref));
     await batch.commit();
     return;
   }
@@ -182,13 +201,16 @@ export async function removePlayer(gid, pid, phase) {
 export const cancelRemove = (gid, pid) => updateDoc(sub(gid, 'players', pid), { leaveRequestedAt: null });
 
 /**
- * Relink: a guest lost their session (cleared data, a new phone). Their new
- * device shows its uid as a short code; the host binds it to the old pid, and
- * drops the orphaned self-registration the new device may have made.
+ * Relink: a guest lost their session (cleared data, a new phone, the
+ * home-screen app). Their new phone asks to be signed back in (a knock, with
+ * its code); the host binds that uid to the old pid, and drops the knock and
+ * any orphaned self-registration the new device may have made. Leaving is
+ * final, so a guest who left (vanished) is never signed back in.
  */
 export async function relink(gid, newUid, pid) {
   const batch = writeBatch(db);
   batch.set(sub(gid, 'bindings', newUid), { pid });
+  batch.delete(sub(gid, 'knocks', newUid));
   await batch.commit();
   if (newUid !== pid) {
     await deleteDoc(sub(gid, 'players', newUid)).catch(() => {});
@@ -198,8 +220,16 @@ export async function relink(gid, newUid, pid) {
 
 // --- Phase writes ----------------------------------------------------------------
 
-function timed(game, phase, now = serverNow()) {
-  return { phase, ...phaseTiming(phase, now, game.config?.durations ?? DEFAULT_DURATIONS, game.minigame ?? 'run') };
+/**
+ * The fields that open `phase` now: its timing, and where the game clock
+ * stands (engine/clock.js). `cycle` is the day being opened, for a night.
+ */
+function timed(game, phase, now = serverNow(), cycle = game.cycle) {
+  return {
+    phase,
+    ...phaseTiming(phase, now, game.config?.durations ?? DEFAULT_DURATIONS, game.minigame ?? 'run'),
+    clockAt: clockAtStart(game, phase, now, cycle),
+  };
 }
 
 /**
@@ -326,7 +356,7 @@ async function openNight(gid, from, cycle) {
     tx.update(sub(gid, 'secret', 'engine'), { recruitDue: need === 'den' });
     // What the den needs to know tonight, readable by Killers only (rules: den/*).
     tx.set(sub(gid, 'den', 'meta'), { cycle, recruitDue: need === 'den', plantUsed: Boolean(secret.plantUsed) });
-    tx.update(gameRef(gid), { ...timed(g, PHASE.NIGHT), cycle, ballot: null, tied: [], dawn: null, banish: null });
+    tx.update(gameRef(gid), { ...timed(g, PHASE.NIGHT, serverNow(), cycle), cycle, ballot: null, tied: [], dawn: null, banish: null });
     return true;
   });
 }

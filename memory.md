@@ -49,6 +49,12 @@
   - Team win only, no personal scores.
   - 5 cycles, about 2 hours.
   - A small role set: Killer, Faithful, Doctor, Detective. (A Medium was in the first set and was removed on 2026-10-02: see below.)
+- **Identity rules (the user's call, 2026-10-02):**
+  - Arrival answers and the photo are locked once the phone is ready.
+  - The only ways to redo them are before the deal: the guest leaves, or the host removes them, and they set up again as a new guest.
+  - **Leaving after the deal is final.** The user asked whether a guest could rejoin as someone new. Claude flagged that this would let a cornered Killer escape a vote and come back on the Faithful side (late joiners are always dealt Faithful-team), and would trigger a recruit night. The user chose to keep leaving final.
+  - The host can sign any guest who is still playing back in on a new or reset phone ("Already playing?" on the hello screen, then the host console's *Sign back in* panel).
+  - Every player's in-progress state is kept on the phone so a reload or a reopened browser carries on.
 - **Venue:** bars and cafes, seated tables of 4–8 plus mingling, mixed friend groups, **no projector**. Every reveal is synced to every phone at once.
 - **Balance** (from `scripts/sim-balance.mjs`):
   - 3 Killers from 12 to 50 players; the count does not scale with room size.
@@ -94,6 +100,13 @@
   - **The role message is sealed (same day, user's ask):** blurred until tapped, kept in the DEEP BLUE thread, and identical in colour, font and layout for every role so a peek at a neighbour's phone shows nothing. No red for Killers.
   - Kept on purpose: the premise ("some of you are Killers", "the lowest score is taken"), input rules, DEEP BLUE's taunts ("Nobody honest scored lower"), clue captions, the Finale's full explanation.
   - Offered, not built: removing the Gallery's hand sketch (an auto-solver), removing looks from the vote list, "X left" events in the Killers' group.
+
+- **The game clock (asked 2026-10-02).** The user wanted the phone's Clock to show the time *in the game*, the clock to run faster than real time, the whole evening to run automatically on it, and its speed to come from the length they choose (their example: "end in 2 hours", adjusted for the number of days). They also said: don't force anyone to play the morning game; just notify them that if they don't play, their score is zero and they may die. Choices Claude made, unasked, that the user may change:
+  - one constant speed with two daily jumps (night at 01:00, alarm at 07:00), rather than a different speed for each phase;
+  - the length counts from the deal to the finale, not arrivals; options are 1½, 2, 2½ and 3 hours plus the quick test;
+  - only the open phases stretch (night, investigation, vote, final votes); the alarm, the morning games, the board and the verdict keep their real lengths, because their beats are timed in seconds;
+  - autopilot starts on, so the host only deals;
+  - the alarm takeover (slide to stop, the "DEEP BLUE does not snooze" joke) was removed and became a notification with a 3-second ring.
 
 ### Greenr: Last Seating (2609-G, the retiring case)
 

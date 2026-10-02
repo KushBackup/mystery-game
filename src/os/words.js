@@ -4,6 +4,8 @@
  * data/killersCopy.js. This file is only the glue between them.
  */
 
+import { clockNow, fmtClock } from '../lib/engine/clock.js';
+
 /** What happened to someone who is no longer playing, in one short line. */
 export function fateLine(p) {
   const day = p.diedCycle ? ` · day ${p.diedCycle}` : '';
@@ -42,10 +44,10 @@ export function photoSource(d) {
 export const hhmm = (d) => `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 
 /**
- * The time of day inside the game, as the phone's clock shows it. The room
- * lives through a compressed day: the night runs 01:00 to 05:00, the alarm
- * always rings at 07:00, the investigation fills the working day, and the
- * vote happens at dusk. Before the deal and after the end it is real time.
+ * The time of day inside the game, as the phone's clock shows it. A game
+ * made with a clock (engine/clock.js) runs on it: one speed, faster than real
+ * time, with the night at 01:00 and the alarm at 07:00. Older games use the
+ * fixed table below. Before the deal it is real time.
  */
 const WORLD = {
   night: [60, 300], night_locked: [300, 300], recruit: [270, 300], recruit_locked: [300, 300],
@@ -56,6 +58,8 @@ const WORLD = {
 };
 
 export function worldMinutes(game, now) {
+  const clocked = clockNow(game, now);
+  if (clocked != null) return clocked;
   const span = WORLD[game?.phase];
   if (!span) return null;
   const [a, b] = span;
@@ -69,7 +73,7 @@ export function worldMinutes(game, now) {
 export function worldClock(game, now) {
   const m = worldMinutes(game, now);
   if (m == null) return hhmm(new Date());
-  return `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+  return fmtClock(m);
 }
 
 /** The light outside, for the wallpaper: night, dawn, day or dusk. */
