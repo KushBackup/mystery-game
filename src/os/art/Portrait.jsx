@@ -1,84 +1,160 @@
-import React, { useId } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
+import { drawPortrait, seedOf, ART_W, ART_H, FACE_CROP, LAYERS } from './portraitArt';
 
 /**
- * A contact photo DEEP BLUE drew from the arrival answers: the grey "no photo"
- * silhouette iOS 6 put on every contact, dressed in the guest's top and, if
- * they said so, their glasses. It is a sketch to find someone across the
- * room, not a likeness: the face stays a silhouette, so it never guesses at
- * anyone's skin, hair or build.
+ * A guest's contact photo: a full-length, hand-drawn picture of them at home,
+ * built from their six arrival answers (portraitArt.js says what each answer
+ * draws). The room, hair, trousers and pose come from the guest's id, so the
+ * same guest is the same picture on every phone and two guests never share one.
  *
- * The top colours are the clothes themselves, so they are drawn as clothes,
- * not as UI colour. A ghost's photo is the same picture, faded to grey.
+ * Two framings of the one drawing:
+ *   - `full`: the whole 3:4 photo, `size` wide. Setup and the contact card.
+ *   - default: a square crop of head and shoulders, `size` across, for every
+ *     list and board where a face sits beside a name. The top colour and
+ *     glasses still read at 24 px.
  *
- * It draws two answers, top and glasses. Setup's live preview bumps when one
- * of those changes (DRAWN in os/Setup.jsx); add a drawn answer there too.
+ * Skin is always the paper and the hair is pencil, because neither is an
+ * answer: the picture never claims a skin or hair colour, only what they
+ * said. `mystery` shades the face out and leaves the hair off, for a person
+ * nobody has named yet (Gallery's sketch of the hand). A ghost's photo is
+ * the same picture, faded to grey.
+ *
+ * `animate` (Setup only): when an answer changes, its part of the picture is
+ * brushed on over ~0.6 s, held on twos like a hand-drawn film, while the old
+ * one fades; a gender change fades the old figure off the new one. Every tap
+ * starts at once, so a guest can flick through options and watch each land.
+ * Under reduced motion it simply changes.
  */
 
-const TOPS = {
-  black: ['#3a3f4a', '#1c1f26'],
-  white: ['#ffffff', '#d9dbe0'],
-  grey: ['#a4a9b2', '#757b86'],
-  blue: ['#3d63a8', '#1f3a6e'],
-  red: ['#ec6478', '#b52c43'],
-  green: ['#45b56c', '#21783f'],
-  yellow: ['#f7bb48', '#d9831a'],
-  print: ['#3d63a8', '#1f3a6e'],
-};
-const UNKNOWN = ['#b4bac5', '#8c93a0'];
+const CACHE = new Map(); // key -> canvas, for the static frames every list redraws
+const CACHE_MAX = 240;
+const BRUSH_MS = 640;
+const HOLD_MS = 1000 / 12; // drawn on twos
 
-export default function Portrait({ traits, size = 84, ghost = false, rounded = 8, className = '' }) {
-  const id = useId().replace(/:/g, '');
-  const [hi, lo] = TOPS[traits?.top] ?? UNKNOWN;
-  const glasses = traits?.glasses === 'yes';
-  const print = traits?.top === 'print';
+const keyOf = (traits) => (traits ? [...LAYERS, 'gender'].map((id) => traits[id] ?? '').join('|') : '-');
+const reduceMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+const fontsReady = () => typeof document === 'undefined' || !document.fonts || document.fonts.status === 'loaded';
+
+/** Paint one frame into a canvas sized w x h device pixels. */
+function paint(canvas, { traits, seed, full, reveal, prev, mystery }) {
+  const g = canvas.getContext('2d');
+  g.setTransform(1, 0, 0, 1, 0, 0);
+  g.clearRect(0, 0, canvas.width, canvas.height);
+  if (full) {
+    const k = canvas.width / ART_W;
+    g.setTransform(k, 0, 0, k, 0, 0);
+  } else {
+    const k = canvas.width / FACE_CROP.w;
+    g.setTransform(k, 0, 0, k, -FACE_CROP.x * k, -FACE_CROP.y * k);
+  }
+  drawPortrait(g, traits ?? {}, seed, { reveal, prev, face: !full, mystery });
+}
+
+function cached(w, h, opts) {
+  const key = `${opts.full ? 'F' : 'C'}${opts.mystery ? 'M' : ''}${w}x${h}:${opts.seed}:${keyOf(opts.traits)}`;
+  let c = CACHE.get(key);
+  if (!c) {
+    c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    paint(c, opts);
+    if (fontsReady()) {
+      CACHE.set(key, c);
+      if (CACHE.size > CACHE_MAX) CACHE.delete(CACHE.keys().next().value);
+    }
+  }
+  return c;
+}
+
+export default function Portrait({ traits, seed, size = 84, full = false, mystery = false, ghost = false, rounded = 8, animate = false, className = '' }) {
+  const ref = useRef(null);
+  const shown = useRef(traits); // the answers the canvas last finished drawing
+  const run = useRef(0);
+  const n = typeof seed === 'number' ? seed : seedOf(seed ?? 'guest');
+  const w = size;
+  const h = full ? Math.round((size * ART_H) / ART_W) : size;
+  const key = keyOf(traits);
+
+  useLayoutEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return undefined;
+    const dpr = Math.min(3, typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
+    const pw = Math.round(w * dpr), ph = Math.round(h * dpr);
+    if (canvas.width !== pw || canvas.height !== ph) { canvas.width = pw; canvas.height = ph; }
+    const g = canvas.getContext('2d');
+    const blit = () => { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, pw, ph); g.drawImage(cached(pw, ph, { traits, seed: n, full, mystery }), 0, 0); };
+
+    const before = shown.current;
+    const moving = animate && before && !reduceMotion();
+    const changed = moving ? LAYERS.filter((id) => (before[id] ?? null) !== (traits?.[id] ?? null)) : [];
+    const refigure = moving && (before.gender ?? null) !== (traits?.gender ?? null);
+    shown.current = traits;
+
+    if (refigure) {
+      // a new figure: the old picture fades off the new one, held on twos
+      const old = document.createElement('canvas');
+      old.width = pw;
+      old.height = ph;
+      old.getContext('2d').drawImage(canvas, 0, 0);
+      const id = ++run.current;
+      const start = performance.now();
+      let last = -1;
+      let raf = 0;
+      const tick = (now) => {
+        if (run.current !== id) return;
+        const t = Math.min(1, (now - start) / BRUSH_MS);
+        const step = Math.floor((now - start) / HOLD_MS);
+        if (step !== last || t >= 1) {
+          last = step;
+          blit();
+          if (t < 1) { g.globalAlpha = (1 - t) ** 1.5; g.drawImage(old, 0, 0); g.globalAlpha = 1; }
+        }
+        if (t < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+      return () => { cancelAnimationFrame(raf); };
+    }
+
+    if (!changed.length) {
+      blit();
+      if (!fontsReady()) document.fonts.ready.then(() => { if (ref.current === canvas && shown.current === traits) blit(); });
+      return undefined;
+    }
+
+    // brush the changed answers on, held on twos
+    const id = ++run.current;
+    const start = performance.now();
+    let last = -1;
+    let raf = 0;
+    const tick = (now) => {
+      if (run.current !== id) return;
+      const t = Math.min(1, (now - start) / BRUSH_MS);
+      const step = Math.floor((now - start) / HOLD_MS);
+      if (t >= 1) { blit(); return; }
+      if (step !== last) {
+        last = step;
+        const e = 1 - (1 - t) ** 2;
+        paint(canvas, { traits, seed: n, full, mystery, prev: before, reveal: Object.fromEntries(changed.map((l) => [l, e])) });
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(raf); };
+    // `key` stands for `traits`: a new object with the same answers is the same picture
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, n, w, h, full, mystery, animate]);
+
+  useEffect(() => () => { run.current += 1; }, []);
+
   return (
-    <svg
-      viewBox="0 0 100 100"
-      width={size}
-      height={size}
+    <canvas
+      ref={ref}
+      width={w}
+      height={h}
       className={className}
-      style={{ borderRadius: rounded, display: 'block', filter: ghost ? 'grayscale(1) contrast(0.9)' : undefined, opacity: ghost ? 0.7 : 1 }}
+      style={{ width: w, height: h, borderRadius: rounded, display: 'block', filter: ghost ? 'grayscale(1) contrast(0.9)' : undefined, opacity: ghost ? 0.7 : 1 }}
       aria-hidden="true"
-    >
-      <defs>
-        <linearGradient id={`${id}bg`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#e9edf3" />
-          <stop offset="1" stopColor="#b9c1ce" />
-        </linearGradient>
-        <linearGradient id={`${id}sk`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#a1aab8" />
-          <stop offset="1" stopColor="#7a8392" />
-        </linearGradient>
-        <linearGradient id={`${id}top`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={hi} />
-          <stop offset="1" stopColor={lo} />
-        </linearGradient>
-        {print && (
-          <pattern id={`${id}pt`} width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(18)">
-            <circle cx="3" cy="3" r="2.2" fill="#ffd23a" />
-            <circle cx="3" cy="3" r="0.9" fill="#fff" />
-            <circle cx="9" cy="9" r="1.6" fill="#ffffff" fillOpacity="0.85" />
-            <path d="M8 2.5 q1.5 -1.5 3 0" stroke="#2fb35a" strokeWidth="1.1" fill="none" />
-          </pattern>
-        )}
-      </defs>
-      <rect width="100" height="100" fill={`url(#${id}bg)`} />
-      {/* neck, head */}
-      <rect x="42" y="52" width="16" height="20" rx="5" fill={`url(#${id}sk)`} />
-      <ellipse cx="50" cy="38" rx="17.5" ry="21" fill={`url(#${id}sk)`} />
-      {/* the top */}
-      <path d="M8 104 C8 80 24 69 41 67 Q50 75 59 67 C76 69 92 80 92 104 Z" fill={`url(#${id}top)`} stroke={traits?.top === 'white' ? '#b4b9c3' : 'none'} strokeWidth="1" />
-      {print && <path d="M8 104 C8 80 24 69 41 67 Q50 75 59 67 C76 69 92 80 92 104 Z" fill={`url(#${id}pt)`} />}
-      <path d="M41 67 Q50 75 59 67" stroke="rgba(0,0,0,0.22)" strokeWidth="1.4" fill="none" />
-      {glasses && (
-        <g stroke="#141a26" strokeWidth="2.6" fill="rgba(225,238,255,0.35)" strokeLinejoin="round">
-          <rect x="33.5" y="34" width="13.5" height="10" rx="3.5" />
-          <rect x="53" y="34" width="13.5" height="10" rx="3.5" />
-          <path d="M47 38 Q50 36 53 38 M33.5 37 L31.5 36 M66.5 37 L68.5 36" fill="none" />
-        </g>
-      )}
-      {!traits && <text x="50" y="45" textAnchor="middle" fontSize="22" fontWeight="700" fill="#eef1f6">?</text>}
-    </svg>
+    />
   );
 }
 
@@ -91,6 +167,7 @@ export function Face({ traits, pid, size = 40, ghost = false, round = false, cla
   return (
     <Portrait
       traits={traits?.[pid]}
+      seed={pid}
       size={size}
       ghost={ghost}
       rounded={round ? size / 2 : Math.max(4, Math.round(size / 7))}

@@ -592,3 +592,15 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 **What happened:** The phone's cursed app, DEEP BLUE, also titled the boot screen, the invite, the lock screen, Settings → About, the status-bar carrier, the page title and the PWA manifest. Players could not tell the game from the app inside it. The user corrected it: the game is The Murder Mystery Experience, by Astral Project, in collaboration with Greenr.
 
 **What to do instead:** Keep in-fiction names (an app, a pack's `title`) off anything that names the whole experience. Those surfaces read `GAME` in `src/data/killersCopy.js`. A story pack's `title` names the story, not the product.
+
+## 2026-10-02 — A character creator needs a gender choice
+
+**What happened:** I built the full-body contact photo from the six arrival answers only, with hair and figure seeded from the guest's id. The user asked straight away why there was no way to choose the player's gender, and to include LGBTQ options.
+
+**What to do instead:** When a feature draws a person, ask (or offer) how the person wants to be drawn before seeding their body. Gender now lives in `GENDER` (data/traits.js), outside `TRAITS`, so it shapes the photo but can never become a clue, and only the guest's own card lists it.
+
+## 2026-10-02 — A character creator shows each choice as it is tapped
+
+**What happened:** Setup's photo was a 112 px thumbnail and a tap auto-advanced to the next question after 760 ms, so the guest only glimpsed their answer being drawn and could not compare options. The user asked for a bigger picture that updates as they click options, "not after the submit".
+
+**What to do instead:** In a creator, a tap is a try-on, not a submit: change the picture immediately, keep the guest on the question, and move on with an explicit Next. Give the picture the most space on the screen; the options can be compact chips.

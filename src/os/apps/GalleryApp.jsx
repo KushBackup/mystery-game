@@ -116,7 +116,7 @@ function HandProfile({ cycle, facts }) {
   return (
     <div className="os-hand">
       <div className="relative shrink-0">
-        <Portrait traits={sketch} size={64} rounded={8} />
+        <Portrait traits={sketch} seed={`hand-${cycle}`} mystery size={64} rounded={8} />
         <span className="os-hand__q" aria-hidden="true">?</span>
       </div>
       <div className="min-w-0 flex-1">

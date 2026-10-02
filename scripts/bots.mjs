@@ -26,7 +26,7 @@ import {
   initializeFirestore, connectFirestoreEmulator, memoryLocalCache, doc, collection, getDoc, getDocs, setDoc, updateDoc,
   onSnapshot, query, where, serverTimestamp,
 } from 'firebase/firestore';
-import { TRAITS } from '../src/data/traits.js';
+import { TRAITS, GENDER } from '../src/data/traits.js';
 import { PACKS, DEFAULT_PACK_ID, dayKit } from '../src/data/packs/index.js';
 import { STEPS, checksOf, guessHits, wordForms, assignDrawings, spoils } from '../src/lib/engine/minigames.js';
 import { encode } from '../src/os/game/strokes.js';
@@ -71,7 +71,7 @@ async function makeBot(i) {
 const G = (bot, gid, ...p) => doc(bot.db, 'games', gid, ...p);
 
 async function arrive(bot, gid) {
-  const traits = Object.fromEntries(TRAITS.map((t) => [t.id, rnd(t.options).id]));
+  const traits = { ...Object.fromEntries(TRAITS.map((t) => [t.id, rnd(t.options).id])), gender: rnd(GENDER.options).id };
   bot.traits = traits;
   await setDoc(G(bot, gid, 'bindings', bot.uid), { pid: bot.uid });
   await setDoc(G(bot, gid, 'players', bot.uid), { name: bot.name, table: String(1 + (bot.i % 5)), status: 'alive', joinedAt: Date.now() });

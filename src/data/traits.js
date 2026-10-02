@@ -144,6 +144,32 @@ export const TRAITS = [
 
 export const TRAIT_BY_ID = Object.fromEntries(TRAITS.map((t) => [t.id, t]));
 
+/**
+ * Gender: asked at the door for the contact photo only (os/art/portraitArt.js
+ * draws the figure from it). It is deliberately NOT in TRAITS, so the engine
+ * never turns it into a clue and the Gallery's sketch of the hand never shows
+ * it: nobody is ever accused, or outed, by a clue about their gender.
+ *
+ * It is stored on the guest's traits doc next to the six answers, so every
+ * phone draws the same photo; their own card can change it until the deal.
+ * Other guests' cards don't list it. Trans women and trans men are drawn as
+ * women and men; every other answer gets the open figure.
+ */
+export const GENDER = {
+  id: 'gender',
+  prompt: 'How should we draw you?',
+  options: [
+    { id: 'woman', label: 'Woman' },
+    { id: 'man', label: 'Man' },
+    { id: 'nonbinary', label: 'Non-binary' },
+    { id: 'transwoman', label: 'Trans woman' },
+    { id: 'transman', label: 'Trans man' },
+    { id: 'genderfluid', label: 'Genderfluid' },
+    { id: 'genderqueer', label: 'Genderqueer' },
+    { id: 'unsaid', label: 'Prefer not to say' },
+  ],
+};
+
 // Dev-time guard: a group that contains every option says nothing, and an
 // option in no group can never be clued, so the hand it describes is
 // invisible on that trait.

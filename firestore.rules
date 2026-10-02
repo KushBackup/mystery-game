@@ -75,8 +75,9 @@ service cloud.firestore {
         allow delete: if isHost();
       }
 
-      // The six arrival answers. Public (every guest's Contacts card shows
-      // them, since 2026-10-02), and frozen once roles are dealt. They are
+      // The six arrival answers, plus `gender` (it draws the contact photo and
+      // is never a clue). Public (every guest's Contacts card shows the six,
+      // since 2026-10-02), and frozen once roles are dealt. They are
       // given before roles exist, so they say nothing about anyone's role.
       match /traits/{pid} {
         allow read: if signedIn();

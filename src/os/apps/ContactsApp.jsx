@@ -3,7 +3,7 @@ import { useStack } from '../nav';
 import { AppFrame, Section, Group, Cell, ActionSheet } from '../ui';
 import Glyph from '../icons/Glyph';
 import Portrait from '../art/Portrait';
-import { TRAITS, TRAIT_BY_ID } from '../../data/traits';
+import { TRAITS, TRAIT_BY_ID, GENDER } from '../../data/traits';
 import { updateMyTrait } from '../../firebase/game';
 import { useSeen, markSeen } from '../seen';
 import { sfxSent, sfxDeny } from '../sfx';
@@ -36,7 +36,7 @@ export default function ContactsApp({ ctx, onClose }) {
       key={p.id}
       title={`${p.name}${p.id === me.pid ? ' (you)' : ''}`}
       sub={p.status === 'alive' ? null : fateLine(p)}
-      icon={<Portrait traits={traits?.[p.id]} ghost={p.status !== 'alive'} size={38} rounded={6} className="os-contact__photo" />}
+      icon={<Portrait traits={traits?.[p.id]} seed={p.id} ghost={p.status !== 'alive'} size={38} rounded={6} className="os-contact__photo" />}
       chevron
       onClick={() => push(p.id)}
     />
@@ -97,7 +97,7 @@ function ContactCard({ ctx, p, onBack }) {
     .then(() => { sfxSent(); setFixError(''); })
     .catch(() => { sfxDeny(); setFixError('Too late: your answers locked when the roles were dealt.'); });
 
-  const trait = sheet ? TRAIT_BY_ID[sheet] : null;
+  const trait = sheet === GENDER.id ? GENDER : sheet ? TRAIT_BY_ID[sheet] : null;
   const overlay = trait ? (
     canFix ? (
       <ActionSheet
@@ -145,9 +145,9 @@ function ContactCard({ ctx, p, onBack }) {
 
   return (
     <AppFrame title={self ? 'My Card' : 'Info'} onBack={onBack} backLabel="Contacts" light enter="push" overlay={overlay}>
-      <div className="flex items-center gap-4 px-4 pt-5">
-        <Portrait traits={file} ghost={dead} size={64} rounded={6} />
-        <div className="min-w-0">
+      <div className="flex items-end gap-4 px-4 pt-5">
+        <div className="os-photo shrink-0"><Portrait traits={file} seed={p.id} ghost={dead} full size={116} rounded={3} /></div>
+        <div className="min-w-0 pb-1">
           <p className="text-[24px] leading-tight truncate text-os-ink">{p.name}{self ? ' (you)' : ''}</p>
           {dead && <p className="text-[15px] text-os-steel">{fateLine(p)}</p>}
         </div>
@@ -161,6 +161,19 @@ function ContactCard({ ctx, p, onBack }) {
       >
         <Group>{TRAITS.map(field)}</Group>
       </Section>
+      {self && (
+        // gender draws your photo and is never a clue, so only your own card shows it
+        <Section head="Your photo" foot={canFix ? 'Drawn from this. Never a clue.' : 'Locked since the roles were dealt.'}>
+          <Group>
+            <Cell
+              title="Drawn as"
+              value={GENDER.options.find((o) => o.id === file?.gender)?.label ?? 'Not set'}
+              chevron={canFix}
+              onClick={canFix ? () => setSheet(GENDER.id) : undefined}
+            />
+          </Group>
+        </Section>
+      )}
       {fixError && <p className="os-section__foot px-6 text-[#b8160c]">{fixError}</p>}
       <div className="h-8" />
     </AppFrame>
