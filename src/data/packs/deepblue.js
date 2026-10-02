@@ -30,7 +30,7 @@ import news from './deepblue.news.js';
 export default {
   id: 'deepblue',
   title: 'DEEP BLUE',
-  // The last words of the title film at the deal (os/Splash.jsx): the story's name, never the game's.
+  // The last words of the opening title film (os/Splash.jsx): the story's name, never the game's.
   caseTitle: 'The Deep Blue Case',
   place: 'wherever you are tonight',
   news,

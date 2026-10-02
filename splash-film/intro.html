@@ -14,12 +14,12 @@ Film brief
     contact-photo creator draws people walks a city street at night, eyes on
     the phone. The morning game is on it. She gets stressed, taps faster,
     sees she has the lowest score, and is taken: she collapses, the phone
-    skids away, the camera goes into its screen, "Who did this?", and the
-    light of the screen fills the frame with white. The game starts there.
+    skids away, the camera goes into it, and the light of the screen fills
+    the frame with white. The game starts there.
   Tone: dark and grown-up, never graphic. No method, no blood on her, no
     self-harm: she is taken because her score was the lowest, which is the
     game's own premise. An adult.
-  Duration 13.1 s; 9:19.5 portrait, 720 px wide, same frame as the title
+  Duration 12.0 s; 9:19.5 portrait, 720 px wide, same frame as the title
     film (keep the action in y 300..2040 for 9:16 phones).
   Look: the creator's ink-and-watercolour fashion sketch (os/art/portraitArt.js):
     paper skin, pencil-grey hair, tapered ink contours, granulating washes
@@ -40,9 +40,9 @@ Film brief
                         bottom, LOWEST; the screen glitches at 1.6
     8.3  taken    2.6  wide: she freezes, clutches her chest, buckles, falls;
                         the phone skids away, still lit; the lamp flickers
-   10.9  phone    2.2  the camera goes into the phone: "Who did this?"; its
-                        light fills the frame with white
-  Closing beat: pure white (the phone fades to the role text).
+   10.9  phone    1.1  the camera goes into the phone and its light fills
+                        the frame with white
+  Closing beat: pure white (the phone fades to the set-up screen).
   Sources: none; everything is drawn here.
 ------------------------------------------------------------------------- */
 
@@ -432,31 +432,14 @@ function sTaken(c, tau, i) {
 }
 
 // ---------------------------------------------------------------- scene 5: into the phone
+// The camera goes into the phone on the ground, and its light fills the frame with white.
 function sPhone(c, tau, i) {
   const ph = { p: PH_REST, ang: TAU + .02 };
-  const go = sm(0, 1.0, tau, easeInOutQuint);
-  if (tau < 1.0) {
-    const z = lerp(1, 9, go), cx = lerp(CX, ph.p[0], go), cy = lerp(CY, ph.p[1] - 30, go);
-    c.save(); resetT(c); c.translate(CX, CY); c.scale(z, z); c.translate(-cx, -cy);
-    c.save(); c.setTransform(c.getTransform()); sTakenStill(c, i); c.restore();
-    c.restore();
-    // the light of the screen washes up as we arrive
-    resetT(c); c.save(); c.globalAlpha = sm(.6, 1.0, tau, easeIn); c.fillStyle = '#0a1028'; c.fillRect(0, 0, W, H); c.restore();
-    return;
-  }
-  // the screen, face on
-  const t = tau - 1.0;
-  resetT(c); c.fillStyle = '#0a1028'; c.fillRect(0, 0, W, H);
-  const g = c.createRadialGradient(CX, 900, 0, CX, 900, 900); g.addColorStop(0, '#16306b'); g.addColorStop(1, '#0a1028'); c.fillStyle = g; c.fillRect(0, 0, W, H);
-  // the whale icon, drawn in light
-  const wh = put(blob(0, 0, 120, 74, 31, { amp: .04 }), CX + 20, 760, -.1);
-  c.save(); c.globalAlpha = sm(0, .25, t, x => x); line(c, wh, 7, 1400 + tw(i), true, '#7fb8ff'); line(c, put([[-110, 0], [-170, -44], [-160, 0], [-170, 44]], CX + 20, 760, -.1), 7, 1401 + tw(i), true, '#7fb8ff'); c.fillStyle = '#7fb8ff'; c.beginPath(); c.arc(CX + 80, 735, 10, 0, TAU); c.fill(); c.restore();
-  const msg = 'Who did this?', n = Math.floor(clamp((t - .2) / .55, 0, 1) * msg.length);
-  c.save(); c.fillStyle = '#ffffff'; c.font = '300 92px "Helvetica Neue", Arial, sans-serif'; c.textAlign = 'center'; c.fillText(msg.slice(0, n), CX, 1060); c.restore();
-  if (n < msg.length && Math.floor(t * 4) % 2 === 0) { c.save(); c.fillStyle = '#ffffff'; c.font = '300 92px "Helvetica Neue", Arial'; c.textAlign = 'left'; const wTxt = c.measureText(msg.slice(0, n)).width, wAll = c.measureText(msg).width; c.fillRect(CX - wAll / 2 + wTxt + 6, 990, 5, 84); c.restore(); }
-  // and the light takes the frame
-  const wk = sm(.95, 1.15, t, easeIn);
-  if (wk > 0) { resetT(c); c.save(); c.globalAlpha = wk; c.fillStyle = PAPER; c.fillRect(0, 0, W, H); c.restore(); }
+  const go = sm(0, 1.0, tau, easeInOutQuint), z = lerp(1, 9, go), cx = lerp(CX, ph.p[0], go), cy = lerp(CY, ph.p[1] - 30, go);
+  c.save(); resetT(c); c.translate(CX, CY); c.scale(z, z); c.translate(-cx, -cy);
+  c.save(); c.setTransform(c.getTransform()); sTakenStill(c, i); c.restore();
+  c.restore();
+  resetT(c); c.save(); c.globalAlpha = sm(.55, .95, tau, easeIn); c.fillStyle = PAPER; c.fillRect(0, 0, W, H); c.restore();
 }
 // The last drawing of the fall, held, for the push-in.
 function sTakenStill(c, i) {
@@ -477,7 +460,7 @@ defineFilm({
     { name: 'stress', dur: 2.2, fn: sStress },
     { name: 'screen', dur: 1.9, fn: sScreen },
     { name: 'taken', dur: 2.6, fn: sTaken },
-    { name: 'phone', dur: 2.2, fn: sPhone },
+    { name: 'phone', dur: 1.1, fn: sPhone },
   ],
 });
 </script>

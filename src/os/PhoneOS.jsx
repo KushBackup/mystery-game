@@ -5,8 +5,6 @@ import { nowLine, PHASE_LABEL, deliveryLine, GAME } from '../data/killersCopy';
 import { dayKit, alarmLine } from '../data/packs/index.js';
 import { StatusBar, HomeBar, HomeScreen, LockScreen, Banner, NotificationCenter, NCTile } from './chrome';
 import { RoleText, IncomingCall, GoneScreen, ChapterCard, TakenScreen } from './takeovers';
-import Splash, { SPLASH_LIFT_MS } from './Splash';
-import { preloadSplash } from './splashFilm';
 import { threadsFor, preview as threadPreview } from './threads';
 import { useSeen, markSeen, peekSeen } from './seen';
 import { useNews } from './news';
@@ -129,12 +127,11 @@ const NC_PULL_DIST = 110;
 
 /**
  * The phone's frame: status bar, the stage, the home button, and the
- * Notification Center dragged down from the status bar. `cover` goes over
- * all of it, status bar included (the title cards at the deal). Also used
- * before a guest exists. On a phone it tracks the visual viewport, so when the
+ * Notification Center dragged down from the status bar. Also used before a
+ * guest exists. On a phone it tracks the visual viewport, so when the
  * keyboard opens the compose bar rides up above it instead of hiding under it.
  */
-export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = () => {}, children, cover = null, stageRef, time = 'day', sections = [], locked = false }) {
+export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = () => {}, children, stageRef, time = 'day', sections = [], locked = false }) {
   const root = useRef(null);
   const [kbd, setKbd] = useState(false);
   useEffect(() => {
@@ -234,7 +231,6 @@ export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = 
       </div>
       {/* With the panel down, Home puts it away first, the way iOS did. */}
       <HomeBar onHome={() => (ncOpen ? ncClose() : onHome())} />
-      {cover}
     </div>
   );
 }
@@ -311,14 +307,6 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const offered = inbox.some((d) => d.kind === 'recruitOffer' && d.cycle === game.cycle);
 
   // Your own death: once, and only after the room has watched it happen.
-  // The deal opens with the title film on every phone, until it has lifted
-  // on the role text. Timed off the room's reveal, so a reload mid-way
-  // rejoins the same card and one opened later never sees them.
-  const splashEnd = phase === 'casting' && !roleRead ? game.revealAt + SPLASH_LIFT_MS : 0;
-  const nowSplash = useServerNow(splashEnd, 250);
-  const showSplash = Boolean(splashEnd) && nowSplash < splashEnd;
-  // Fetched while the guest waits, so the film starts on the deal without buffering.
-  useEffect(() => { if (phase === 'lobby' || phase === 'casting') preloadSplash(); }, [phase]);
 
   const takenSeen = useSeen(`${gid}.taken`, 0);
   const died = realMe.status === 'ghost' && ['murdered', 'deep', 'banished'].includes(realMe.cause) && takenSeen !== realMe.diedCycle;
@@ -521,7 +509,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const shown = app ?? closing;
   const App = shown ? APPS[shown] : null;
   return (
-    <PhoneFrame game={game} ghost={ghost} clear={!app || Boolean(takeover)} onHome={home} onOpenApp={open} stageRef={stageRef} time={timeOfDay(phase)} sections={sections} locked={Boolean(takeover)} cover={showSplash && <Splash key={game.revealAt} game={game} pack={pack} />}>
+    <PhoneFrame game={game} ghost={ghost} clear={!app || Boolean(takeover)} onHome={home} onOpenApp={open} stageRef={stageRef} time={timeOfDay(phase)} sections={sections} locked={Boolean(takeover)}>
       <HomeScreen
         key={homeIn}
         entering={homeIn > 0}

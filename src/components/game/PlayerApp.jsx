@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ensureAnonymous, beat } from '../../firebase/game';
 import { useAuthUser, useActiveGameId, useGame, useBinding, usePlayers, useMyRole, useInbox } from '../../hooks/useKillers';
 import { packFor } from '../../data/packs/index.js';
@@ -7,11 +7,16 @@ import Setup from '../../os/Setup';
 import { Hold } from '../../os/ui';
 import Wallpaper from '../../os/art/Wallpaper';
 import { markSeen } from '../../os/seen';
+import Splash from '../../os/Splash';
+import { introSeen, markIntroSeen } from '../../os/splashFilm';
 
 /**
  * A guest's phone, from the door to the gate.
  *
  *   auth → active game → binding → (Setup | the DEEP BLUE phone)
+ *
+ * The first time a device opens the page, the opening video (os/Splash.jsx)
+ * plays over all of it, once, while the rest connects underneath.
  *
  * This file only loads things and decides which of the two to show. The phone
  * itself (home screen, apps, the phase-driven takeovers) is src/os/PhoneOS.jsx.
@@ -26,6 +31,17 @@ const Boot = ({ label, still = false }) => (
 );
 
 export default function PlayerApp() {
+  const [intro, setIntro] = useState(() => !introSeen());
+  const introDone = useCallback(() => { markIntroSeen(); setIntro(false); }, []);
+  return (
+    <>
+      <Door />
+      {intro && <Splash onDone={introDone} />}
+    </>
+  );
+}
+
+function Door() {
   const user = useAuthUser();
   const [authError, setAuthError] = useState('');
 

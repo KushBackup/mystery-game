@@ -1103,14 +1103,14 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   100% { opacity: 0; visibility: hidden; }
 }
 
-/* --- The title film at the deal (Splash.jsx): a hand-drawn film on white,
-       above everything, status bar included. It lifts when Splash.jsx adds
-       --lift on the room's clock. `cover`, so a 9:16 phone loses only the
-       film's empty top and bottom. */
+/* --- The opening video (Splash.jsx), on a device's first visit: over the
+       whole page, status bar included, while it connects underneath. It
+       lifts when Splash.jsx adds --lift. `cover`, so a 9:16 phone loses only
+       the film's empty top and bottom. */
 .os-splash {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 1000;
   background: #fff;
   pointer-events: auto;
   transition: opacity var(--lift) ease-in-out, visibility 0s var(--lift);

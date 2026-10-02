@@ -1,7 +1,7 @@
-# splash-film: the title film and intro at the deal
+# splash-film: the opening video
 
-When the host deals the roles, every guest's phone plays one 22.25-second
-video at the same moment, made of two hand-drawn films:
+The first time a guest opens the page, their phone plays one 21.17-second
+video, once per device, made of two hand-drawn films:
 
 1. **The title film** ([splash.html](splash.html), 9.17 s, on white). An ink
    drop pops into a ring tunnel and the Astral Project sticker ("presents"),
@@ -10,16 +10,16 @@ video at the same moment, made of two hand-drawn films:
    For "The Deep Blue Case", crime-scene tape snaps across, CASE is stamped on
    in red, the title drips, a shadow with a red eye passes under the water,
    and a magnifier finds a fingerprint. An iris closes on white.
-2. **The intro** ([intro.html](intro.html), 13.1 s). The iris opens on a
+2. **The intro** ([intro.html](intro.html), 12.0 s). The iris opens on a
    rainy street at night. A guest drawn in the contact-photo creator's style
    walks along, eyes on her phone. She stops, taps faster, sweats, and a
    scribble of dread hangs over her. Her screen shows the morning game, a
    crash, the board, YOU at the bottom, LOWEST, and a glitch. She freezes,
    clutches her chest, buckles and falls, and the phone skids away, still
-   lit. The camera goes into the phone ("Who did this?") and its light fills
-   the frame with white.
+   lit. The camera goes into the phone and its light fills the frame with
+   white.
 
-The phone then fades to the role text. Each film's brief and beat sheet sit at
+The phone then fades to the set-up screen. Each film's brief and beat sheet sit at
 the top of its HTML.
 
 ## Files
@@ -51,10 +51,10 @@ ffmpeg -y -i out/splash.mp4 -i out/intro.mp4 \
 
 ## Things that must stay true
 
-- **Length.** The two films together fill the casting phase's held beat:
-  `SPLASH_MS` in `src/lib/engine/phases.js` (22300 ms: 22.25 s plus a white
-  frame). Change both together, or the role text arrives mid-film or after a
-  blank wait.
+- **Seen once.** A device that has watched it doesn't see it again
+  (`localStorage['astral.intro']`). After changing the video, bump `VERSION`
+  in `src/os/splashFilm.js` so every device sees the new one. Keep
+  `LENGTH_S` in `src/os/Splash.jsx` equal to the video's length.
 - **Both films end white**, and the intro opens with the iris the title closed
   on, so the join is seamless.
 - **Format.** 9:19.5 (1080 × 2340 units), shipped 720 px wide and shown with
@@ -63,7 +63,7 @@ ffmpeg -y -i out/splash.mp4 -i out/intro.mp4 \
 - **The words** of the title film must match `SPLASH` in
   `src/data/killersCopy.js` and the pack's `caseTitle`: those are its
   screen-reader label.
-- **Reduced motion** shows seven stills (`STILLS` in `src/os/Splash.jsx`, in
+- **Reduced motion** shows six stills (`STILLS` in `src/os/Splash.jsx`, in
   seconds into the joined video; the intro starts at 9.17). If a scene moves,
   re-pick moments where each beat's words and action are complete.
 - **The intro's character** is drawn in the creator's style
@@ -72,8 +72,8 @@ ffmpeg -y -i out/splash.mp4 -i out/intro.mp4 \
   woman, bob, glasses, yellow top, denim, white sneakers.
 - **Never graphic.** No method, no blood on her, nothing that reads as
   self-harm. She is taken because her score was the lowest, which is the
-  game's premise. The last line on her phone asks a question; it never
-  explains a rule.
+  game's premise. Her phone shows no closing message (a "Who did this?"
+  screen was cut at the user's request).
 - **Fonts.** The lettering uses Segoe Print, Impact and Arial Black (Windows).
   Render on a machine that has them.
 - **No sound.** The video is muted, so it can start without a tap.

@@ -29,7 +29,7 @@ export const GAME = {
 };
 
 /**
- * What the title film at the deal says (os/Splash.jsx), before the story's own
+ * What the opening title film says (os/Splash.jsx), before the story's own
  * title (the pack's `caseTitle`). The film draws these itself
  * (splash-film/splash.html); here they are its screen-reader label, and must
  * match it.
