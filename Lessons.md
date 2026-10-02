@@ -593,6 +593,12 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 
 **What to do instead:** Keep in-fiction names (an app, a pack's `title`) off anything that names the whole experience. Those surfaces read `GAME` in `src/data/killersCopy.js`. A story pack's `title` names the story, not the product.
 
+### 2026-10-02 — "Players discover the game" was applied to a screen where a choice has to be made
+
+**What happened:** Following the "never explain a mechanic" rule, the Night app showed bare choices ("Watch a guest", "Dig through the logs") with no purpose and no outcome. In a playtest the user opened it and could not tell what the night was for or what either move did. A guest list also appeared below the options, off-screen, so a tap looked like it did nothing.
+
+**What to do instead:** Discovery suits outcomes the room can work out (the board, the photos, who the Killers are). It does not suit a screen where the player must weigh options: a move you can't weigh is not a choice. On a choice screen, say what each option does tonight, what arrives at dawn and why to pick it. Put the second step on its own screen, and show a clear saved state. The Night app now does this from `NIGHT` in killersCopy.js; the rest of the phone keeps the discovery rule.
+
 ## 2026-10-02 — A character creator needs a gender choice
 
 **What happened:** I built the full-body contact photo from the six arrival answers only, with hair and figure seeded from the guest's id. The user asked straight away why there was no way to choose the player's gender, and to include LGBTQ options.

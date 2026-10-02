@@ -48,7 +48,7 @@
   - Murdered and banished players become Ghosts, who keep playing.
   - Team win only, no personal scores.
   - 5 cycles, about 2 hours.
-  - A small role set: Killer, Faithful, Doctor, Detective, Medium.
+  - A small role set: Killer, Faithful, Doctor, Detective. (A Medium was in the first set and was removed on 2026-10-02: see below.)
 - **Venue:** bars and cafes, seated tables of 4–8 plus mingling, mixed friend groups, **no projector**. Every reveal is synced to every phone at once.
 - **Balance** (from `scripts/sim-balance.mjs`):
   - 3 Killers from 12 to 50 players; the count does not scale with room size.
@@ -65,7 +65,8 @@
 - **DEEP BLUE is an app, not the game (2026-10-02).** Players were confused because the game and the app inside it were both called DEEP BLUE. The user's call: the game is **The Murder Mystery Experience, by Astral Project, in collaboration with Greenr**; DEEP BLUE is only the cursed app on the phone (its icon, its thread, its morning game, the News stories about it). Anything naming the whole experience (boot card, invite, lock screen, Settings → About, page title, PWA manifest) reads `GAME` in `src/data/killersCopy.js`. The phone's carrier says ASTRAL, not DEEP BLUE. Docs still call the phone skin "the DEEP BLUE phone" internally; that is a code name, never shown to players.
 - **Rules the user chose:** the rig is picked at night; the run is the best of unlimited retries inside a 90 s window; only rigged scores kill, **except** that a Doctor's firewall blocking the rig means the genuinely lowest scorer dies instead (which can be a Killer); the day's top 3 earn a clue photo.
 - **Host console:** keeps the Evidence Room look and gains controls; only player phones changed.
-- **Detective = Trace, Medium = Séance** (built 2026-10-01, stretch tier): see TECHNICAL_DOCUMENTATION.md. Trace originally cleared "neither" guests outright, which pushed the Faithful to 68–78% in the sim; it now reads only tonight's hacker.
+- **Detective = Trace** (built 2026-10-01, stretch tier): see TECHNICAL_DOCUMENTATION.md. Trace originally cleared "neither" guests outright, which pushed the Faithful to 68–78% in the sim; it now reads only tonight's hacker.
+- **The Medium was removed (2026-10-02, the user's call).** It had a nightly Séance (a ghost's team and a copy of their clue). The user felt it wasn't doing much. The worry was that ghosts would lose their audience; they keep the true clue, the whisper and the Endgame votes, and Spirits became the ghosts' own chat. Don't bring the role back without asking. The "chorus whisper" idea (several ghosts whispering to the same guest are joined into one message) was offered as a ghost upgrade and not yet chosen.
 
 - **News app world (2026-10-02).** The user wanted the paper to feel like part of the story: authored articles dripped by day, **local to Panjim, Goa, with Greenr, Panjim as the setting**, plus the room's own events printed as articles. Pure flavour only (the user chose this over hints or rule-teaching). Decisions that are not obvious from the code: **Greenr appears only as a bystander** (it is the real venue and a collaborator, so it is never the site of a death, a fault or a cover-up, and it only ever says things like "we checked the Wi-Fi"); all outlets, officials and sources are invented or anonymous (never a real outlet, never "Goa Police"); no victim is under 18 and no method is given, because DEEP BLUE stands in for the real challenge. The toll rises on a fixed curve (9, 14, 23, 31, 40, 52). Content lives in `src/data/packs/deepblue.news.js`.
 

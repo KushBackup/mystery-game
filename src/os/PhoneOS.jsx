@@ -24,6 +24,7 @@ import NightApp from './apps/NightApp';
 import SettingsApp from './apps/SettingsApp';
 import VoteApp from './apps/VoteApp';
 import WeatherApp from './apps/WeatherApp';
+import HelpApp from './apps/HelpApp';
 
 /**
  * The DEEP BLUE phone: a guest's whole game, as an iPhone-era home screen.
@@ -77,7 +78,7 @@ const PHASE_BANNER = {
 /** Phases that open with a chapter card (takeovers.jsx). */
 const CHAPTERS = new Set(['night', 'investigation', 'roundtable', 'endgame']);
 
-const GRID = [['clock', 'Clock'], ['contacts', 'Contacts'], ['night', 'Night'], ['weather', 'Weather'], ['settings', 'Settings']];
+const GRID = [['clock', 'Clock'], ['contacts', 'Contacts'], ['night', 'Night'], ['weather', 'Weather'], ['settings', 'Settings'], ['help', 'Help']];
 const DOCK = [['messages', 'Messages'], ['deepblue', 'DEEP BLUE'], ['news', 'News'], ['gallery', 'Photos']];
 
 const APPS = {
@@ -92,6 +93,7 @@ const APPS = {
   settings: SettingsApp,
   vote: VoteApp,
   weather: WeatherApp,
+  help: HelpApp,
 };
 
 /** How far (px) a pull must travel before release decides it should finish opening. */
@@ -211,11 +213,11 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const { players } = useMaskedPlayers(realPlayers, game);
   const me = { ...(players.find((p) => p.id === realMe.pid) ?? realMe), pid: realMe.pid };
   const isKiller = role?.role === 'killer' && me.status === 'alive';
-  const spiritsOk = me.status === 'ghost' || (role?.role === 'medium' && me.status === 'alive');
+  const spiritsOk = me.status === 'ghost';
 
   // One listener per channel for the whole phone; apps get the lists from ctx.
   const chat = useChannel(gid, 'chat');
-  const spirits = useChannel(gid, 'mediumChat', spiritsOk);
+  const spirits = useChannel(gid, 'spiritsChat', spiritsOk);
   const den = useChannel(gid, 'denChat', isKiller);
   // The Killers' group: who is in it, and when DEEP BLUE added them (threads.js).
   const mates = useKillerGroup(gid, isKiller);

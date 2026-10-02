@@ -45,7 +45,6 @@ service cloud.firestore {
       function me() { return get(/databases/$(database)/documents/games/$(gid)/bindings/$(request.auth.uid)).data.pid; }
       function game() { return get(/databases/$(database)/documents/games/$(gid)).data; }
       function myStatus() { return get(/databases/$(database)/documents/games/$(gid)/players/$(me())).data.status; }
-      function myRole() { return get(/databases/$(database)/documents/games/$(gid)/roles/$(me())).data.role; }
       function isKiller() { return hasBinding() && exists(/databases/$(database)/documents/games/$(gid)/killers/$(me())); }
       function isMe(pid) { return hasBinding() && me() == pid; }
       // Ids of the form "<key>_<pid>" belong to that pid.
@@ -233,10 +232,11 @@ service cloud.firestore {
         allow delete: if isHost();
       }
 
-      match /mediumChat/{id} {
-        allow read: if isHost() || (hasBinding() && (myStatus() == 'ghost' || myRole() == 'medium'));
-        allow create: if hasBinding() && request.resource.data.pid == me() && shortText(request.resource.data.text)
-          && ((myStatus() == 'ghost') || (myRole() == 'medium' && myStatus() == 'alive'));
+      // Spirits: the ghosts' own chat. Nobody living reads it.
+      match /spiritsChat/{id} {
+        allow read: if isHost() || (hasBinding() && myStatus() == 'ghost');
+        allow create: if hasBinding() && myStatus() == 'ghost'
+          && request.resource.data.pid == me() && shortText(request.resource.data.text);
         allow delete: if isHost();
       }
 

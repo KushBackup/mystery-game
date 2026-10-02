@@ -35,7 +35,6 @@ export function photoSource(d) {
   if (d.via === 'ghost') return 'From the other side';
   if (d.via === 'watch') return 'You saw it yourself';
   if (d.via === 'top') return `#${d.rank ?? 1} on the board`;
-  if (d.via === 'seance') return 'Through the séance';
   return 'Dug out of the logs';
 }
 

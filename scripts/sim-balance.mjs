@@ -195,9 +195,6 @@ function playGame(n, ratios, gameSeed) {
         // Trace the two most suspected guests not yet cleared.
         const targets = ranked.filter((q) => q !== p && !cleared.has(q)).slice(0, 2);
         actions[p] = targets.length === 2 ? { kind: 'trace', targets } : { kind: 'scour' };
-      } else if (role === ROLE.MEDIUM) {
-        const ghosts = Object.keys(players).filter((q) => players[q].status === 'ghost');
-        actions[p] = ghosts.length ? { kind: 'seance', target: pick(ghosts, rng) } : { kind: 'scour' };
       } else if (chance(rng, 0.35)) {
         actions[p] = { kind: 'watch', target: pick(ranked.filter((q) => q !== p).slice(0, 8), rng) };
       } else {
@@ -222,7 +219,7 @@ function playGame(n, ratios, gameSeed) {
     const heard = [];
     for (const f of out.facts) {
       // Searchers and the day's top three hold the night's clues.
-      const holders = morning.deliveries.filter((d) => d.kind === 'fact' && (!d.via || d.via === 'top' || d.via === 'seance') && d.fact.trait === f.trait && d.fact.group === f.group);
+      const holders = morning.deliveries.filter((d) => d.kind === 'fact' && (!d.via || d.via === 'top') && d.fact.trait === f.trait && d.fact.group === f.group);
       const faithfulHolders = holders.filter((d) => !isKiller(d.to)).length;
       if (1 - (1 - SHARE_Q) ** faithfulHolders > rng()) heard.push(f);
       stats.factShare.push(pool.filter((p) => fits(TRAITS, traits[p], f)).length / pool.length);
@@ -247,7 +244,6 @@ function playGame(n, ratios, gameSeed) {
         else for (const t of d.targets) claims[t] = (claims[t] ?? 0) - 0.1;
         detectiveClaimed = d.to;
       }
-      if (d.kind === 'seance' && d.team === 'killers') claims[d.ghost] = (claims[d.ghost] ?? 0);
       if (d.kind === 'check') {
         if (d.team === 'killers' && chance(rng, 0.6)) {
           claims[d.target] = (claims[d.target] ?? 0) + 1.5;

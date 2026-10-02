@@ -16,7 +16,6 @@ export const ROLE = Object.freeze({
   FAITHFUL: 'faithful',
   DOCTOR: 'doctor',
   DETECTIVE: 'detective',
-  MEDIUM: 'medium',
 });
 
 export const ROLE_INFO = {
@@ -24,7 +23,6 @@ export const ROLE_INFO = {
   faithful: { team: 'faithful', label: 'Faithful' },
   doctor: { team: 'faithful', label: 'Doctor' },
   detective: { team: 'faithful', label: 'Detective' },
-  medium: { team: 'faithful', label: 'Medium' },
 };
 
 export const teamOf = (role) => ROLE_INFO[role]?.team ?? 'faithful';
@@ -57,8 +55,7 @@ export function targetCounts(n, ratios = DEFAULT_RATIOS) {
 
   const doctor = n >= 8 ? (n > r.secondDoctorAbove ? 2 : 1) : 0;
   const detective = n >= 8 ? 1 : 0;
-  const medium = n >= 12 ? 1 : 0;
-  return { killer, doctor, detective, medium };
+  return { killer, doctor, detective };
 }
 
 /**
@@ -76,7 +73,6 @@ export function dealRoles(pids, counts, rng) {
   give(ROLE.KILLER, counts.killer);
   give(ROLE.DOCTOR, counts.doctor);
   give(ROLE.DETECTIVE, counts.detective);
-  give(ROLE.MEDIUM, counts.medium);
   while (i < order.length) roles[order[i++]] = ROLE.FAITHFUL;
   return roles;
 }
@@ -89,9 +85,9 @@ export function dealRoles(pids, counts, rng) {
  */
 export function assignLateJoiner(roles, roomSize, ratios, rng) {
   const want = targetCounts(roomSize, ratios);
-  const dealt = { doctor: 0, detective: 0, medium: 0 };
+  const dealt = { doctor: 0, detective: 0 };
   for (const role of Object.values(roles)) if (role in dealt) dealt[role]++;
-  const open = ['detective', 'doctor', 'medium'].filter((r) => want[r] > dealt[r]);
+  const open = ['detective', 'doctor'].filter((r) => want[r] > dealt[r]);
   if (open.length === 0) return ROLE.FAITHFUL;
   return open[Math.floor(rng() * open.length)];
 }

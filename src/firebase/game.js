@@ -115,7 +115,7 @@ export const subscribeDen = (gid, cycle, cb) =>
 /** Tonight's den status: is it a recruit night, is the frame spent. Killer-only. */
 export const subscribeDenMeta = (gid, cb) => watchDoc('den meta', sub(gid, 'den', 'meta'), cb);
 
-/** One channel: 'chat', 'denChat' or 'mediumChat'. Newest 100, returned oldest-first. */
+/** One channel: 'chat', 'denChat' or 'spiritsChat'. Newest 100, returned oldest-first. */
 export const subscribeChannel = (gid, channel, cb) =>
   resilient(channel, (onError) =>
     onSnapshot(query(col(gid, channel), orderBy('at', 'desc'), limit(100)), (s) => cb(listData(s).reverse()), onError));

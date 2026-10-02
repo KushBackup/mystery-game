@@ -18,7 +18,7 @@ import { sfxSent } from '../sfx';
  */
 
 export default function KillPoll({ ctx, dark = false }) {
-  const { gid, game, me, players, nameOf, mates } = ctx;
+  const { gid, game, me, players, nameOf, mates, traits } = ctx;
   const den = useDen(gid, game.cycle, true) ?? [];
   const meta = useDenMeta(gid, true);
   // Until the group has loaded, a partner would look like a target.
@@ -38,5 +38,5 @@ export default function KillPoll({ ctx, dark = false }) {
     .then(sfxSent)
     .catch((e) => console.warn('[poll] not saved:', e.code ?? e.message));
 
-  return <GuestPicker guests={targets} value={mine} note={note} dark={dark} onPick={pick} />;
+  return <GuestPicker guests={targets} traits={traits} value={mine} note={note} dark={dark} onPick={pick} />;
 }

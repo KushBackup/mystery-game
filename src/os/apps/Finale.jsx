@@ -21,7 +21,7 @@ import { useStage, useStageSounds } from './stage';
 const BEATS = { show: 0, killers: 2.6, story: 5 };
 
 /** Rank order for the cast list: Killers, then the special roles, then the Faithful. */
-const ORDER = { killer: 0, doctor: 1, detective: 2, medium: 3, faithful: 4 };
+const ORDER = { killer: 0, doctor: 1, detective: 2, faithful: 3 };
 
 export default function Finale({ ctx, onPaper }) {
   const { game, pack, players, nameOf, traits, me } = ctx;

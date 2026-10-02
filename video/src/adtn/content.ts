@@ -40,7 +40,7 @@ export const QUIZ = [
 ] as const;
 
 /** The slot reel on the role card: the game's real roles (src/data/killersCopy.js). */
-export const ROLES = ["Faithful", "Doctor", "Killer", "Detective", "Faithful", "Medium", "Killer", "Faithful"] as const;
+export const ROLES = ["Faithful", "Doctor", "Killer", "Detective", "Faithful", "Doctor", "Killer", "Faithful"] as const;
 
 /** Clue banners — real clue lines from the Greenr story pack, one per trait. */
 export const CLUES = [

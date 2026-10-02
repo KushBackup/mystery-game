@@ -16,13 +16,13 @@
 import { deliveryLine } from '../data/killersCopy';
 import { photoSource } from './words';
 
-const SYSTEM_KINDS = new Set(['check', 'trace', 'seance', 'saved', 'quiet', 'recruited', 'fact']);
+const SYSTEM_KINDS = new Set(['check', 'trace', 'saved', 'quiet', 'recruited', 'fact']);
 const UNKNOWN_KINDS = new Set(['whisper', 'watch']);
 
 /** Which threads this guest can see, with their message lists, unread counts and unread items. */
 export function threadsFor(ctx, seen) {
   const { me, role, chat, spirits, inbox } = ctx;
-  const spiritsOk = me.status === 'ghost' || (role?.role === 'medium' && me.status === 'alive');
+  const spiritsOk = me.status === 'ghost';
   const denOk = role?.role === 'killer' && me.status === 'alive' && Array.isArray(ctx.mates);
   // The role message from casting stays at the top of the DEEP BLUE thread, sealed (RoleMessage).
   const roleMsg = role?.role ? [{ id: 'role', kind: 'role', at: 1, cycle: 0 }] : [];

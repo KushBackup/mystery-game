@@ -24,9 +24,6 @@
  *      log: did either of them do tonight's hacking (were they the hand)?
  *      "Neither" clears nobody of being a Killer, only of tonight. (The older single `check`, which reveals one
  *      guest's team until checks run out, still resolves if sent.)
- *      The Medium holds a séance with one Ghost: a copy of that Ghost's clue
- *      tonight, which is always true (a frame never reaches the dead), and
- *      the Ghost's team, the only way to learn it for someone the deep took.
  *   6. Scourers (and anyone who did nothing) each receive one clue fragment.
  *   7. Ghosts each receive one *true* clue, and deliver their whispers.
  *
@@ -203,17 +200,12 @@ export function resolveNight(ctx) {
   // --- Faithful night actions ---------------------------------------------
   const scourers = [];
   const watchedVictim = [];
-  const seances = [];
-  const ghostSet = new Set(ghosts);
   for (const pid of faithful) {
     const a = actions[pid];
     const role = roles[pid];
     const traced = role === ROLE.DETECTIVE && a?.kind === 'trace' ? [...new Set(a.targets ?? [])].filter((t) => t !== pid && players[t]?.status === 'alive') : [];
     if (traced.length === 2) {
       deliveries.push({ to: pid, kind: 'trace', targets: sorted(traced), hit: hand != null && traced.includes(hand) });
-    } else if (role === ROLE.MEDIUM && a?.kind === 'seance' && ghostSet.has(a.target)) {
-      seances.push({ medium: pid, ghost: a.target });
-      deliveries.push({ to: pid, kind: 'seance', ghost: a.target, team: teamOf(roles[a.target]) });
     } else if (a?.kind === 'watch' && a.target && a.target !== pid && players[a.target]?.status === 'alive') {
       if (a.target === victim) watchedVictim.push(pid);
       const seen = hand != null && a.target === hand && chance(rng, config.watchP);
@@ -273,11 +265,6 @@ export function resolveNight(ctx) {
       ?? (config.autoFrameFrom != null && cycle === config.autoFrameFrom && frameable.length ? pick(frameable, rng) : null);
   const out = murderOutcome(full, { victim, hand, framePid, protectedSet, scourers, extraFactTo: watchedVictim });
   if (out.plantUsed) secretPatch.plantUsed = true;
-  // A séance copies what the summoned Ghost learned tonight.
-  for (const { medium, ghost } of seances) {
-    const seen = out.deliveries.find((d) => d.to === ghost && d.via === 'ghost');
-    if (seen) out.deliveries.push({ to: medium, kind: 'fact', via: 'seance', ghost, fact: seen.fact });
-  }
 
   for (const pid of alive) {
     if (roles[pid] === ROLE.DOCTOR && out.saved && secretPatch.lastProtected[pid] === victim) {

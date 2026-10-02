@@ -7,6 +7,13 @@
  * it never explains how a mechanic works (the rig, who strikes, the firewall).
  * The board, the photos and the room teach that. If a screen seems to need
  * an explanation, give it a cue instead: a badge, a banner, a result.
+ *
+ * One exception, the user's call after playtesting (2026-10-02): the Night
+ * app explains every move in full (`NIGHT`): what it does tonight and what it
+ * changes in the game. Nobody could tell what "Watch a guest" was for, and a
+ * move you can't weigh is not a choice. And the Help app (data/helpCopy.js),
+ * the rule book a guest opens on purpose, states every rule. The rule above
+ * still holds everywhere else.
  */
 
 /**
@@ -27,7 +34,6 @@ export const ROLE_CARD = {
   faithful: { title: 'Faithful', line: 'Someone here is a Killer. Find them.' },
   doctor: { title: 'Doctor', line: 'Each night, you can keep one person safe.' },
   detective: { title: 'Detective', line: 'Each night, you can look into two people.' },
-  medium: { title: 'Medium', line: 'The dead talk to you.' },
 };
 
 /**
@@ -109,8 +115,6 @@ export function deliveryLine(d, nameOf) {
       const [a, b] = (d.targets ?? []).map(nameOf);
       return d.hit ? `TRACE: ${a} or ${b} did tonight’s hacking.` : `Trace: neither ${a} nor ${b} did tonight’s hacking.`;
     }
-    case 'seance':
-      return d.team === 'killers' ? `${nameOf(d.ghost)} came through. They were a KILLER.` : `${nameOf(d.ghost)} came through. They were innocent.`;
     case 'whisper':
       return `${nameOf(d.from)} whispers from beyond: “${d.word}”`;
     case 'saved':
@@ -131,10 +135,122 @@ export const DELIVERY_TAG = {
   watch: 'Watch',
   check: 'Check',
   trace: 'Trace',
-  seance: 'Séance',
   whisper: 'Whisper',
   saved: 'Saved',
   quiet: 'Search',
   recruited: 'Recruited',
   recruitOffer: 'Offer',
+};
+
+/**
+ * The Night app's words. The one place the phone explains a mechanic in full
+ * (see the header): each move says what it does tonight, what arrives at dawn,
+ * and why a player would pick it. Every line here must stay true to
+ * engine/night.js and engine/morning.js; change them together.
+ *
+ * `how` rows are [label, text]. 25 words or fewer per text.
+ */
+export const NIGHT = {
+  title: (cycle) => `Night ${cycle}`,
+  day: {
+    title: 'Not night yet',
+    line: 'Night moves open when night falls. DEEP BLUE will ping you.',
+  },
+  faithful: {
+    line: 'Each night, one Killer goes out to strike. Pick one move to hunt them.',
+    foot: 'Make no move and you dig through the logs.',
+    head: 'Your move tonight',
+  },
+  moves: {
+    watch: {
+      glyph: 'eye',
+      title: 'Watch a guest',
+      short: 'Try to catch a Killer in the act.',
+      how: [
+        ['Tonight', 'Pick one guest and keep an eye on them all night.'],
+        ['At dawn', 'If they went out to kill, you probably saw them slip away. About 6 times in 10.'],
+        ['Bonus', 'If the Killers went after the guest you watched, you also get a clue photo.'],
+        ['Careful', '“A quiet night” doesn’t clear them. You may have missed it.'],
+        ['Why', 'The only move that can point straight at one person.'],
+      ],
+      pick: 'Who do you watch?',
+      done: (name) => `You’re watching ${name}.`,
+    },
+    scour: {
+      glyph: 'search',
+      title: 'Dig through the logs',
+      short: 'Get one sure clue about tonight’s Killer.',
+      how: [
+        ['Tonight', 'You go through DEEP BLUE’s logs instead of watching anyone.'],
+        ['At dawn', 'A clue photo lands in Photos. It shows one answer the Killer who struck gave when they arrived.'],
+        ['Then', 'Check it against everyone’s answers in Contacts to narrow down who it could be.'],
+        ['Why', 'A clue every night, guaranteed. It narrows the field but never names one person.'],
+      ],
+      cta: 'Dig tonight',
+      done: () => 'You’re digging through the logs.',
+    },
+    trace: {
+      glyph: 'signal',
+      title: 'Trace two phones',
+      short: 'Find out if one of two guests struck tonight.',
+      how: [
+        ['Tonight', 'Pick two guests. DEEP BLUE checks their phones against tonight’s logs.'],
+        ['At dawn', 'You learn whether either of them was tonight’s Killer. Not which one.'],
+        ['Careful', '“Neither” clears them for tonight only. A different Killer may strike another night.'],
+        ['Why', 'A hit traps a Killer in a pair of two.'],
+      ],
+      pick: (n) => `Pick two guests · ${n}/2`,
+      done: (a, b) => `You’re tracing ${a} and ${b}.`,
+    },
+    protect: {
+      glyph: 'shield',
+      title: 'Protect a guest',
+      short: 'Keep one guest safe from the Killers tonight.',
+      line: 'Each night, one Killer goes out to strike. You can keep one guest safe.',
+      how: [
+        ['Tonight', 'Pick one guest to protect. It can be you.'],
+        ['At dawn', 'If the Killers chose them, they live. DEEP BLUE tells you if you saved someone.'],
+        ['But', 'The deep still takes the lowest real score on the morning board instead. Your guest is safe from that too.'],
+        ['Rule', 'You can’t protect the same guest two nights in a row.'],
+      ],
+      pick: 'Who do you protect?',
+      barred: 'Protected last night',
+      done: (name) => `You’re protecting ${name}.`,
+    },
+    whisper: {
+      glyph: 'chat',
+      title: 'Whisper from beyond',
+      short: 'Send one word to a living guest.',
+      line: 'You were taken, but you still play. Help the living find the Killers.',
+      how: [
+        ['Tonight', 'Pick one word, then one living guest.'],
+        ['At dawn', 'They read your word, signed with your name.'],
+        ['Also', 'Every night you get a clue photo of your own. Ghost clues are always true.'],
+      ],
+      word: 'Pick a word',
+      pick: (word) => `Who hears “${word}”?`,
+      done: (name, word) => `${name} will hear “${word}”.`,
+    },
+  },
+  killer: {
+    line: 'Pick tonight’s target with your partners. Most votes wins.',
+    how: [
+      ['At dawn', 'DEEP BLUE drops their score to the bottom of the morning board, and the deep takes them.'],
+      ['Unless', 'A Doctor protected them. Then the lowest real score is taken instead, and that could be one of you.'],
+      ['Turns', 'One of you strikes each night, in turn. Tonight’s clues describe that one, and guests watching them may see them.'],
+      ['No vote', 'DEEP BLUE picks someone for you.'],
+    ],
+    mine: (name) => `Your pick: ${name}. You can change it.`,
+  },
+  recruit: {
+    line: 'One of you is gone. Pick a guest to invite in.',
+    how: [
+      ['Yes', 'They join you and nobody dies tonight.'],
+      ['No', 'They become tonight’s target instead.'],
+    ],
+  },
+  result: 'Your result arrives at dawn.',
+  change: 'You can change your move until the night ends.',
+  changeBtn: 'Change my move',
+  count: (alive, gone) => `${alive} still in the game${gone ? ` · ${gone} taken` : ''}`,
 };

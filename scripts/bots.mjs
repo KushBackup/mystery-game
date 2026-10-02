@@ -24,7 +24,7 @@ import {
 } from 'firebase/auth';
 import {
   initializeFirestore, connectFirestoreEmulator, memoryLocalCache, doc, collection, getDoc, getDocs, setDoc, updateDoc,
-  onSnapshot, query, where, serverTimestamp,
+  onSnapshot, query, where, serverTimestamp, addDoc,
 } from 'firebase/firestore';
 import { TRAITS, GENDER } from '../src/data/traits.js';
 import { PACKS, DEFAULT_PACK_ID, dayKit } from '../src/data/packs/index.js';
@@ -114,10 +114,6 @@ async function act(bot, gid, game) {
   if (bot.role === 'detective') {
     const two = [...alive].sort(() => Math.random() - 0.5).slice(0, 2).map((p) => p.pid);
     return two.length === 2 ? action({ kind: 'trace', targets: two, target: null }) : action({ kind: 'scour' });
-  }
-  if (bot.role === 'medium') {
-    const ghosts = players.filter((p) => p.status === 'ghost');
-    return ghosts.length ? action({ kind: 'seance', target: rnd(ghosts).pid }) : action({ kind: 'scour' });
   }
   return Math.random() < 0.4 ? action({ kind: 'watch', target: rnd(alive).pid }) : action({ kind: 'scour' });
 }
@@ -312,6 +308,21 @@ async function drawChecks(bots, gid, game) {
   return results;
 }
 
+/** Rule checks that need a ghost: Spirits is the ghosts' own chat, and nobody living reads or posts in it. */
+async function spiritsChecks(bots, gid) {
+  const results = [];
+  const ghost = bots.find((x) => x.status === 'ghost');
+  const living = bots.find((x) => x.status === 'alive');
+  const spirits = (bot) => collection(bot.db, 'games', gid, 'spiritsChat');
+  const post = (bot) => addDoc(spirits(bot), { pid: bot.pid, name: bot.name, text: 'boo', at: Date.now() });
+  await expectAllowed('ghost posts in Spirits', () => post(ghost), results);
+  await expectAllowed('ghost reads Spirits', () => getDocs(spirits(ghost)), results);
+  await expectDenied('living guest reads Spirits', () => getDocs(spirits(living)), results);
+  await expectDenied('living guest posts in Spirits', () => post(living), results);
+  await expectDenied('ghost posts in Spirits as someone else', () => addDoc(spirits(ghost), { pid: living.pid, name: 'x', text: 'boo', at: Date.now() }), results);
+  return results;
+}
+
 /** Rule checks that need the run open: scores can only go up, and only your own. */
 async function runChecks(bots, gid, game) {
   const results = [];
@@ -368,6 +379,10 @@ async function selftest(n) {
       await Promise.all(bots.map((b) => answerRecruit(b, gid, g)));
     } else if (g.phase === 'game') {
       await Promise.all(bots.map((b) => readSelf(b, gid)));
+      if (!ranChecks.has('spirits') && bots.some((b) => b.status === 'ghost') && bots.some((b) => b.status === 'alive')) {
+        ranChecks.add('spirits');
+        security.push(...await spiritsChecks(bots, gid));
+      }
       const kind = g.minigame ?? 'run';
       // Each game's checks once; the word checks again once there is a ghost to test.
       const checkKey = kind === 'word' && bots.some((b) => b.status === 'ghost') ? 'word+ghost' : kind;

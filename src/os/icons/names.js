@@ -3,11 +3,11 @@
  * those export only components (react-refresh).
  */
 export const ICON_NAMES = [
-  'messages', 'deepblue', 'news', 'gallery', 'clock', 'contacts', 'notes', 'night', 'settings', 'weather',
+  'messages', 'deepblue', 'news', 'gallery', 'clock', 'contacts', 'notes', 'night', 'settings', 'weather', 'help',
 ];
 
 export const GLYPH_NAMES = [
   'back', 'forward', 'signal', 'wifi', 'battery', 'lock', 'unlock', 'search', 'send', 'camera',
   'check', 'cross', 'skull', 'crown', 'star', 'moon', 'heart', 'eye', 'shield', 'whale', 'bell',
-  'alarm', 'trophy', 'ghost', 'vote', 'chat', 'photo', 'plus', 'dots',
+  'alarm', 'trophy', 'ghost', 'vote', 'chat', 'photo', 'plus', 'dots', 'pencil', 'question',
 ];

@@ -190,6 +190,24 @@ const ART = {
       </>
     ),
   },
+  // A pocket rule book with a hand-inked question mark: the Help app.
+  help: {
+    stops: ['#ffd27a', '#f5a524', '#c06a0c'],
+    draw: () => (
+      <g transform="rotate(-6 30 30)">
+        <rect x="14" y="9" width="33" height="43" rx="3" fill="#fbf6e6" />
+        <rect x="14" y="9" width="6" height="43" rx="2" fill="#2c4f8f" />
+        <path d="M20 9v43" stroke="#1b3466" strokeWidth="1" />
+        <g stroke="#c9d6ea" strokeWidth="1">
+          <path d="M23 46h20M23 42h20" />
+        </g>
+        <path d="M27.500 22.500c0-3.600 2.600-6 6.300-6 3.700 0 6.300 2.300 6.300 5.500 0 2.600-1.600 3.900-3.300 5-1.500 1-2.100 1.700-2.100 3.400v1" fill="none" stroke="#24324f" strokeWidth="3.600" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="34.700" cy="37.600" r="2.300" fill="#24324f" />
+      </g>
+    ),
+    gloss: 0.8,
+  },
+
   settings: {
     stops: ['#d7dbe0', '#9aa1ab', '#5f6671'],
     draw: () => (

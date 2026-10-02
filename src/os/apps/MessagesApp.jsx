@@ -21,7 +21,7 @@ import { useDenMeta } from '../../hooks/useKillers';
  *   The Room   every guest. The living post; ghosts can only read.
  *   (a group)  a living Killer's partners, titled with their names
  *              (threads.js). At night DEEP BLUE posts a poll in it: who goes.
- *   Spirits    ghosts and the living Medium.
+ *   Spirits    the ghosts, among themselves.
  *   DEEP BLUE  the app talking to you: your results, your photos, and its
  *              own remarks each night, morning and vote (voice.js).
  *   Unknown    whispers from the dead, and what you saw on watch.
@@ -120,8 +120,8 @@ function ThreadView({ ctx, thread, onBack }) {
   const canSend = thread.id === 'room' ? me.status === 'alive' : thread.id === 'spirits' || thread.id === 'den';
   const voting = ['roundtable', 'revote', 'endgame'].includes(game.phase);
   const polling = thread.id === 'den' && game.phase === 'night';
-  const channel = { room: 'chat', spirits: 'mediumChat', den: 'denChat' }[thread.id];
-  const placeholder = { room: 'Message the room', spirits: 'Only ghosts and the Medium see this', den: 'Message' }[thread.id];
+  const channel = { room: 'chat', spirits: 'spiritsChat', den: 'denChat' }[thread.id];
+  const placeholder = { room: 'Message the room', spirits: 'Only ghosts see this', den: 'Message' }[thread.id];
 
   return (
     <AppFrame
@@ -144,7 +144,7 @@ function ThreadView({ ctx, thread, onBack }) {
         <Thread
           messages={thread.id === 'room' ? [...thread.list, ...events].sort((a, b) => (a.at ?? 0) - (b.at ?? 0)) : thread.list.map((m) => (m.kind === 'added' ? { ...m, event: true } : m))}
           me={me}
-          empty={thread.id === 'spirits' ? 'The dead talk here. The Medium listens.' : 'Say hello. Everyone in the room is here.'}
+          empty={thread.id === 'spirits' ? 'The dead talk here. Only the dead.' : 'Say hello. Everyone in the room is here.'}
           poll={() => <PollBubble ctx={ctx} />}
         />
       ) : (
@@ -227,7 +227,7 @@ function SystemThread({ list, ctx }) {
       {list.map((d, i) => {
         if (d.kind === 'role') return <div key={d.id} className="os-bubble-row"><RoleMessage role={ctx.role} /></div>;
         const day = !list[i - 1] || list[i - 1].cycle !== d.cycle;
-        const alert = ((d.kind === 'check' || d.kind === 'seance') && d.team === 'killers') || (d.kind === 'trace' && d.hit) || d.kind === 'recruited' || (d.kind === 'watch' && d.seen);
+        const alert = (d.kind === 'check' && d.team === 'killers') || (d.kind === 'trace' && d.hit) || d.kind === 'recruited' || (d.kind === 'watch' && d.seen);
         return (
           <React.Fragment key={d.id}>
             {day && <p className="os-stamp-time">DAY {d.cycle}</p>}
