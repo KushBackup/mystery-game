@@ -23,6 +23,13 @@
  * scores and resolveMorning decides who the board takes. That commit is the
  * dawn: deaths, the board and every held delivery land together, so no clue
  * arrives before the leaderboard does.
+ *
+ * The morning game rotates (engine/minigames.js): word, drawing, run. The
+ * commit that rings the alarm also picks the day's game and sends each guest
+ * their word, after any recruit has answered, so a guest turned tonight gets
+ * the Killers' hint, not the word. The morning commit turns whatever the day
+ * produced (clues and picks, drawings and guesses, or run scores) into one
+ * score each, and resolveMorning reads that the same way whatever the game.
  */
 
 import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
@@ -33,12 +40,13 @@ import { auth, authReady, db } from './app.js';
 import { serverNow, measureOffset } from '../lib/clockSkew.js';
 import { gameRef, sub, col } from './game.js';
 import { TRAITS } from '../data/traits.js';
-import { DEFAULT_PACK_ID } from '../data/packs/index.js';
+import { DEFAULT_PACK_ID, packFor, dayKit } from '../data/packs/index.js';
 import {
   PHASE, DEFAULT_DURATIONS, DEFAULT_CYCLES, ENDGAME_ROUNDS, phaseTiming, lockFor,
   ROLE, ROLE_INFO, teamOf, DEFAULT_RATIOS, targetCounts, dealRoles, assignLateJoiner,
   makeRng, freshSeed, resolveNight, resolveRecruit, resolveMorning, DEFAULT_NIGHT_CONFIG,
   tallyBanish, breakTie, checkWin, applyLeaves, recruitNeed, fateRecruit,
+  DEFAULT_GAMES, gameOfDay, pickWord, dealDrawWords, shownWord, scoreWordDay, scoreDrawDay,
 } from '../lib/engine/index.js';
 
 // --- Auth ----------------------------------------------------------------------
@@ -89,6 +97,8 @@ export const subscribeNightActions = (gid, cycle, cb) => listen(query(col(gid, '
 export const subscribeNightDen = (gid, cycle, cb) => listen(query(col(gid, 'den'), where('cycle', '==', cycle)), cb, 'den');
 export const subscribeBallot = (gid, ballot, cb) => listen(query(col(gid, 'votes'), where('ballot', '==', ballot)), cb, 'votes');
 export const subscribeScores = (gid, cycle, cb) => listen(query(col(gid, 'scores'), where('cycle', '==', cycle)), cb, 'scores');
+/** One day's plays in a morning game's collection: clues, picks, drawings or guesses. */
+export const subscribeDayPlays = (gid, name, cycle, cb) => listen(query(col(gid, name), where('cycle', '==', cycle)), cb, name);
 
 // --- Reading everything ----------------------------------------------------------
 
@@ -117,8 +127,9 @@ const denFor = async (gid, cycle) =>
     .filter((d) => d.id !== 'meta')
     .map((d) => [d.data().pid, d.data()]));
 
-const scoresFor = async (gid, cycle) =>
-  Object.fromEntries((await getDocsFromServer(query(col(gid, 'scores'), where('cycle', '==', cycle)))).docs.map((d) => [d.data().pid, d.data()]));
+/** One day's docs in `name` (scores, clues, picks, drawings, guesses), keyed by pid. */
+const dayDocs = async (gid, name, cycle) =>
+  Object.fromEntries((await getDocsFromServer(query(col(gid, name), where('cycle', '==', cycle)))).docs.map((d) => [d.data().pid, d.data()]));
 
 // Firestore refuses `undefined` anywhere in a write; engine output may carry it.
 const clean = (v) => JSON.parse(JSON.stringify(v ?? null));
@@ -129,7 +140,7 @@ const votesFor = async (gid, ballot) =>
 // --- Setup -----------------------------------------------------------------------
 
 /** Start a fresh game and point every phone at it. Nothing old is deleted; a reset is just a new gid. */
-export async function createGame({ packId = DEFAULT_PACK_ID, durations = DEFAULT_DURATIONS, cycles = DEFAULT_CYCLES, ratios = DEFAULT_RATIOS } = {}) {
+export async function createGame({ packId = DEFAULT_PACK_ID, durations = DEFAULT_DURATIONS, cycles = DEFAULT_CYCLES, ratios = DEFAULT_RATIOS, games = DEFAULT_GAMES } = {}) {
   const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '');
   const gid = `g${stamp}-${Math.random().toString(36).slice(2, 6)}`;
   await setDoc(gameRef(gid), {
@@ -138,7 +149,7 @@ export async function createGame({ packId = DEFAULT_PACK_ID, durations = DEFAULT
     packId,
     // Public on purpose: every phone builds the same run from it (os/game/course.js).
     courseSeed: freshSeed(),
-    config: { durations: { ...DEFAULT_DURATIONS, ...durations }, cycles, ratios: { ...DEFAULT_RATIOS, ...ratios } },
+    config: { durations: { ...DEFAULT_DURATIONS, ...durations }, cycles, ratios: { ...DEFAULT_RATIOS, ...ratios }, games: [...games] },
     autopilot: false,
     createdAt: Date.now(),
     phaseStartedAt: Date.now(),
@@ -152,6 +163,9 @@ export async function createGame({ packId = DEFAULT_PACK_ID, durations = DEFAULT
 export const setAutopilot = (gid, on) => updateDoc(gameRef(gid), { autopilot: on });
 
 export const updateConfig = (gid, config) => updateDoc(gameRef(gid), { config });
+
+/** The morning games' rotation. Takes effect at the next alarm. */
+export const setDayGames = (gid, games) => updateDoc(gameRef(gid), { 'config.games': [...games] });
 
 /** Before the deal: drop a no-show entirely. After it: they vanish at the next dawn. */
 export async function removePlayer(gid, pid, phase) {
@@ -185,7 +199,7 @@ export async function relink(gid, newUid, pid) {
 // --- Phase writes ----------------------------------------------------------------
 
 function timed(game, phase, now = serverNow()) {
-  return { phase, ...phaseTiming(phase, now, game.config?.durations ?? DEFAULT_DURATIONS) };
+  return { phase, ...phaseTiming(phase, now, game.config?.durations ?? DEFAULT_DURATIONS, game.minigame ?? 'run') };
 }
 
 /**
@@ -331,8 +345,18 @@ function nightCtx(gid, g, world, extra = {}) {
   };
 }
 
+/**
+ * What the finale publishes: every role, and the true story of each night
+ * (who the Killers chose, who struck, how they rigged it, any frame). Only
+ * written once there is a winner, so nothing here can spoil a live game.
+ */
+const finaleOf = (world) => ({
+  finaleRoles: world.roles,
+  finaleStory: clean({ nights: world.secret.nights ?? {}, hands: world.secret.hands ?? {} }),
+});
+
 /** Dawn bookkeeping, at the end of the morning: deaths, leavers, the board, win check. */
-function stageDawn(tx, gid, g, world, { deaths, publicDawn, recruited = false, board = null }) {
+function stageDawn(tx, gid, g, world, { deaths, publicDawn, recruited = false, board = null, dayGame = null }) {
   const players = structuredClone(world.players);
   for (const d of deaths) {
     players[d.pid].status = 'ghost';
@@ -350,9 +374,10 @@ function stageDawn(tx, gid, g, world, { deaths, publicDawn, recruited = false, b
     ...timed(g, PHASE.DAWN),
     dawn,
     board: clean(board),
+    dayGame: clean(dayGame),
     news: arrayUnion({ kind: 'dawn', ...dawn, top: board?.top ?? [], at: serverNow() }),
     winner: winner ?? null,
-    ...(winner ? { finaleRoles: world.roles } : {}),
+    ...(winner ? finaleOf(world) : {}),
   });
 }
 
@@ -362,6 +387,8 @@ async function resolveNightPhase(gid) {
   const world = await readWorld(gid);
   const [actions, den] = await Promise.all([actionsFor(gid, g.cycle), denFor(gid, g.cycle)]);
   const res = resolveNight(nightCtx(gid, g, world, { actions, den }));
+  // A recruit night picks the day's game after the answer, in the recruit commit.
+  const day = res.recruit ? null : planDayGame(g, world);
 
   return commitOnce(gid, `${g.cycle}-night`, PHASE.NIGHT_LOCKED, (tx) => {
     // The recruit's offer has to reach them now; everything else waits for the board.
@@ -371,18 +398,92 @@ async function resolveNightPhase(gid) {
       ...res.secretPatch,
       recruitDue: false,
       [`hands.${g.cycle}`]: res.hand ?? res.recruit?.hand ?? null,
+      // The night as it really happened, kept for the finale's "how it happened".
+      [`nights.${g.cycle}`]: clean({
+        victim: res.victim ?? null,
+        recruit: res.recruit?.target ?? null,
+        hand: res.hand ?? res.recruit?.hand ?? null,
+        rig: res.rig ?? null,
+        frame: res.frame ?? null,
+        protectedList: res.protectedList ?? [],
+      }),
       pendingRecruit: res.recruit ? clean({
         ...res.recruit, scourers: res.scourers, protectedList: res.protectedList, cycle: g.cycle,
         held: res.deliveries.filter((d) => d.kind !== 'recruitOffer'),
       }) : null,
       pendingMorning: res.recruit ? null : pendingMorning(g.cycle, res),
     };
-    tx.update(sub(gid, 'secret', 'engine'), secretPatch);
+    tx.update(sub(gid, 'secret', 'engine'), { ...secretPatch, ...(day?.secretPatch ?? {}) });
     for (const [pid, left] of Object.entries(res.secretPatch.checksLeft ?? {})) {
       if (left !== world.secret.checksLeft?.[pid]) tx.update(sub(gid, 'roles', pid), { checksLeft: left });
     }
-    tx.update(gameRef(gid), { ...timed(g, res.recruit ? PHASE.RECRUIT : PHASE.ALARM) });
+    if (day) writeDayGame(tx, gid, g.cycle, day);
+    tx.update(gameRef(gid), { ...timed(g, res.recruit ? PHASE.RECRUIT : PHASE.ALARM), ...(day ? { minigame: day.kind } : {}) });
   });
+}
+
+// --- The day's game ------------------------------------------------------------------
+
+/**
+ * Pick the day's game and its words. Words go only to living guests with a
+ * role, through their own inbox: the Faithful team gets the word and its hint,
+ * the Killers the hint alone. A drawing day gives each guest their own word.
+ * Ghosts get nothing to clue or draw; they watch the wall and guess drawings.
+ *
+ * @param rolePatch roles changed by tonight's recruit, not yet in `world`
+ */
+function planDayGame(g, world, rolePatch = {}) {
+  const kind = gameOfDay(g.config, g.cycle);
+  const roles = { ...world.roles, ...rolePatch };
+  const living = Object.keys(world.players).filter((p) => world.players[p].status === 'alive' && roles[p]).sort();
+  const kit = dayKit(packFor(g.packId));
+  const { seed } = world.secret;
+  if (kind === 'word') {
+    const used = world.secret.wordsUsed ?? [];
+    const pair = pickWord(seed, g.cycle, kit.wordPairs, used);
+    return {
+      kind,
+      deliveries: living.map((pid) => (teamOf(roles[pid]) === 'killers'
+        ? { to: pid, kind: 'word', hint: pair.hint }
+        : { to: pid, kind: 'word', word: pair.word, hint: pair.hint })),
+      secretPatch: { wordsUsed: [...used, pair.id], [`day.${g.cycle}`]: { kind, id: pair.id, word: pair.word, hint: pair.hint } },
+    };
+  }
+  if (kind === 'draw') {
+    const used = world.secret.drawUsed ?? [];
+    const words = dealDrawWords(seed, g.cycle, living, kit.drawWords, used);
+    return {
+      kind,
+      deliveries: living.map((pid) => ({ to: pid, kind: 'draw', word: words[pid] })),
+      secretPatch: { drawUsed: [...used, ...Object.values(words)], [`day.${g.cycle}`]: { kind, words } },
+    };
+  }
+  return { kind, deliveries: [], secretPatch: { [`day.${g.cycle}`]: { kind } } };
+}
+
+/** One inbox doc per guest per day, so a re-run overwrites instead of adding. */
+function writeDayGame(tx, gid, cycle, day) {
+  for (const d of day.deliveries) tx.set(sub(gid, 'inbox', `${cycle}-day-${d.to}`), { ...d, cycle, step: 'day', at: Date.now() });
+}
+
+/**
+ * The day's scores, `{ pid: { best } }`, whatever the game, plus what the room
+ * may now see about it (the word, or who drew what). Run scores are the
+ * guests' own; the word and drawing boards are computed here from the plays.
+ */
+async function dayScores(gid, g, world) {
+  const day = world.secret.day?.[g.cycle];
+  const kind = g.minigame ?? day?.kind ?? 'run';
+  if (kind === 'word' && day?.word) {
+    const [clues, picks] = await Promise.all([dayDocs(gid, 'clues', g.cycle), dayDocs(gid, 'picks', g.cycle)]);
+    return { scores: scoreWordDay({ clues, picks, word: day.word }), reveal: { kind, cycle: g.cycle, word: day.word, hint: day.hint } };
+  }
+  if (kind === 'draw' && day?.words) {
+    const [drawings, guesses] = await Promise.all([dayDocs(gid, 'drawings', g.cycle), dayDocs(gid, 'guesses', g.cycle)]);
+    const shown = Object.fromEntries(Object.entries(day.words).map(([pid, w]) => [pid, shownWord(w)]));
+    return { scores: scoreDrawDay({ drawings, guesses, words: day.words }), reveal: { kind, cycle: g.cycle, words: shown } };
+  }
+  return { scores: await dayDocs(gid, 'scores', g.cycle), reveal: { kind: 'run', cycle: g.cycle } };
 }
 
 /** What the morning needs from the night, stashed where only the host can read it. */
@@ -413,6 +514,7 @@ async function resolveRecruitPhase(gid) {
   const res = pending
     ? resolveRecruit(nightCtx(gid, g, world), { ...pending, accepted })
     : { rolePatch: {}, deaths: [], deliveries: [], publicDawn: { victims: [], attempted: null } };
+  const day = planDayGame(g, world, res.rolePatch);
 
   return commitOnce(gid, `${g.cycle}-recruit`, PHASE.RECRUIT_LOCKED, (tx) => {
     for (const [pid, role] of Object.entries(res.rolePatch)) {
@@ -427,8 +529,10 @@ async function resolveRecruitPhase(gid) {
         deliveries: [...(pending?.held ?? []), ...(res.deliveries ?? [])],
         recruited: accepted,
       }),
+      ...day.secretPatch,
     });
-    tx.update(gameRef(gid), { ...timed(g, PHASE.ALARM) });
+    writeDayGame(tx, gid, g.cycle, day);
+    tx.update(gameRef(gid), { ...timed(g, PHASE.ALARM), minigame: day.kind });
   });
 }
 
@@ -439,7 +543,7 @@ async function resolveMorningPhase(gid) {
   await lock(gid, PHASE.GAME);
   const g = (await getDocFromServer(gameRef(gid))).data();
   const world = await readWorld(gid);
-  const scores = await scoresFor(gid, g.cycle);
+  const { scores, reveal } = await dayScores(gid, g, world);
   const stash = world.secret.pendingMorning;
   const pending = stash?.cycle === g.cycle ? stash : {};
   const res = resolveMorning({ seed: world.secret.seed, cycle: g.cycle, players: world.players, roles: world.roles, scores, pending });
@@ -451,7 +555,8 @@ async function resolveMorningPhase(gid) {
       deaths: res.deaths,
       publicDawn: res.publicDawn,
       recruited: Boolean(pending.recruited),
-      board: { cycle: g.cycle, rows: res.board, ghosts: res.ghostBoard, top: res.top },
+      board: { cycle: g.cycle, kind: reveal.kind, rows: res.board, ghosts: res.ghostBoard, top: res.top },
+      dayGame: reveal,
     });
   });
 }
@@ -506,7 +611,7 @@ async function resolveBallotPhase(gid, from) {
       banish: { pid: banished, team, role: banished ? ROLE_INFO[world.roles[banished]]?.label : null, tally, cast, votes: shown, fromTie: !winnerPid && Boolean(banished) },
       tied: [],
       winner: winner ?? null,
-      ...(winner ? { finaleRoles: world.roles } : {}),
+      ...(winner ? finaleOf(world) : {}),
     });
   });
 }
@@ -567,7 +672,7 @@ export async function advance(gid) {
       const round = g.endgameRound ?? 0;
       if (round > 0 && round >= endgameRounds) {
         const world = await readWorld(gid);
-        return step(PHASE.BANISH, { ...timed(g, PHASE.FINALE), winner: checkWin(world.players, world.roles, { endgameDone: true }), finaleRoles: world.roles });
+        return step(PHASE.BANISH, { ...timed(g, PHASE.FINALE), winner: checkWin(world.players, world.roles, { endgameDone: true }), ...finaleOf(world) });
       }
       if (round > 0 || g.cycle >= cycles) {
         return step(PHASE.BANISH, { ...timed(g, PHASE.ENDGAME), endgameRound: round + 1, ballot: `e${round + 1}`, tied: [] });

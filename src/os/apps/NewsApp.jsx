@@ -1,13 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppFrame, Section, Group, Cell, Hold, Btn } from '../ui';
 import Glyph from '../icons/Glyph';
-import { Avatar } from './ContactsApp';
-import { useServerNow } from '../../hooks/useKillers';
+import { Face } from '../art/Portrait';
 import { narrate } from '../../data/packs/index.js';
-import { ROLE_INFO } from '../../lib/engine/roles.js';
 import { sfxFanfare, sfxGlitch, sfxSting, sfxPing, sfxTick } from '../sfx';
 import { BOARD_BEAT, VERDICT_BEAT } from '../beats';
 import NewsPaper from './NewsPaper';
+import Finale from './Finale';
+import { useStage, useStageSounds } from './stage';
 
 /**
  * News: where the room finds out.
@@ -28,31 +28,6 @@ import NewsPaper from './NewsPaper';
 
 /** Seconds after `revealAt` at which each beat of the board lands. */
 const BEAT = BOARD_BEAT;
-
-function useStage(revealAt, beats) {
-  const now = useServerNow(revealAt ? revealAt + (Math.max(...Object.values(beats)) + 1) * 1000 : 0, 100);
-  if (!revealAt) return 'full';
-  const t = (now - revealAt) / 1000;
-  if (t < 0) return 'hold';
-  let stage = 'hold';
-  for (const [name, at] of Object.entries(beats).sort((a, b) => a[1] - b[1])) if (t >= at) stage = name;
-  return stage;
-}
-
-/** Run `fx[stage]` when a stage is *reached* while mounted, never for the stage we mounted into. */
-function useStageSounds(stage, fx) {
-  const prev = useRef(undefined);
-  useEffect(() => {
-    if (prev.current === undefined) {
-      prev.current = stage;
-      return;
-    }
-    if (prev.current !== stage) {
-      prev.current = stage;
-      fx[stage]?.();
-    }
-  });
-}
 
 export default function NewsApp({ ctx, onClose }) {
   const { game } = ctx;
@@ -77,7 +52,7 @@ export default function NewsApp({ ctx, onClose }) {
     <AppFrame title={title} onBack={onClose} tone={game.phase === 'banish' ? 'red' : 'dark'} dark right={<button type="button" className="os-barbtn" onClick={() => setView('paper')}>Paper</button>}>
       {game.phase === 'dawn' && <BoardReveal ctx={ctx} />}
       {game.phase === 'banish' && <BanishReveal key={game.ballot} ctx={ctx} />}
-      {game.phase === 'finale' && <Finale ctx={ctx} />}
+      {game.phase === 'finale' && <Finale ctx={ctx} onPaper={() => setView('paper')} />}
     </AppFrame>
   );
 }
@@ -123,7 +98,7 @@ function BoardReveal({ ctx }) {
           if (!r) return <div key={i} />;
           return (
             <div key={r.pid} className="os-pop text-center" style={{ animationDelay: `${i * 350}ms` }}>
-              <Avatar name={nameOf(r.pid)} size={i === 0 ? 52 : 40} />
+              <div className="inline-block"><Face traits={ctx.traits} pid={r.pid} size={i === 0 ? 56 : 44} round className={i === 0 ? 'os-face--gold' : ''} /></div>
               <p className="text-[14px] mt-1 truncate">{nameOf(r.pid)}</p>
               <div className="mt-1 mx-auto rounded-t-md bg-os-deep border border-os-chrome/30 grid place-items-center" style={{ height: [72, 52, 40][i] }}>
                 <div>
@@ -145,7 +120,7 @@ function BoardReveal({ ctx }) {
             <div className="os-glitch">
               {d.cause === 'deep' && <p className="text-[14px] text-os-chrome mb-2">A firewall blocked the rig on {nameOf(d.attempted)}. So the deep took the lowest honest score.</p>}
               <div className="flex items-center justify-center gap-3">
-                <Avatar name={nameOf(takenPid)} dead size={44} />
+                <Face traits={ctx.traits} pid={takenPid} ghost size={48} round />
                 <div className="text-left">
                   <p className="text-[22px] leading-tight os-rgb">{nameOf(takenPid)}</p>
                   <p className="os-arcade text-os-red text-[21px] mt-1"><Scramble to={lastRow?.score ?? 0} /></p>
@@ -170,12 +145,14 @@ function BoardReveal({ ctx }) {
             <div className="mx-3 mt-4 rounded-lg bg-os-red/90 p-4 text-white">
               <p className="os-label text-[12px]">YOU WERE TAKEN</p>
               {d.cause === 'rig' ? (
-                <p className="text-[22px] mt-2">Your real best was <b className="os-arcade text-[17px]">{myScore?.best ?? 0}</b>. The board says <b className="os-arcade text-[17px]">{lastRow?.score ?? 0}</b>. Someone rigged it. You're a ghost now: you still whisper, and you vote at the end.</p>
+                <p className="text-[22px] mt-2">{myScore ? <>Your real best was <b className="os-arcade text-[17px]">{myScore.best ?? 0}</b>. </> : 'You played. '}The board says <b className="os-arcade text-[17px]">{lastRow?.score ?? 0}</b>. Someone rigged it. You're a ghost now: you still whisper, and you vote at the end.</p>
               ) : (
                 <p className="text-[17px] mt-2">Yours was the lowest honest score. You're a ghost now: you still whisper, and you vote at the end.</p>
               )}
             </div>
           )}
+
+          {!iWasTaken && <MyPlace rows={rows} me={me} takenPid={takenPid} cycle={game.board.cycle} />}
 
           {photos > 0 && (
             <div className="px-3 mt-4">
@@ -186,6 +163,38 @@ function BoardReveal({ ctx }) {
           <BoardList ctx={ctx} />
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Where you landed, in one line: the first thing every guest looks for on a
+ * leaderboard. Near the bottom it says so, because tomorrow the bottom kills.
+ */
+function MyPlace({ rows, me, takenPid, cycle }) {
+  const mine = rows.find((r) => r.pid === me.pid);
+  if (!mine) return null;
+  const n = rows.length;
+  const fromDeep = n - mine.rank - (takenPid && rows.at(-1)?.pid === takenPid ? 1 : 0);
+  let tone = 'calm';
+  let line = `#${mine.rank} of ${n}. Safe, for today.`;
+  if (mine.rank <= 3) {
+    tone = 'top';
+    line = `#${mine.rank} of ${n}. DEEP BLUE sent you a photo.`;
+  } else if (fromDeep <= 0) {
+    tone = 'edge';
+    line = `#${mine.rank} of ${n}. Nobody honest scored lower.`;
+  } else if (fromDeep <= 2) {
+    tone = 'edge';
+    line = `#${mine.rank} of ${n}. ${fromDeep === 1 ? 'One place' : 'Two places'} above the deep.`;
+  }
+  return (
+    <div className={`os-myplace os-myplace--${tone} mx-3 mt-4`}>
+      <span className="os-myplace__score">{mine.score}</span>
+      <div className="min-w-0">
+        <p className="os-label text-[11px] opacity-80">YOUR SCORE · DAY {cycle}</p>
+        <p className="text-[17px] font-bold leading-snug">{line}</p>
+      </div>
     </div>
   );
 }
@@ -204,7 +213,7 @@ function BoardList({ ctx }) {
           {rows.map((r) => (
             <div key={r.pid} className={`os-board-row ${r.pid === me.pid ? 'os-board-row--me' : ''} ${r.rank <= 3 && r.pid !== taken ? 'os-board-row--top' : ''} ${r.pid === taken ? 'os-board-row--dead' : ''}`}>
               <span className="os-board-rank">{r.rank <= 3 && r.pid !== taken ? <Glyph name={r.rank === 1 ? 'crown' : 'star'} size={14} /> : `#${r.rank}`}</span>
-              <span className="truncate text-[16px]">{nameOf(r.pid)}{r.pid === me.pid ? ' (you)' : ''}{!r.played && r.pid !== taken ? <span className="text-os-chrome text-[13px]"> · didn’t play</span> : null}</span>
+              <span className="truncate text-[16px] flex items-center gap-2 min-w-0"><Face traits={ctx.traits} pid={r.pid} size={24} round ghost={r.pid === taken} /><span className="truncate">{nameOf(r.pid)}{r.pid === me.pid ? ' (you)' : ''}{!r.played && r.pid !== taken ? <span className="text-os-chrome text-[13px]"> · didn’t play</span> : null}</span></span>
               <span className="flex items-center gap-2">{r.pid === taken && <span className="os-taken !text-[12px]">TAKEN</span>}<span className="os-board-score">{r.score}</span></span>
             </div>
           ))}
@@ -246,7 +255,7 @@ function BanishReveal({ ctx }) {
     <div className="pb-8">
       <div className="text-center px-5 pt-8">
         <p className="os-label text-[12px] text-os-chrome">{b.pid === me.pid ? 'THE GROUP CHOSE YOU' : 'LOGGED OUT BY THE GROUP'}</p>
-        <div className="mt-4 inline-block os-pop"><Avatar name={nameOf(b.pid)} size={72} /></div>
+        <div className="mt-4 inline-block os-pop"><Face traits={ctx.traits} pid={b.pid} size={88} round ghost={reached('verdict')} /></div>
         <p className="text-[30px] mt-3 leading-tight os-pop">{nameOf(b.pid)}</p>
         {b.fromTie && <p className="text-[14px] text-os-chrome mt-1">Still tied after the re-vote. Fate chose.</p>}
         {reached('verdict') && (
@@ -260,44 +269,9 @@ function BanishReveal({ ctx }) {
         <Section head="Who voted for whom" className="os-rise">
           <Group dark>
             {tally.map(([pid, n]) => (
-              <Cell key={pid} title={nameOf(pid)} sub={(byTarget[pid] ?? []).map(nameOf).join(', ')} value={<span className="os-arcade text-os-gold text-[16px]">{n}</span>} />
+              <Cell key={pid} icon={<Face traits={ctx.traits} pid={pid} size={32} round />} title={nameOf(pid)} sub={(byTarget[pid] ?? []).map(nameOf).join(', ')} value={<span className="os-arcade text-os-gold text-[16px]">{n}</span>} />
             ))}
           </Group>
-        </Section>
-      )}
-    </div>
-  );
-}
-
-// --- The finale ---------------------------------------------------------------------------
-
-function Finale({ ctx }) {
-  const { game, pack, players, nameOf } = ctx;
-  const stage = useStage(game.revealAt, { show: 0 });
-  useStageSounds(stage, { show: game.winner === 'faithful' ? sfxFanfare : sfxGlitch });
-  if (stage === 'hold') return <Hold label="STOP THE PRESSES…" />;
-  const faithfulWin = game.winner === 'faithful';
-  const roles = game.finaleRoles ?? {};
-  const killers = Object.keys(roles).filter((p) => roles[p] === 'killer');
-  const specials = Object.keys(roles).filter((p) => ['doctor', 'detective', 'medium'].includes(roles[p]));
-  const statusOf = (pid) => players.find((p) => p.id === pid)?.status;
-  return (
-    <div className="pb-10">
-      <div className="os-paper mx-3 mt-4 p-4 text-center">
-        <p className="os-label text-[12px] text-os-steel">THE DEEP TIMES · SPECIAL EDITION</p>
-        <p className="os-arcade text-[26px] leading-snug mt-3" style={{ color: faithfulWin ? '#186a26' : 'var(--color-os-red)' }}>{faithfulWin ? 'FAITHFUL WIN' : 'KILLERS WIN'}</p>
-        {narrate(pack, faithfulWin ? 'finaleFaithful' : 'finaleKillers').map((l, i) => <p key={i} className="text-[17px] mt-2">{l}</p>)}
-      </div>
-      <Section head="The Killers">
-        <Group dark>
-          {killers.map((p) => (
-            <Cell key={p} icon={<Avatar name={nameOf(p)} size={32} />} title={nameOf(p)} sub={statusOf(p) === 'alive' ? 'Walked free' : statusOf(p) === 'vanished' ? 'Went home' : 'Caught'} />
-          ))}
-        </Group>
-      </Section>
-      {specials.length > 0 && (
-        <Section head="Secret roles">
-          <Group dark>{specials.map((p) => <Cell key={p} title={nameOf(p)} value={ROLE_INFO[roles[p]]?.label} />)}</Group>
         </Section>
       )}
     </div>

@@ -8,9 +8,37 @@
  * `night` is on every player's phone whatever their role: keep it a plain moon
  * and stars, nothing that reads as a weapon or a mask.
  */
-import React, { useId } from 'react';
+import React, { useId, useState, useEffect } from 'react';
 
 const R = 13.500;
+
+/** The clock glyph: real hands, ticking the second hand once a second. */
+function ClockGlyph() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const h = now.getHours() % 12;
+  const m = now.getMinutes();
+  const s = now.getSeconds();
+  const hourAngle = h * 30 + m * 0.500;
+  const minuteAngle = m * 6 + s * 0.100;
+  const secondAngle = s * 6;
+  return (
+    <>
+      <circle cx="30" cy="30" r="24.500" fill="#fff" />
+      <circle cx="30" cy="30" r="24.500" fill="none" stroke="#c9ced6" strokeWidth="1.200" />
+      {Array.from({ length: 12 }, (_, i) => (
+        <rect key={i} x={i % 3 === 0 ? 29 : 29.500} y="7" width={i % 3 === 0 ? 2 : 1} height={i % 3 === 0 ? 5 : 3.200} fill="#1d2026" transform={`rotate(${i * 30} 30 30)`} />
+      ))}
+      <path d="M30 30V16" stroke="#1d2026" strokeWidth="3" strokeLinecap="round" transform={`rotate(${hourAngle} 30 30)`} />
+      <path d="M30 30V11" stroke="#1d2026" strokeWidth="2.200" strokeLinecap="round" transform={`rotate(${minuteAngle} 30 30)`} />
+      <path d="M30 34V9" stroke="#e8432d" strokeWidth="1.100" strokeLinecap="round" transform={`rotate(${secondAngle} 30 30)`} />
+      <circle cx="30" cy="30" r="2.200" fill="#e8432d" />
+    </>
+  );
+}
 
 /** The shared tile: background, glyph (children), gloss, rim. */
 function Tile({ id, stops, children, gloss = 1 }) {
@@ -101,19 +129,7 @@ const ART = {
 
   clock: {
     stops: ['#4a4f58', '#1d2026', '#0a0b0e'],
-    draw: () => (
-      <>
-        <circle cx="30" cy="30" r="24.500" fill="#fff" />
-        <circle cx="30" cy="30" r="24.500" fill="none" stroke="#c9ced6" strokeWidth="1.200" />
-        {Array.from({ length: 12 }, (_, i) => (
-          <rect key={i} x={i % 3 === 0 ? 29 : 29.500} y="7" width={i % 3 === 0 ? 2 : 1} height={i % 3 === 0 ? 5 : 3.200} fill="#1d2026" transform={`rotate(${i * 30} 30 30)`} />
-        ))}
-        <path d="M30 30V16" stroke="#1d2026" strokeWidth="3" strokeLinecap="round" transform="rotate(-62 30 30)" />
-        <path d="M30 30V11" stroke="#1d2026" strokeWidth="2.200" strokeLinecap="round" transform="rotate(60 30 30)" />
-        <path d="M30 34V9" stroke="#e8432d" strokeWidth="1.100" strokeLinecap="round" transform="rotate(170 30 30)" />
-        <circle cx="30" cy="30" r="2.200" fill="#e8432d" />
-      </>
-    ),
+    draw: () => <ClockGlyph />,
   },
 
   contacts: {
@@ -164,6 +180,16 @@ const ART = {
     ),
   },
 
+  weather: {
+    stops: ['#7fc2ff', '#3f8be8', '#1d56b8'],
+    draw: () => (
+      <>
+        <circle cx="23" cy="23" r="10" fill="#ffd84a" />
+        <circle cx="23" cy="23" r="10" fill="none" stroke="#f5a623" strokeWidth="1.200" />
+        <path d="M20 46c-5.500 0-9-3.400-9-7.800 0-4.200 3.300-7.500 7.800-7.700 1.600-5 6.200-8.300 11.600-8.300 6.200 0 11.300 4.500 12.100 10.400 4 .5 6.500 3.400 6.500 6.800 0 3.900-3.100 6.600-7.300 6.600Z" fill="#fff" />
+      </>
+    ),
+  },
   settings: {
     stops: ['#d7dbe0', '#9aa1ab', '#5f6671'],
     draw: () => (

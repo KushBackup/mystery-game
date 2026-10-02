@@ -16,6 +16,16 @@ export const DEFAULT_PACK_ID = deepblue.id;
 export const packFor = (id) => PACKS[id] ?? PACKS[DEFAULT_PACK_ID];
 
 /**
+ * The morning games' words: a pack's own, or DEEP BLUE's if it has none
+ * (greenr predates them). `dayGames` names and explains each game.
+ */
+export const dayKit = (pack) => ({
+  dayGames: pack?.dayGames ?? deepblue.dayGames,
+  wordPairs: pack?.wordPairs?.length ? pack.wordPairs : deepblue.wordPairs,
+  drawWords: pack?.drawWords?.length ? pack.drawWords : deepblue.drawWords,
+});
+
+/**
  * The two narration lines for a beat, with {name} filled, plus any other
  * {key} from `vars`. A pack without the beat falls back to `fallback`, so
  * an older pack (greenr has no dawnRig or dawnDeep) still says something true.

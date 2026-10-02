@@ -53,6 +53,9 @@ export const DEFAULT_DURATIONS = Object.freeze({
   recruit: 45 * SEC,
   alarm: 20 * SEC,
   game: 90 * SEC,
+  // The word and drawing days (minigames.js) need longer than the run.
+  game_word: 125 * SEC,
+  game_draw: 140 * SEC,
   dawn: 60 * SEC,
   investigation: 8 * MIN,
   roundtable: 6 * MIN,
@@ -120,9 +123,15 @@ export function nextPlainPhase(game, { maxCycles = DEFAULT_CYCLES } = {}) {
   }
 }
 
-/** Timing fields to write alongside a new phase. */
-export function phaseTiming(phase, now, durations = DEFAULT_DURATIONS) {
-  const ms = durations[phase] ?? 0;
+/** How long the game phase runs for the day's game: `game_word`, `game_draw`, or the run's `game`. */
+export function gameSpan(kind, durations = DEFAULT_DURATIONS) {
+  const key = `game_${kind}`;
+  return durations[key] ?? DEFAULT_DURATIONS[key] ?? durations.game ?? DEFAULT_DURATIONS.game;
+}
+
+/** Timing fields to write alongside a new phase. `kind` is the day's game, for the game phase. */
+export function phaseTiming(phase, now, durations = DEFAULT_DURATIONS, kind = 'run') {
+  const ms = phase === PHASE.GAME && kind && kind !== 'run' ? gameSpan(kind, durations) : durations[phase] ?? 0;
   const revealAt = REVEALS.has(phase) ? now + REVEAL_LEAD_MS : 0;
   return {
     phaseStartedAt: now,

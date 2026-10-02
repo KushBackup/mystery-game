@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow } from '../hooks/useKillers';
+import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow, useAllTraits } from '../hooks/useKillers';
 import { serverNow } from '../lib/clockSkew';
 import { nowLine, PHASE_LABEL, deliveryLine } from '../data/killersCopy';
-import { StatusBar, HomeBar, HomeScreen, LockScreen, Banner } from './chrome';
+import { StatusBar, HomeBar, HomeScreen, LockScreen, Banner, NotificationCenter, NCTile } from './chrome';
 import { AlarmScreen, RoleText, IncomingCall, GoneScreen, ChapterCard, TakenScreen } from './takeovers';
-import { threadsFor } from './threads';
+import { threadsFor, preview as threadPreview } from './threads';
 import { useSeen, markSeen } from './seen';
 import { useNews } from './news';
+import { useVoice } from './voice';
 import { useMaskedPlayers, BOARD_BEAT, VERDICT_BEAT } from './beats';
 import { prefersLessMotion } from './nav';
 import { dayLabel, photoSource, timeOfDay } from './words';
@@ -21,12 +22,13 @@ import NotesApp from './apps/NotesApp';
 import NightApp from './apps/NightApp';
 import SettingsApp from './apps/SettingsApp';
 import VoteApp from './apps/VoteApp';
+import WeatherApp from './apps/WeatherApp';
 
 /**
  * The DEEP BLUE phone: a guest's whole game, as an iPhone-era home screen.
  *
  * The phase drives the phone the way the host drives the room. Each phase
- * opens the app it belongs to (the Night app at night, the game for the run,
+ * opens the app it belongs to (the Night app at night, the day's game in the morning,
  * News for the board, the poll for the vote), a chapter card marks the turn
  * of the day, and a few moments take the whole screen: the role text at
  * casting, the alarm every morning, the recruit call, and your own death.
@@ -55,7 +57,7 @@ const AUTO = {
 /** Phases that open with a chapter card (takeovers.jsx). */
 const CHAPTERS = new Set(['night', 'investigation', 'roundtable', 'endgame']);
 
-const GRID = [['clock', 'Clock'], ['contacts', 'Contacts'], ['notes', 'Notes'], ['night', 'Night'], ['settings', 'Settings']];
+const GRID = [['clock', 'Clock'], ['contacts', 'Contacts'], ['night', 'Night'], ['weather', 'Weather'], ['settings', 'Settings']];
 const DOCK = [['messages', 'Messages'], ['deepblue', 'DEEP BLUE'], ['news', 'News'], ['gallery', 'Photos']];
 
 const APPS = {
@@ -69,14 +71,19 @@ const APPS = {
   night: NightApp,
   settings: SettingsApp,
   vote: VoteApp,
+  weather: WeatherApp,
 };
 
+/** How far (px) a pull must travel before release decides it should finish opening. */
+const NC_PULL_DIST = 110;
+
 /**
- * The phone's frame: status bar, the stage, the home button. Also used before
- * a guest exists. On a phone it tracks the visual viewport, so when the
+ * The phone's frame: status bar, the stage, the home button, and the
+ * Notification Center dragged down from the status bar. Also used before a
+ * guest exists. On a phone it tracks the visual viewport, so when the
  * keyboard opens the compose bar rides up above it instead of hiding under it.
  */
-export function PhoneFrame({ game, ghost, clear, onHome = () => {}, children, stageRef, time = 'day' }) {
+export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = () => {}, children, stageRef, time = 'day', sections = [], locked = false }) {
   const root = useRef(null);
   const [kbd, setKbd] = useState(false);
   useEffect(() => {
@@ -84,7 +91,7 @@ export function PhoneFrame({ game, ghost, clear, onHome = () => {}, children, st
     if (!vv) return undefined;
     const fit = () => {
       const el = root.current;
-      if (!el || window.matchMedia('(min-width: 640px) and (min-height: 700px)').matches) return;
+      if (!el) return;
       el.style.height = `${vv.height}px`;
       el.style.top = `${vv.offsetTop}px`;
       el.style.bottom = 'auto';
@@ -98,10 +105,48 @@ export function PhoneFrame({ game, ghost, clear, onHome = () => {}, children, st
       vv.removeEventListener('scroll', fit);
     };
   }, []);
+
+  // --- Notification Center: dragged down from the status bar. `ncPull` is the
+  // live 0..1 position while a finger is down; `ncOpen` is where it lands.
+  // Locked (a takeover is showing) closes it and ignores the gesture, so a
+  // player can't pull into Messages mid-reveal.
+  const [ncOpen, setNcOpen] = useState(false);
+  const [ncPull, setNcPull] = useState(null);
+  const ncDrag = useRef(null);
+  // A takeover arriving (e.g. a death reveal) closes the panel — adjusted
+  // during render, the documented way to react to a changed input without an
+  // effect: https://react.dev/learn/you-might-not-need-an-effect
+  const [wasLocked, setWasLocked] = useState(locked);
+  if (locked !== wasLocked) {
+    setWasLocked(locked);
+    if (locked) setNcOpen(false);
+  }
+  const ncClose = () => setNcOpen(false);
+  const ncDown = (e) => {
+    if (locked || ncOpen) return;
+    ncDrag.current = { y: e.clientY };
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+  };
+  const ncMove = (e) => {
+    if (!ncDrag.current) return;
+    const dy = Math.max(0, e.clientY - ncDrag.current.y);
+    setNcPull(Math.min(1, dy / NC_PULL_DIST));
+  };
+  const ncUp = (e) => {
+    if (!ncDrag.current) return;
+    const dy = Math.max(0, e.clientY - ncDrag.current.y);
+    ncDrag.current = null;
+    setNcOpen(dy > 6 ? dy > NC_PULL_DIST * 0.35 : true);
+    setNcPull(null);
+  };
+
   return (
     <div ref={root} className={`os-root ${kbd ? 'os-root--kbd' : ''}`} data-time={time}>
-      <StatusBar game={game} ghost={ghost} clear={clear} />
-      <div ref={stageRef} className="os-stage">{children}</div>
+      <StatusBar game={game} ghost={ghost} clear={clear} drag={{ onPointerDown: ncDown, onPointerMove: ncMove, onPointerUp: ncUp, onPointerCancel: ncUp }} />
+      <div ref={stageRef} className="os-stage">
+        {children}
+        <NotificationCenter sections={sections} open={ncOpen} pull={ncPull} onOpen={onOpenApp} onClose={ncClose} />
+      </div>
       <HomeBar onHome={onHome} />
     </div>
   );
@@ -122,6 +167,8 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const myScore = useMyScore(gid, game.cycle, me.pid);
   const action = useMyAction(gid, game.cycle, me.pid);
   const denPicks = useDen(gid, game.cycle, isKiller && phase === 'night');
+  // Everyone's arrival answers (Contacts, Notes). Frozen at the deal, so this listener is nearly silent.
+  const traits = useAllTraits(gid);
 
   // --- Which app is open: the phase's app on every phase change, the guest's
   // choice in between. A phase change also decides whether a chapter card
@@ -185,18 +232,59 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
     if (app === 'news') markSeen(`${gid}.news`, newsKey ? newsKey.split('|') : []);
   }, [app, gid, newsKey]);
 
-  const ctxBase = { gid, uid, game, me, role, players, inbox, pack, nameOf, chat, spirits, den, myVote, myScore, news };
+  // DEEP BLUE's own lines to this guest (voice.js), shown in its Messages thread.
+  const voice = useVoice(gid, game, me, pack, nameOf);
+
+  const ctxBase = { gid, uid, game, me, role, players, inbox, pack, nameOf, chat, spirits, den, myVote, myScore, news, traits, voice };
   const threads = threadsFor(ctxBase, seen);
   const acted = isKiller ? (denPicks ?? []).some((d) => d.pid === me.pid && (d.victim || d.recruit)) : Boolean(action);
   const needsNight = phase === 'night' && ['alive', 'ghost'].includes(me.status) && !acted;
   const needsVote = ['roundtable', 'revote'].includes(phase) ? me.status === 'alive' && !myVote : phase === 'endgame' && ['alive', 'ghost'].includes(me.status) && !myVote;
+  const newsSeenArr = Array.isArray(newsSeen) ? newsSeen : [];
   const badges = {
     messages: threads.reduce((n, t) => n + t.unread, 0) || null,
     gallery: inbox.filter((d) => d.kind === 'fact' && !gallerySeen.includes(d.id)).length || null,
-    news: news.ids.filter((id) => !(Array.isArray(newsSeen) ? newsSeen : []).includes(id)).length || null,
+    news: news.ids.filter((id) => !newsSeenArr.includes(id)).length || null,
     night: needsNight ? '!' : null,
     deepblue: phase === 'game' && !myScore ? '!' : null,
   };
+
+  // --- Notification Center: unread only, grouped by app (chrome.jsx). Every
+  // row reopens the same app its badge would, then the panel puts itself
+  // away — nothing here tracks "seen" a second time; threads.js, news.js and
+  // the gallery's own ledger already own that.
+  const NC_LIMIT = 6;
+  const ncMessages = threads
+    .flatMap((t) => t.unreadList.map((m) => ({
+      id: `msg:${t.id}:${m.id}`,
+      at: m.at ?? 0,
+      icon: t.icon,
+      tile: t.icon ? undefined : <NCTile glyph="eye" bg="linear-gradient(#5f6671, #232730)" />,
+      title: t.title,
+      text: threadPreview(t.id, m, ctxBase),
+      app: 'messages',
+    })))
+    .sort((a, b) => b.at - a.at)
+    .slice(0, NC_LIMIT);
+  const ncPhotos = inbox
+    .filter((d) => d.kind === 'fact' && !gallerySeen.includes(d.id))
+    .sort((a, b) => (b.at ?? 0) - (a.at ?? 0))
+    .slice(0, NC_LIMIT)
+    .map((d) => ({ id: d.id, icon: 'gallery', title: 'Photos', text: `New photo · ${photoSource(d)}`, app: 'gallery' }));
+  const ncNews = news.all
+    .filter((s) => !newsSeenArr.includes(s.id))
+    .slice(0, NC_LIMIT)
+    .map((s) => ({ id: s.id, icon: 'news', title: s.kicker || 'News', text: s.head, app: 'news' }));
+  const ncAction = [
+    needsNight && { id: 'need-night', icon: 'night', title: 'Night', text: 'Choose your move before it ends.', app: 'night' },
+    needsVote && { id: 'need-vote', tile: <NCTile glyph="vote" bg="linear-gradient(#4a9bf5, #0b6fe3)" />, title: 'Vote', text: 'Cast your ballot before it closes.', app: 'vote' },
+  ].filter(Boolean);
+  const sections = [
+    { key: 'action', title: 'Needs You', rows: ncAction },
+    { key: 'messages', title: 'Messages', rows: ncMessages },
+    { key: 'photos', title: 'Photos', rows: ncPhotos },
+    { key: 'news', title: 'News', rows: ncNews },
+  ];
 
   // --- Banner: the newest arrival since this phone opened, unless you're
   // looking at it. A burst (the morning's photos) reads as one line.
@@ -205,7 +293,8 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const banner = (() => {
     const fresh = [];
     for (const d of inbox) {
-      if ((d.at ?? 0) <= mountAt || d.kind === 'recruitOffer') continue;
+      // The day's word arrives with the alarm and is shown in the game itself, never on a banner.
+      if ((d.at ?? 0) <= mountAt || ['recruitOffer', 'word', 'draw'].includes(d.kind)) continue;
       const photo = d.kind === 'fact';
       if (photo && app === 'gallery') continue;
       fresh.push({ id: d.id, at: d.at, icon: photo ? 'gallery' : 'messages', title: photo ? 'Photos' : 'DEEP BLUE', text: photo ? `New photo · ${photoSource(d)}` : deliveryLine(d, nameOf), app: photo ? 'gallery' : 'messages', kind: photo ? 'photo' : 'system' });
@@ -244,7 +333,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const label = (PHASE_LABEL[phase] ?? '').toUpperCase();
   const line = phase === 'lobby'
     ? 'You’re in. While you wait for the host, practise DEEP BLUE.'
-    : nowLine({ phase, role: role?.role, status: me.status, isRecruitTarget: offered, hasActed: acted && phase === 'night' });
+    : nowLine({ phase, role: role?.role, status: me.status, isRecruitTarget: offered, hasActed: acted && phase === 'night', minigame: game.minigame ?? 'run' });
   const suggested = AUTO[phase] ?? (phase === 'lobby' ? 'deepblue' : phase === 'investigation' ? 'gallery' : null);
 
   // --- What takes the whole screen right now.
@@ -275,7 +364,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const shown = app ?? closing;
   const App = shown ? APPS[shown] : null;
   return (
-    <PhoneFrame game={game} ghost={ghost} clear={!app || Boolean(takeover)} onHome={home} stageRef={stageRef} time={timeOfDay(phase)}>
+    <PhoneFrame game={game} ghost={ghost} clear={!app || Boolean(takeover)} onHome={home} onOpenApp={open} stageRef={stageRef} time={timeOfDay(phase)} sections={sections} locked={Boolean(takeover)}>
       <HomeScreen
         key={homeIn}
         entering={homeIn > 0}

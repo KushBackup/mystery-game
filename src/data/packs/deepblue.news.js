@@ -32,7 +32,7 @@ export const OUTLETS = {
   wire: { name: 'Konkan Wire', tag: 'WIRE' },
   courier: { name: 'Mandovi Courier', tag: 'PANJIM' },
   dispatch: { name: 'Fontainhas Dispatch', tag: 'LOCAL' },
-  times: { name: 'The Deep Times', tag: 'THE DEEP TIMES' },
+  times: { name: 'The Goa Times', tag: 'THE GOA TIMES' },
 };
 
 /** Section names, as the segmented control and the lists print them. */
@@ -214,7 +214,7 @@ export const ARTICLES = [
     kicker: 'OPINION',
     head: 'Nobody wins DEEP BLUE. That is the point.',
     dek: 'The leaderboard is not a game. It is a way of making you watch each other.',
-    by: 'The Deep Times editorial board',
+    by: 'The Goa Times editorial board',
     time: '16:30',
     art: 'eyes',
     cap: 'Look at the person next to you.',
@@ -385,7 +385,7 @@ export const EPILOGUE = {
  * in code (src/os/news.js). A pack without `live` falls back to plain wording.
  */
 export const LIVE = {
-  by: 'The Deep Times, from the room',
+  by: 'The Goa Times, from the room',
   dawn: {
     rig: {
       kicker: 'THE BOARD',

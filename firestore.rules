@@ -75,9 +75,11 @@ service cloud.firestore {
         allow delete: if isHost();
       }
 
-      // The six arrival answers. Private, and frozen once roles are dealt.
+      // The six arrival answers. Public (every guest's Contacts card shows
+      // them, since 2026-10-02), and frozen once roles are dealt. They are
+      // given before roles exist, so they say nothing about anyone's role.
       match /traits/{pid} {
-        allow read: if isHost() || isMe(pid);
+        allow read: if signedIn();
         allow create, update: if (request.auth.uid == pid || isMe(pid)) && !exists(/databases/$(database)/documents/games/$(gid)/roles/$(pid));
         allow delete: if isHost();
       }
@@ -159,6 +161,60 @@ service cloud.firestore {
           && request.resource.data.best >= 0 && request.resource.data.best <= 999
           && request.resource.data.runs is int
           && (resource == null || request.resource.data.best >= resource.data.best);
+      }
+
+      // --- The morning games (lib/engine/minigames.js) ----------------------------
+      // Each is open only while the game phase is, and only on its own day
+      // (game.minigame, which the host sets when the alarm rings). The words
+      // themselves never live here: each guest's arrives in their own inbox.
+      function dayGame(kind) { return game().phase == 'game' && game().minigame == kind; }
+      function todays(id) { return ownsId(id) && id == string(game().cycle) + '_' + me(); }
+      function ownDoc(fields) {
+        return request.resource.data.keys().hasOnly(fields)
+          && request.resource.data.pid == me()
+          && request.resource.data.cycle == game().cycle;
+      }
+
+      // "<cycle>_<pid>" → { clue }: the word game's wall. Public, because the
+      // room reads it together. Posted once by a living guest, never edited,
+      // so the order clues landed in is the order everyone saw.
+      match /clues/{id} {
+        allow read: if signedIn();
+        allow create: if todays(id) && dayGame('word') && myStatus() == 'alive'
+          && ownDoc(['pid', 'cycle', 'clue', 'at'])
+          && request.resource.data.clue is string
+          && request.resource.data.clue.size() > 0 && request.resource.data.clue.size() <= 20;
+        allow delete: if isHost();
+      }
+
+      // "<cycle>_<pid>" → { picks: [pid] }: the three clues you thought fit
+      // best. Private, so nobody is pressured over who they picked.
+      match /picks/{id} {
+        allow read: if isHost() || ownsId(id);
+        allow create, update: if todays(id) && dayGame('word') && myStatus() in ['alive', 'ghost']
+          && ownDoc(['pid', 'cycle', 'picks', 'at'])
+          && request.resource.data.picks is list && request.resource.data.picks.size() <= 3;
+      }
+
+      // "<cycle>_<pid>" → { strokes, checks }: the drawing game. Public so
+      // other phones can show it. `checks` are short fingerprints of the word
+      // for the guesser's instant "Correct!"; the host scores the typed text.
+      match /drawings/{id} {
+        allow read: if signedIn();
+        allow create, update: if todays(id) && dayGame('draw') && myStatus() == 'alive'
+          && ownDoc(['pid', 'cycle', 'strokes', 'checks', 'at'])
+          && request.resource.data.strokes is string && request.resource.data.strokes.size() <= 30000
+          && request.resource.data.checks is list && request.resource.data.checks.size() <= 6;
+        allow delete: if isHost();
+      }
+
+      // "<cycle>_<pid>" → { answers: { drawerPid: { text, ms } } }. Private.
+      // Ghosts guess too.
+      match /guesses/{id} {
+        allow read: if isHost() || ownsId(id);
+        allow create, update: if todays(id) && dayGame('draw') && myStatus() in ['alive', 'ghost']
+          && ownDoc(['pid', 'cycle', 'answers', 'at'])
+          && request.resource.data.answers is map && request.resource.data.answers.size() <= 40;
       }
 
       // Fragments, watch results, checks, whispers, recruit offers. Addressed to

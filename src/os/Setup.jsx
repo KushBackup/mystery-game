@@ -12,7 +12,7 @@ import { primeSfx, sfxTap, sfxDeny, sfxBoot } from './sfx';
  * Arrival, as a new phone's setup assistant. The first time a phone opens the
  * game it boots (the logo, a filling bar); then "hello" in a few languages,
  * slide to set up, the Terms of Service (which are the rules, told in the
- * fiction), your name and table, six one-tap questions, "your phone is ready".
+ * fiction), your name, six one-tap questions, "your phone is ready".
  *
  * The questions come before anyone has a role, which is the point
  * (data/traits.js): nobody knows yet whether they'll want to lie, so they
@@ -29,7 +29,6 @@ export default function Setup({ gid, uid, pack, late }) {
   const booted = useSeen('booted', false);
   const [step, setStep] = useState('hello'); // (boot) | hello | terms | name | 0..5 | review
   const [name, setName] = useState('');
-  const [table, setTable] = useState('');
   const [answers, setAnswers] = useState({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -53,9 +52,6 @@ export default function Setup({ gid, uid, pack, late }) {
           </div>
           <Section head="Your first name">
             <input className="os-input" autoFocus value={name} maxLength={24} autoComplete="given-name" onChange={(e) => setName(e.target.value)} />
-          </Section>
-          <Section head="Table number (if you have one)">
-            <input className="os-input !w-28" value={table} maxLength={3} inputMode="numeric" onChange={(e) => setTable(e.target.value.replace(/\D/g, ''))} />
           </Section>
           <Section>
             <Btn type="submit" disabled={!name.trim()}>Next</Btn>
@@ -101,7 +97,7 @@ export default function Setup({ gid, uid, pack, late }) {
     setBusy(true);
     setError('');
     try {
-      await arrive(gid, uid, { name, table, traits: answers });
+      await arrive(gid, uid, { name, traits: answers });
     } catch (e) {
       setError(e.code === 'permission-denied' ? 'That didn’t go through. Ask the host.' : 'No connection. Try again.');
       setBusy(false);
@@ -112,7 +108,7 @@ export default function Setup({ gid, uid, pack, late }) {
     <AppFrame title="Almost done" onBack={() => setStep(TRAITS.length - 1)} light>
       <div className="px-5 pt-6">
         <p className="text-[26px] leading-tight text-os-ink">{name.trim()}</p>
-        <p className="text-[15px] text-os-steel mt-1">{table ? `Table ${table} · ` : ''}{pack.title}</p>
+        <p className="text-[15px] text-os-steel mt-1">{pack.title}</p>
       </div>
       <Section head="Your answers" foot="These lock when the roles are dealt. Tap one to change it.">
         <div className="os-group">
@@ -191,7 +187,7 @@ function Boot({ onDone }) {
  */
 const CLAUSES = [
   'DEEP BLUE rings every morning. You will wake up.',
-  'Every morning, everyone plays the run. Your best score counts.',
+  'Every morning, everyone plays a game: a word, a sketch, or the run. Everyone gets a score.',
   'The lowest score on the board is taken by the deep.',
   'Some of you have the admin password. They choose whose score sinks. Find them, and vote them out.',
   'The taken keep their phones. They can still whisper.',

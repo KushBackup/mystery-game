@@ -9,3 +9,4 @@ export * from './banish.js';
 export * from './win.js';
 export * from './roster.js';
 export * from './phases.js';
+export * from './minigames.js';

@@ -68,6 +68,23 @@
 
 - **News app world (2026-10-02).** The user wanted the paper to feel like part of the story: authored articles dripped by day, **local to Panjim, Goa, with Greenr, Panjim as the setting**, plus the room's own events printed as articles. Pure flavour only (the user chose this over hints or rule-teaching). Decisions that are not obvious from the code: **Greenr appears only as a bystander** (it is the real venue and a collaborator, so it is never the site of a death, a fault or a cover-up, and it only ever says things like "we checked the Wi-Fi"); all outlets, officials and sources are invented or anonymous (never a real outlet, never "Goa Police"); no victim is under 18 and no method is given, because DEEP BLUE stands in for the real challenge. The toll rises on a fixed curve (9, 14, 23, 31, 40, 52). Content lives in `src/data/packs/deepblue.news.js`.
 
+- **The arrival answers are public (decided 2026-10-02).** The user asked for every contact card to show what that guest answered at registration, "so it becomes easier to see what everyone answered", and pointed out that some guests' real answer won't be on the form and some will have lied on it. Before this the six traits were private (only self and host) and the design leaned on Killers lying about the hidden three out loud. Now `traits/{pid}` is readable by everyone; the bluff moves to "the file is wrong about me". The balance sim already scored the Faithful as if they knew everyone's traits, so the published numbers still hold.
+  - **First pass over-built it, corrected same day.** Claude added a search bar, Tables/Marked list views, a private Suspect/Not sure/Trusted read, free-text notes, a vote-from-card button and a public record (board places, votes cast/drawn, last chat line) — four extra Firestore-adjacent pieces of state for one app. The user: "this is too detailed for the players... let's just keep the contacts very simple. Name, avatar, their answers. I like the functionality where the player can select what the other person said, I think that's cool, let's keep that." All of it was cut back to: name, a photo drawn from the answers, the six answers plainly listed, and the one feature that was explicitly liked — tapping an answer to mark it "matches" / "they said X" / "not on the list", local to that phone. **Lesson, not just a fact:** "make X more detailed" is not licence to add every adjacent feature a build like this suggests; ship the one cool mechanic the request actually names and let the user ask for more. See [[killers-night-rebuild]].
+  - **Not built, on purpose, even after the cut:** filtering Contacts by a trait or matching a clue photo against the room automatically. Offer it to the user rather than adding it.
+
+- **The morning game rotates (decided 2026-10-02).** The user felt players had too little to do between the night, the board and the vote, and asked for two more games "every round a different game": **1. Word**, **2. Sketch**, **3. the Flappy run** ("put that on number three"). Choices the user made when asked:
+  - Every game makes a board. The rig and the firewall work on any of them, so the kill mechanic is unchanged.
+  - In Word, Killers get a **category hint** (not a decoy word, not nothing). The user's own framing was "faithfuls have a piece of information that the traitors don't have, and the traitors have to pretend".
+  - Sketch is **everyone draws at once, then guesses**. Skribbl-style turns don't fit 20–45 people.
+  - Build it for the 3 Oct Panjim event, with a host console switch to fall back to "Run every day".
+  - The rotation is Word, Sketch, Run, Word, Sketch.
+
+  Claude chose these, unasked, and the user may change them:
+  - picks as Word's score (100 for a clue + 50 per pick);
+  - Sketch's points (50 + speed for a guess, 30 per guess to the drawer);
+  - ghosts may pick and guess but never post a clue or draw (ghosts are muted in the room, and a free-text clue would be a channel);
+  - the wall and the drawings staying up after the board until the next night.
+
 ### Greenr: Last Seating (2609-G, the retiring case)
 
 - **Cast and setting:** 26 playable, first-name-only guests at Greenr, Assagao, Goa, on 19 September 2026.

@@ -12,7 +12,7 @@ import { PHASE_LABEL } from '../../data/killersCopy';
 const DAY = [
   ['night', 'Night', 'Killers rig a score. Everyone else acts.'],
   ['alarm', 'Alarm', 'Every phone rings at once.'],
-  ['game', 'The run', 'Everyone plays. Best run counts.'],
+  ['game', 'Morning game', 'Word, Sketch or the run. Everyone plays.'],
   ['dawn', 'The board', 'Last place is taken.'],
   ['investigation', 'Investigate', 'Photos, messages, talk.'],
   ['roundtable', 'Vote', 'The group logs someone out.'],

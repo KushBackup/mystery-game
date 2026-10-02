@@ -717,7 +717,7 @@ iPhones have the real Helvetica Neue. Everything else gets **Inter** (variable, 
 
 ## II.4 Components (os.css)
 
-- **Frame:** `.os-root` (full screen; on a laptop it sits in a 390 px bezel), `.os-status` (the battery is the phase timer and turns red in the last fifth; a ghost's phone says "No Service"), `.os-homebar` / `.os-homebtn`.
+- **Frame:** `.os-root` (always full viewport; the 390 px laptop bezel was removed 2026-10-02), `.os-status` (the battery is the phase timer and turns red in the last fifth; a ghost's phone says "No Service"), `.os-homebar` / `.os-homebtn`.
 - **Home:** `.os-now` (the NowCard as a pinned notice), `.os-grid` (4 columns), `.os-dock` (glass shelf), `.os-icon` + `.os-badge`.
 - **Apps:** `.os-app` (`--light` pinstripe for lists, `--dark` for night and media), `.os-nav` (`--dark`, `--red` for Breaking News and the vote), `.os-barbtn--back` (the pointed iOS back button: a rotated square clipped to its left half, in `.os-barbtn__tip`).
 - **Lists:** `.os-section` / `.os-group` / `.os-cell` (`--on` = selected, with a check). `GuestPicker` in [ui.jsx](src/os/ui.jsx) builds every "pick a guest" screen from these.
@@ -725,6 +725,14 @@ iPhones have the real Helvetica Neue. Everything else gets **Inter** (variable, 
 - **Moments:** `.os-lock`, `.os-slide` (slide to unlock / set up / stop, with the shimmer), `.os-alarm`, `.os-banner` (drops in and removes itself; no JS timer), `.os-hold` + `.os-spinner`.
 - **Reveals:** `.os-glitch` (the bottom row corrupting), `.os-rgb`, `.os-taken`, `.os-verdict` (the stamp), `.os-board-row`.
 - **The paper (News):** `.os-app--paper` (cream broadsheet surface; `AppFrame paper`), `.os-news` (sets `--paper`, `--rule`, `--serif`; **wrap anything using `--paper` in it**), `.os-seg` (bar-style segmented control), `.os-ticker` (the one continuous motion in the app, `transform` only, still under reduced motion), `.os-lead`, `.os-storylist` / `.os-story`, `.os-article`. Georgia is the sole serif the phone uses, and only for reading surfaces.
+- **Contacts:** kept deliberately plain (2026-10-02). `.os-contact__photo` (a thin dark border on the list thumbnail), `.os-field` (iOS 6 contact field: blue lower-case label column, bold value, red `.os-field__bad` / green `.os-field__ok` mark line under it). The photo is `Portrait` ([Portrait.jsx](src/os/art/Portrait.jsx)): the iOS 6 grey "no photo" silhouette wearing the guest's top colour and glasses. The face stays a silhouette on purpose: it never guesses at skin, hair or build.
+- **Faces:** `.os-face` (any guest's drawn photo outside Contacts; `Face` in [Portrait.jsx](src/os/art/Portrait.jsx)), `--gold` ring for #1 on the podium, `--killer` red ring only in the finale.
+- **Board and finale:** `.os-myplace` (`--top`, `--edge`: your place on the board), `.os-finale-me--won/--lost`, `.os-tl` (the finale's night-by-night timeline: a face per beat, ring tone = killer / dead / good).
+- **Photos:** `.os-hand` (one night's clues summed into a sketch, with a blue "?" badge).
+- **DEEP BLUE's voice:** `.os-bubble--voice` (deeper navy, italic, a faint blue glow): the app speaking for itself, distinct from `--sys` results.
+- **Weather:** `.os-weather` (sky gradient by forecast, `--night`), `.os-weather__card`, `.os-weather__alert`. The alert tag's orange (#d9831a) and the weather glyphs' sun yellow are art on that one surface, like the night console's phosphor.
+- **Role emblem:** `.os-role-emblem--<role>` on the private role text only; never anything role-coloured on the home screen.
+- **The action sheet:** `.os-sheet` (`ActionSheet` in [ui.jsx](src/os/ui.jsx), passed to `AppFrame` as `overlay`): dark glass panel rising from the bottom, glossy white buttons, red for the choices that contradict something, a dark Cancel. Use it for any one-of-many choice made from inside a card.
 
 ## II.5 Motion
 

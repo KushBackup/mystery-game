@@ -26,6 +26,14 @@ When the same lesson recurs, **edit the existing entry** rather than adding a du
 
 ## Entries
 
+### 2026-10-02 — "Make the Contacts app more detailed" was over-read as "add every adjacent feature"
+
+**What happened:** Asked to make Contacts detailed (show each guest's arrival answers, let players check an answer against what they see or hear), I also added list views (Everyone/Tables/Marked), a private Suspect/Not sure/Trusted read, free-text notes, a vote-from-card button, and a public per-guest record of board places and votes — none of which were asked for. The user: "this is too detailed for the players... let's just keep the contacts very simple. Name, avatar, their answers. I like the functionality where the player can select what the other person said, I think that's cool, let's keep that."
+
+**Why it was wrong:** "More detailed" named one mechanic (show the answers, let a player flag a mismatch) and I treated it as a brief to maximalize the whole screen, because the surrounding data (board history, chat, voting) was *available* to pull in. Available data is not the same as requested scope.
+
+**What to do instead:** When asked to flesh out one named feature, build that feature and stop — don't add every adjacent capability a screen could technically expose just because the plumbing is already there. If extra pieces seem valuable, name them in the reply as options rather than shipping them, and let the user opt in.
+
 ### 2026-10-02 — A shortcut into the data can bypass a reveal hold the main screen respects
 
 **What happened:** While rebuilding News I found that the old "Paper" button and "Latest board" button, reachable during the board's "POSTING THE BOARD…" hold, listed the new `game.news` headline ("Maya finishes last") and the board with the TAKEN row ~5 s before the room was told. The reveal screen was gated by `revealAt`; the paper beside it read the same data ungated.

@@ -272,6 +272,8 @@ export function resolveNight(ctx) {
     publicDawn: out.publicDawn,
     protectedList: sorted(protectedSet),
     rig,
+    // Who the frame landed on, for the finale's account of the night (null when none).
+    frame: out.plantUsed ? framePid : null,
     secretPatch,
   };
 }

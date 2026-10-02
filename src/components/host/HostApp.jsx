@@ -3,10 +3,11 @@ import { HOST_EMAILS, EMULATED } from '../../firebase/app';
 import {
   signInHost, signOutHost, createGame, advance, setAutopilot, extendPhase, endPhaseNow, removePlayer, cancelRemove,
   dealLateJoiners, syncHostClock, subscribeRoles, subscribePresence, subscribeNightActions,
-  subscribeNightDen, subscribeBallot, subscribeSecret, subscribeScores,
+  subscribeNightDen, subscribeBallot, subscribeSecret, subscribeScores, subscribeDayPlays, setDayGames,
 } from '../../firebase/host';
 import { useAuthUser, useActiveGameId, useGame, usePlayers } from '../../hooks/useKillers';
-import { PACKS, packFor, narrate } from '../../data/packs/index.js';
+import { PACKS, packFor, narrate, dayKit } from '../../data/packs/index.js';
+import { DEFAULT_GAMES, gameOfDay } from '../../lib/engine/minigames.js';
 import { PHASE, DEFAULT_DURATIONS, DEFAULT_CYCLES, ENDGAME_ROUNDS, LOCKED } from '../../lib/engine/phases.js';
 import { ROLE_INFO, targetCounts } from '../../lib/engine/roles.js';
 import { serverNow } from '../../lib/clockSkew';
@@ -26,7 +27,7 @@ import { Screen, PhaseClock, Hold, Action } from '../game/parts';
 // A stable empty list, so a missing snapshot doesn't look like a new array every render.
 const EMPTY = [];
 
-const QUICK = { casting: 15_000, night: 45_000, recruit: 20_000, alarm: 10_000, game: 40_000, dawn: 20_000, investigation: 60_000, roundtable: 60_000, revote: 30_000, banish: 15_000, endgame: 60_000 };
+const QUICK = { casting: 15_000, night: 45_000, recruit: 20_000, alarm: 10_000, game: 40_000, game_word: 50_000, game_draw: 55_000, dawn: 20_000, investigation: 60_000, roundtable: 60_000, revote: 30_000, banish: 15_000, endgame: 60_000 };
 
 export default function HostApp() {
   const user = useAuthUser();
@@ -62,12 +63,13 @@ function Setup({ onCancel }) {
   const [packId, setPackId] = useState(Object.keys(PACKS)[0]);
   const [cycles, setCycles] = useState(DEFAULT_CYCLES);
   const [pace, setPace] = useState('standard');
+  const [rotate, setRotate] = useState(true);
   const [busy, setBusy] = useState(false);
 
   const create = async () => {
     setBusy(true);
     try {
-      await createGame({ packId, cycles, durations: pace === 'quick' ? QUICK : DEFAULT_DURATIONS });
+      await createGame({ packId, cycles, durations: pace === 'quick' ? QUICK : DEFAULT_DURATIONS, games: rotate ? DEFAULT_GAMES : ['run'] });
     } finally {
       setBusy(false);
     }
@@ -87,6 +89,10 @@ function Setup({ onCancel }) {
           {[3, 4, 5].map((n) => (
             <Choice key={n} on={cycles === n} onClick={() => setCycles(n)}>{n} days</Choice>
           ))}
+        </Field>
+        <Field label="Morning games">
+          <Choice on={rotate} onClick={() => setRotate(true)}>Rotate Word · Sketch · Run</Choice>
+          <Choice on={!rotate} onClick={() => setRotate(false)}>Run every day</Choice>
         </Field>
         <Field label="Pace">
           <Choice on={pace === 'standard'} onClick={() => setPace('standard')}>Standard (~2 h)</Choice>
@@ -125,7 +131,7 @@ function useHostSub(subscribe, deps) {
   return key && state.key === key ? state.value : undefined;
 }
 
-function nextLabel(game, alive) {
+function nextLabel(game, alive, today) {
   const cycles = game.config?.cycles ?? DEFAULT_CYCLES;
   const round = game.endgameRound ?? 0;
   switch (game.phase) {
@@ -133,8 +139,8 @@ function nextLabel(game, alive) {
     case PHASE.CASTING: return 'Start night 1';
     case PHASE.NIGHT: return 'End the night';
     case PHASE.RECRUIT: return 'End the recruitment';
-    case PHASE.ALARM: return 'Start the run';
-    case PHASE.GAME: return 'Stop the run and post the board';
+    case PHASE.ALARM: return `Start ${today}`;
+    case PHASE.GAME: return `Stop ${today} and post the board`;
     case PHASE.DAWN: return game.winner ? 'Reveal the winner' : 'Start the investigation';
     case PHASE.INVESTIGATION: return 'Call the Round Table';
     case PHASE.ROUNDTABLE:
@@ -187,7 +193,13 @@ function Console({ gid, game }) {
   const den = useHostSub((cb) => subscribeNightDen(gid, game.cycle, cb), [gid, game.cycle]) ?? EMPTY;
   const votes = useHostSub((cb) => subscribeBallot(gid, game.ballot, cb), [gid, game.ballot]) ?? EMPTY;
   const scoring = [PHASE.GAME, PHASE.GAME_LOCKED].includes(game.phase);
-  const scores = useHostSub((cb) => subscribeScores(gid, game.cycle, cb), [gid, scoring ? game.cycle : null]) ?? EMPTY;
+  const kind = game.minigame ?? 'run';
+  const scores = useHostSub((cb) => subscribeScores(gid, game.cycle, cb), [gid, scoring && kind === 'run' ? game.cycle : null]) ?? EMPTY;
+  // A word or drawing day's plays: what was posted (clues, drawings) and the reactions (picks, guesses).
+  const [postsName, reactsName] = kind === 'word' ? ['clues', 'picks'] : ['drawings', 'guesses'];
+  const dayOn = scoring && kind !== 'run' ? game.cycle : null;
+  const posts = useHostSub((cb) => subscribeDayPlays(gid, postsName, game.cycle, cb), [gid, postsName, dayOn]) ?? EMPTY;
+  const reacts = useHostSub((cb) => subscribeDayPlays(gid, reactsName, game.cycle, cb), [gid, reactsName, dayOn]) ?? EMPTY;
   const pack = packFor(game.packId);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -246,7 +258,12 @@ function Console({ gid, game }) {
 
   if (newGame) return <Setup onCancel={() => setNewGame(false)} />;
 
-  const label = nextLabel(game, alive.length);
+  const kit = dayKit(pack);
+  const todayTitle = kit.dayGames[kind]?.title ?? 'THE RUN';
+  const label = nextLabel(game, alive.length, todayTitle);
+  const rotating = (game.config?.games ?? DEFAULT_GAMES).length > 1;
+  const nextKind = gameOfDay(game.config, game.phase === PHASE.LOBBY || game.phase === PHASE.CASTING ? 1 : game.cycle + 1);
+  const day = secret?.day?.[game.cycle];
   const lines = narrationFor(game, pack, nameOf);
   const killerIds = roles.filter((r) => r.role === 'killer').map((r) => r.id);
   const livingKillers = alive.filter((p) => killerIds.includes(p.id));
@@ -286,7 +303,11 @@ function Console({ gid, game }) {
         {game.phase === PHASE.NIGHT && <Stat n={actedNight.size} label={`of ${alive.length + ghosts.length} acted`} />}
         {[PHASE.ROUNDTABLE, PHASE.REVOTE, PHASE.ENDGAME].includes(game.phase) && <Stat n={votes.length} label={`of ${voters} voted`} />}
         {game.phase === PHASE.LOBBY && <Stat n={counts.killer} label="killers to deal" />}
-        {scoring && <Stat n={scores.length} label={`of ${alive.length + ghosts.length} played`} />}
+        {scoring && kind === 'run' && <Stat n={scores.length} label={`of ${alive.length + ghosts.length} played`} />}
+        {scoring && kind === 'word' && <Stat n={posts.length} label={`of ${alive.length} clues`} />}
+        {scoring && kind === 'word' && <Stat n={reacts.length} label="picked" />}
+        {scoring && kind === 'draw' && <Stat n={posts.length} label={`of ${alive.length} drew`} />}
+        {scoring && kind === 'draw' && <Stat n={reacts.length} label="guessing" />}
       </div>
 
       {/* Say this */}
@@ -321,8 +342,26 @@ function Console({ gid, game }) {
         </section>
       )}
 
+      {/* Today's word or drawing game, for the host's eyes */}
+      {[PHASE.ALARM, PHASE.GAME, PHASE.GAME_LOCKED].includes(game.phase) && kind !== 'run' && (
+        <section className="er-card mt-6">
+          <p className="er-mono">Today: {todayTitle}</p>
+          <p className="font-body text-[15px] text-bone mt-1">{kit.dayGames[kind]?.rule}</p>
+          {showRoles && kind === 'word' && day?.word && (
+            <p className="font-typewriter text-[18px] text-bone mt-2">The word: {day.word} · the Killers' hint: {day.hint}</p>
+          )}
+          {showRoles && kind === 'word' && posts.length > 0 && (
+            <ol className="mt-2 space-y-1">
+              {posts.map((c, i) => (
+                <li key={c.id} className="font-body text-[14px] text-bone">{i + 1}. {c.clue} <span className="text-dim">· {nameOf(c.pid)}{roleOf[c.pid] === 'killer' ? ' (Killer)' : ''}</span></li>
+              ))}
+            </ol>
+          )}
+        </section>
+      )}
+
       {/* The run, live: who is where on today's board, before anyone else sees it */}
-      {scoring && showRoles && (
+      {scoring && kind === 'run' && showRoles && (
         <section className="er-card mt-6">
           <p className="er-mono">Today's run, live{secret?.pendingMorning?.victim ? ` · rig on ${nameOf(secret.pendingMorning.victim)}${secret.pendingMorning.saved ? ' (firewalled: the lowest honest score dies instead)' : ''}` : ''}</p>
           <ol className="mt-2 space-y-1">
@@ -370,6 +409,12 @@ function Console({ gid, game }) {
         <p className="font-body text-[13px] text-dim mt-1 break-all">
           {gid}{secret?.counts ? ` · dealt ${secret.counts.killer} killers` : ''}{secret?.plantUsed ? ' · frame used' : ''}
         </p>
+        <p className="er-mono mt-4">Morning games{game.phase !== PHASE.FINALE ? ` · next: ${kit.dayGames[nextKind]?.title ?? nextKind}` : ''}</p>
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <Action tone={rotating ? undefined : 'ghost'} onClick={() => run(() => setDayGames(gid, DEFAULT_GAMES))}>Rotate all three</Action>
+          <Action tone={rotating ? 'ghost' : undefined} onClick={() => run(() => setDayGames(gid, ['run']))}>Run every day</Action>
+        </div>
+        <p className="font-body text-[13px] text-dim mt-1">Takes effect at the next alarm. Today's game carries on.</p>
         <Action tone="ghost" className="mt-4" onClick={() => window.confirm('Start a brand new game? Everyone will need to arrive again.') && setNewGame(true)}>
           New game
         </Action>

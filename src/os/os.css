@@ -48,20 +48,6 @@
 .os-root p { text-wrap: pretty; }
 .os-balance { text-wrap: balance; }
 
-/* On a laptop the phone sits in a bezel, so the host can test on one screen. */
-@media (min-width: 640px) and (min-height: 700px) {
-  body:has(.os-root) { background: #0a0c10; }
-  .os-root {
-    inset: auto;
-    top: 50%;
-    left: 50%;
-    width: 390px;
-    height: min(844px, calc(100dvh - 48px));
-    translate: -50% -50%;
-    border-radius: 44px;
-    box-shadow: 0 0 0 10px #0d0f14, 0 0 0 12px #2b3140, 0 30px 80px rgba(0, 0, 0, 0.6);
-  }
-}
 
 .os-stage {
   position: relative;
@@ -103,6 +89,7 @@
   font-variant-numeric: tabular-nums;
   color: #fff;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.7);
+  touch-action: none;
 }
 .os-status--clear { background: linear-gradient(rgba(0, 0, 0, 0.62), rgba(0, 0, 0, 0.3)); border-bottom-color: transparent; }
 .os-status__left { display: flex; align-items: center; gap: 5px; min-width: 0; }
@@ -575,6 +562,14 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   background: linear-gradient(rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 52%), #1f3d78;
   border-color: rgba(0, 0, 0, 0.5);
 }
+/* DEEP BLUE speaking for itself (voice.js): deeper water, a little colder. */
+.os-bubble--voice {
+  color: #d6e6ff;
+  font-style: italic;
+  background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 52%), #0b1d45;
+  border-color: rgba(61, 139, 242, 0.55);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 0 10px rgba(61, 139, 242, 0.25);
+}
 .os-bubble--alert { color: #fff; background: linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 52%), #c71c12; border-color: #6e0c07; }
 .os-event {
   align-self: center;
@@ -657,6 +652,62 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   7%, 90% { translate: 0 0; }
   100% { translate: 0 -110%; }
 }
+
+/* ---------------------------------------------- 9b. Notification Center */
+
+/* Pulled down from the status bar. Grouped by app, like old iOS: a header per
+   group, a rounded card of rows below it. Drag tracks the finger live (inline
+   transform, no transition); release hands off to .os-nc--open and the CSS
+   transition finishes the motion. */
+
+.os-nc__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 61;
+  background: rgba(0, 0, 0, 0.4);
+  border: 0;
+  cursor: default;
+  animation: os-fade 180ms ease both;
+}
+
+.os-nc {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 62;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 10px 14px;
+  background: linear-gradient(rgba(44, 48, 58, 0.95), rgba(14, 16, 22, 0.97) 60%, rgba(8, 9, 13, 0.97));
+  border-bottom: 1px solid rgba(0, 0, 0, 0.6);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  transform: translateY(-100%);
+  transition: transform 280ms cubic-bezier(0.2, 0.9, 0.25, 1);
+}
+.os-nc--open { transform: translateY(0); }
+.os-nc__scroll { overflow-y: auto; max-height: 100%; display: flex; flex-direction: column; gap: 14px; }
+.os-nc__empty { padding: 30px 8px; text-align: center; font-size: 15px; color: #9aa3b4; }
+.os-nc__head { padding: 0 6px 5px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; color: #9aa3b4; }
+.os-nc__card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02) 50%, rgba(0, 0, 0, 0.14) 51%), rgba(20, 24, 34, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+.os-nc__row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 10px; text-align: left; cursor: pointer; }
+.os-nc__row:active { background: rgba(255, 255, 255, 0.08); }
+.os-nc__div { height: 1px; margin: 0 10px; background: rgba(255, 255, 255, 0.1); }
+.os-nc__row-title { font-size: 13.5px; font-weight: 700; color: #fff; }
+.os-nc__row-text {
+  font-size: 14px; line-height: 1.22; color: #cfd6e2; margin-top: 1px;
+  overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.os-nc__tile { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4); flex-shrink: 0; }
 
 /* -------------------------------------------------------- 10. Lock screen */
 
@@ -892,6 +943,8 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   .os-alarm__ring, .os-alarm__flash, .os-slide__text { animation: none !important; }
   .os-slide__text { color: #c9d1dc; background: none; }
   .os-spinner { animation-duration: 2s; }
+  .os-nc { transition: none; }
+  .os-nc__scrim { animation: none; }
 }
 
 
@@ -1113,4 +1166,198 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 
 @media (prefers-reduced-motion: reduce) {
   .os-ticker__track { animation: none; }
+}
+
+/* =============================================================================
+   18. CONTACTS: the file on every guest
+   iOS 6 Contacts: photo thumbnails in a plain grouped list, and an Info card
+   with a framed photo and blue field labels. The action sheet is shared.
+   ========================================================================== */
+
+.os-contact__photo { border: 1px solid rgba(0, 0, 0, 0.28); box-shadow: 0 1px 1px rgba(0, 0, 0, 0.18); }
+
+/* iOS 6 contact fields: a blue label column on the left, the value beside it. */
+.os-field { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 9px 12px 9px 0; text-align: left; background: transparent; border: 0; color: inherit; font: inherit; }
+.os-field + .os-field { border-top: 1px solid #d0d3d9; }
+button.os-field { cursor: pointer; touch-action: manipulation; }
+button.os-field:active { background: linear-gradient(#4a9bf5, #0b6fe3); color: #fff; }
+button.os-field:active .os-field__label, button.os-field:active .os-field__ok, button.os-field:active .os-field__bad { color: #fff; }
+.os-field__label { flex: 0 0 86px; text-align: right; font-size: 14px; font-weight: 700; color: #385487; }
+.os-field__value { flex: 1 1 auto; min-width: 0; font-size: 17px; font-weight: 700; line-height: 1.25; }
+.os-field__ok, .os-field__bad { display: flex; align-items: center; gap: 4px; margin-top: 2px; font-size: 13px; font-weight: 600; }
+.os-field__ok { color: #1f8a35; }
+.os-field__bad { color: #c71c12; }
+
+/* --- The action sheet. ---------------------------------------------------- */
+.os-sheet { position: absolute; inset: 0; z-index: 50; display: flex; flex-direction: column; justify-content: flex-end; }
+.os-sheet__scrim { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.45); border: 0; animation: os-fade 200ms ease both; cursor: default; }
+.os-sheet__panel {
+  position: relative; display: flex; flex-direction: column; max-height: 82%;
+  padding: 12px 18px 16px; color: #fff;
+  background: linear-gradient(rgba(70, 82, 104, 0.96), rgba(22, 28, 40, 0.97));
+  border-top: 1px solid rgba(0, 0, 0, 0.7); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  animation: os-sheet-up 260ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+.os-sheet__title { padding: 2px 6px 10px; font-size: 14.5px; line-height: 1.3; text-align: center; color: #d9e2f0; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.6); }
+.os-sheet__list { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+.os-sheet__list::-webkit-scrollbar { display: none; }
+.os-sheet__btn {
+  flex: 0 0 auto; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 14px;
+  font-size: 18px; font-weight: 700; color: var(--color-os-ink); text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+  background: linear-gradient(#ffffff, #e4e7ec 50%, #d4d9e0 51%, #e8ebef); border: 1px solid #0d111a; border-radius: 9px;
+  box-shadow: inset 0 1px 0 #fff, 0 1px 0 rgba(255, 255, 255, 0.15); cursor: pointer; touch-action: manipulation;
+}
+.os-sheet__btn:active { filter: brightness(0.82); }
+.os-sheet__btn--red { color: #fff; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.35); background: linear-gradient(rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.08) 50%, rgba(0, 0, 0, 0.06) 51%, rgba(0, 0, 0, 0)), linear-gradient(#f26a5f, #b81a10); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4); }
+.os-sheet__btn--cancel { margin-top: 12px; color: #fff; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5); background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.04) 50%, rgba(0, 0, 0, 0.1) 51%, rgba(0, 0, 0, 0)), linear-gradient(#4a5160, #1a1e28); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25); }
+@keyframes os-sheet-up { from { translate: 0 100%; } to { translate: 0 0; } }
+@keyframes os-fade { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .os-sheet__panel, .os-sheet__scrim { animation: none; }
+}
+
+/* ---------------------------------------------------- 19. Faces and the finale */
+
+/* A guest's drawn photo wherever a person appears (Portrait.jsx `Face`). */
+.os-face { flex: 0 0 auto; border: 1px solid rgba(0, 0, 0, 0.35); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); }
+.os-face--gold { border: 2px solid var(--color-os-gold); box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.45), 0 2px 10px rgba(255, 204, 51, 0.35); }
+.os-face--killer { border: 2px solid var(--color-os-red); box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5), 0 0 16px rgba(255, 59, 48, 0.45); }
+
+/* Your place on the morning board. */
+.os-myplace {
+  display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 12px;
+  background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 55%), var(--color-os-deep);
+  border: 1px solid rgba(143, 163, 194, 0.35); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.os-myplace__score { min-width: 48px; text-align: center; font-size: 30px; font-weight: 800; color: var(--color-os-gold); font-variant-numeric: tabular-nums; }
+.os-myplace--top { border-color: rgba(255, 204, 51, 0.6); }
+.os-myplace--edge { background: linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 55%), #3a1420; border-color: rgba(255, 59, 48, 0.55); }
+
+/* The finale: your night, and the night-by-night account. */
+.os-finale-me--won { color: #fff; background: linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 52%), linear-gradient(#3fbf5a, #1d7d33); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.4); }
+.os-finale-me--lost { color: #fff; background: linear-gradient(rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0) 52%), linear-gradient(#4a5468, #232a38); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 6px rgba(0, 0, 0, 0.4); }
+
+.os-tl { padding: 12px 14px 6px; border-top: 1px solid rgba(255, 255, 255, 0.1); }
+.os-tl:first-child { border-top: 0; }
+.os-tl__day { font-size: 12px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-os-chrome); margin-bottom: 8px; }
+.os-tl__item { position: relative; display: flex; align-items: flex-start; gap: 10px; padding: 0 0 12px 4px; }
+.os-tl__item::before { content: ''; position: absolute; left: 17px; top: 28px; bottom: 0; width: 2px; background: rgba(143, 163, 194, 0.25); }
+.os-tl__item:last-child::before { display: none; }
+.os-tl__dot { flex: 0 0 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; background: rgba(143, 163, 194, 0.25); }
+.os-tl__dot:empty::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--color-os-chrome); }
+.os-tl__item--killer .os-tl__dot { box-shadow: 0 0 0 2px var(--color-os-red); }
+.os-tl__item--dead .os-tl__dot { box-shadow: 0 0 0 2px rgba(143, 163, 194, 0.6); }
+.os-tl__item--good .os-tl__dot { box-shadow: 0 0 0 2px var(--color-os-green); }
+.os-tl__item p { padding-top: 4px; }
+
+/* Photos: what one night's photos add up to (GalleryApp `HandProfile`). */
+.os-hand {
+  display: flex; gap: 12px; padding: 10px 12px; border-radius: 10px;
+  background: linear-gradient(rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0) 50%), #10182a;
+  border: 1px solid rgba(143, 163, 194, 0.28); color: var(--color-os-foam);
+}
+.os-hand__q {
+  position: absolute; right: -5px; bottom: -5px; width: 22px; height: 22px; display: grid; place-items: center;
+  border-radius: 50%; font-size: 13px; font-weight: 800; color: #fff;
+  background: linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 55%), var(--color-os-sea);
+  border: 2px solid #10182a;
+}
+
+/* ---------------------------------------------------------- 20. Weather */
+/* The iOS 6 weather card: a sky gradient that follows the forecast and the hour. */
+.os-weather { background: linear-gradient(#4f9be8, #2a6cc4 45%, #1d4f99); }
+.os-weather--rain { background: linear-gradient(#6f8fb5, #48678f 45%, #2d4466); }
+.os-weather--heavy, .os-weather--storm { background: linear-gradient(#56657c, #36435a 45%, #1d2638); }
+.os-weather--clear { background: linear-gradient(#5aaaf5, #2f7fd8 45%, #1e5cb0); }
+.os-weather--night { background: linear-gradient(#1b2546, #0d1530 50%, #050a1c); }
+.os-weather__card {
+  border-radius: 10px; background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.18); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.os-weather__row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; }
+.os-weather__row + .os-weather__row { border-top: 1px solid rgba(255, 255, 255, 0.14); }
+.os-weather__alert {
+  display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px;
+  font-size: 14px; line-height: 1.3; color: #fff;
+  background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.os-weather__alert-tag {
+  flex: 0 0 auto; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.05em;
+  background: linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 55%), #d9831a;
+}
+
+/* The role text's emblem (takeovers.jsx RoleText). Private to that screen. */
+.os-role-emblem {
+  float: right; display: grid; place-items: center; width: 52px; height: 52px; margin: 0 0 6px 10px; border-radius: 12px; color: #fff;
+  background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 52%), linear-gradient(#5d9bf0, #1f56b3);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 2px 4px rgba(0, 0, 0, 0.35);
+}
+.os-role-emblem--killer { background: linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 52%), linear-gradient(#ff6a5f, #9e130b); }
+.os-role-emblem--doctor { background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 52%), linear-gradient(#6fe08a, #1f8a3a); }
+.os-role-emblem--medium { background: linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 52%), linear-gradient(#7a86a8, #2c3550); }
+.os-term__dim { color: #4fae63; font-weight: 600; }
+
+/* ------------------------------------------------- 21. The morning games */
+/* WORD and SKETCH (os/game/WordGame.jsx, DrawGame.jsx). The run has its own canvas. */
+
+/* What to do now, and how long is left. Red for the last ten seconds of a step. */
+.os-stepbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 14px;
+  background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 55%), var(--color-os-deep);
+  border-bottom: 1px solid #000; color: var(--color-os-foam);
+}
+.os-stepbar__time { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.os-stepbar--hot { background: linear-gradient(rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 55%), #7a1610; }
+
+/* The card with your word (or your hint). */
+.os-daycard {
+  padding: 14px 16px; border-radius: 14px; text-align: center; color: var(--color-os-foam);
+  background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 55%), var(--color-os-navy);
+  border: 1px solid rgba(143, 163, 194, 0.35); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.os-daycard--hint { background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 55%), #3a1420; border-color: rgba(255, 59, 48, 0.55); }
+.os-daycard__word { font-size: 38px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em; margin-top: 4px; overflow-wrap: anywhere; }
+.os-daycard__word--inline { font-size: 26px; margin-top: 2px; }
+
+/* The wall: every clue in the order it landed. Tappable only while picking. */
+.os-wall { list-style: none; margin: 0; padding: 0 12px; display: grid; gap: 6px; }
+.os-wall__row {
+  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 46px; padding: 8px 12px; border-radius: 10px; text-align: left;
+  color: var(--color-os-foam); background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(143, 163, 194, 0.25); font: inherit;
+}
+.os-wall__row:disabled { cursor: default; }
+.os-wall__row--own { border-style: dashed; }
+.os-wall__row--on { background: linear-gradient(rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0) 55%), var(--color-os-sea); border-color: #0b4fae; }
+.os-wall__n { flex: 0 0 26px; font-size: 13px; font-weight: 800; color: var(--color-os-chrome); font-variant-numeric: tabular-nums; }
+.os-wall__row--on .os-wall__n { color: #fff; }
+.os-wall__clue { flex: 1 1 auto; min-width: 0; font-size: 19px; font-weight: 700; overflow-wrap: anywhere; }
+.os-wall__flag { font-size: 12px; font-weight: 700; color: var(--color-os-red); }
+.os-wall__who { flex: 0 1 auto; min-width: 0; max-width: 40%; font-size: 13px; color: var(--color-os-chrome); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.os-wall__row--on .os-wall__who { color: #fff; }
+
+/* Drawing: the pad, the inks, a drawing at any size. */
+.os-pad, .os-sketch { display: block; border-radius: 10px; background: var(--color-os-foam); box-shadow: 0 0 0 1px #000, 0 2px 8px rgba(0, 0, 0, 0.5); }
+.os-pad { touch-action: none; }
+.os-ink { width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.35); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); }
+.os-ink--on { border-color: #fff; box-shadow: 0 0 0 3px var(--color-os-sea); }
+
+/* Guessing: the per-drawing timer and the "Correct!" stamp. */
+.os-guess-timer { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.os-guess-timer i { display: block; height: 100%; background: var(--color-os-sea); transition: width 250ms linear; }
+.os-guess-flash {
+  position: absolute; top: 40%; left: 0; right: 0; width: max-content; margin: 0 auto; padding: 8px 16px; border-radius: 10px; white-space: nowrap;
+  font-size: 22px; font-weight: 800; color: #fff; background: linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 52%), linear-gradient(#78e08a, #25a03c);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+/* After: everyone's drawings with their words. */
+.os-gallery-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 12px; padding: 0 12px 16px; justify-items: center; }
+.os-gallery-cell { margin: 0; }
+.os-gallery-cell figcaption { display: flex; flex-direction: column; margin-top: 6px; max-width: 128px; color: var(--color-os-foam); }
+.os-gallery-cell figcaption b { font-size: 15px; }
+.os-gallery-cell figcaption span { font-size: 12px; color: var(--color-os-chrome); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .os-guess-timer i { transition: none; }
 }

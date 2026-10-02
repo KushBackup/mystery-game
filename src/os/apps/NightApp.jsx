@@ -38,21 +38,25 @@ export default function NightApp({ ctx, onClose }) {
 
   return (
     <AppFrame title="Night" onBack={onClose} tone="dark" dark bodyClass="os-term">
-      <ConsoleHead me={me} game={game} night={night} />
+      <ConsoleHead me={me} game={game} night={night} players={ctx.players} />
       {body}
     </AppFrame>
   );
 }
 
 /**
- * The console's header. Everyone's reads the same way (name, table, night), so
- * the screen gives nothing away to the guest leaning over your shoulder.
+ * The console's header. Everyone's reads the same way (name, table, night, and
+ * the room's public headcount), so the screen gives nothing away to the guest
+ * leaning over your shoulder.
  */
-function ConsoleHead({ me, game, night }) {
+function ConsoleHead({ me, game, night, players }) {
+  const online = players.filter((p) => p.status === 'alive').length;
+  const lost = players.filter((p) => p.status === 'ghost').length;
   return (
     <div className="os-term__head" aria-hidden="true">
       <p>DEEP BLUE · Night console</p>
       <p><b>{me.name}</b>{me.table ? ` · Table ${me.table}` : ''}{me.status === 'ghost' ? ' · No signal' : ''}</p>
+      <p className="os-term__dim">&gt; {online} handsets in range{lost ? ` · ${lost} not responding` : ''} · board.db synced</p>
       <p className="os-cursor">{night ? `Night ${game.cycle} · session open` : 'Session closed'}</p>
     </div>
   );
@@ -197,7 +201,7 @@ function KillerDen({ gid, game, me, living, nameOf, den: denChat, night }) {
         </div>
       ) : !night ? (
         <>
-          <Sleeping line="Admin tools open at nightfall. Still play the run: last place is dangerous for you too." />
+          <Sleeping line="Admin tools open at nightfall. Still play the morning game: last place is dangerous for you too." />
         </>
       ) : (
         <>
@@ -219,7 +223,7 @@ function KillerDen({ gid, game, me, living, nameOf, den: denChat, night }) {
             <Section head="Rig it to…">
               <Group dark>
                 <Cell title="Zero" sub={`Blatant. Everyone sees the zero.${rigCount('zero') ? ` · ${rigCount('zero')} chose` : ''}`} on={(mine.rig ?? 'zero') === 'zero'} onClick={() => set({ rig: 'zero' })} />
-                <Cell title="Just below last place" sub={`Subtle. Looks like a bad run.${rigCount('under') ? ` · ${rigCount('under')} chose` : ''}`} on={mine.rig === 'under'} onClick={() => set({ rig: 'under' })} />
+                <Cell title="Just below last place" sub={`Subtle. Looks like a bad morning.${rigCount('under') ? ` · ${rigCount('under')} chose` : ''}`} on={mine.rig === 'under'} onClick={() => set({ rig: 'under' })} />
               </Group>
             </Section>
           )}

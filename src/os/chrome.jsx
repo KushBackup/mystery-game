@@ -16,7 +16,7 @@ import { sfxUnlock, sfxTap } from './sfx';
  * out and turns red in the last fifth, so a glance at any screen says how long
  * is left without a countdown shouting at you. A ghost's phone has no signal.
  */
-export function StatusBar({ game, ghost = false, clear = false }) {
+export function StatusBar({ game, ghost = false, clear = false, drag }) {
   const clock = useWorldClock(game);
   const online = useOnline();
   const now = useServerNow(game?.phaseEndsAt, 1000);
@@ -29,7 +29,7 @@ export function StatusBar({ game, ghost = false, clear = false }) {
   const secs = Math.ceil(left / 1000);
   const label = ends ? (secs >= 60 ? `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}` : `${secs}s`) : '';
   return (
-    <div className={`os-status ${clear ? 'os-status--clear' : ''}`} role="status">
+    <div className={`os-status ${clear ? 'os-status--clear' : ''}`} role="status" {...drag}>
       <div className="os-status__left">
         {!online ? (
           <>
@@ -156,6 +156,71 @@ export const Banner = ({ icon = 'messages', title, text, onOpen }) => (
   </button>
 );
 
+/** One row of a Notification Center group: an icon, a bold title, one line of text. */
+function NCRow({ icon, tile, title, text, onTap }) {
+  return (
+    <button type="button" className="os-nc__row" onClick={onTap}>
+      {icon ? <AppIcon name={icon} size={30} className="shrink-0" /> : tile}
+      <span className="min-w-0 flex-1">
+        <span className="os-nc__row-title block">{title}</span>
+        <span className="os-nc__row-text block">{text}</span>
+      </span>
+    </button>
+  );
+}
+
+/** A small round glyph tile, for a row with no app icon of its own (Night, Vote, Unknown). */
+export const NCTile = ({ glyph, bg }) => (
+  <span className="os-nc__tile" style={{ background: bg }}><Glyph name={glyph} size={16} color="#fff" /></span>
+);
+
+/** One app's group: a small-caps header, a card of rows (divided). Nothing renders if empty. */
+function NCGroup({ title, rows, onTap }) {
+  if (!rows.length) return null;
+  return (
+    <div>
+      <p className="os-nc__head">{title.toUpperCase()}</p>
+      <div className="os-nc__card">
+        {rows.map((r, i) => (
+          <React.Fragment key={r.id}>
+            {i > 0 && <div className="os-nc__div" />}
+            <NCRow icon={r.icon} tile={r.tile} title={r.title} text={r.text} onTap={() => onTap(r.app)} />
+          </React.Fragment>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The Notification Center: pulled down from the status bar (PhoneFrame owns
+ * the drag). `pull` is the live 0..1 drag position while a finger is down
+ * (inline transform, no transition); once released, `open` takes over and the
+ * CSS transition finishes the motion. Grouped by app, old-iOS style, so a
+ * thread's own read state still decides what's in here — nothing is tracked
+ * twice (threads.js, news.js, seen.js already own that). Each row only names
+ * which app it belongs to (`app`); `onOpen` is the shell's own `open(name)`,
+ * passed through rather than closed over while the rows are built.
+ */
+export function NotificationCenter({ sections, open, pull, onOpen, onClose }) {
+  const any = sections.some((s) => s.rows.length);
+  const style = pull != null ? { transform: `translateY(${pull * 100 - 100}%)`, transition: 'none' } : undefined;
+  // Opening a row's app also puts the panel away, same as tapping any home icon.
+  const go = (app) => { onOpen(app); onClose(); };
+  return (
+    <>
+      {open && <button type="button" className="os-nc__scrim" aria-label="Close notifications" onClick={onClose} />}
+      <div className={`os-nc ${open ? 'os-nc--open' : ''}`} style={style}>
+        <div className="os-nc__scroll os-scroll">
+          {any
+            ? sections.map((s) => <NCGroup key={s.key} title={s.title} rows={s.rows} onTap={go} />)
+            : <p className="os-nc__empty">No New Notifications.</p>}
+        </div>
+      </div>
+    </>
+  );
+}
+
 /** One icon on the home screen or dock. `onOpen` gets the icon's centre, for the zoom. */
 function HomeIcon({ app, label, badge, onOpen }) {
   const open = (e) => {
@@ -197,7 +262,6 @@ export function HomeScreen({ grid, dock, badges, now, onOpen, ghost, entering })
       <div className="os-grid relative">
         {grid.map(([app, label]) => <HomeIcon key={app} app={app} label={label} badge={badges[app]} onOpen={onOpen} />)}
       </div>
-      <div className="os-dots relative" aria-hidden="true"><i className="on" /><i /></div>
       <div className="os-dock">
         {dock.map(([app, label]) => <HomeIcon key={app} app={app} label={label} badge={badges[app]} onOpen={onOpen} />)}
       </div>

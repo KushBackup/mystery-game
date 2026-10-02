@@ -45,6 +45,56 @@ Killers murder by rigging the morning run's leaderboard, so a day resolves in tw
 
 The run stops `GAME_GRACE_MS` (2 s) before `phaseEndsAt` so the last score write beats the host's lock.
 
+### The morning games: Word, Sketch, Run (2026-10-02)
+
+The game phase plays one of three games, rotated by day. The rules live in [src/lib/engine/minigames.js](src/lib/engine/minigames.js), which is pure and seeded.
+
+- **Which game.** `gameOfDay(config, cycle)` reads `config.games`, which defaults to `['word','draw','run']`. The host console can set it to `['run']`.
+- **Choosing the game.** The host picks the game in the commit that rings the alarm (`planDayGame` in host.js). That is the night commit, or the recruit commit on a recruit night, so a guest recruited tonight gets the Killers' hint. The same commit writes `game.minigame` and one inbox card per living guest with a role (`{cycle}-day-{pid}`), and records the answers in `secret.day.{cycle}`. Ghosts get no card.
+- **Timing.** The phase lasts `durations.game_word` (125 s) or `game_draw` (140 s); see `gameSpan` in phases.js. Inside it, every phone derives the same step from `revealAt` with `stepAt()`:
+  - Word: read 10 s, clue 60 s, pick 50 s.
+  - Sketch: draw 45 s, guess 90 s.
+  - If the phase is shorter (the Quick pace), the steps shrink in proportion.
+  - The last step never runs past the phase.
+- **Scoring.** When the game locks, `dayScores` in host.js reads the day's plays and turns them into `{pid: {best}}`:
+  - Word: clues and picks, through `scoreWordDay`.
+  - Sketch: drawings and guesses, through `scoreDrawDay`. The host checks the typed text against the real word, with plurals and listed alternatives.
+  - Run: the score docs, as before.
+
+  `resolveMorning` then runs unchanged, and the dawn commit also publishes `game.dayGame` (the word, or who drew what).
+- **On the phone.** [GameApp.jsx](src/os/apps/GameApp.jsx) routes on `game.minigame`:
+  - [WordGame.jsx](src/os/game/WordGame.jsx) shows the card, the one-clue form and the live wall. Clues stream in `serverTimestamp` order, numbered. Picks are tap-to-toggle, up to 3.
+  - [DrawGame.jsx](src/os/game/DrawGame.jsx) shows the pad, then the guessing. Strokes are encoded by [strokes.js](src/os/game/strokes.js): hex points on a 256-unit board, about 4 characters per point. The pad autosaves every 1.5 s, and once more when the step ends.
+  - Guessing follows `assignDrawings`, a wheel over the inked drawings seeded by the public `courseSeed`, so each drawing gets about the same number of guessers. It follows the drawings as they arrive. Do not freeze the list on the first snapshot: that snapshot can come from the phone's own cache and hold nothing but its own drawing.
+  - After the lock, the wall or the drawings stay up, with the answers, until the next night.
+  - The shared step bar and the drawing renderer are in [dayParts.jsx](src/os/game/dayParts.jsx), and the step hook is in [dayStep.js](src/os/game/dayStep.js).
+- **Words.** `dayGames`, `wordPairs` and `drawWords` live in the pack ([deepblue.js](src/data/packs/deepblue.js)). `dayKit(pack)` falls back to DEEP BLUE's words for a pack that has none.
+- **Trust.** It is the same as the run's: a phone writes its own plays. Two limits are known:
+  - `checks` is a short hash of a word from a bank of about 110, so a devtools user could brute-force a drawing's word.
+  - A clue can only be checked for giving the word away on a Faithful phone; the host zeroes it at scoring.
+
+  Neither one reveals a role.
+
+### The finale: how it happened (2026-10-02)
+
+- **What the host keeps.** Each night's resolution also writes `secret.nights.{cycle}`: the Killers' victim (or recruit target), the hand, the rig, the frame (`resolveNight` now returns `frame`) and the firewalled guests. Host-only, like the rest of `secret`.
+- **What the host publishes.** `finaleOf(world)` in [host.js](src/firebase/host.js) adds `finaleRoles` and `finaleStory: { nights, hands }` to the game doc in the same write that sets a winner, and never before. `bots.mjs --selftest` fails a run if either appears without a winner.
+- **What the phone shows** ([Finale.jsx](src/os/apps/Finale.jsx), three synced beats via [stage.js](src/os/apps/stage.js)): the headline, then the Killers' faces and fates, then *your night* (role, whether your team won, how you went), **How it happened** (night by night: who the Killers chose, who hacked and what the photos described, rig, frame, firewall; then the morning and the vote, from `game.news`), and every guest's role. Ends on the morning-after paper.
+
+### Atmosphere and reading aids (2026-10-02)
+
+Added in one autopilot pass the user asked for ("make it feel detailed and rich"). None of it changes a rule; all of it is per-phone.
+
+| Piece | Where | What |
+|---|---|---|
+| **Faces everywhere** | `Face` in [Portrait.jsx](src/os/art/Portrait.jsx) | The Contacts photo (drawn from top colour and glasses) now marks a guest on the board podium, the taken row, every board row, the verdict, the vote list and the finale, so the room recognises the same face in every app |
+| **The poll shows looks** | `GuestPicker traits` in [ui.jsx](src/os/ui.jsx), `lookLine` in [dossier.js](src/os/dossier.js) | Each row in the vote: face plus "Black top · glasses · Sneakers" (public answers only) |
+| **Your place** | `MyPlace` in [NewsApp.jsx](src/os/apps/NewsApp.jsx) | After the board: your score and rank, with a warning tone two places or fewer above the deep |
+| **The hand, per night** | `HandProfile` in [GalleryApp.jsx](src/os/apps/GalleryApp.jsx) | Photos lays each night's clue groups over each other (they all describe one hand) and draws a sketch: what is known, and "photos disagree" when a frame makes two clues incompatible. It never names or filters guests (see memory.md: auto-matching was deliberately not built) |
+| **DEEP BLUE's voice** | [voice.js](src/os/voice.js), `pack.voice` | The app talks to each guest in its Messages thread: at nightfall, after the board (rank-based), after the verdict, at the finale. Derived on the phone from what has already been revealed, never role-specific, kept in localStorage `deepblue.seen.<gid>.voice` so older lines survive the next board. Counts toward the Messages badge, never a banner |
+| **Weather** | [WeatherApp.jsx](src/os/apps/WeatherApp.jsx), [weather.js](src/os/weather.js), `pack.weather` | Panjim's sky worsens on a fixed curve by edition day (like the paper); only the finale's sky depends on the winner. The alarm shows one line of it |
+| **Role emblem, console headcount** | [takeovers.jsx](src/os/takeovers.jsx), [NightApp.jsx](src/os/apps/NightApp.jsx) | A glossy emblem on the private role text; the night console's header shows the public count of handsets in range and not responding (same on every phone) |
+
 ### The Detective and the Medium (2026-10-01)
 
 - **Trace** (Detective, every night): two guests' phones against tonight's server log. `hit` means one of them was tonight's hand; "neither" clears them of tonight only. Delivered as `kind: 'trace'`. (The older `check` still resolves if sent, but nothing sends it.)
@@ -58,9 +108,9 @@ The run stops `GAME_GRACE_MS` (2 s) before `phaseEndsAt` so the last score write
 | [PhoneOS.jsx](src/os/PhoneOS.jsx) | The shell. Owns the open app (each phase auto-opens its app via `AUTO`; the Home button always goes home), the takeovers, badges and banners, and the phone's only chat listeners (`chat`, `mediumChat`, `denChat`); apps get them through `ctx` |
 | [chrome.jsx](src/os/chrome.jsx) | Status bar (the battery is the phase timer), home screen and glass dock, home button, lock screen, slide to unlock, notification banner |
 | [takeovers.jsx](src/os/takeovers.jsx) | Full-screen moments synced to `revealAt`: the role text at casting, the alarm, the recruit "incoming call", the signed-out screen |
-| [apps/](src/os/apps/) | Messages (The Room, Spirits, DEEP BLUE, Unknown), DEEP BLUE (the game), News (board reveal, verdict, finale, and the paper: see [The News app](#the-news-app)), Photos (clue photos), Clock, Contacts, Notes, Night (every role's night, same icon for all), Settings, Vote |
+| [apps/](src/os/apps/) | Messages (The Room, Spirits, DEEP BLUE with its voice, Unknown), DEEP BLUE (the game), News (board reveal, verdict, finale in `Finale.jsx`, and the paper: see [The News app](#the-news-app)), Photos (clue photos and each night's hand), Clock, Contacts (every guest's answers: see [The Contacts app](#the-contacts-app)), Notes, Night (every role's night, same icon for all), Weather, Settings, Vote. `stage.js` holds the synced-beat hooks the reveals share |
 | [game/](src/os/game/) | `physics.js` (pure, fixed 60 Hz tick, seeded course) and `DeepBlueGame.jsx` (canvas at 144×256, integer-scaled; the one 8-bit thing left on the phone) |
-| [icons/](src/os/icons/), [art/](src/os/art/) | Smooth vector art: `AppIcon` (glossy iOS-style app icons), `Glyph` (UI glyphs, status-bar signal/wifi/battery), the `Wallpaper`, and `CluePhoto` (one softened CCTV still per trait group, still drawn on a coarse grid) |
+| [icons/](src/os/icons/), [art/](src/os/art/) | Smooth vector art: `AppIcon` (glossy iOS-style app icons), `Glyph` (UI glyphs, status-bar signal/wifi/battery), the `Wallpaper`, `CluePhoto` (one softened CCTV still per trait group, still drawn on a coarse grid) and `Portrait` (a contact photo drawn from a guest's answers) |
 | [sfx.js](src/os/sfx.js) | Every sound, synthesized (Web Audio); vibration patterns; the `astral.sfx` / `astral.vibe` preferences |
 | [seen.js](src/os/seen.js) | Read marks behind every badge, in localStorage only (`deepblue.seen.*`), never Firestore; also `booted` (first boot shown) and `taken` (death screen shown) |
 | [beats.js](src/os/beats.js) | When each reveal's beats land, and `useMaskedPlayers`: a player who dies in the reveal still playing reads as alive until its beat, so no phone (or Contacts, or the group chat) spoils it |
@@ -81,6 +131,18 @@ News plays the reveal for the phase it is in (`BoardReveal`, `BanishReveal`, `Fi
 - **Pack contract.** `pack.news = { outlets, sections, articles, epilogue, live, ticker }`. A pack with no `news` prints only the live stories; the rules for writing it (pure flavour, no real people or outlets, Greenr is only ever a bystander, no victims under 18, no method) are in the header of `deepblue.news.js` and must be read before adding an article.
 - **Type.** The paper is the one place the phone uses a serif (`Georgia`, as iOS 6's reading surfaces did): `.os-news`, `.os-article`, section 17 of [os.css](src/os/os.css).
 
+### The Contacts app
+
+Contacts is the room's directory and **the file on every guest** ([ContactsApp.jsx](src/os/apps/ContactsApp.jsx), words and record in [dossier.js](src/os/dossier.js)).
+
+- **Deliberately plain (2026-10-02).** A first pass added search, a Tables view, a Marked view, a Suspect/Trusted read, private notes, a vote button and a public record. The user said it was too detailed for players and asked for name, photo, their answers, plus the one thing worth keeping. All of that was cut; see memory.md for why, before adding any of it back.
+- **The list.** Grouped by status only: In the room / Ghosts / Went home, alphabetical within each. Each row has a `Portrait` drawn from the guest's answers (their top's colour, glasses) and their table.
+- **The card** (Info): the photo, name, status or fate, table. Then the six answers as plain iOS contact fields (no visible/hidden split in the UI — `trait.visible` only changes the sheet's wording). Tapping someone else's answer opens an action sheet to mark it: "Matches what I see" / "They said: Beer" / "Something not on the list", shown inline under the answer. At the finale, everyone's role is not shown (cut with the rest; the finale reveal screens already cover it).
+- **The file vs your marks.** The six answers are `traits/{pid}`, **public since 2026-10-02** and frozen at the deal, read by one listener in PhoneOS (`useAllTraits`, `ctx.traits`). They are what a guest *said*, so each answer can be checked from the card through an action sheet: "Matches what I see", "I see: grey", "Something not on the list" (for an answer the form didn't offer, or a lie). A mismatch shows as a red line on the card and an eye flag on the list. Reads, checks and notes live in localStorage only (`deepblue.seen.<gid>.contacts.{reads,checks,notes}`), never Firestore.
+- **My Card** shows your own file as every phone sees it. Until you have a role, its fields open an action sheet to fix an answer (`updateMyTrait`; the rules refuse it after the deal).
+- **The record** reads `ctx.news.entries`: the raw `game.news` entries `useNews` has already released past `revealGate()`, so a card cannot show who was taken or banished before the reveal says so. The host's dawn entry carries `places` and the verdict entry `votes` for this.
+- **Shared pieces** it added to [ui.jsx](src/os/ui.jsx): `Seg` (segmented control, `plain` for the light in-list style), `ActionSheet` (passed to `AppFrame` as `overlay`).
+
 ### Listeners
 
 - Every listener is self-healing (`resilient()` in game.js, `listen()` in host.js): an error schedules a retry with backoff.
@@ -90,7 +152,15 @@ News plays the reveal for the phase it is in (`BoardReveal`, `BanishReveal`, `Fi
 
 - `npm run emulators`: Auth and Firestore emulators under the `demo-killers` project. Needs JDK 21.
 - `npm run sim`: balance simulator. Plays thousands of games through the real engine.
-- `node scripts/bots.mjs --selftest --n 30 [--killer-leaves]`: a whole game, bots playing the morning run, plus 23 privacy-rule checks (7 of them on `scores`), against the emulator.
+- `node scripts/bots.mjs --selftest --n 30 [--killer-leaves]`: a whole game, bots playing every morning game in the rotation (Word, Sketch, Run, Word, Sketch), plus privacy-rule checks against the emulator: 54 checks in all.
+  - 5 are on `scores`.
+  - The `traits` checks assert that answers are readable by everyone, but writable only by their owner and only before the deal.
+  - The Word and Sketch checks cover:
+    - one clue each, never edited;
+    - picks, guesses and other guests' words staying private;
+    - ghosts posting no clue;
+    - each collection being shut outside its own day.
+  - The test fails if `game.dayGame` appears before the lock.
 - `node scripts/bots.mjs --join 12`: 12 bots join the active game, to fill a room around real phones.
 
 ---

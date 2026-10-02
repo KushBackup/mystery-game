@@ -14,8 +14,10 @@
  *
  * 2. Half are visible and half are not. Top, glasses and footwear can be
  *    checked by looking across the table. Drink, season and siblings have to
- *    be asked, and a Killer can lie about them. That mix is what makes the
- *    room talk instead of just scanning.
+ *    be asked. Since 2026-10-02 every answer is public (each guest's Contacts
+ *    card shows the file), so the lie is no longer "my drink" but "the file is
+ *    wrong about me", and the room checks the file against the person. That
+ *    is what makes the room talk instead of just scanning.
  *
  * 3. Clues name a group, never a raw answer. "Gin" might describe 3 people in
  *    35, which is an accusation, not a clue. Groups ("a clear spirit", "no

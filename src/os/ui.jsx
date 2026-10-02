@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import Glyph from './icons/Glyph';
 import { sfxTap } from './sfx';
+import { Face } from './art/Portrait';
+import { lookLine } from './dossier';
 
 /**
  * The phone's small vocabulary. Every app is built from these, the way iOS 6
@@ -11,17 +13,18 @@ import { sfxTap } from './sfx';
 
 /**
  * An app's window: nav bar on top, a scrolling body, optional footer (a compose
- * bar). The shell zooms the whole app in from its icon; `enter` is for moving
+ * bar), and `overlay` (an action sheet) above everything. The shell zooms the whole app in from its icon; `enter` is for moving
  * *inside* an app: 'push' slides a detail in from the right, 'pop' slides the
  * list back in from the left (see nav.js).
  */
-export function AppFrame({ title, onBack, backLabel = 'Home', right, tone = 'blue', light = false, dark = false, paper = false, footer, children, bodyClass = '', bodyRef, enter }) {
+export function AppFrame({ title, onBack, backLabel = 'Home', right, tone = 'blue', light = false, dark = false, paper = false, footer, overlay, children, bodyClass = '', bodyRef, enter }) {
   const motion = enter === 'push' ? 'os-nav-push' : enter === 'pop' ? 'os-nav-pop' : '';
   return (
     <section className={`os-app ${motion} ${light ? 'os-app--light os-pinstripe' : ''} ${dark ? 'os-app--dark' : ''} ${paper ? 'os-app--paper' : ''}`}>
       <NavBar title={title} onBack={onBack} backLabel={backLabel} right={right} tone={tone} />
       <div ref={bodyRef} className={`os-scroll flex-1 min-h-0 ${bodyClass}`}>{children}</div>
       {footer}
+      {overlay}
     </section>
   );
 }
@@ -90,6 +93,36 @@ export function Btn({ children, onClick, tone = 'blue', small = false, disabled,
   );
 }
 
+/**
+ * The iOS 6 action sheet: a dark glass panel that rises from the bottom with a
+ * stack of glossy buttons and a Cancel. Pass it as an AppFrame `overlay`.
+ * `options` are { id, label, tone ('red'), on (a check mark) }.
+ */
+export function ActionSheet({ title, options, onPick, onCancel }) {
+  return (
+    <div className="os-sheet" role="dialog" aria-modal="true" aria-label={title ?? 'Choose'}>
+      <button type="button" className="os-sheet__scrim" aria-label="Cancel" onClick={onCancel} />
+      <div className="os-sheet__panel">
+        {title && <p className="os-sheet__title">{title}</p>}
+        <div className="os-sheet__list">
+          {options.map((o) => (
+            <button
+              key={o.id}
+              type="button"
+              className={`os-sheet__btn ${o.tone === 'red' ? 'os-sheet__btn--red' : ''}`}
+              onClick={() => { sfxTap(); onPick(o.id); }}
+            >
+              <span className="truncate">{o.label}</span>
+              {o.on && <Glyph name="check" size={15} />}
+            </button>
+          ))}
+        </div>
+        <button type="button" className="os-sheet__btn os-sheet__btn--cancel" onClick={() => { sfxTap(); onCancel(); }}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
 export const Switch = ({ on, onChange, label }) => (
   <button type="button" role="switch" aria-checked={on} aria-label={label} className="os-switch" onClick={() => { sfxTap(); onChange(!on); }} />
 );
@@ -116,10 +149,11 @@ export const Empty = ({ glyph = 'dots', title, line }) => (
 
 /**
  * Pick one guest, as a grouped list with a check mark. A search field shows
- * once the list is long. `disabled` greys a row but keeps it, so a Doctor sees
+ * once the list is long. Pass `traits` (ctx.traits) to show each guest's
+ * drawn photo and their look, so a choice can be made from across the room. `disabled` greys a row but keeps it, so a Doctor sees
  * *why* they can't pick someone.
  */
-export function GuestPicker({ guests, value, onPick, disabled = () => false, note = () => null, dark = true, emptyLine = 'Nobody to choose.' }) {
+export function GuestPicker({ guests, value, onPick, disabled = () => false, note = () => null, dark = true, emptyLine = 'Nobody to choose.', traits = null }) {
   const [q, setQ] = useState('');
   const shown = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -140,7 +174,8 @@ export function GuestPicker({ guests, value, onPick, disabled = () => false, not
           <Cell
             key={g.pid}
             title={g.name}
-            sub={note(g) ?? (g.table ? `Table ${g.table}` : null)}
+            icon={traits ? <Face traits={traits} pid={g.pid} size={36} /> : undefined}
+            sub={note(g) ?? (traits ? lookLine(traits[g.pid]) : null) ?? (g.table ? `Table ${g.table}` : null)}
             on={value === g.pid}
             disabled={disabled(g)}
             onClick={() => onPick(g.pid)}

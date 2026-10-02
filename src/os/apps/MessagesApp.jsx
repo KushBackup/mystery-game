@@ -7,18 +7,18 @@ import Glyph from '../icons/Glyph';
 import AppIcon from '../icons/AppIcon';
 import { Avatar } from './ContactsApp';
 import { sendToChannel } from '../../firebase/game';
-import { deliveryLine } from '../../data/killersCopy';
 import { useSeen, markSeen } from '../seen';
 import { sfxSent } from '../sfx';
-import { photoSource, hhmm } from '../words';
-import { threadsFor } from '../threads';
+import { hhmm } from '../words';
+import { threadsFor, preview, systemText } from '../threads';
 
 /**
  * Messages: the group chat everyone is in, plus the threads nobody chose.
  *
  *   The Room   every guest. The living post; ghosts can only read.
  *   Spirits    ghosts and the living Medium.
- *   DEEP BLUE  the app talking to you: your role, your results, your photos.
+ *   DEEP BLUE  the app talking to you: your results, your photos, and its
+ *              own remarks each night, morning and vote (voice.js).
  *   Unknown    whispers from the dead, and what you saw on watch.
  *
  * The channel lists come from the shell's subscriptions (PhoneOS), never a
@@ -62,16 +62,6 @@ export default function MessagesApp({ ctx, onClose, thread: initial }) {
       <p className="os-section__foot px-6 mt-2">Say it in The Room, or say it out loud. Killers read The Room too.</p>
     </AppFrame>
   );
-}
-
-function preview(id, m, ctx) {
-  if (id === 'room' || id === 'spirits') return `${m.pid === ctx.me.pid ? 'You' : m.name}: ${m.text}`;
-  return systemText(m, ctx);
-}
-
-function systemText(d, ctx) {
-  if (d.kind === 'fact') return `New photo · ${photoSource(d)}. Open Gallery.`;
-  return deliveryLine(d, ctx.nameOf);
 }
 
 /**
@@ -192,7 +182,7 @@ function SystemThread({ list, ctx }) {
           <React.Fragment key={d.id}>
             {day && <p className="os-stamp-time">DAY {d.cycle}</p>}
             <div className="os-bubble-row">
-              <div className={`os-bubble ${alert ? 'os-bubble--alert' : 'os-bubble--sys'}`}>
+              <div className={`os-bubble ${alert ? 'os-bubble--alert' : d.kind === 'voice' ? 'os-bubble--voice' : 'os-bubble--sys'}`}>
                 {systemText(d, ctx)}
                 {d.kind === 'fact' && (
                   <button type="button" className="os-btn os-btn--sm mt-2" onClick={() => ctx.open('gallery')}>Open Gallery</button>

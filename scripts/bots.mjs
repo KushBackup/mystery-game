@@ -24,10 +24,12 @@ import {
 } from 'firebase/auth';
 import {
   initializeFirestore, connectFirestoreEmulator, memoryLocalCache, doc, collection, getDoc, getDocs, setDoc, updateDoc,
-  onSnapshot, query, where,
+  onSnapshot, query, where, serverTimestamp,
 } from 'firebase/firestore';
 import { TRAITS } from '../src/data/traits.js';
-import { PACKS, DEFAULT_PACK_ID } from '../src/data/packs/index.js';
+import { PACKS, DEFAULT_PACK_ID, dayKit } from '../src/data/packs/index.js';
+import { STEPS, checksOf, guessHits, wordForms, assignDrawings, spoils } from '../src/lib/engine/minigames.js';
+import { encode } from '../src/os/game/strokes.js';
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, a, i, arr) => {
@@ -142,6 +144,65 @@ async function play(bot, gid, game) {
   }
 }
 
+// --- The word and drawing days --------------------------------------------------------
+
+const CLUE_WORDS = ['sunny', 'local', 'tasty', 'loud', 'night', 'summer', 'party', 'cheap', 'classic', 'goan', 'salty', 'sweet', 'quick', 'old'];
+
+async function myDayWord(bot, gid, game) {
+  const d = await getDoc(G(bot, gid, 'inbox', `${game.cycle}-day-${bot.pid}`)).catch(() => null);
+  return d?.exists() ? d.data() : null;
+}
+
+/**
+ * The day's game for one bot, in two stages, like the steps on a phone:
+ * stage 0 posts (a clue, or a drawing), stage 1 reacts (picks, or guesses).
+ * Refusals are expected (a ghost can't post, the rule checks already posted
+ * this bot's clue) and are swallowed.
+ */
+async function playDay(bot, gid, game, stage) {
+  await readSelf(bot, gid);
+  if (!['alive', 'ghost'].includes(bot.status)) return;
+  const c = game.cycle;
+  const quiet = (p) => p.catch((e) => { if (e.code !== 'permission-denied') throw e; });
+  if (Math.random() < 0.08) return; // some guests never play
+  if (game.minigame === 'word') {
+    if (stage === 0 && bot.status === 'alive') {
+      const mine = await myDayWord(bot, gid, game);
+      const clue = CLUE_WORDS.filter((w) => !spoils(w, mine?.word ?? ''))[Math.floor(Math.random() * 10)] ?? 'hmm';
+      await quiet(setDoc(G(bot, gid, 'clues', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, clue, at: serverTimestamp() }));
+    }
+    if (stage === 1) {
+      const wall = (await getDocs(query(collection(bot.db, 'games', gid, 'clues'), where('cycle', '==', c)))).docs.map((d) => d.data().pid).filter((p) => p !== bot.pid);
+      const picks = wall.sort(() => Math.random() - 0.5).slice(0, 3);
+      await quiet(setDoc(G(bot, gid, 'picks', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, picks, at: Date.now() }));
+    }
+    return;
+  }
+  if (game.minigame === 'draw') {
+    if (stage === 0 && bot.status === 'alive') {
+      const mine = await myDayWord(bot, gid, game);
+      if (!mine?.word) return;
+      const pts = Array.from({ length: 8 }, (_, i) => [20 + i * 25, 60 + Math.floor(Math.random() * 120)]);
+      await quiet(setDoc(G(bot, gid, 'drawings', `${c}_${bot.pid}`), {
+        pid: bot.pid, cycle: c, strokes: encode([{ ink: 0, points: pts }]), checks: checksOf(mine.word, `${c}:${bot.pid}`), at: serverTimestamp(),
+      }));
+    }
+    if (stage === 1) {
+      const drawings = (await getDocs(query(collection(bot.db, 'games', gid, 'drawings'), where('cycle', '==', c)))).docs.map((d) => d.data());
+      const byPid = Object.fromEntries(drawings.map((d) => [d.pid, d]));
+      const mine = assignDrawings(Object.keys(byPid), bot.pid, `${game.courseSeed}:${c}`);
+      const bank = dayKit(PACKS[game.packId] ?? PACKS[DEFAULT_PACK_ID]).drawWords.flatMap(wordForms);
+      const answers = {};
+      for (const drawer of mine) {
+        // A bot "recognises" half the drawings, by trying the bank against the fingerprint.
+        const hit = Math.random() < 0.5 ? bank.find((w) => guessHits(w, byPid[drawer].checks, `${c}:${drawer}`)) : null;
+        answers[drawer] = { text: hit ?? 'potato', ms: 1000 + Math.floor(Math.random() * 13000) };
+      }
+      await quiet(setDoc(G(bot, gid, 'guesses', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, answers, at: Date.now() }));
+    }
+  }
+}
+
 async function vote(bot, gid, game) {
   await readSelf(bot, gid);
   const voting = game.phase === 'endgame' ? ['alive', 'ghost'] : ['alive'];
@@ -188,7 +249,8 @@ async function securityChecks(bots, gid) {
 
   await expectDenied('faithful reads another guest\'s role', () => getDoc(G(faithful, gid, 'roles', other.pid)), results);
   await expectAllowed('faithful reads own role', () => getDoc(G(faithful, gid, 'roles', faithful.pid)), results);
-  await expectDenied('faithful reads another guest\'s traits', () => getDoc(G(faithful, gid, 'traits', other.pid)), results);
+  await expectAllowed('faithful reads another guest\'s traits (public: Contacts)', () => getDoc(G(faithful, gid, 'traits', other.pid)), results);
+  await expectDenied('faithful edits another guest\'s traits', () => setDoc(G(faithful, gid, 'traits', other.pid), faithful.traits), results);
   await expectDenied('faithful lists the killers', () => getDocs(collection(faithful.db, 'games', gid, 'killers')), results);
   await expectDenied('faithful reads the den', () => getDocs(collection(faithful.db, 'games', gid, 'den')), results);
   await expectDenied('faithful reads the whole inbox', () => getDocs(collection(faithful.db, 'games', gid, 'inbox')), results);
@@ -202,10 +264,51 @@ async function securityChecks(bots, gid) {
   await expectDenied('faithful rewrites their traits after the deal', () => setDoc(G(faithful, gid, 'traits', faithful.pid), faithful.traits), results);
   await expectDenied('faithful posts a score outside the run', () => setDoc(G(faithful, gid, 'scores', `0_${faithful.pid}`), { pid: faithful.pid, cycle: 0, best: 99, runs: 1, at: 1 }), results);
   await expectDenied('faithful reads another guest\'s score', () => getDoc(G(faithful, gid, 'scores', `1_${other.pid}`)), results);
+  await expectDenied('faithful posts a clue outside the day game', () => setDoc(G(faithful, gid, 'clues', `0_${faithful.pid}`), { pid: faithful.pid, cycle: 0, clue: 'x', at: 1 }), results);
+  await expectDenied('faithful posts a drawing outside the day game', () => setDoc(G(faithful, gid, 'drawings', `0_${faithful.pid}`), { pid: faithful.pid, cycle: 0, strokes: '', checks: [], at: 1 }), results);
   if (killer) {
     await expectAllowed('killer lists the killers', () => getDocs(collection(killer.db, 'games', gid, 'killers')), results);
     await expectDenied('killer reads a guest\'s role', () => getDoc(G(killer, gid, 'roles', faithful.pid)), results);
   }
+  return results;
+}
+
+/** Rule checks that need a word day open: one clue each, picks and words private, ghosts silent. */
+async function wordChecks(bots, gid, game) {
+  const results = [];
+  const a = bots.find((b) => b.status === 'alive');
+  const b = bots.find((x) => x !== a && x.status === 'alive');
+  const ghost = bots.find((x) => x.status === 'ghost');
+  const c = game.cycle;
+  const clue = (bot, pid, text) => setDoc(G(bot, gid, 'clues', `${c}_${pid}`), { pid, cycle: c, clue: text, at: serverTimestamp() });
+  await expectAllowed('guest posts a clue on a word day', () => clue(a, a.pid, 'sunny'), results);
+  await expectDenied('guest edits their clue after posting', () => clue(a, a.pid, 'cloudy'), results);
+  await expectDenied('guest posts a clue for someone else', () => clue(a, b.pid, 'rainy'), results);
+  await expectDenied('guest posts a 40-letter clue', () => clue(b, b.pid, 'x'.repeat(40)), results);
+  await expectAllowed('anyone reads the wall', () => getDocs(query(collection(b.db, 'games', gid, 'clues'), where('cycle', '==', c))), results);
+  await expectAllowed('guest saves their picks', () => setDoc(G(a, gid, 'picks', `${c}_${a.pid}`), { pid: a.pid, cycle: c, picks: [], at: 1 }), results);
+  await expectDenied('guest reads another guest\'s picks', () => getDoc(G(b, gid, 'picks', `${c}_${a.pid}`)), results);
+  await expectDenied('guest reads another guest\'s word', () => getDoc(G(b, gid, 'inbox', `${c}-day-${a.pid}`)), results);
+  await expectAllowed('guest reads their own word', () => getDoc(G(b, gid, 'inbox', `${c}-day-${b.pid}`)), results);
+  await expectDenied('guest posts a drawing on a word day', () => setDoc(G(b, gid, 'drawings', `${c}_${b.pid}`), { pid: b.pid, cycle: c, strokes: '0', checks: [], at: 1 }), results);
+  if (ghost) await expectDenied('ghost posts a clue', () => clue(ghost, ghost.pid, 'boo'), results);
+  return results;
+}
+
+/** Rule checks that need a drawing day open. */
+async function drawChecks(bots, gid, game) {
+  const results = [];
+  const a = bots.find((b) => b.status === 'alive');
+  const b = bots.find((x) => x !== a && x.status === 'alive');
+  const c = game.cycle;
+  const draw = (bot, pid, strokes) => setDoc(G(bot, gid, 'drawings', `${c}_${pid}`), { pid, cycle: c, strokes, checks: ['abc'], at: serverTimestamp() });
+  await expectAllowed('guest saves a drawing', () => draw(a, a.pid, '0000011112222'), results);
+  await expectAllowed('guest redraws before the end', () => draw(a, a.pid, '0000011112222'), results);
+  await expectDenied('guest draws on someone else\'s drawing', () => draw(a, b.pid, '0'), results);
+  await expectDenied('guest saves an oversized drawing', () => draw(b, b.pid, '0'.repeat(31000)), results);
+  await expectAllowed('guest saves guesses', () => setDoc(G(a, gid, 'guesses', `${c}_${a.pid}`), { pid: a.pid, cycle: c, answers: {}, at: 1 }), results);
+  await expectDenied('guest reads another guest\'s guesses', () => getDoc(G(b, gid, 'guesses', `${c}_${a.pid}`)), results);
+  await expectDenied('guest posts a clue on a drawing day', () => setDoc(G(b, gid, 'clues', `${c}_${b.pid}`), { pid: b.pid, cycle: c, clue: 'x', at: serverTimestamp() }), results);
   return results;
 }
 
@@ -253,7 +356,7 @@ async function selftest(n) {
   const log = [];
   let guard = 0;
   let late = null;
-  let ranChecks = false;
+  const ranChecks = new Set();
   for (;;) {
     if (guard++ > 140) throw new Error('game did not finish in 140 steps');
     const g = await game();
@@ -265,12 +368,17 @@ async function selftest(n) {
       await Promise.all(bots.map((b) => answerRecruit(b, gid, g)));
     } else if (g.phase === 'game') {
       await Promise.all(bots.map((b) => readSelf(b, gid)));
-      if (!ranChecks) {
-        ranChecks = true;
-        const { results } = await runChecks(bots, gid, g);
-        security.push(...results);
+      const kind = g.minigame ?? 'run';
+      // Each game's checks once; the word checks again once there is a ghost to test.
+      const checkKey = kind === 'word' && bots.some((b) => b.status === 'ghost') ? 'word+ghost' : kind;
+      if (!ranChecks.has(checkKey)) {
+        ranChecks.add(checkKey);
+        if (kind === 'word') security.push(...await wordChecks(bots, gid, g));
+        else if (kind === 'draw') security.push(...await drawChecks(bots, gid, g));
+        else security.push(...(await runChecks(bots, gid, g)).results);
       }
-      await Promise.all(bots.map((b) => play(b, gid, g)));
+      if (kind === 'run') await Promise.all(bots.map((b) => play(b, gid, g)));
+      else for (const stage of [0, 1]) await Promise.all(bots.map((b) => playDay(b, gid, g, stage)));
     } else if (['roundtable', 'revote', 'endgame'].includes(g.phase)) {
       await Promise.all(bots.map((b) => vote(b, gid, g)));
     } else if (g.phase === 'investigation' && g.cycle === 2 && !late) {
@@ -288,11 +396,16 @@ async function selftest(n) {
 
     await host.advance(gid);
     const after = await game();
+    // The finale's account of every night must never reach a phone before there is a winner.
+    if ((after.finaleStory || after.finaleRoles) && !after.winner) log.push(`  FAIL: finale story published mid-game (${after.phase})`);
+    // Nor may the day's word (or who drew what) reach a phone before the game locks.
+    if (['alarm', 'game'].includes(after.phase) && after.dayGame?.cycle === after.cycle) log.push(`  FAIL: day ${after.cycle}'s game revealed during ${after.phase}`);
     if (after.phase === 'dawn') {
       const d = after.dawn;
       const names = (pids) => pids.map((p) => bots.find((b) => b.pid === p)?.name ?? p).join(', ') || 'none';
       const rows = after.board?.rows ?? [];
-      log.push(`day ${after.cycle}: ${d.cause === 'rig' ? `rig took ${names(d.victims)} (board shows ${d.rigged})` : d.cause === 'deep' ? `firewall on ${names([d.attempted])}; the deep took ${names(d.victims)}` : 'nobody taken'}${d.vanished.length ? `; vanished ${names(d.vanished)}` : ''}${d.recruited ? '; a recruit said yes' : ''}`);
+      const dg = after.dayGame ?? {};
+      log.push(`day ${after.cycle} [${after.board?.kind ?? '?'}${dg.word ? `: ${dg.word} / ${dg.hint}` : dg.words ? `: ${Object.keys(dg.words).length} words dealt` : ''}]: ${d.cause === 'rig' ? `rig took ${names(d.victims)} (board shows ${d.rigged})` : d.cause === 'deep' ? `firewall on ${names([d.attempted])}; the deep took ${names(d.victims)}` : 'nobody taken'}${d.vanished.length ? `; vanished ${names(d.vanished)}` : ''}${d.recruited ? '; a recruit said yes' : ''}`);
       log.push(`  board: ${rows.slice(0, 3).map((r) => `${names([r.pid])} ${r.score}`).join(', ')} … last ${rows.length ? `${names([rows.at(-1).pid])} ${rows.at(-1).score}` : '-'}; top-3 photos to ${names(after.board?.top ?? [])}`);
     }
     if (after.phase === 'revote') log.push(`  tie between ${after.tied.length}; re-vote`);
@@ -306,6 +419,7 @@ async function selftest(n) {
   const end = await game();
   console.log(log.join('\n'));
   console.log(`\nWINNER: ${end.winner}`);
+  console.log(`finale story: ${Object.keys(end.finaleStory?.nights ?? {}).length} nights recorded, ${Object.keys(end.finaleRoles ?? {}).length} roles ${end.finaleStory ? 'ok' : 'FAIL (missing)'}`);
 
   const inbox = await getDocs(collection(db, 'games', gid, 'inbox'));
   const kinds = inbox.docs.reduce((acc, d) => ({ ...acc, [d.data().kind]: (acc[d.data().kind] ?? 0) + 1 }), {});
@@ -348,7 +462,18 @@ async function join(n) {
       if (g.phase === 'game') {
         // Wait out the countdown so bot scores land inside the window, like a phone's would.
         await new Promise((r) => setTimeout(r, Math.max(0, (g.revealAt ?? 0) - Date.now()) + 3000));
-        await Promise.all(bots.map((b) => play(b, gid, g)));
+        const steps = STEPS[g.minigame];
+        if (!steps) await Promise.all(bots.map((b) => play(b, gid, g)));
+        else {
+          // Post during the first step that takes input, react in the last, like a phone.
+          const scale = Math.min(1, ((g.phaseEndsAt - (g.revealAt ?? 0)) - 2000) / steps.reduce((n, [, x]) => n + x * 1000, 0));
+          const at = (i) => (g.revealAt ?? 0) + steps.slice(0, i).reduce((n, [, x]) => n + x * 1000 * scale, 0);
+          const post = steps.length === 3 ? 1 : 0;
+          await new Promise((r) => setTimeout(r, Math.max(0, at(post) - Date.now()) + 2000 + Math.random() * 4000));
+          await Promise.all(bots.map((b) => playDay(b, gid, g, 0)));
+          await new Promise((r) => setTimeout(r, Math.max(0, at(steps.length - 1) - Date.now()) + 2000));
+          await Promise.all(bots.map((b) => playDay(b, gid, g, 1)));
+        }
       }
       if (['roundtable', 'revote', 'endgame'].includes(g.phase)) await Promise.all(bots.map((b) => vote(b, gid, g)));
     } catch (e) {

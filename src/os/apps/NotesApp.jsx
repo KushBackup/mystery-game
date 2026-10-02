@@ -3,7 +3,7 @@ import { AppFrame, Section, Group, Cell } from '../ui';
 import { useStack } from '../nav';
 import { ROLE_CARD } from '../../data/killersCopy';
 import { TRAITS } from '../../data/traits';
-import { useMyTraits, useKillerIds } from '../../hooks/useKillers';
+import { useKillerIds } from '../../hooks/useKillers';
 import { useSeen, markSeen, noteKey } from '../seen';
 
 /**
@@ -57,10 +57,10 @@ function Pad({ ctx, onBack }) {
 }
 
 function TraitsNote({ ctx, onBack }) {
-  const traits = useMyTraits(ctx.gid, ctx.me.pid);
+  const traits = ctx.traits?.[ctx.me.pid];
   return (
     <AppFrame title="My answers" onBack={onBack} backLabel="Notes" light enter="push">
-      <Section head="What I answered at the door" foot="Clues describe the killer in these terms. Killers answered too, before they knew. They can lie about the hidden ones out loud.">
+      <Section head="What I answered at the door" foot="Clues describe the killer in these terms. Killers answered too, before they knew. Every phone can read these in Contacts, so a lie has to beat the file.">
         <Group>
           {TRAITS.map((t) => (
             <Cell

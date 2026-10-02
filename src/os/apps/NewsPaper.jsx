@@ -127,7 +127,7 @@ function Masthead({ game }) {
   return (
     <header className="os-news__mast">
       <p className="os-news__kick">PANJIM EDITION · {editionLabel(game)}</p>
-      <h2 className="os-news__title">The Deep Times</h2>
+      <h2 className="os-news__title">The Goa Times</h2>
       <p className="os-news__tag">All the news that sinks</p>
     </header>
   );

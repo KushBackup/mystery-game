@@ -10,7 +10,8 @@
 import { useEffect, useState } from 'react';
 import {
   watchAuth, subscribeActive, subscribeGame, subscribeBinding, subscribePlayers, subscribeMyRole, subscribeInbox,
-  subscribeChannel, subscribeMyAction, subscribeMyVote, subscribeMyScore, subscribeMyTraits, subscribeKillers, subscribeDen, subscribeDenMeta,
+  subscribeChannel, subscribeMyAction, subscribeMyVote, subscribeMyScore, subscribeMyTraits, subscribeAllTraits, subscribeKillers, subscribeDen, subscribeDenMeta,
+  subscribeDayWall, subscribeMyPlay,
 } from '../firebase/game.js';
 import { serverNow } from '../lib/clockSkew.js';
 
@@ -52,10 +53,16 @@ export const useChannel = (gid, channel, enabled = true) =>
 export const useMyAction = (gid, cycle, pid) => useSub((cb) => subscribeMyAction(gid, cycle, pid, cb), [gid, cycle, pid]);
 export const useMyVote = (gid, ballot, pid) => useSub((cb) => subscribeMyVote(gid, ballot, pid, cb), [gid, ballot, pid]);
 export const useMyTraits = (gid, pid) => useSub((cb) => subscribeMyTraits(gid, pid, cb), [gid, pid]);
+export const useAllTraits = (gid) => useSub((cb) => subscribeAllTraits(gid, cb), [gid]);
 export const useMyScore = (gid, cycle, pid) => useSub((cb) => subscribeMyScore(gid, cycle, pid, cb), [gid, cycle, pid]);
 export const useKillerIds = (gid, isKiller) => useSub((cb) => subscribeKillers(gid, cb), [gid, isKiller || null]);
 export const useDen = (gid, cycle, isKiller) => useSub((cb) => subscribeDen(gid, cycle, cb), [gid, cycle, isKiller || null]);
-export const useDenMeta = (gid, isKiller) => useSub((cb) => subscribeDenMeta(gid, cb), [gid, isKiller || null]);
+/** The morning games: a public wall (`clues`, `drawings`) and this guest's own doc (`picks`, `guesses`). */
+export const useDayWall = (gid, name, cycle, enabled = true) =>
+  useSub((cb) => subscribeDayWall(gid, name, cycle, cb), [gid, name, cycle, enabled || null]);
+export const useMyPlay = (gid, name, cycle, pid, enabled = true) =>
+  useSub((cb) => subscribeMyPlay(gid, name, cycle, pid, cb), [gid, name, cycle, pid, enabled || null]);
+export const useDenMeta =(gid, isKiller) => useSub((cb) => subscribeDenMeta(gid, cb), [gid, isKiller || null]);
 
 /**
  * Server time, ticking every `ms` while `until` is in the future. It stops

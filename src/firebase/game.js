@@ -98,6 +98,9 @@ export const subscribeBinding = (gid, uid, cb) =>
 export const subscribePlayers = (gid, cb) => watchList('players', col(gid, 'players'), cb);
 export const subscribeMyRole = (gid, pid, cb) => watchDoc('role', sub(gid, 'roles', pid), cb);
 export const subscribeMyTraits = (gid, pid, cb) => watchDoc('traits', sub(gid, 'traits', pid), cb);
+/** Every guest's arrival answers, as { pid: answers }. Public; frozen at the deal. */
+export const subscribeAllTraits = (gid, cb) =>
+  resilient('traits', (onError) => onSnapshot(col(gid, 'traits'), (s) => cb(Object.fromEntries(s.docs.map((d) => [d.id, d.data()]))), onError));
 export const subscribeInbox = (gid, pid, cb) => watchList('inbox', query(col(gid, 'inbox'), where('to', '==', pid)), cb);
 export const subscribeMyAction = (gid, cycle, pid, cb) => watchDoc('action', sub(gid, 'actions', `${cycle}_${pid}`), cb);
 export const subscribeMyVote = (gid, ballot, pid, cb) => watchDoc('vote', sub(gid, 'votes', `${ballot}_${pid}`), cb);
@@ -122,13 +125,16 @@ export const subscribeChannel = (gid, channel, cb) =>
  * Arrive: bind this device, register the guest, store their answers. One batch,
  * so a guest never half-exists (a player with no traits can't be clued).
  */
-export async function arrive(gid, uid, { name, table, traits }) {
+export async function arrive(gid, uid, { name, traits }) {
   const batch = writeBatch(db);
   batch.set(sub(gid, 'bindings', uid), { pid: uid });
-  batch.set(sub(gid, 'players', uid), { name: name.trim().slice(0, 24), table: table ?? '', status: 'alive', joinedAt: Date.now() });
+  batch.set(sub(gid, 'players', uid), { name: name.trim().slice(0, 24), status: 'alive', joinedAt: Date.now() });
   batch.set(sub(gid, 'traits', uid), { ...traits });
   await batch.commit();
 }
+
+/** Fix one of your own answers. The rules allow it only until you have a role. */
+export const updateMyTrait = (gid, pid, trait, value) => updateDoc(sub(gid, 'traits', pid), { [trait]: value });
 
 export const submitAction = (gid, cycle, pid, action) =>
   setDoc(sub(gid, 'actions', `${cycle}_${pid}`), { ...action, pid, cycle, at: serverTimestamp() });
@@ -143,7 +149,29 @@ export const submitVote = (gid, ballot, pid, target) =>
 export const submitScore = (gid, cycle, pid, best, runs) =>
   setDoc(sub(gid, 'scores', `${cycle}_${pid}`), { pid, cycle, best, runs, at: Date.now() });
 
-export const sendToChannel = (gid, channel, pid, name, text) =>
+// --- The morning games (lib/engine/minigames.js). One doc per guest per day. -----------
+
+/** One day's docs in a public morning-game collection (`clues`, `drawings`), oldest first. */
+export const subscribeDayWall = (gid, name, cycle, cb) =>
+  watchList(name, query(col(gid, name), where('cycle', '==', cycle)), (list) =>
+    cb(list.sort((a, b) => (a.at?.toMillis?.() ?? Infinity) - (b.at?.toMillis?.() ?? Infinity))));
+/** This guest's own doc in a private one (`picks`, `guesses`). */
+export const subscribeMyPlay = (gid, name, cycle, pid, cb) => watchDoc(name, sub(gid, name, `${cycle}_${pid}`), cb);
+
+/** Post your one clue. Once: the rules refuse an edit, so the wall's order is the order they landed. */
+export const postClue = (gid, cycle, pid, clue) =>
+  setDoc(sub(gid, 'clues', `${cycle}_${pid}`), { pid, cycle, clue: clue.trim().slice(0, 20), at: serverTimestamp() });
+
+export const savePicks = (gid, cycle, pid, picks) =>
+  setDoc(sub(gid, 'picks', `${cycle}_${pid}`), { pid, cycle, picks: picks.slice(0, 3), at: Date.now() });
+
+export const saveDrawing = (gid, cycle, pid, strokes, checks) =>
+  setDoc(sub(gid, 'drawings', `${cycle}_${pid}`), { pid, cycle, strokes, checks, at: serverTimestamp() });
+
+export const saveGuesses = (gid, cycle, pid, answers) =>
+  setDoc(sub(gid, 'guesses', `${cycle}_${pid}`), { pid, cycle, answers, at: Date.now() });
+
+export const sendToChannel =(gid, channel, pid, name, text) =>
   addDoc(col(gid, channel), { pid, name, text: text.trim().slice(0, 280), at: Date.now() });
 
 export const requestLeave = (gid, pid) => updateDoc(sub(gid, 'players', pid), { leaveRequestedAt: Date.now() });

@@ -1,12 +1,31 @@
 import React, { useRef } from 'react';
 import DeepBlueGame from '../game/DeepBlueGame';
+import WordGame from '../game/WordGame';
+import DrawGame from '../game/DrawGame';
 import { NavBar } from '../ui';
 import { submitScore } from '../../firebase/game';
 import { serverNow } from '../../lib/clockSkew';
 import { GAME_GRACE_MS } from '../../lib/engine/phases.js';
 
 /**
- * DEEP BLUE, the app. During the morning run it is the real thing: the
+ * DEEP BLUE, the app: whichever game the morning plays (engine/minigames.js).
+ * On a word or drawing day it opens that game from the alarm until the game
+ * locks, then keeps its wall or its drawings up, with the answers, until the
+ * night. Any other time it is the run below: live on a run day, practice
+ * otherwise.
+ */
+export default function GameApp({ ctx, onClose }) {
+  const { game } = ctx;
+  const kind = game.minigame ?? 'run';
+  const today = ['alarm', 'game', 'game_locked'].includes(game.phase);
+  const shown = game.dayGame?.cycle === game.cycle && game.dayGame.kind === kind ? game.dayGame : null;
+  if (kind === 'word' && (today || shown)) return <WordGame ctx={ctx} onClose={onClose} dayGame={shown} />;
+  if (kind === 'draw' && (today || shown)) return <DrawGame ctx={ctx} onClose={onClose} dayGame={shown} />;
+  return <RunGame ctx={ctx} onClose={onClose} />;
+}
+
+/**
+ * The run. During the morning run it is the real thing: the
  * course is the room's shared course (the game doc's public courseSeed and
  * the day), the window opens on the room's shared instant, and a new best is
  * written straight away, so a phone that dies mid-run keeps what it had.
@@ -14,10 +33,11 @@ import { GAME_GRACE_MS } from '../../lib/engine/phases.js';
  *
  * Any other time it is practice: a different course, nothing written.
  */
-export default function GameApp({ ctx, onClose }) {
+function RunGame({ ctx, onClose }) {
   const { gid, game, me, myScore } = ctx;
-  const live = game.phase === 'game';
-  const posting = game.phase === 'game_locked';
+  const runDay = (game.minigame ?? 'run') === 'run';
+  const live = runDay && game.phase === 'game';
+  const posting = runDay && game.phase === 'game_locked';
   const bestRef = useRef({ cycle: null, best: 0, runs: 0 });
 
   const serverBest = myScore?.best ?? 0;

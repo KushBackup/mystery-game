@@ -12,12 +12,12 @@ export const ROLE_CARD = {
   killer: {
     title: 'Killer',
     line: 'You have the admin password. Each night, pick whose score sinks to the bottom, and who does the hacking.',
-    tip: 'Whoever hacks leaves clues. Take turns. Still play the run: last place is dangerous for you too.',
+    tip: 'Whoever hacks leaves clues. Take turns. Still play each morning’s game: last place is dangerous for you too.',
   },
   faithful: {
     title: 'Faithful',
     line: 'Each night, watch a guest or dig through the logs. By day, find the Killers and vote them out.',
-    tip: 'Clues describe whoever hacked. Look at shoes, tops, glasses. Top 3 in the run earn a photo.',
+    tip: 'Clues describe whoever hacked. Look at shoes, tops, glasses. The top 3 each morning earn a photo.',
   },
   doctor: {
     title: 'Doctor',
@@ -37,12 +37,12 @@ export const ROLE_CARD = {
 };
 
 /** The one line at the top of the screen. `ctx` = { phase, role, status, cycle, ... } */
-export function nowLine({ phase, role, status, isRecruitTarget, hasActed }) {
+export function nowLine({ phase, role, status, isRecruitTarget, hasActed, minigame = 'run' }) {
   if (status === 'vanished') return 'You left the game. Thanks for playing.';
   if (status === 'ghost') {
     if (phase === 'night') return hasActed ? 'Whisper sent. Wait for dawn.' : 'Send one word to one living guest.';
     if (phase === 'endgame') return 'Final vote. The dead vote too.';
-    if (phase === 'game') return 'Ghosts can still play. Your score can’t hurt you now.';
+    if (phase === 'game') return minigame === 'word' ? 'Ghosts watch the wall, and pick the best clues.' : 'Ghosts can still play. Your score can’t hurt you now.';
     return 'You are a ghost. Talk to the Medium in Spirits. Vote in the Endgame.';
   }
   switch (phase) {
@@ -60,9 +60,10 @@ export function nowLine({ phase, role, status, isRecruitTarget, hasActed }) {
     case 'recruit':
       return isRecruitTarget ? 'The Killers want you. Decide.' : 'The night is long. Wait.';
     case 'alarm':
-      return 'Wake up. The run starts in a moment.';
+      return GAME_LINE[minigame]?.alarm ?? GAME_LINE.run.alarm;
     case 'game':
-      return 'Tap to swim. Your best run counts. Don’t come last.';
+      if (minigame === 'word') return role === 'killer' ? 'You only have the hint. Read the wall. Blend in.' : GAME_LINE.word.game;
+      return GAME_LINE[minigame]?.game ?? GAME_LINE.run.game;
     case 'game_locked':
       return 'Time. The board is being posted…';
     case 'dawn':
@@ -84,6 +85,13 @@ export function nowLine({ phase, role, status, isRecruitTarget, hasActed }) {
   }
 }
 
+/** The morning, by the day's game (engine/minigames.js). */
+const GAME_LINE = {
+  run: { alarm: 'Wake up. The run starts in a moment.', game: 'Tap to swim. Your best run counts. Don’t come last.' },
+  word: { alarm: 'Wake up. Today’s game is WORD.', game: 'Post one word that fits. Don’t say the word itself.' },
+  draw: { alarm: 'Wake up. Today’s game is SKETCH.', game: 'Draw your word. Then guess everyone else’s, fast.' },
+};
+
 export const PHASE_LABEL = {
   lobby: 'Arrivals',
   casting: 'Casting',
@@ -92,8 +100,8 @@ export const PHASE_LABEL = {
   recruit: 'Night',
   recruit_locked: 'Night',
   alarm: 'Alarm',
-  game: 'The run',
-  game_locked: 'The run',
+  game: 'Morning game',
+  game_locked: 'Morning game',
   dawn: 'Board',
   investigation: 'Investigate',
   roundtable: 'Round table',

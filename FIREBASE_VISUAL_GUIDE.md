@@ -9,21 +9,26 @@ The new game uses authentication and locked-down rules ([firestore.rules](firest
 
 | Path under `games/{gid}/` | Contents | Written by | Read by |
 |---|---|---|---|
-| *(the game doc)* | `phase, cycle, ballot, tied, phaseEndsAt, revealAt, config, courseSeed, dawn (victims, attempted, cause, taken, rigged), board (cycle, rows, ghosts, top), news (every dawn and verdict), banish, winner, finaleRoles, endgameRound, autopilot` | host | everyone |
+| *(the game doc)* | `phase, cycle, ballot, tied, phaseEndsAt, revealAt, config (durations incl. `game_word`/`game_draw`, cycles, ratios, `games`: the morning rotation), courseSeed, minigame (today's morning game: word, draw or run; set when the alarm rings), dayGame (after the game locks: `{kind, cycle, word, hint}` or `{kind, cycle, words: {pid: word}}`), dawn (victims, attempted, cause, taken, rigged), board (cycle, kind, rows, ghosts, top), news (every dawn and verdict), banish, winner, finaleRoles, finaleStory (nights, hands: written only with a winner), endgameRound, autopilot` | host | everyone |
 | `bindings/{uid}` | `{pid}` (auth uid → game identity) | self on arrival, host on relink | self, host |
 | `players/{pid}` | `name, table, status (alive/ghost/vanished), cause, revealedRole, leaveRequestedAt` | self (only name, table and leave), host | everyone |
-| `traits/{pid}` | the six arrival answers, frozen once dealt | self | self, host |
+| `traits/{pid}` | the six arrival answers, frozen once dealt (a guest can fix their own until they have a role) | self | everyone (public since 2026-10-02: every phone's Contacts card shows them) |
 | `roles/{pid}` | `role, team, checksLeft` | host | self, host |
 | `killers/{pid}` | membership marker | host | Killers, host |
 | `den/{cycle}_{pid}`, `den/meta` | a Killer's night pick (victim, hand, rig, frame, recruit); tonight's den status | that Killer, only during `night` / host | Killers, host |
 | `denChat/*` | Killer chat | Killers | Killers, host |
 | `actions/{cycle}_{pid}` | one night action (watch, scour, protect, trace, seance, whisper, recruitAnswer) | self, only during `night` / `recruit` | self, host |
 | `scores/{cycle}_{pid}` | `{pid, cycle, best, runs, at}`: the day's best run, an int 0–999 that can only go up | self, only during `game` | self, host (private until the board) |
+| `clues/{cycle}_{pid}` | `{pid, cycle, clue, at}`: one word on the Word game's wall. Created once, never edited, so its order is the order it landed | self, alive, only during `game` on a Word day | everyone |
+| `picks/{cycle}_{pid}` | `{pid, cycle, picks: [≤3 pids], at}`: the clues you thought fit best | self (alive or ghost), Word day `game` only | self, host |
+| `drawings/{cycle}_{pid}` | `{pid, cycle, strokes (≤30 KB, see os/game/strokes.js), checks (word fingerprints), at}` | self, alive, Sketch day `game` only | everyone |
+| `guesses/{cycle}_{pid}` | `{pid, cycle, answers: {drawerPid: {text, ms}}, at}`; the host re-checks every text | self (alive or ghost), Sketch day `game` only | self, host |
 | `votes/{ballot}_{pid}` | `{target, ballot}` | self, only on the open ballot | self, host |
 | `inbox/{cycle}-{step}-{i}` | fragments (`via`: search, watch, ghost, top, seance), watch results, traces, séances, whispers, recruit offers. Steps: `night` (recruit offer only), `morning` (everything else) | host | the addressee only (query with `where('to','==',pid)`) |
+| `inbox/{cycle}-day-{pid}` | the morning game's card, written when the alarm rings: Word `{kind:'word', word, hint}` for the Faithful team, `{kind:'word', hint}` for Killers; Sketch `{kind:'draw', word}` | host | the addressee only |
 | `chat/*`, `mediumChat/*` | room chat (living players); Spirits (ghosts and the Medium) | as stated | as stated |
 | `presence/{pid}` | heartbeat, and the clock-skew stamp | self | self, host |
-| `secret/engine`, `resolutions/*`, `hostLease/current` | seed, hands, plant and recruit state, `pendingMorning` (the stashed night); idempotency markers; host clock stamp | host | host |
+| `secret/engine`, `resolutions/*`, `hostLease/current` | seed, hands, `nights` (each night as it really happened: victim or recruit, hand, rig, frame, protected; copied to `finaleStory` at the end), plant and recruit state, `pendingMorning` (the stashed night), `day.{cycle}` (the morning game's answers), `wordsUsed`, `drawUsed`; idempotency markers; host clock stamp | host | host |
 
 
 ## 🗺️ Architecture Overview

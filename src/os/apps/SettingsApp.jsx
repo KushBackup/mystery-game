@@ -35,7 +35,6 @@ export default function SettingsApp({ ctx, onClose }) {
       <Section head="This phone" foot="If your phone dies, show this code to the host from a new one.">
         <Group>
           <Cell title="Name" value={me.name} />
-          <Cell title="Table" value={me.table || '—'} />
           <Cell title="Device code" value={<span className="os-arcade text-[14px]">{(uid ?? me.pid).slice(0, 6).toUpperCase()}</span>} />
         </Group>
       </Section>

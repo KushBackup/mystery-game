@@ -34,7 +34,7 @@ export default function VoteApp({ ctx, onClose }) {
             <p className="text-[22px] leading-tight mt-1 text-os-ink">Who gets logged out?</p>
           </div>
           <Section foot={myVote?.target ? `Your vote: ${nameOf(myVote.target)}. Tap another name to change it.` : 'Nobody chosen yet. Not voting wastes your voice.'}>
-            <GuestPicker guests={targets} value={myVote?.target} onPick={vote} dark={false} />
+            <GuestPicker guests={targets} value={myVote?.target} onPick={vote} dark={false} traits={ctx.traits} />
           </Section>
           <div className="h-8" />
         </>

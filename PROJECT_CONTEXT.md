@@ -16,23 +16,29 @@
 **The skin: DEEP BLUE (2026-09-30).** Every guest's phone becomes a retro iPhone-era (iOS 6) home screen in Helvetica-style type, with apps for each part of the game: Messages (the group chat), DEEP BLUE (the game), News, Photos, Clock, Contacts, Notes, Night and Settings. The story: everyone in the room has a viral app called DEEP BLUE. Every morning it rings, everyone plays a Flappy-style run as a little pixel whale, and the lowest score is "taken by the deep". The Killers have the admin password, and they murder by rigging a score to the bottom. DEEP BLUE is fictional on purpose; see [memory.md](memory.md).
 
 **The evening:**
-1. **Arrival.** Scan in, give a first name and table, and answer six one-tap trait questions: top colour, glasses, footwear, first drink, birthday, siblings.
+1. **Arrival.** Scan in, give a first name and table, and answer six one-tap trait questions: top colour, glasses, footwear, first drink, birthday, siblings. **The answers are public** (since 2026-10-02): every guest's Contacts card shows them, with a photo drawn from them. A guest can fix their own until the roles are dealt; after that the file is locked. The file is only what someone *said*, so on every card a player can mark an answer as "doesn't match" (an option the form lacked, a jacket taken off, a lie) — kept deliberately simple: no suspect ratings, no notes, no separate views, nothing else to manage.
 2. **Casting.** The host deals roles to whoever is present: 3 Killers from 12 to 50 guests, plus a Doctor, a Detective, a Medium and the Faithful.
 3. **Three to five days**, each about 21 minutes:
    - **Night (3 min, the Night app).** Killers pick whose score to sink, *the hand* who hacks, and whether to rig it to zero or just below last place; once per game they can frame someone. The Faithful watch a guest or dig through the logs. The Doctor puts a firewall on one guest. The Detective traces two guests' phones: did either one do tonight's hacking? The Medium summons a ghost: their true clue, and whether they were a Killer. Ghosts whisper one word.
    - **Alarm (20 s).** Every phone rings at once. Slide to stop.
-   - **The run (90 s).** Everyone plays the same course. Your best run counts. Ghosts can play too, on their own board.
+   - **The morning game (2026-10-02).** One of three, in turn: **Word** on days 1 and 4, **Sketch** on days 2 and 5, **the Run** on day 3. Every game gives each guest a score, and the board below works the same way whichever game produced it. The host can switch the rotation to "Run every day" from the console, at setup or mid-game, and the change applies from the next alarm.
+     - **Word (about 2 min).** The Faithful see a secret word (e.g. *Prawn*). The Killers see only its category (*Seafood*). Each living guest posts one word that fits the word without saying it. The clues stream onto a public, numbered wall in the order they land, so a Killer can wait and read the others before posting, but everyone can see who waited. Then everyone picks the three clues that fit best. A guest scores 100 for a fair clue plus 50 for each pick it gets; a clue that gives the word away scores 0. After the board, the wall stays up with the word revealed until the vote. Ghosts can't post a clue, but they pick.
+     - **Sketch (about 2½ min).** Each living guest gets their own secret word and draws it with a finger (45 s). Then each phone shows about six other guests' drawings, one at a time with 15 s each, and the guest types a guess. A right guess scores 50 plus up to 50 for speed; a drawer scores 30 each time their drawing is guessed. After the board, everyone's drawings stay up with their words. Ghosts don't draw, but they guess.
+     - **The Run (90 s).** Everyone plays the same course. Your best run counts. Ghosts can play too, on their own board.
    - **The board (dawn).** A synced leaderboard reveal: the podium, then last place glitches to TAKEN. If the Killers' rig landed, their target is taken, whatever they really scored. If a firewall blocked it, the deep takes the lowest honest score instead, and that can be a Killer. The top 3 each earn a clue photo, and everyone else's clues arrive with the board.
-   - **Investigation (8 min).** Photos, Messages, and real conversation about shoes, tops, glasses and drinks.
+   - **Investigation (8 min).** Photos, Messages, Contacts, and real conversation about shoes, tops, glasses and drinks. A clue photo names a group ("a clear spirit"), Contacts shows who answered into it, and the talk is about whether the file is true.
    - **Round Table.** Vote to banish, with one re-vote if it ties. A synced reveal shows Killer or Faithful and who voted for whom.
 4. **Endgame.** Two votes; Ghosts vote too. Any Killer left alive wins it for the Killers.
+5. **The finale (2026-10-02).** Every phone plays the special edition together: who won, the Killers' faces, then *how it happened*, night by night (who the Killers chose, who hacked and what the photos described, the rig, any frame, each firewall, each morning and each vote), and every guest's secret role. This is the murder-mystery payoff the old reveal deck used to give.
+
+**The world around the game (2026-10-02).** Between the beats the phone keeps the story going without asking anyone to read much: DEEP BLUE talks to each guest in its Messages thread (one line at nightfall, after each board, after each verdict); a Weather app shows the storm over Panjim building day by day; every guest has the same drawn face on the board, the poll and the finale; the board tells you your own place; and Photos sums each night's clues into a sketch of that night's hand.
 
 **Live roster:**
 - A late arrival is dealt in straight away, always on the Faithful team.
 - A guest who leaves vanishes at the next dawn, and their role stays secret.
 - If a vanished Killer leaves the team short, the Killers recruit. A guest who refuses is murdered.
 
-**Balance:** tuned with `npm run sim`. With the morning rules, Trace and Séance, the Faithful win 47–54% of simulated games from 20 to 45 guests.
+**Balance:** tuned with `npm run sim`. With the morning rules, Trace and Séance, the Faithful win 47–54% of simulated games from 20 to 45 guests. The sim does not model the Word game. Word gives the Faithful a new signal: who doesn't know the word. Watch the first events, and if the Faithful run away with it, the lever is the hints (make them broader).
 
 The technical design is in [TECHNICAL_DOCUMENTATION.md](TECHNICAL_DOCUMENTATION.md).
 

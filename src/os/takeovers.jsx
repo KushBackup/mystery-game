@@ -9,7 +9,8 @@ import { Btn } from './ui';
 import { useSyncedReveal, useKillerIds, useMyAction } from '../hooks/useKillers';
 import { submitAction } from '../firebase/game';
 import { ROLE_CARD } from '../data/killersCopy';
-import { alarmLine, narrate } from '../data/packs/index.js';
+import { alarmLine, narrate, dayKit } from '../data/packs/index.js';
+import { weatherLine } from './weather';
 import { startAlarm, stopAlarm, sfxSting, sfxPing, sfxDeny, sfxNightfall, sfxDaybreak, sfxStatic } from './sfx';
 
 /**
@@ -28,6 +29,7 @@ export function AlarmScreen({ game, pack, onStop }) {
   const ringing = phase === 'show';
   const clock = useWorldClock(game);
   const [snoozed, setSnoozed] = useState(0);
+  const today = dayKit(pack).dayGames[game.minigame ?? 'run'];
 
   useEffect(() => {
     if (!ringing) return undefined;
@@ -44,12 +46,14 @@ export function AlarmScreen({ game, pack, onStop }) {
         </div>
         <p className="text-[84px] leading-none font-extralight tracking-tight tabular-nums mt-6 text-white os-pixel-shadow">{clock}</p>
         <p className="os-label text-[12px] mt-3 text-os-chrome">ALARM · DAY {game.cycle}</p>
+        {weatherLine(pack, game) && <p className="text-[14px] mt-1 text-os-chrome">{weatherLine(pack, game)}</p>}
         <p className="text-[21px] leading-snug mt-4 text-white max-w-[300px] os-balance">{ringing ? alarmLine(pack, game.cycle) : 'Wake up…'}</p>
+        {ringing && today?.alarm && <p className="text-[16px] font-bold leading-snug mt-3 text-os-foam max-w-[300px] os-balance">{today.alarm}</p>}
       </div>
       <div className="relative px-4 pb-5 pt-3 bg-gradient-to-b from-transparent to-black">
         {ringing && (
           <div className="text-center mb-4">
-            {/* The joke teaches the rule: there is no getting out of the run. */}
+            {/* The joke teaches the rule: there is no getting out of the morning game. */}
             <button
               key={snoozed}
               type="button"
@@ -61,7 +65,7 @@ export function AlarmScreen({ game, pack, onStop }) {
           </div>
         )}
         <SlideToUnlock label="slide to stop" tone="red" glyph="cross" onDone={() => { stopAlarm(); onStop(); }} />
-        <p className="os-label text-[11px] text-os-chrome text-center mt-3">YOUR RUN STARTS WHEN THE ALARM ENDS</p>
+        <p className="os-label text-[11px] text-os-chrome text-center mt-3">{(today?.title ?? 'THE RUN')} STARTS WHEN THE ALARM ENDS</p>
       </div>
     </div>
   );
@@ -71,6 +75,9 @@ export function AlarmScreen({ game, pack, onStop }) {
  * Casting: the role arrives as a text from DEEP BLUE. The lock-screen beat
  * before it holds every phone on the same second, so a table flips together.
  */
+/** The emblem on the role text: private to this screen, never on the home screen. */
+const ROLE_GLYPH = { killer: 'skull', faithful: 'heart', doctor: 'shield', detective: 'eye', medium: 'ghost' };
+
 export function RoleText({ game, gid, role, nameOf, onDone }) {
   const phase = useSyncedReveal(game.revealAt);
   const shown = phase === 'show' && Boolean(role);
@@ -105,6 +112,7 @@ export function RoleText({ game, gid, role, nameOf, onDone }) {
         <div className="os-bubble-row os-rise"><div className="os-bubble">Welcome to DEEP BLUE. Read this alone.</div></div>
         <div className="os-bubble-row os-rise" style={{ animationDelay: '500ms' }}>
           <div className={`os-bubble ${isKiller ? 'os-bubble--alert' : ''}`} style={{ maxWidth: '88%' }}>
+            <span className={`os-role-emblem os-role-emblem--${role.role}`} aria-hidden="true"><Glyph name={ROLE_GLYPH[role.role] ?? 'heart'} size={30} /></span>
             <p className="os-label text-[12px] opacity-80">YOU ARE</p>
             <p className="os-arcade text-[29px] leading-tight my-2">{card.title.toUpperCase()}</p>
             <p className="text-[17px] leading-snug">{card.line}</p>
