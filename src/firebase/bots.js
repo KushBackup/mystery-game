@@ -186,6 +186,24 @@ export async function vote(bot, gid, game) {
   await setDoc(G(bot, gid, 'votes', `${game.ballot}_${bot.pid}`), { target: rnd(targets), pid: bot.pid, ballot: game.ballot });
 }
 
+/**
+ * Last words: a bot the board took this morning posts one of today's true
+ * clue photos to the room, most of the time (firestore.rules lastWords).
+ * Only a Faithful bot: a Killer the deep took has no reason to help.
+ */
+export async function lastWords(bot, gid, game) {
+  const me = (await getDoc(G(bot, gid, 'players', bot.pid))).data();
+  if (me?.status !== 'ghost' || !['murdered', 'deep'].includes(me.cause) || me.diedCycle !== game.cycle) return;
+  if (bot.role === 'killer' || Math.random() > 0.7) return;
+  const mine = await getDocs(query(collection(bot.db, 'games', gid, 'inbox'), where('to', '==', bot.pid)));
+  const today = mine.docs.map((d) => ({ id: d.id, ...d.data() })).filter((d) => d.kind === 'fact' && d.via === 'ghost' && d.fact && d.cycle === game.cycle);
+  if (!today.length) return;
+  const clue = rnd(today);
+  await setDoc(G(bot, gid, 'chat', `last_${bot.pid}`), {
+    kind: 'last', pid: bot.pid, name: bot.name, inboxId: clue.id, fact: { trait: clue.fact.trait, group: clue.fact.group }, at: Date.now(),
+  });
+}
+
 export async function answerRecruit(bot, gid, game) {
   const inbox = await getDocs(query(collection(bot.db, 'games', gid, 'inbox'), where('to', '==', bot.pid)));
   const offered = inbox.docs.some((d) => d.data().kind === 'recruitOffer' && d.data().cycle === game.cycle);
@@ -217,6 +235,7 @@ export function driveBots(db, gid, bots, { log = () => {}, onPhase = () => {} } 
     const all = (fn) => Promise.all(bots.map((b) => fn(b).catch((e) => log(`bot ${b.name}: ${e.code ?? e.message}`))));
     if (g.phase === 'night') await all((b) => act(b, gid, g));
     if (g.phase === 'recruit') await all((b) => answerRecruit(b, gid, g));
+    if (g.phase === 'investigation') await all((b) => lastWords(b, gid, g));
     if (g.phase === 'game') {
       // Wait out the countdown so bot scores land inside the window, like a phone's would.
       await sleep(Math.max(0, (g.revealAt ?? 0) - Date.now()) + 3000);

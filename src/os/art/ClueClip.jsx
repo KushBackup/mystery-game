@@ -78,8 +78,7 @@ export default function ClueClip({ fact, seed = '', cam, stamp: when, className,
   const photo = photoFor(trait, group, String(seed), cam, when);
   const [fx, fy] = FOCUS[trait] ?? [W / 2, H / 2];
   // The seconds tick after the HUD's timestamp, in the HUD's half-size font.
-  const stampText = String(when ?? '').toUpperCase();
-  const secX = 6 + (stampText ? textWidth(stampText) + 2 : 40);
+  const secX = 6 + textWidth(photo.stamp) + 2;
   const secY = H * 2 - 10;
 
   return (

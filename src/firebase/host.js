@@ -591,8 +591,18 @@ async function resolveMorningPhase(gid) {
   const pending = stash?.cycle === g.cycle ? stash : {};
   const res = resolveMorning({ seed: world.secret.seed, cycle: g.cycle, players: world.players, roles: world.roles, scores, pending });
 
-  return commitOnce(gid, `${g.cycle}-morning`, PHASE.GAME_LOCKED, (tx) => {
-    writeDeliveries(tx, gid, g.cycle, 'morning', clean(res.deliveries));
+  const delivered = clean(res.deliveries);
+  // Ghost sight: every clue the living got for this night, and who got it,
+  // under the same inbox ids (so each item shows in the same form on every
+  // phone, os/evidence.js). Planted clues go in unmarked: a ghost catches a
+  // frame by holding it against their own true photos. Rules: ghosts read it.
+  const sight = delivered
+    .map((d, i) => ({ ...d, id: `${g.cycle}-morning-${i}` }))
+    .filter((d) => d.kind === 'fact' && d.fact && d.via !== 'ghost')
+    .map(({ id, to, fact, via, from, rank }) => clean({ id, to, fact, via: via ?? null, from, rank }));
+
+  const done = await commitOnce(gid, `${g.cycle}-morning`, PHASE.GAME_LOCKED, (tx) => {
+    writeDeliveries(tx, gid, g.cycle, 'morning', delivered);
     tx.update(sub(gid, 'secret', 'engine'), { pendingMorning: null });
     stageDawn(tx, gid, g, world, {
       deaths: res.deaths,
@@ -602,6 +612,14 @@ async function resolveMorningPhase(gid) {
       dayGame: reveal,
     });
   });
+  // Written after the board, outside its transaction, and allowed to fail: a
+  // project whose rules predate ghost sight refuses it, and that must never
+  // stop the morning. Only by the device whose commit landed, from the world it read.
+  if (done) {
+    await setDoc(sub(gid, 'ghostSight', String(g.cycle)), { cycle: g.cycle, items: sight, at: Date.now() })
+      .catch((e) => console.warn('ghostSight', e.code ?? e.message));
+  }
+  return done;
 }
 
 // --- Ballots -----------------------------------------------------------------------

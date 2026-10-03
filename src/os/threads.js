@@ -88,6 +88,7 @@ export function groupTitle(ctx) {
 export function preview(id, m, ctx) {
   if (m.kind === 'added') return m.text;
   if (m.kind === 'poll') return 'DEEP BLUE created a poll';
+  if (m.kind === 'last') return `${m.pid === ctx.me.pid ? 'You' : m.name} left a last message`;
   if (id === 'room' || id === 'spirits' || id === 'den') return `${m.pid === ctx.me.pid ? 'You' : m.name}: ${m.text}`;
   return systemText(m, ctx);
 }
@@ -99,4 +100,19 @@ export function systemText(d, ctx) {
   if (d.kind === 'role') return 'Your role. Read it alone.';
   if (d.kind === 'fact') return `New ${FORM_NAME[mediaFor(d)].toLowerCase()} · ${photoSource(d, ctx.nameOf)}`;
   return deliveryLine(d, ctx.nameOf);
+}
+
+/**
+ * Last words: the true clue photos a guest the board took this morning may
+ * post to the room, once, during that day's investigation or round table
+ * (firestore.rules lastWords). Null when there is nothing to offer: not taken
+ * today, the wrong phase, already posted, or no photo of their own yet.
+ */
+export function lastWordsDue(ctx) {
+  const { me, game, chat, inbox } = ctx;
+  if (me?.status !== 'ghost' || !['murdered', 'deep'].includes(me.cause) || me.diedCycle !== game.cycle) return null;
+  if (!['investigation', 'roundtable'].includes(game.phase)) return null;
+  if ((chat ?? []).some((m) => m.kind === 'last' && m.pid === me.pid)) return null;
+  const photos = (inbox ?? []).filter((d) => d.kind === 'fact' && d.via === 'ghost' && d.fact && d.cycle === game.cycle);
+  return photos.length ? photos : null;
 }

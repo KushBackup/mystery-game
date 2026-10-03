@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppFrame, Empty } from '../ui';
 import Evidence from '../art/Evidence';
 import Glyph from '../icons/Glyph';
@@ -34,7 +34,12 @@ export default function GalleryApp({ ctx, onClose }) {
   const [open, setOpen] = useState(null);
   const [dir, setDir] = useState(null);
   const seenIds = useSeen(`${gid}.gallery`, []);
-  const witnesses = paperWitnesses(ctx.news);
+  const witnesses = [...paperWitnesses(ctx.news), ...lastMessages(ctx)];
+  // Opening The Room clears the Photos badge for the newest night it holds (PhoneOS).
+  const sightDay = room.reduce((m, d) => Math.max(m, d.cycle ?? 0), 0);
+  useEffect(() => {
+    if (album === 'room' && sightDay) markSeen(`${gid}.sight`, sightDay);
+  }, [album, sightDay, gid]);
 
   const view = (i) => {
     setDir(open == null ? 'push' : null);
@@ -124,15 +129,23 @@ function roomItems(sight) {
 
 /** The paper's witnesses (news.js), one per day, already past their reveal. */
 function paperWitnesses(news) {
-  return (news?.room ?? []).filter((s) => s.witness).map((s) => ({ cycle: s.day, fact: s.witness }));
+  return (news?.room ?? []).filter((s) => s.witness).map((s) => ({ cycle: s.day, fact: s.witness, from: 'paper' }));
+}
+
+/** Last words in the Room: the taken guest's true photo describes the night they were taken on. */
+function lastMessages(ctx) {
+  const died = Object.fromEntries((ctx.players ?? []).map((p) => [p.id, p.diedCycle]));
+  return (ctx.chat ?? [])
+    .filter((m) => m.kind === 'last' && m.fact && died[m.pid])
+    .map((m) => ({ cycle: died[m.pid], fact: m.fact, from: 'last' }));
 }
 
 /**
  * What your clues add up to, night by night. Every clue from one night
  * describes the same hand (the Killer who hacked that night), so the groups
  * the clues name can be laid over each other: "dark" and "plain" leave
- * black, grey or navy. The paper's witness for that night counts too, since
- * everyone has read it. A sketch, drawn the way Contacts draws a guest, fills
+ * black, grey or navy. The paper's witness and a taken guest's last message
+ * for that night count too, since the whole room has seen them. A sketch, drawn the way Contacts draws a guest, fills
  * in what is known. It never names anyone: matching it to the room is the
  * game. Two clues that cannot both be true mean one of them is a frame.
  */
@@ -145,14 +158,15 @@ function HandProfiles({ photos, witnesses }) {
           key={c}
           cycle={c}
           facts={[...photos.filter((d) => d.cycle === c).map((d) => d.fact), ...witnesses.filter((w) => w.cycle === c).map((w) => w.fact)]}
-          paper={witnesses.some((w) => w.cycle === c)}
+          paper={witnesses.some((w) => w.cycle === c && w.from === 'paper')}
+          last={witnesses.some((w) => w.cycle === c && w.from === 'last')}
         />
       ))}
     </div>
   );
 }
 
-function HandProfile({ cycle, facts, paper }) {
+function HandProfile({ cycle, facts, paper, last }) {
   const known = [];
   for (const t of TRAITS) {
     const groups = facts.filter((f) => f.trait === t.id).map((f) => t.groups.find((g) => g.id === f.group)).filter(Boolean);
@@ -181,7 +195,11 @@ function HandProfile({ cycle, facts, paper }) {
             </li>
           ))}
         </ul>
-        {paper && <p className="os-label text-[10px] text-os-chrome mt-1">INCLUDES THE PAPER’S WITNESS</p>}
+        {(paper || last) && (
+          <p className="os-label text-[10px] text-os-chrome mt-1">
+            INCLUDES {[paper && 'THE PAPER’S WITNESS', last && 'A LAST MESSAGE'].filter(Boolean).join(' AND ')}
+          </p>
+        )}
       </div>
     </div>
   );

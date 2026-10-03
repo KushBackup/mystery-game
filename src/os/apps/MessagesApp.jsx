@@ -6,11 +6,14 @@ import { AppFrame, Section, Group, Cell, Empty } from '../ui';
 import Glyph from '../icons/Glyph';
 import AppIcon from '../icons/AppIcon';
 import { Avatar } from './ContactsApp';
-import { sendToChannel } from '../../firebase/game';
+import { sendToChannel, postLastWords } from '../../firebase/game';
 import { useSeen, markSeen, useDraft } from '../seen';
 import { sfxSent } from '../sfx';
 import { hhmm } from '../words';
-import { threadsFor, preview, systemText, pollQuestion } from '../threads';
+import { threadsFor, preview, systemText, pollQuestion, lastWordsDue } from '../threads';
+import Evidence from '../art/Evidence';
+import { clueWords } from '../../data/packs/index.js';
+import { LAST_WORDS } from '../../data/killersCopy';
 import KillPoll from './KillPoll';
 import RoleMessage from '../RoleMessage';
 import { useDenMeta } from '../../hooks/useKillers';
@@ -19,7 +22,9 @@ import { useKeyboard } from '../keyboard';
 /**
  * Messages: the group chat everyone is in, plus the threads nobody chose.
  *
- *   The Room   every guest. The living post; ghosts can only read.
+ *   The Room   every guest. The living post; ghosts can only read, except
+ *              that a guest taken this morning may post one photo as their
+ *              last words (LastWords below, threads.js lastWordsDue).
  *   (a group)  a living Killer's partners, titled with their names
  *              (threads.js). At night DEEP BLUE posts a poll in it: who goes.
  *   Spirits    the ghosts, among themselves.
@@ -147,12 +152,73 @@ function ThreadView({ ctx, thread, onBack }) {
           me={me}
           empty={thread.id === 'spirits' ? 'The dead talk here. Only the dead.' : 'Say hello. Everyone in the room is here.'}
           poll={() => <PollBubble ctx={ctx} />}
+          last={(m) => <LastBubble m={m} ctx={ctx} />}
         />
       ) : (
         <SystemThread list={thread.list} ctx={ctx} />
       )}
-      {thread.id === 'room' && me.status === 'ghost' && <p className="os-section__foot px-6 pb-4">The dead can read, but not post here.</p>}
+      {thread.id === 'room' && me.status === 'ghost' && (lastWordsDue(ctx)
+        ? <LastWords ctx={ctx} photos={lastWordsDue(ctx)} />
+        : <p className="os-section__foot px-6 pb-4">The dead can read, but not post here.</p>)}
     </AppFrame>
+  );
+}
+
+/** A guest's last words in the room: one true clue photo, framed in black, no text. */
+function LastBubble({ m, ctx }) {
+  const { plain } = clueWords(ctx.pack, m.fact);
+  const day = ctx.players.find((p) => p.id === m.pid)?.diedCycle;
+  return (
+    <div className="os-bubble-row os-rise">
+      <span className="os-bubble-name">{m.pid === ctx.me.pid ? 'You' : m.name}</span>
+      <div className="os-last">
+        <p className="os-last__kick">{LAST_WORDS.kicker(m.pid === ctx.me.pid ? 'Your' : `${m.name}’s`)}</p>
+        <div className="os-last__item"><Evidence fact={m.fact} seed={m.inboxId} pack={ctx.pack} stamp={day ? `D${day}` : undefined} /></div>
+        <p className="os-last__plain">{plain}</p>
+        <p className="os-last__foot">{LAST_WORDS.true}</p>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The taken guest's one post: pick a photo, then Post. Only offered while
+ * lastWordsDue says so; the rules check it again (the fact must be theirs,
+ * today, once).
+ */
+function LastWords({ ctx, photos }) {
+  const [pick, setPick] = useState(photos.length === 1 ? photos[0].id : null);
+  const [state, setState] = useState('');
+  const chosen = photos.find((d) => d.id === pick);
+  const post = async () => {
+    if (!chosen || state === 'sending') return;
+    setState('sending');
+    try {
+      await postLastWords(ctx.gid, ctx.me.pid, ctx.me.name, chosen);
+      sfxSent();
+      setState('');
+    } catch (err) {
+      setState(err.code === 'permission-denied' ? 'closed' : 'error');
+    }
+  };
+  return (
+    <div className="os-lastpick">
+      <p className="os-lastpick__head">{LAST_WORDS.head}</p>
+      <p className="os-lastpick__line">{LAST_WORDS.line}</p>
+      <div className="os-lastpick__photos">
+        {photos.map((d) => (
+          <button key={d.id} type="button" aria-pressed={pick === d.id} className={`os-lastpick__photo ${pick === d.id ? 'is-on' : ''}`} onClick={() => setPick(d.id)}>
+            <Evidence fact={d.fact} seed={d.id} pack={ctx.pack} stamp={`D${d.cycle}`} thumb />
+            <span>{clueWords(ctx.pack, d.fact).plain}</span>
+          </button>
+        ))}
+      </div>
+      {state === 'closed' && <p className="os-compose__error" role="alert">{LAST_WORDS.closed}</p>}
+      {state === 'error' && <p className="os-compose__error" role="alert">{LAST_WORDS.error}</p>}
+      <button type="button" className="os-btn w-full mt-3" disabled={!chosen || state === 'sending'} onClick={post}>
+        {state === 'sending' ? LAST_WORDS.sending : LAST_WORDS.post}
+      </button>
+    </div>
   );
 }
 
@@ -183,7 +249,7 @@ function PollBubble({ ctx }) {
 }
 
 /** Chat bubbles: yours green on the right, theirs grey on the left, names when the speaker changes. */
-export function Thread({ messages, me, empty = 'Nothing yet.', poll = null }) {
+export function Thread({ messages, me, empty = 'Nothing yet.', poll = null, last = null }) {
   const end = useRef(null);
   useEffect(() => toBottom(end.current), [messages.length]);
   // The keyboard coming up shortens the list: keep the newest message just above the compose bar.
@@ -199,6 +265,7 @@ export function Thread({ messages, me, empty = 'Nothing yet.', poll = null }) {
       {messages.map((m, i) => {
         if (m.event) return <p key={m.id} className="os-event os-rise">{m.text}</p>;
         if (m.kind === 'poll') return <React.Fragment key={m.id}>{poll?.(m)}</React.Fragment>;
+        if (m.kind === 'last') return <React.Fragment key={m.id}>{last?.(m)}</React.Fragment>;
         const prev = messages[i - 1];
         const mine = m.pid === me.pid;
         const gap = !prev || (m.at ?? 0) - (prev.at ?? 0) > 5 * 60_000;

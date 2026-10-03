@@ -55,3 +55,25 @@ export function formFor(fact, seed) {
 
 /** The form of an inbox delivery. */
 export const mediaFor = (d) => formFor(d?.fact, d?.id ?? '');
+
+// Dev-time guard: every form the table can pick must have words for every
+// group of its trait, or a guest gets an empty receipt or a silent voice note.
+if (import.meta.env?.DEV) {
+  Promise.all([import('../data/traits.js'), import('../data/packs/deepblue.js')]).then(([{ TRAITS }, { default: pack }]) => {
+    const ev = pack.evidence ?? {};
+    const words = {
+      voice: (t, g) => ev.voice?.[t]?.[g],
+      receipt: (t, g) => ev.receipt?.[t]?.[g],
+      profile: (t, g) => ev.profile?.[t]?.[g],
+    };
+    for (const t of TRAITS) {
+      for (const form of FORMS[t.id] ?? []) {
+        if (!words[form]) continue;
+        for (const g of t.groups) if (!words[form](t.id, g.id)) console.error(`[evidence] no ${form} words for ${t.id}.${g.id}`);
+      }
+    }
+    for (const t of TRAITS) {
+      for (const g of t.groups) if (!pack.news?.live?.witness?.[t.id]?.[g.id]) console.error(`[evidence] no witness quote for ${t.id}.${g.id}`);
+    }
+  });
+}

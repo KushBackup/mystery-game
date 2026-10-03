@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow, useAllTraits, useKillerGroup, useMyPlay } from '../hooks/useKillers';
+import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow, useAllTraits, useKillerGroup, useMyPlay, useGhostSight } from '../hooks/useKillers';
 import { serverNow } from '../lib/clockSkew';
-import { nowLine, PHASE_LABEL, deliveryLine, GAME } from '../data/killersCopy';
+import { nowLine, PHASE_LABEL, deliveryLine, GAME, LAST_WORDS } from '../data/killersCopy';
 import { dayKit, alarmLine } from '../data/packs/index.js';
 import { StatusBar, HomeBar, SyncNote, HomeScreen, LockScreen, Banner, NotificationCenter, NCTile } from './chrome';
 import { RoleText, IncomingCall, GoneScreen, ChapterCard, TakenScreen } from './takeovers';
-import { threadsFor, preview as threadPreview } from './threads';
+import { threadsFor, preview as threadPreview, lastWordsDue } from './threads';
 import { useSeen, markSeen, peekSeen } from './seen';
 import { resync, useResyncNote } from './resync';
 import { Hold } from './ui';
@@ -313,6 +313,8 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const chat = useChannel(gid, 'chat');
   const spirits = useChannel(gid, 'spiritsChat', spiritsOk);
   const den = useChannel(gid, 'denChat', isKiller);
+  // Ghost sight: every clue the living got, night by night (Photos → The Room). Ghosts only.
+  const ghostSight = useGhostSight(gid, spiritsOk);
   // The Killers' group: who is in it, and when DEEP BLUE added them (threads.js).
   const mates = useKillerGroup(gid, isKiller);
   const myVote = useMyVote(gid, game.ballot, me.pid);
@@ -442,7 +444,12 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   // DEEP BLUE's own lines to this guest (voice.js), shown in its Messages thread.
   const voice = useVoice(gid, game, me, pack, nameOf);
 
-  const ctxBase = { gid, uid, game, me, role, players, inbox, pack, nameOf, chat, spirits, den, mates: isKiller ? mates : null, myVote, myScore, news, traits, voice };
+  const ctxBase = { gid, uid, game, me, role, players, inbox, pack, nameOf, chat, spirits, den, mates: isKiller ? mates : null, myVote, myScore, news, traits, voice, ghostSight: spiritsOk ? ghostSight ?? [] : [] };
+  // A guest taken this morning may still post their last words (threads.js).
+  const lastDue = Boolean(lastWordsDue(ctxBase));
+  // The Room album fills each morning; a new night badges Photos until it is opened (GalleryApp).
+  const sightSeen = useSeen(`${gid}.sight`, 0);
+  const sightDay = spiritsOk ? Math.max(0, ...(ghostSight ?? []).filter((d) => d.items?.length).map((d) => d.cycle ?? 0)) : 0;
   const threads = threadsFor(ctxBase, seen);
   const acted = isKiller ? (denPicks ?? []).some((d) => d.pid === me.pid && (d.victim || d.recruit)) : Boolean(action);
   const needsNight = phase === 'night' && ['alive', 'ghost'].includes(me.status) && !acted;
@@ -457,8 +464,8 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const needsVote = ['roundtable', 'revote'].includes(phase) ? me.status === 'alive' && !myVote : phase === 'endgame' && ['alive', 'ghost'].includes(me.status) && !myVote;
   const newsSeenArr = Array.isArray(newsSeen) ? newsSeen : [];
   const badges = {
-    messages: threads.reduce((n, t) => n + t.unread, 0) || null,
-    gallery: inbox.filter((d) => d.kind === 'fact' && !gallerySeen.includes(d.id)).length || null,
+    messages: threads.reduce((n, t) => n + t.unread, 0) + (lastDue ? 1 : 0) || null,
+    gallery: inbox.filter((d) => d.kind === 'fact' && !gallerySeen.includes(d.id)).length + (sightDay > sightSeen ? 1 : 0) || null,
     news: news.ids.filter((id) => !newsSeenArr.includes(id)).length || null,
     board: boardDay && boardSeen !== boardDay ? 1 : null,
     night: needsNight ? '!' : null,
@@ -493,6 +500,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
     .map((s) => ({ id: s.id, icon: 'news', title: s.kicker || 'News', text: s.head, app: 'news' }));
   const ncAction = [
     needsNight && { id: 'need-night', icon: 'night', title: 'Night', text: 'Choose your move before it ends.', app: 'night' },
+    lastDue && { id: 'need-last', icon: 'messages', title: LAST_WORDS.head, text: LAST_WORDS.nudge, app: 'messages' },
     needsGame && {
       id: 'need-game',
       icon: 'deepblue',

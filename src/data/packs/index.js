@@ -57,7 +57,7 @@ export function clueWords(pack, fact, form = 'still') {
   // A voice note's flavour is what the witness said; a receipt or a screenshot
   // has a fixed line (os/evidence.js). A still or a clip, or a pack without
   // `evidence`, uses the CCTV caption.
-  const ev = pack.evidence;
+  const ev = pack.evidence ?? deepblue.evidence; // greenr predates the evidence forms, like dayKit
   const flavour = (form === 'voice' && ev?.voice?.[fact.trait]?.[fact.group])
     || ((form === 'receipt' || form === 'profile') && ev?.[form]?.note)
     || pack.clueText?.[fact.trait]?.[fact.group]

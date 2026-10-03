@@ -60,7 +60,7 @@
 - **Balance** (from `scripts/sim-balance.mjs`):
   - 3 Killers from 12 to 50 players; the count does not scale with room size.
   - 2 Endgame banishments.
-  - The clue budget scales by ±1 clue per 20 guests around 35.
+  - The clue budget scales by ±1 clue per 15 guests around 35 (was 20 until the witness, 2026-10-03).
   - Result: the Faithful win about 50–56% at 20–45 players.
 - **Plan file:** `C:\Users\Kush\.claude\plans\so-i-want-you-peppy-island.md`. The Greenr game stays in the repo until the M6 cleanup; the new code lives in `src/lib/engine/`, `src/data/traits.js` and `src/data/packs/`.
 - **Testing:** the plan is to test against the Firebase Local Emulator, never the live `murder-1bf1c` project. The emulator needs a JDK, and none was installed on 2026-09-26.
@@ -123,6 +123,16 @@
   - only the open phases stretch (night, investigation, vote, final votes); the alarm, the morning games, the board and the verdict keep their real lengths, because their beats are timed in seconds;
   - autopilot starts on, so the host only deals;
   - the alarm takeover (slide to stop, the "DEEP BLUE does not snooze" joke) was removed and became a notification with a 3-second ring.
+
+- **Evidence and ghosts (asked 2026-10-03, the day of the Panjim event).** The user asked to make the game "more rich": more clues and evidence, a murder-mystery feel of discovering things, ghosts seeing clues or handing one out before dying, more pictures, video, a newspaper article ("you figure it out, plan it out"). Their choices when asked:
+  - **Genuinely more clues**, over "the same clues in richer forms" and over a recommended middle option. So the paper's witness is an *extra* public clue each murder night; the private budget was cut to pay for it (1, 2, 2, 2, 3, size step 15) and the sim is back in the old band. A sharper witness on the old budget gave the Faithful 85%: the lever is `publicBand`.
+  - **Last words go to the whole Room** (over a private send, or the victim choosing).
+  - **Ghost sight: yes.** Ghosts see every clue the living got, and who got it.
+  - **Video is drawn in code** in the CCTV style, not hand-drawn films.
+  - Then, when a peer session wanted to deploy the half-built tree for the event: "No, no, complete your work first. And complete it properly." (Lessons.md, 2026-10-03.)
+  Claude's own choices, unasked: which forms each trait can take (receipt only for drink, the leaked admin screenshot for birthday and siblings, voice notes only for shoes); the clip pans and zooms the still rather than a figure walking; the paper keeps its existing dawn picture; a witness box in the story rather than a new article; last words and the paper's witness fold into Photos' sketch of the hand and the Finale; the bots post last words 70% of the time.
+  **Live deploy needs the rules too:** `chat/last_*` and `ghostSight` are new rules (`firebase deploy --only firestore:rules --project murder-1bf1c`), with the user's approval, as well as `npm run deploy`. Deploy the rules first. Under old rules the app still runs (the ghost sight write is outside the morning transaction and may fail), but last words are refused ("Too late") and The Room album stays empty.
+  - **What went live at 15:01 on 2026-10-03** (commit 2b78099, deployed by the peer session): only the first stage, the witness and the evidence forms, with the old size step of 20 (small rooms favour the Faithful, about 62–68% at 16–20 guests in the sim). Last words, ghost sight and the step of 15 are in the working tree, not live.
 
 ### Greenr: Last Seating (2609-G, the retiring case)
 

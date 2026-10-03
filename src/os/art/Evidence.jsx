@@ -13,11 +13,13 @@ import ClueClip from './ClueClip';
 import ClueVoice from './ClueVoice';
 import { Receipt, AdminProfile } from './ClueDoc';
 import { formFor, CLIP_SECONDS, VOICE_SECONDS } from '../evidence.js';
-import { clueWords } from '../../data/packs/index.js';
+import { clueWords, PACKS, DEFAULT_PACK_ID } from '../../data/packs/index.js';
 import './evidence.css';
 
-export default function Evidence({ fact, seed = '', pack, stamp, form, thumb = false }) {
+export default function Evidence({ fact, seed = '', pack: given, stamp, form, thumb = false }) {
   const kind = form ?? formFor(fact, seed);
+  // A pack without its own evidence words (greenr predates them) borrows DEEP BLUE's, like dayKit.
+  const pack = given?.evidence ? given : { ...given, evidence: PACKS[DEFAULT_PACK_ID].evidence };
   if (kind === 'clip') {
     if (thumb) {
       return (

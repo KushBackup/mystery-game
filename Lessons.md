@@ -701,3 +701,15 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 
 **What to do instead:** When two `.os-*` surface classes share an element, check `position` and height in computed style, not only the box. Anything sized in `cqh` needs its container's height to be definite: an absolutely positioned, inset parent, or an explicit height. Measure the chain with `getBoundingClientRect` and `getComputedStyle(...).width` set to `46cqh`; a 0 there names the bug at once.
 
+
+## 2026-10-03 — I told a peer session that half-built work was safe to ship
+
+**What happened:** Midway through the evidence and ghosts work, another Claude session on the same tree asked whether it could commit and deploy everything for that evening's event. My finished half passed lint, the build, the emulator self-test and a browser render, so I answered "safe" and stopped editing. Ghost sight and last words were not built yet. The user said: "No, no, complete your work first. And complete it properly."
+
+**What to do instead:** When a peer asks to ship, tell the user what is done and what is not before saying anything is safe. Let the user decide whether a partial feature goes out. "It passes the checks" is not the same as "it is finished". If shipping goes ahead anyway, revoke the signal (here `ship-ok.txt`) the moment editing starts again, and tell the peer which files are in play.
+
+## 2026-10-03 — A sharper extra clue swung the balance from 48% to 85%
+
+**What happened:** The paper's witness, one extra public clue per murder night, at the same share band as a photo (0.4 to 0.8 of the room) and on top of the old budget, put the Faithful at 85% at 35 guests in `npm run sim`. Even with the budget cut, small rooms stayed high (68% at 16 guests) until the room-size step went from 20 to 15.
+
+**What to do instead:** Treat any new source of information as a balance change, even one that "only" adds a public line. Sweep 16 to 45 guests, not one size: room size changes how much one clue is worth. Adjust the vagueness (`publicBand`), the private budget and the size step together, and record the before and after numbers in the code comment and in PROJECT_CONTEXT.md.

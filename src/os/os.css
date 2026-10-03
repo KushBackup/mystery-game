@@ -724,6 +724,19 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 
 /* A poll DEEP BLUE posts into a group: a bubble wide enough for a guest list. */
 .os-poll { width: 94%; max-width: 94%; padding: 10px 8px 8px; }
+/* Last words: a taken guest's one photo in The Room (MessagesApp LastBubble), and the picker that posts it. */
+.os-last { width: 82%; max-width: 300px; overflow: hidden; border: 3px solid var(--color-os-ink); border-radius: 14px; background: #fff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25); }
+.os-last__kick { padding: 7px 12px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; color: var(--color-os-foam); background: var(--color-os-ink); }
+.os-last__item { background: #000; }
+.os-last__plain { padding: 9px 12px 0; font-size: 15px; font-weight: 700; line-height: 1.3; color: var(--color-os-ink); }
+.os-last__foot { padding: 4px 12px 10px; font-size: 12px; color: var(--color-os-steel); }
+.os-lastpick { margin: 4px 12px 16px; padding: 14px; border: 3px solid var(--color-os-ink); border-radius: 14px; background: #fff; }
+.os-lastpick__head { font-size: 17px; font-weight: 800; color: var(--color-os-ink); }
+.os-lastpick__line { margin-top: 4px; font-size: 14px; line-height: 1.35; color: var(--color-os-steel); }
+.os-lastpick__photos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+.os-lastpick__photo { display: flex; flex-direction: column; gap: 4px; padding: 3px; border: 2px solid transparent; border-radius: 8px; text-align: left; background: var(--color-os-mist); }
+.os-lastpick__photo span { font-size: 12px; line-height: 1.25; color: var(--color-os-ink); }
+.os-lastpick__photo.is-on { border-color: var(--color-os-sea); background: var(--color-os-foam); }
 .os-poll__q { padding: 0 6px 8px; font-size: 17px; font-weight: 700; line-height: 1.2; }
 .os-poll .os-search { margin: 0 0 8px; }
 .os-receipt { align-self: flex-end; margin: -2px 6px 0 0; font-size: 11px; font-weight: 600; color: #6d7380; }

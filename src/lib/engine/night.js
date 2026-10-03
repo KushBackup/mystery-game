@@ -60,14 +60,16 @@ export const RIG_VALUES = Object.freeze(['zero', 'under']);
 export const DEFAULT_NIGHT_CONFIG = Object.freeze({
   // Private clues per night at `sizePivot` players, by cycle; the last entry
   // repeats. The paper's witness adds one public clue on top, so the room
-  // gets 2, 3, 3, 3, 4. Was [2, 2, 3, 3, 3] before the witness (2026-10-03):
-  // the sim put the Faithful at 56/48/55% (20/35/45 guests) then, 59/47/51% now.
+  // gets 2, 3, 3, 3, 4. Was [2, 2, 3, 3, 3] before the witness (2026-10-03).
   clueBudget: [1, 2, 2, 2, 3],
   // A bigger room needs more clues to find the same hand among more faces, and
   // a smaller one fewer. One clue more or less per `sizeStep` guests either side
   // of the pivot, tuned with scripts/sim-balance.mjs.
+  // sizeStep went from 20 to 15 with the witness (2026-10-03): the extra public
+  // clue helped small rooms most. The sim (1500 games) then put the Faithful at
+  // 62/54/48/48/47/50/57% for 16/20/25/30/35/40/45 guests.
   sizePivot: 35,
-  sizeStep: 20,
+  sizeStep: 15,
   watchP: 0.6,
   // The night the engine frames someone on the Killers' behalf, or null for never.
   // Off: see the header for the sim numbers. Try it with `sim-balance.mjs --frame 2`.

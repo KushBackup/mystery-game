@@ -38,8 +38,10 @@ import {
   initializeFirestore, connectFirestoreEmulator, memoryLocalCache, doc, collection, getDoc, getDocs, setDoc, updateDoc,
   query, where, serverTimestamp, addDoc, writeBatch, deleteDoc,
 } from 'firebase/firestore';
+import { TRAITS } from '../src/data/traits.js';
+import { fits } from '../src/lib/engine/clues.js';
 import {
-  botName, G, arrive, heartbeat, leave, readSelf, act, play, playDay, vote, answerRecruit, driveBots,
+  botName, G, arrive, heartbeat, leave, readSelf, act, play, playDay, vote, answerRecruit, driveBots, lastWords,
 } from '../src/firebase/bots.js';
 
 const args = Object.fromEntries(
@@ -225,6 +227,49 @@ async function spiritsChecks(bots, gid) {
   return results;
 }
 
+/**
+ * Ghost sight and last words, once a guest has been taken this morning:
+ * ghosts read every clue the living got, the living can't; only today's
+ * taken guest may post last words, only in investigation, only a clue they
+ * hold, only once; and no living guest can dress a chat line up as one.
+ */
+async function lastWordsChecks(bots, gid, game, players) {
+  const results = [];
+  const c = game.cycle;
+  const takenToday = bots.find((b) => ['murdered', 'deep'].includes(players[b.pid]?.cause) && players[b.pid]?.diedCycle === c);
+  const older = bots.find((b) => players[b.pid]?.status === 'ghost' && players[b.pid]?.diedCycle < c);
+  const living = bots.find((b) => players[b.pid]?.status === 'alive');
+  const sight = (bot) => getDocs(collection(bot.db, 'games', gid, 'ghostSight'));
+  if (takenToday) await expectAllowed('ghost reads ghost sight', () => sight(takenToday), results);
+  await expectDenied('living guest reads ghost sight', () => sight(living), results);
+
+  const held = async (bot) => (await getDocs(query(collection(bot.db, 'games', gid, 'inbox'), where('to', '==', bot.pid))))
+    .docs.map((d) => ({ id: d.id, ...d.data() })).filter((d) => d.kind === 'fact' && d.via === 'ghost' && d.fact);
+  const post = (bot, clue, fact = clue.fact, id = `last_${bot.pid}`) => setDoc(G(bot, gid, 'chat', id), {
+    kind: 'last', pid: bot.pid, name: bot.name, inboxId: clue.id, fact: { trait: fact.trait, group: fact.group }, at: Date.now(),
+  });
+  await expectDenied('living guest posts a fake last message', () => setDoc(G(living, gid, 'chat', `last_${living.pid}`), {
+    kind: 'last', pid: living.pid, name: living.name, text: 'trust me', inboxId: 'x', fact: { trait: 'top', group: 'dark' }, at: Date.now(),
+  }), results);
+  await expectDenied('living guest sends a chat line carrying a fact', () => addDoc(collection(living.db, 'games', gid, 'chat'), {
+    pid: living.pid, name: living.name, text: 'look', fact: { trait: 'top', group: 'dark' }, at: Date.now(),
+  }), results);
+  if (older) {
+    const theirs = await held(older);
+    if (theirs.length) await expectDenied('a ghost from an earlier day posts last words', () => post(older, theirs[0]), results);
+  }
+  if (!takenToday) return results;
+  const mine = (await held(takenToday)).filter((d) => d.cycle === c);
+  if (!mine.length) return results;
+  const f = mine[0].fact;
+  const wrong = f.trait === 'top' ? { trait: 'top', group: f.group === 'dark' ? 'pale' : 'dark' } : { trait: 'top', group: 'dark' };
+  await expectDenied('taken guest posts a clue they do not hold', () => post(takenToday, mine[0], wrong), results);
+  await expectDenied('taken guest posts under another id', () => post(takenToday, mine[0], f, `last_x${takenToday.pid}`), results);
+  await expectAllowed('taken guest posts their last words', () => post(takenToday, mine[0]), results);
+  await expectDenied('taken guest posts last words twice', () => post(takenToday, mine[0]), results);
+  return results;
+}
+
 /** Rule checks that need the run open: scores can only go up, and only your own. */
 async function runChecks(bots, gid, game) {
   const results = [];
@@ -308,7 +353,32 @@ async function selftest(n) {
       else for (const stage of [0, 1]) await Promise.all(bots.map((b) => playDay(b, gid, g, stage)));
     } else if (['roundtable', 'revote', 'endgame'].includes(g.phase)) {
       await Promise.all(bots.map((b) => vote(b, gid, g)));
-    } else if (g.phase === 'investigation' && g.cycle === 2 && !late) {
+    } else if (g.phase === 'dawn' && !ranChecks.has('last-early')) {
+      // Last words are refused before the investigation opens, even for today's taken guest.
+      const players = Object.fromEntries((await getDocs(collection(db, 'games', gid, 'players'))).docs.map((d) => [d.id, d.data()]));
+      const taken = bots.find((x) => ['murdered', 'deep'].includes(players[x.pid]?.cause) && players[x.pid]?.diedCycle === g.cycle);
+      const clue = taken && (await getDocs(query(collection(taken.db, 'games', gid, 'inbox'), where('to', '==', taken.pid)))).docs
+        .map((d) => ({ id: d.id, ...d.data() })).find((d) => d.kind === 'fact' && d.via === 'ghost' && d.cycle === g.cycle);
+      if (clue) {
+        ranChecks.add('last-early');
+        await expectDenied('taken guest posts last words during the board', () => setDoc(G(taken, gid, 'chat', `last_${taken.pid}`), {
+          kind: 'last', pid: taken.pid, name: taken.name, inboxId: clue.id, fact: clue.fact, at: Date.now(),
+        }), security);
+      }
+    }
+    if (g.phase === 'investigation') {
+      await Promise.all(bots.map((x) => readSelf(x, gid)));
+      const players = Object.fromEntries((await getDocs(collection(db, 'games', gid, 'players'))).docs.map((d) => [d.id, d.data()]));
+      const fresh = bots.some((x) => ['murdered', 'deep'].includes(players[x.pid]?.cause) && players[x.pid]?.diedCycle === g.cycle);
+      const needOlder = !ranChecks.has('last-older') && bots.some((x) => players[x.pid]?.status === 'ghost' && players[x.pid]?.diedCycle < g.cycle);
+      if (fresh && (!ranChecks.has('last') || needOlder)) {
+        if (needOlder) ranChecks.add('last-older');
+        ranChecks.add('last');
+        security.push(...await lastWordsChecks(bots, gid, g, players));
+      }
+      await Promise.all(bots.map((x) => lastWords(x, gid, g).catch(() => {})));
+    }
+    if (g.phase === 'investigation' && g.cycle === 2 && !late) {
       // Live join and leave, mid-game.
       late = await makeBot(n);
       await arrive(late, gid);
@@ -327,6 +397,8 @@ async function selftest(n) {
     if ((after.finaleStory || after.finaleRoles) && !after.winner) log.push(`  FAIL: finale story published mid-game (${after.phase})`);
     // Nor may the day's word (or who drew what) reach a phone before the game locks.
     if (['alarm', 'game'].includes(after.phase) && after.dayGame?.cycle === after.cycle) log.push(`  FAIL: day ${after.cycle}'s game revealed during ${after.phase}`);
+    // Nor the paper's witness: it is written with the board, never before.
+    if (['alarm', 'game'].includes(after.phase) && after.dawn?.cycle === after.cycle) log.push(`  FAIL: day ${after.cycle}'s witness written during ${after.phase}`);
     if (after.phase === 'dawn') {
       const d = after.dawn;
       const names = (pids) => pids.map((p) => bots.find((b) => b.pid === p)?.name ?? p).join(', ') || 'none';
@@ -358,6 +430,21 @@ async function selftest(n) {
   const real = passed.every((p) => ghostHeld.some((h) => h.to === p.from && h.fact.trait === p.fact.trait && h.fact.group === p.fact.group));
   security.push([real ? 'ok' : 'FAIL', `ghosts pass only clues they hold (${passed.length} passed)`, real ? 'all held' : 'a pass was not held']);
   if (forged) security.push([passed.some((p) => p.fact.trait === 'forged') ? 'FAIL' : 'ok', 'a forged pass is dropped', `night ${forged.cycle}`]);
+
+  // The paper's witness: printed on murder mornings, always true of that night's hand.
+  const hands = end.finaleStory?.hands ?? {};
+  const traitsSnap = Object.fromEntries((await getDocs(collection(db, 'games', gid, 'traits'))).docs.map((d) => [d.id, d.data()]));
+  const witnesses = (end.news ?? []).filter((e) => e.kind === 'dawn' && e.witness);
+  const lying = witnesses.filter((e) => !fits(TRAITS, traitsSnap[hands[e.cycle]], e.witness));
+  security.push([lying.length ? 'FAIL' : 'ok', `the paper's witness is true (${witnesses.length} printed)`, lying.length ? `day ${lying[0].cycle}` : 'all fit the hand']);
+  // Ghost sight holds every clue the living got, under the inbox ids they arrived with.
+  const sightDocs = (await getDocs(collection(db, 'games', gid, 'ghostSight'))).docs.map((d) => d.data());
+  const byId = Object.fromEntries(inbox.docs.map((d) => [d.id, d.data()]));
+  const badSight = sightDocs.flatMap((d) => d.items ?? []).filter((it) => byId[it.id]?.to !== it.to || byId[it.id]?.fact?.group !== it.fact.group);
+  security.push([badSight.length ? 'FAIL' : 'ok', `ghost sight matches the inbox (${sightDocs.length} nights)`, badSight.length ? `${badSight.length} mismatched` : 'all match']);
+  const lastPosts = (await getDocs(collection(db, 'games', gid, 'chat'))).docs.map((d) => d.data()).filter((m) => m.kind === 'last');
+  const realLast = lastPosts.every((m) => ghostHeld.some((h) => h.to === m.pid && h.fact.trait === m.fact.trait && h.fact.group === m.fact.group));
+  security.push([realLast ? 'ok' : 'FAIL', `last words are clues the guest held (${lastPosts.length} posted)`, realLast ? 'all held' : 'one was not held']);
 
   // Idempotency: advancing a finished game, or re-running, must change nothing.
   const before = JSON.stringify(await game());

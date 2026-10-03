@@ -1,7 +1,7 @@
 import React from 'react';
 import { Section, Hold, Btn } from '../ui';
 import { Face } from '../art/Portrait';
-import { narrate } from '../../data/packs/index.js';
+import { narrate, clueWords } from '../../data/packs/index.js';
 import { ROLE_INFO } from '../../lib/engine/roles.js';
 import { lookLine } from '../dossier';
 import { sfxFanfare, sfxGlitch, sfxSting } from '../sfx';
@@ -135,8 +135,10 @@ function selfFate(p) {
  * what the room saw (each morning's board and each vote, from game.news).
  */
 function HowItHappened({ ctx, story, roles, face }) {
-  const { game, nameOf, traits } = ctx;
+  const { game, nameOf, traits, pack } = ctx;
   const nights = story.nights ?? {};
+  const lastWords = (ctx.chat ?? []).filter((m) => m.kind === 'last');
+  const plain = (fact) => clueWords(pack, fact).plain;
   const news = game.news ?? [];
   const days = [...new Set([...Object.keys(nights).map(Number), ...news.map((n) => n.cycle).filter(Boolean)])].sort((a, b) => a - b);
   if (!days.length) return null;
@@ -168,6 +170,9 @@ function HowItHappened({ ctx, story, roles, face }) {
       if (taken && dawn.cause === 'deep') items.push({ k: 'd', icon: taken, tone: 'dead', text: <>The rig bounced, so the deep took the lowest honest score: {who(taken)}{roles[taken] === 'killer' ? ', a Killer' : ''}.</> });
       else if (taken) items.push({ k: 'd', icon: taken, tone: 'dead', text: <>Morning: {who(taken)} was taken off the bottom of the board.</> });
       else items.push({ k: 'd', tone: 'quiet', text: <>Morning: nobody was taken.</> });
+      if (dawn.witness) items.push({ k: 'w', tone: 'good', text: <>The paper’s witness, true: {plain(dawn.witness)}.</> });
+      const last = taken ? lastWords.find((m) => m.pid === taken) : null;
+      if (last) items.push({ k: 'l', icon: taken, tone: 'good', text: <>{who(taken)}’s last message, true: {plain(last.fact)}.</> });
     }
     for (const v of votes) {
       items.push(v.pid

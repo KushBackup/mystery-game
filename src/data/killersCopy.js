@@ -171,6 +171,23 @@ export const DELIVERY_TAG = {
  * Big type on a Night screen is the same on every phone ("Night 2"); only the
  * small lines differ by role, so a glance across the table reads nothing.
  */
+/**
+ * Last words (MessagesApp LastWords, threads.js lastWordsDue): a guest the
+ * board took this morning may post one true clue photo to The Room, once.
+ * Role-neutral, like everything a ghost's phone shows face-up.
+ */
+export const LAST_WORDS = {
+  head: 'Your last message',
+  line: 'Before you go, show the room one photo. Only once, and only today.',
+  post: 'Post to the room',
+  sending: 'Posting…',
+  closed: 'Too late. The room has moved on.',
+  error: 'Not sent. Try again.',
+  kicker: (whose) => `${whose} last message`.toUpperCase(),
+  true: 'Sent from the other side. Ghost photos are always true.',
+  nudge: 'Post one photo to the room before the vote.',
+};
+
 export const NIGHT = {
   title: (cycle) => `Night ${cycle}`,
   /** The hero's countdown: minutes, then seconds; never m:ss (it would read as a time of day). */

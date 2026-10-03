@@ -14,6 +14,8 @@
  *      their role was: never "your team", never a Killer-only line.
  *   2. True to the engine: engine/night.js (each ghost's nightly true clue,
  *      the whisper, the pass, which only carries a photo the ghost holds),
+ *      last words (one photo posted to the Room on the day a guest is taken)
+ *      and ghost sight (Photos → The Room, every clue the living got),
  *      morning.js (the ghost board), the Endgame votes, firestore.rules (the
  *      dead read the Room but can't post; Spirits is theirs). Help's Ghost
  *      topic and NIGHT.moves.pass/whisper in killersCopy.js say the same.
@@ -29,8 +31,8 @@ const poster = (n) => `${BASE}tutorial/ghost-${n}.jpg`;
 /** The film slides, in order. `title` is the big line, `line` the small one. */
 export const FILM_SLIDES = Object.freeze([
   { id: 'rise', n: 1, title: 'Welcome to the spirit world.', line: 'You were taken, but you’re still in the game. Your side can still win.' },
-  { id: 'mute', n: 2, title: 'The living can’t hear you.', line: 'You can read the Room, but you can’t post in it.' },
-  { id: 'truth', n: 3, title: 'Every night, a true clue photo.', line: 'Ghost photos never lie, even on a night the Killers bend the clues.' },
+  { id: 'mute', n: 2, title: 'The living can’t hear you.', line: 'You can read the Room, but not post. Except once: on the day you’re taken, post one photo there.' },
+  { id: 'truth', n: 3, title: 'Every night, a true clue photo.', line: 'Ghost photos never lie. In Photos, The Room shows every clue the living got.' },
   { id: 'pass', n: 4, title: 'Pass a photo to a living guest.', line: 'Open Night, pick a photo, then a guest. Or whisper them one word.' },
   { id: 'spirits', n: 5, title: 'Plot with the dead in Spirits.', line: 'Spirits is in Messages. Only ghosts can read it.' },
   { id: 'play', n: 6, title: 'Keep playing every morning.', line: 'Your scores go on a ghost board. In the final votes, the dead vote too.' },

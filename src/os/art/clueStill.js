@@ -976,6 +976,7 @@ function buildPhoto(trait, group, seed, cam, when) {
     hud: [...gridToPaths(shadow), ...gridToPaths(hud)],
     rec: gridToPaths(rec),
     label: `CCTV still, ${camLabel}, ${stampLabel}`,
+    stamp: String(stampLabel).toUpperCase(),
   };
 }
 

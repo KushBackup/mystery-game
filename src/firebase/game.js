@@ -184,6 +184,16 @@ export const saveDrawing = (gid, cycle, pid, strokes, checks) =>
 export const saveGuesses = (gid, cycle, pid, answers) =>
   setDoc(sub(gid, 'guesses', `${cycle}_${pid}`), { pid, cycle, answers, at: Date.now() });
 
+/** Ghost sight: one doc per night, every clue the living got (rules: ghosts only). */
+export const subscribeGhostSight = (gid, cb) =>
+  resilient('ghostSight', (onError) => onSnapshot(col(gid, 'ghostSight'), (s) => cb(s.docs.map((d) => ({ id: d.id, ...d.data() }))), onError));
+
+/** Last words: a guest taken this morning posts one true clue photo to the room, once (rules: lastWords). */
+export const postLastWords = (gid, pid, name, clue) =>
+  setDoc(sub(gid, 'chat', `last_${pid}`), {
+    kind: 'last', pid, name, inboxId: clue.id, fact: { trait: clue.fact.trait, group: clue.fact.group }, at: Date.now(),
+  });
+
 export const sendToChannel =(gid, channel, pid, name, text) =>
   addDoc(col(gid, channel), { pid, name, text: text.trim().slice(0, 280), at: Date.now() });
 

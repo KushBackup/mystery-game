@@ -240,11 +240,40 @@ service cloud.firestore {
       }
 
       // --- Talk ----------------------------------------------------------------
+      // Last words: a guest the board took this morning (murdered, or the deep's
+      // catch) may post ONE of their own true clue photos to the room, during
+      // that day's investigation or round table. No text: a ghost is muted, so a
+      // photo is the whole message. The fact must match a via-'ghost' clue in
+      // their own inbox; the fixed id makes it once per game (no update rule).
+      function lastWords(id) {
+        let d = request.resource.data;
+        let p = get(/databases/$(database)/documents/games/$(gid)/players/$(me())).data;
+        let clue = get(/databases/$(database)/documents/games/$(gid)/inbox/$(d.inboxId)).data;
+        return hasBinding() && id == 'last_' + me()
+          && d.keys().hasOnly(['kind', 'pid', 'name', 'fact', 'inboxId', 'at'])
+          && d.kind == 'last' && d.pid == me() && d.inboxId is string
+          && d.fact.keys().hasOnly(['trait', 'group'])
+          && p.status == 'ghost' && p.cause in ['murdered', 'deep'] && p.diedCycle == game().cycle
+          && game().phase in ['investigation', 'roundtable']
+          && clue.to == me() && clue.kind == 'fact' && clue.via == 'ghost'
+          && clue.fact.trait == d.fact.trait && clue.fact.group == d.fact.group;
+      }
+
       match /chat/{id} {
         allow read: if signedIn();
-        allow create: if hasBinding() && myStatus() == 'alive'
-          && request.resource.data.pid == me() && shortText(request.resource.data.text);
+        // A living guest's line is text only: no `kind` or `fact`, so nobody alive can fake last words.
+        allow create: if (hasBinding() && myStatus() == 'alive'
+            && request.resource.data.pid == me() && shortText(request.resource.data.text)
+            && !request.resource.data.keys().hasAny(['kind', 'fact', 'inboxId']))
+          || lastWords(id);
         allow delete: if isHost();
+      }
+
+      // Ghost sight: every clue the living got on a night, and who got it. The
+      // host writes one doc per cycle with the morning; only ghosts read it.
+      match /ghostSight/{cycle} {
+        allow read: if isHost() || (hasBinding() && myStatus() == 'ghost');
+        allow write: if isHost();
       }
 
       // Spirits: the ghosts' own chat. Nobody living reads it.
