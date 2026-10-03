@@ -1,11 +1,22 @@
 #!/usr/bin/env node
 /**
- * Bots for Killers Night, against the Firebase Local Emulator only.
+ * Bots for Killers Night, against the Firebase Local Emulator (or, with
+ * --live, the real game).
  *
  *   npm run emulators                         # in another terminal first
  *   node scripts/bots.mjs --selftest --n 20   # play a whole game, check the rules hold
  *   node scripts/bots.mjs --join 12           # add 12 bots to the active game, to fill
  *                                             # a room around real phones in the browser
+ *   node scripts/bots.mjs --join 8 --live     # the same, in the LIVE game (murder-1bf1c)
+ *
+ * --live joins the game the host console created on the real project. It
+ * needs no emulator and no host sign-in: bots are anonymous guests under the
+ * real security rules, like any phone. Their names end in "(bot)" so the host
+ * can tell them apart, and they send a heartbeat so the console shows them
+ * present. Ctrl+C while the game is still in the lobby takes them back out;
+ * after the deal they stay (as a phone that walked out would), and the host
+ * removes them. --selftest is never allowed with --live: it creates games and
+ * plays host.
  *
  * Every bot is its own Firebase app with its own anonymous user, so the real
  * security rules judge every write, exactly as they would on 40 phones. The
@@ -13,9 +24,10 @@
  * credential for a host email) through src/firebase/host.js, the same code the
  * host console runs.
  *
- * It refuses to run unless the emulator answers. It never touches the live
- * project: the bots use the demo-killers project id, which cannot reach the
- * cloud, and src/firebase/app.js is emulated outside a production build.
+ * Without --live it refuses to run unless the emulator answers, and never
+ * touches the live project: the bots use the demo-killers project id, which
+ * cannot reach the cloud, and src/firebase/app.js is emulated outside a
+ * production build.
  */
 
 import { initializeApp } from 'firebase/app';
@@ -24,12 +36,11 @@ import {
 } from 'firebase/auth';
 import {
   initializeFirestore, connectFirestoreEmulator, memoryLocalCache, doc, collection, getDoc, getDocs, setDoc, updateDoc,
-  onSnapshot, query, where, serverTimestamp, addDoc, writeBatch, deleteDoc,
+  query, where, serverTimestamp, addDoc, writeBatch, deleteDoc,
 } from 'firebase/firestore';
-import { TRAITS, GENDER } from '../src/data/traits.js';
-import { PACKS, DEFAULT_PACK_ID, dayKit } from '../src/data/packs/index.js';
-import { STEPS, checksOf, guessHits, wordForms, assignDrawings, spoils } from '../src/lib/engine/minigames.js';
-import { encode } from '../src/os/game/strokes.js';
+import {
+  botName, G, arrive, heartbeat, leave, readSelf, act, play, playDay, vote, answerRecruit, driveBots,
+} from '../src/firebase/bots.js';
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((acc, a, i, arr) => {
@@ -39,12 +50,10 @@ const args = Object.fromEntries(
 );
 
 const HOST = '127.0.0.1';
-const CONFIG = { apiKey: 'demo-key', authDomain: 'demo-killers.firebaseapp.com', projectId: 'demo-killers' };
-const NAMES = ['Aarav', 'Diya', 'Kabir', 'Meera', 'Rohan', 'Ishita', 'Vikram', 'Tara', 'Neel', 'Anaya', 'Dev', 'Zoya',
-  'Arjun', 'Kiara', 'Sahil', 'Riya', 'Omar', 'Leela', 'Yash', 'Sana', 'Karan', 'Nisha', 'Aditya', 'Pooja', 'Farhan',
-  'Ira', 'Manav', 'Tanvi', 'Reyansh', 'Aisha', 'Veer', 'Myra', 'Kunal', 'Alia', 'Rehan', 'Sara', 'Nikhil', 'Avni', 'Jay', 'Esha'];
-
-const rnd = (xs) => xs[Math.floor(Math.random() * xs.length)];
+const LIVE = Boolean(args.live);
+const CONFIG = LIVE
+  ? (await import('../src/firebase/app.js')).LIVE_CONFIG
+  : { apiKey: 'demo-key', authDomain: 'demo-killers.firebaseapp.com', projectId: 'demo-killers' };
 
 async function emulatorUp() {
   try {
@@ -60,161 +69,13 @@ async function emulatorUp() {
 async function makeBot(i) {
   const app = initializeApp(CONFIG, `bot-${i}-${Date.now()}`);
   const auth = getAuth(app);
-  connectAuthEmulator(auth, `http://${HOST}:9099`, { disableWarnings: true });
+  if (!LIVE) connectAuthEmulator(auth, `http://${HOST}:9099`, { disableWarnings: true });
   await setPersistence(auth, inMemoryPersistence);
   const db = initializeFirestore(app, { localCache: memoryLocalCache() });
-  connectFirestoreEmulator(db, HOST, 8080);
+  if (!LIVE) connectFirestoreEmulator(db, HOST, 8080);
   const { user } = await signInAnonymously(auth);
-  return { i, app, db, uid: user.uid, pid: user.uid, name: NAMES[i % NAMES.length] + (i >= NAMES.length ? ` ${Math.floor(i / NAMES.length) + 1}` : '') };
-}
-
-const G = (bot, gid, ...p) => doc(bot.db, 'games', gid, ...p);
-
-async function arrive(bot, gid) {
-  const traits = { ...Object.fromEntries(TRAITS.map((t) => [t.id, rnd(t.options).id])), gender: rnd(GENDER.options).id };
-  bot.traits = traits;
-  await setDoc(G(bot, gid, 'bindings', bot.uid), { pid: bot.uid });
-  await setDoc(G(bot, gid, 'players', bot.uid), { name: bot.name, status: 'alive', joinedAt: Date.now() });
-  await setDoc(G(bot, gid, 'traits', bot.uid), traits);
-}
-
-async function readSelf(bot, gid) {
-  const [role, me] = await Promise.all([getDoc(G(bot, gid, 'roles', bot.pid)), getDoc(G(bot, gid, 'players', bot.pid))]);
-  bot.role = role.exists() ? role.data().role : null;
-  bot.status = me.data()?.status;
-}
-
-async function allPlayers(bot, gid) {
-  const snap = await getDocs(collection(bot.db, 'games', gid, 'players'));
-  return snap.docs.map((d) => ({ pid: d.id, ...d.data() }));
-}
-
-/** One night action, chosen at random but always legal for the role. */
-async function act(bot, gid, game) {
-  await readSelf(bot, gid);
-  const players = await allPlayers(bot, gid);
-  const alive = players.filter((p) => p.status === 'alive' && p.pid !== bot.pid);
-  if (!alive.length) return;
-  const c = game.cycle;
-  const action = (a) => setDoc(G(bot, gid, 'actions', `${c}_${bot.pid}`), { ...a, pid: bot.pid, cycle: c });
-
-  if (bot.status === 'ghost') {
-    return action({ kind: 'whisper', target: rnd(alive).pid, word: rnd(PACKS[DEFAULT_PACK_ID].whispers) });
-  }
-  if (bot.status !== 'alive') return;
-  if (bot.role === 'killer') {
-    const mates = (await getDocs(collection(bot.db, 'games', gid, 'killers'))).docs.map((d) => d.id);
-    const faithful = alive.filter((p) => !mates.includes(p.pid));
-    // Only what the phone's poll sends (KillPoll): the engine picks the hand and the rig.
-    const choice = { victim: rnd(faithful)?.pid ?? null, pid: bot.pid, cycle: c };
-    if (Math.random() < 0.5) choice.recruit = rnd(faithful)?.pid ?? null;
-    return setDoc(G(bot, gid, 'den', `${c}_${bot.pid}`), choice);
-  }
-  if (bot.role === 'doctor') return action({ kind: 'protect', target: rnd(alive).pid });
-  if (bot.role === 'detective') {
-    const two = [...alive].sort(() => Math.random() - 0.5).slice(0, 2).map((p) => p.pid);
-    return two.length === 2 ? action({ kind: 'trace', targets: two, target: null }) : action({ kind: 'scour' });
-  }
-  return Math.random() < 0.4 ? action({ kind: 'watch', target: rnd(alive).pid }) : action({ kind: 'scour' });
-}
-
-/**
- * The morning run. Each bot has a skill it keeps all game, plays a couple of
- * runs, and writes only a new best, as the real app does. One in ten skips
- * the run, to exercise "didn't play counts as 0".
- */
-async function play(bot, gid, game) {
-  await readSelf(bot, gid);
-  if (!['alive', 'ghost'].includes(bot.status)) return;
-  bot.skill ??= 2 + Math.floor(Math.random() * 30);
-  if (Math.random() < 0.1) return;
-  const c = game.cycle;
-  const runs = [0, 1].map(() => Math.floor(bot.skill * (0.4 + Math.random() * 0.6)));
-  let best = -1;
-  for (const [i, score] of runs.entries()) {
-    if (score <= best) continue;
-    best = score;
-    // A refusal here is the rules working: the rule checks already set this bot a higher best.
-    await setDoc(G(bot, gid, 'scores', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, best, runs: i + 1, at: Date.now() })
-      .catch((e) => { if (e.code !== 'permission-denied') throw e; });
-  }
-}
-
-// --- The word and drawing days --------------------------------------------------------
-
-const CLUE_WORDS = ['sunny', 'local', 'tasty', 'loud', 'night', 'summer', 'party', 'cheap', 'classic', 'goan', 'salty', 'sweet', 'quick', 'old'];
-
-async function myDayWord(bot, gid, game) {
-  const d = await getDoc(G(bot, gid, 'inbox', `${game.cycle}-day-${bot.pid}`)).catch(() => null);
-  return d?.exists() ? d.data() : null;
-}
-
-/**
- * The day's game for one bot, in two stages, like the steps on a phone:
- * stage 0 posts (a clue, or a drawing), stage 1 reacts (picks, or guesses).
- * Refusals are expected (a ghost can't post, the rule checks already posted
- * this bot's clue) and are swallowed.
- */
-async function playDay(bot, gid, game, stage) {
-  await readSelf(bot, gid);
-  if (!['alive', 'ghost'].includes(bot.status)) return;
-  const c = game.cycle;
-  const quiet = (p) => p.catch((e) => { if (e.code !== 'permission-denied') throw e; });
-  if (Math.random() < 0.08) return; // some guests never play
-  if (game.minigame === 'word') {
-    if (stage === 0 && bot.status === 'alive') {
-      const mine = await myDayWord(bot, gid, game);
-      const clue = CLUE_WORDS.filter((w) => !spoils(w, mine?.word ?? ''))[Math.floor(Math.random() * 10)] ?? 'hmm';
-      await quiet(setDoc(G(bot, gid, 'clues', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, clue, at: serverTimestamp() }));
-    }
-    if (stage === 1) {
-      const wall = (await getDocs(query(collection(bot.db, 'games', gid, 'clues'), where('cycle', '==', c)))).docs.map((d) => d.data().pid).filter((p) => p !== bot.pid);
-      const picks = wall.sort(() => Math.random() - 0.5).slice(0, 3);
-      await quiet(setDoc(G(bot, gid, 'picks', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, picks, at: Date.now() }));
-    }
-    return;
-  }
-  if (game.minigame === 'draw') {
-    if (stage === 0 && bot.status === 'alive') {
-      const mine = await myDayWord(bot, gid, game);
-      if (!mine?.word) return;
-      const pts = Array.from({ length: 8 }, (_, i) => [20 + i * 25, 60 + Math.floor(Math.random() * 120)]);
-      await quiet(setDoc(G(bot, gid, 'drawings', `${c}_${bot.pid}`), {
-        pid: bot.pid, cycle: c, strokes: encode([{ ink: 0, points: pts }]), checks: checksOf(mine.word, `${c}:${bot.pid}`), at: serverTimestamp(),
-      }));
-    }
-    if (stage === 1) {
-      const drawings = (await getDocs(query(collection(bot.db, 'games', gid, 'drawings'), where('cycle', '==', c)))).docs.map((d) => d.data());
-      const byPid = Object.fromEntries(drawings.map((d) => [d.pid, d]));
-      const mine = assignDrawings(Object.keys(byPid), bot.pid, `${game.courseSeed}:${c}`);
-      const bank = dayKit(PACKS[game.packId] ?? PACKS[DEFAULT_PACK_ID]).drawWords.flatMap(wordForms);
-      const answers = {};
-      for (const drawer of mine) {
-        // A bot "recognises" half the drawings, by trying the bank against the fingerprint.
-        const hit = Math.random() < 0.5 ? bank.find((w) => guessHits(w, byPid[drawer].checks, `${c}:${drawer}`)) : null;
-        answers[drawer] = { text: hit ?? 'potato', ms: 1000 + Math.floor(Math.random() * 13000) };
-      }
-      await quiet(setDoc(G(bot, gid, 'guesses', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, answers, at: Date.now() }));
-    }
-  }
-}
-
-async function vote(bot, gid, game) {
-  await readSelf(bot, gid);
-  const voting = game.phase === 'endgame' ? ['alive', 'ghost'] : ['alive'];
-  if (!voting.includes(bot.status)) return;
-  const players = await allPlayers(bot, gid);
-  let targets = players.filter((p) => p.status === 'alive' && p.pid !== bot.pid).map((p) => p.pid);
-  if (game.phase === 'revote') targets = (game.tied ?? []).filter((p) => p !== bot.pid);
-  if (!targets.length) return;
-  await setDoc(G(bot, gid, 'votes', `${game.ballot}_${bot.pid}`), { target: rnd(targets), pid: bot.pid, ballot: game.ballot });
-}
-
-async function answerRecruit(bot, gid, game) {
-  const inbox = await getDocs(query(collection(bot.db, 'games', gid, 'inbox'), where('to', '==', bot.pid)));
-  const offered = inbox.docs.some((d) => d.data().kind === 'recruitOffer' && d.data().cycle === game.cycle);
-  if (!offered) return;
-  await setDoc(G(bot, gid, 'actions', `${game.cycle}_${bot.pid}`), { kind: 'recruitAnswer', accept: Math.random() < 0.5, pid: bot.pid, cycle: game.cycle });
+  const name = botName(i);
+  return { i, app, db, uid: user.uid, pid: user.uid, name: LIVE ? `${name} (bot)` : name };
 }
 
 // --- Rule checks ----------------------------------------------------------------
@@ -502,50 +363,41 @@ async function join(n) {
   const metaSnap = await getDoc(doc(bots[0].db, 'meta', 'active'));
   const gid = metaSnap.data()?.gameId;
   if (!gid) throw new Error('No active game. Create one from the host console first.');
+  if (LIVE) {
+    console.log(`LIVE game ${gid}: ${n} bots join in 5 s. Ctrl+C now to cancel.`);
+    await new Promise((r) => setTimeout(r, 5000));
+  }
   await Promise.all(bots.map((b) => arrive(b, gid)));
   console.log(`${n} bots arrived in ${gid}. They act on every phase; Ctrl+C to stop.`);
 
-  let last = '';
-  onSnapshot(doc(bots[0].db, 'games', gid), async (s) => {
-    const g = s.data();
-    const key = `${g.phase}:${g.cycle}:${g.ballot ?? ''}`;
-    if (key === last) return;
-    last = key;
-    console.log(`phase ${g.phase} (cycle ${g.cycle})`);
-    // A short, human-ish delay so the host console shows actions trickling in.
-    await new Promise((r) => setTimeout(r, 1500));
-    try {
-      if (g.phase === 'night') await Promise.all(bots.map((b) => act(b, gid, g)));
-      if (g.phase === 'recruit') await Promise.all(bots.map((b) => answerRecruit(b, gid, g)));
-      if (g.phase === 'game') {
-        // Wait out the countdown so bot scores land inside the window, like a phone's would.
-        await new Promise((r) => setTimeout(r, Math.max(0, (g.revealAt ?? 0) - Date.now()) + 3000));
-        const steps = STEPS[g.minigame];
-        if (!steps) await Promise.all(bots.map((b) => play(b, gid, g)));
-        else {
-          // Post during the first step that takes input, react in the last, like a phone.
-          const scale = Math.min(1, ((g.phaseEndsAt - (g.revealAt ?? 0)) - 2000) / steps.reduce((n, [, x]) => n + x * 1000, 0));
-          const at = (i) => (g.revealAt ?? 0) + steps.slice(0, i).reduce((n, [, x]) => n + x * 1000 * scale, 0);
-          const post = steps.length === 3 ? 1 : 0;
-          await new Promise((r) => setTimeout(r, Math.max(0, at(post) - Date.now()) + 2000 + Math.random() * 4000));
-          await Promise.all(bots.map((b) => playDay(b, gid, g, 0)));
-          await new Promise((r) => setTimeout(r, Math.max(0, at(steps.length - 1) - Date.now()) + 2000));
-          await Promise.all(bots.map((b) => playDay(b, gid, g, 1)));
-        }
-      }
-      if (['roundtable', 'revote', 'endgame'].includes(g.phase)) await Promise.all(bots.map((b) => vote(b, gid, g)));
-    } catch (e) {
-      console.warn('bot error:', e.code ?? e.message);
+  const beat = () => Promise.all(bots.map((b) => heartbeat(b, gid))).catch((e) => console.warn('heartbeat:', e.code ?? e.message));
+  beat();
+  setInterval(beat, 60_000);
+
+  let phase = 'lobby';
+  process.on('SIGINT', async () => {
+    if (phase === 'lobby') {
+      await Promise.all(bots.map((b) => leave(b, gid))).catch((e) => console.warn('leave:', e.code ?? e.message));
+      console.log(`${n} bots left ${gid}.`);
+    } else {
+      console.log(`Bots stopped. They stay in ${gid}; remove them from the host console.`);
     }
+    process.exit(0);
   });
+
+  driveBots(bots[0].db, gid, bots, { log: (m) => console.log(m), onPhase: (p) => { phase = p; } });
 }
 
 // --- Main ------------------------------------------------------------------------------
 
-if (!(await emulatorUp())) {
+if (LIVE && (args.selftest || !args.join)) {
+  console.error('--live only goes with --join. The self-test creates games and plays host; it never runs live.');
+  process.exit(2);
+}
+if (!LIVE && !(await emulatorUp())) {
   console.error('The Firestore emulator is not running on 127.0.0.1:8080. Start it with `npm run emulators`.');
   process.exit(2);
 }
 if (args.selftest) await selftest(Number(args.n ?? 20));
 else if (args.join) await join(Number(args.join));
-else console.log('Usage: node scripts/bots.mjs --selftest [--n 20] | --join <count>');
+else console.log('Usage: node scripts/bots.mjs --selftest [--n 20] | --join <count> [--live]');

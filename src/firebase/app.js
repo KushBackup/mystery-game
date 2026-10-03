@@ -43,7 +43,8 @@ const PRODUCTION_BUILD = import.meta.env?.PROD === true;
 export const EMULATED = !PRODUCTION_BUILD && !params.has('live');
 export const PER_TAB = params.has('tab') || typeof indexedDB === 'undefined';
 
-const LIVE_CONFIG = {
+// Exported for scripts/bots.mjs --live, which fills the real room with bots on purpose.
+export const LIVE_CONFIG = {
   apiKey: 'AIzaSyBr2zO-hMOEUZiY6BumIkPwhB9t0vWazmM',
   authDomain: 'murder-1bf1c.firebaseapp.com',
   projectId: 'murder-1bf1c',
@@ -52,7 +53,7 @@ const LIVE_CONFIG = {
   appId: '1:1066963158553:web:50a78fed478e6a4e458c88',
 };
 
-const EMULATOR_CONFIG = { apiKey: 'demo-key', authDomain: 'demo-killers.firebaseapp.com', projectId: 'demo-killers' };
+export const EMULATOR_CONFIG = { apiKey: 'demo-key', authDomain: 'demo-killers.firebaseapp.com', projectId: 'demo-killers' };
 
 // A named app, so this never collides with the legacy game's default app in
 // src/firebase/config.js while both still exist in the repo.

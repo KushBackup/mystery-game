@@ -7,6 +7,7 @@ import {
 } from '../../firebase/host';
 import { useAuthUser, useActiveGameId, useGame, usePlayers, useServerNow } from '../../hooks/useKillers';
 import { cancelKnock } from '../../firebase/game';
+import { useHostBots } from '../../firebase/hostBots';
 import { PACKS, packFor, narrate, dayKit } from '../../data/packs/index.js';
 import { DEFAULT_GAMES, gameOfDay, introDay } from '../../lib/engine/minigames.js';
 import { PHASE, DEFAULT_DURATIONS, DEFAULT_CYCLES, ENDGAME_ROUNDS, LOCKED } from '../../lib/engine/phases.js';
@@ -237,6 +238,7 @@ function Console({ gid, game }) {
   const [error, setError] = useState('');
   const [showRoles, setShowRoles] = useState(false);
   const [newGame, setNewGame] = useState(false);
+  const { bots, add: addBot } = useHostBots(gid, players);
 
   const roleOf = useMemo(() => Object.fromEntries(roles.map((r) => [r.id, r.role])), [roles]);
   const names = useMemo(() => Object.fromEntries(players.map((p) => [p.id, p.name])), [players]);
@@ -456,6 +458,14 @@ function Console({ gid, game }) {
           ))}
         </ul>
         {players.length === 0 && <p className="er-mono mt-3">Nobody yet.</p>}
+        {game.phase !== PHASE.FINALE && (
+          <>
+            <Action tone="ghost" className="mt-3" busy={busy} onClick={() => run(addBot)}>Add bot</Action>
+            {bots.length > 0 && (
+              <p className="font-body text-[13px] text-dim mt-1">{bots.length} {bots.length === 1 ? 'bot plays' : 'bots play'} from this console. Keep it open.</p>
+            )}
+          </>
+        )}
       </section>
 
       <section className="mt-10 border-t border-line pt-6">

@@ -194,6 +194,43 @@ function line(g, pts, o = {}) {
 }
 
 /**
+ * Pigment grains, one tile per colour: 96 drawing units square, drawn at 3x so
+ * a grain stays crisp on a large photo, about one grain per 14 square units.
+ */
+const GRAIN_TILE = 96;
+const GRAIN_RES = 3;
+const GRAINS = new Map(); // colour -> pattern; a pattern copies its canvas, so each is made once
+function grainPattern(g, color, seed) {
+  let pat = GRAINS.get(color);
+  if (pat === undefined) {
+    pat = null;
+    if (typeof document !== 'undefined') {
+      const c = document.createElement('canvas');
+      c.width = c.height = GRAIN_TILE * GRAIN_RES;
+      const t = c.getContext('2d');
+      t.scale(GRAIN_RES, GRAIN_RES);
+      t.fillStyle = color;
+      const r = rng(seedOf(color));
+      t.beginPath();
+      for (let i = 0; i < (GRAIN_TILE * GRAIN_TILE) / 14; i++) {
+        const rad = 0.25 + r() * 0.8, x = r() * GRAIN_TILE, y = r() * GRAIN_TILE, rot = r() * TAU;
+        t.moveTo(x + rad * 1.4 * Math.cos(rot), y + rad * 1.4 * Math.sin(rot));
+        t.ellipse(x, y, rad * 1.4, rad, rot, 0, TAU);
+      }
+      t.fill();
+      pat = g.createPattern(c, 'repeat');
+    }
+    GRAINS.set(color, pat);
+    if (GRAINS.size > 96) GRAINS.delete(GRAINS.keys().next().value);
+  }
+  if (!pat) return null;
+  if (pat.setTransform && typeof DOMMatrix !== 'undefined') {
+    pat.setTransform(new DOMMatrix([1 / GRAIN_RES, 0, 0, 1 / GRAIN_RES, hash(seed, 9) * GRAIN_TILE, hash(seed, 10) * GRAIN_TILE]));
+  }
+  return pat;
+}
+
+/**
  * A watercolour wash: a slightly wandering shape off the line, pigment
  * granulating inside it and drying darker at its edge. Multiply, so washes
  * glaze over each other the way paint does.
@@ -210,15 +247,16 @@ function wash(g, pts, color, { seed = 1, alpha = 0.85, dx = 0.8, dy = 0.6, amp =
   g.fill(path);
   g.clip(path);
   if (gran > 0) {
-    const r = rng(seed + 77);
-    g.globalAlpha = alpha * gran;
-    g.fillStyle = shade(color, 0.25);
-    const count = Math.min(900, Math.ceil(((x1 - x0) * (y1 - y0)) / 14));
-    for (let i = 0; i < count; i++) {
-      const rad = 0.25 + r() * 0.8;
-      g.beginPath();
-      g.ellipse(x0 + r() * (x1 - x0), y0 + r() * (y1 - y0), rad * 1.4, rad, r() * TAU, 0, TAU);
-      g.fill();
+    // The grain is a tile laid over the wash in one fill, offset by the seed.
+    // It used to be a fill per grain: ~6,000 multiply-blended draws a photo,
+    // which a mid-range Android phone could not paint in time.
+    const pat = grainPattern(g, shade(color, 0.25), seed);
+    if (pat) {
+      // big washes were capped at 900 grains, so they read lighter
+      const area = (x1 - x0) * (y1 - y0);
+      g.globalAlpha = alpha * gran * Math.min(1, Math.sqrt((900 * 14) / Math.max(1, area)));
+      g.fillStyle = pat;
+      g.fill(path);
     }
   }
   if (edge > 0) {
@@ -1259,7 +1297,7 @@ function wallShadow(g, S) {
 
 // ---------------------------------------------------------------- layers and the reveal
 
-/** Each answer owns one layer, so Setup can draw just that answer on as it lands. */
+/** Each answer owns one layer, so Setup can brush just that answer on as it lands. */
 export const LAYERS = ['season', 'siblings', 'top', 'shoes', 'drink', 'glasses'];
 const BOX = {
   season: (S) => (S.calendarLeft ? [10, 70, 90, 120] : [200, 70, 96, 120]),
@@ -1279,47 +1317,15 @@ function drawLayer(g, id, traits, S) {
   if (id === 'glasses') { g.save(); headSpace(g); glasses(g, traits.glasses, S); g.restore(); }
 }
 
-let scratch = null;
-function layerCanvas(target) {
-  const w = target.canvas.width, h = target.canvas.height;
-  if (!scratch || typeof document === 'undefined') {
-    scratch = [0, 1].map(() => document.createElement('canvas'));
-  }
-  for (const c of scratch) {
-    if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
-  }
-  return scratch;
-}
-
 /**
- * A layer brushed on: the new drawing shows through a zigzag of broad brush
- * strokes laid top to bottom, the way you'd colour a shape in, while the old
- * one fades under it.
+ * Where a layer is brushed on, in drawing units: its box, and a zigzag of
+ * broad strokes laid top to bottom across it, the way you'd colour a shape in.
+ * Portrait.jsx strokes the zigzag `t` of the way along as a mask and lets the
+ * finished photo show through it, so an answer lands without the whole
+ * picture being drawn again every frame.
  */
-function brushIn(g, id, traits, prevTraits, S, t) {
-  const [a, m] = layerCanvas(g);
-  const ga = a.getContext('2d'), gm = m.getContext('2d');
-  const T = g.getTransform();
-  if (prevTraits && t < 1) {
-    g.save();
-    ga.setTransform(1, 0, 0, 1, 0, 0);
-    ga.clearRect(0, 0, a.width, a.height);
-    ga.setTransform(T);
-    drawLayer(ga, id, prevTraits, S);
-    g.setTransform(1, 0, 0, 1, 0, 0);
-    g.globalAlpha = 1 - t;
-    g.drawImage(a, 0, 0);
-    g.restore();
-  }
-  if (t <= 0) return;
-  ga.setTransform(1, 0, 0, 1, 0, 0);
-  ga.clearRect(0, 0, a.width, a.height);
-  ga.setTransform(T);
-  drawLayer(ga, id, traits, S);
-  gm.setTransform(1, 0, 0, 1, 0, 0);
-  gm.clearRect(0, 0, m.width, m.height);
-  gm.setTransform(T);
-  const [bx, by, bw, bh] = BOX[id](S);
+export function brushMask(g, id, seed, t) {
+  const [bx, by, bw, bh] = BOX[id](sceneFor(seed));
   const rows = Math.max(3, Math.round(bh / 9));
   const zig = [];
   for (let k = 0; k <= rows; k++) {
@@ -1329,37 +1335,27 @@ function brushIn(g, id, traits, prevTraits, S, t) {
   }
   let total = 0;
   for (let i = 1; i < zig.length; i++) total += Math.hypot(zig[i][0] - zig[i - 1][0], zig[i][1] - zig[i - 1][1]);
-  gm.lineCap = 'round';
-  gm.lineJoin = 'round';
-  gm.strokeStyle = '#000';
-  gm.lineWidth = ((bh + 8) / rows) * 1.25;
-  gm.setLineDash([total * t, total * 2]);
-  gm.beginPath();
-  zig.forEach(([x, y], i) => (i ? gm.lineTo(x, y) : gm.moveTo(x, y)));
-  gm.stroke();
-  gm.setLineDash([]);
-  gm.setTransform(1, 0, 0, 1, 0, 0);
-  gm.globalCompositeOperation = 'source-in';
-  gm.drawImage(a, 0, 0);
-  gm.globalCompositeOperation = 'source-over';
   g.save();
-  g.setTransform(1, 0, 0, 1, 0, 0);
-  g.drawImage(m, 0, 0);
+  g.lineCap = 'round';
+  g.lineJoin = 'round';
+  g.strokeStyle = '#000';
+  g.lineWidth = ((bh + 8) / rows) * 1.25;
+  g.setLineDash([total * t, total * 2]);
+  g.beginPath();
+  zig.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
+  g.stroke();
   g.restore();
+  return [bx - 6, by - 6, bw + 12, bh + 12];
 }
 
 /**
  * Paint the whole photo. The context must already be scaled so that the
  * drawing's 300 x 400 units fill the target (Portrait.jsx does this).
  */
-export function drawPortrait(g, traits = {}, seed = 0, { reveal = {}, prev = null, face = false, mystery = false } = {}) {
+export function drawPortrait(g, traits = {}, seed = 0, { face = false, mystery = false } = {}) {
   const t = traits ?? {};
   const S = sceneFor(seed, mystery ? 'open' : lookOf(t.gender));
-  const layer = (id) => {
-    const p = reveal[id];
-    if (p === undefined || p >= 1) drawLayer(g, id, t, S);
-    else brushIn(g, id, t, prev, S, p);
-  };
+  const layer = (id) => drawLayer(g, id, t, S);
   const theHead = () => {
     g.save();
     headSpace(g);

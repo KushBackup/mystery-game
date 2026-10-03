@@ -5,8 +5,12 @@
  * big smooth gradient with a little glow, nothing busy behind the icons.
  *
  * 'lock' is brighter with the whale lit along its back; 'home' is dimmer so
- * icons and labels read on top. Only the bubbles and a slow whale drift move,
- * and both stop under prefers-reduced-motion.
+ * icons and labels read on top.
+ *
+ * It holds still (2026-10-03). The bubbles, the whale's drift and the swaying
+ * shafts were CSS animations inside the SVG, which Chrome cannot hand to the
+ * GPU: a mid-range Android phone repainted the whole screen every frame, and
+ * with it the time-of-day filter and the dock's blur, all night long.
  */
 import React, { useId } from 'react';
 
@@ -29,18 +33,8 @@ const VARIANTS = {
 
 const BUBBLES = [
   [14, 118, 2.2, 9], [26, 140, 1.4, 12], [38, 128, 3, 8], [52, 150, 1.6, 14], [66, 122, 2.4, 10], [78, 144, 1.8, 11],
-  [86, 112, 2.8, 13], [20, 96, 1.5, 15], [60, 104, 2, 9.5], [44, 154, 1.2, 12.5],
+  [86, 112, 2.8, 13], [20, 96, 1.5, 15], [60, 104, 2, 9.5], [44, 154, 1.2, 12.5], // x, y, r, (seconds a rise took)
 ];
-
-const CSS = `
-.dbw-b{animation:dbw-rise var(--d) linear var(--l) infinite}
-@keyframes dbw-rise{0%{transform:translateY(0);opacity:0}12%{opacity:.8}80%{opacity:.5}100%{transform:translateY(-80px);opacity:0}}
-.dbw-w{animation:dbw-drift 24s ease-in-out infinite alternate}
-@keyframes dbw-drift{from{transform:translate(0,0)}to{transform:translate(6px,-2.5px)}}
-.dbw-s{animation:dbw-sway 14s ease-in-out infinite alternate;transform-origin:50% 0}
-@keyframes dbw-sway{from{transform:skewX(-1.5deg)}to{transform:skewX(1.5deg)}}
-@media (prefers-reduced-motion: reduce){.dbw-b,.dbw-w,.dbw-s{animation:none!important}}
-`;
 
 export default function Wallpaper({ variant = 'home', className, style }) {
   const v = VARIANTS[variant] ?? VARIANTS.home;
@@ -53,7 +47,6 @@ export default function Wallpaper({ variant = 'home', className, style }) {
       className={className}
       style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block', ...style }}
     >
-      <style>{CSS}</style>
       <defs>
         <linearGradient id={`${id}s`} x1="0" y1="0" x2="0" y2="1">
           {v.sky.map((c, i) => <stop key={c} offset={[0, 0.22, 0.5, 0.76, 1][i]} stopColor={c} />)}
@@ -77,12 +70,12 @@ export default function Wallpaper({ variant = 'home', className, style }) {
       </defs>
       <rect width="90" height="160" fill={`url(#${id}s)`} />
       <rect width="90" height="100" fill={`url(#${id}g)`} />
-      <g className="dbw-s">
+      <g>
         <path d="M6 0h14L48 110H12Z" fill={`url(#${id}r)`} />
         <path d="M34 0h10L74 100H48Z" fill={`url(#${id}r)`} />
         <path d="M62 0h12L90 70v40H70Z" fill={`url(#${id}r)`} />
       </g>
-      <g className="dbw-w">
+      <g>
         <path
           transform="translate(8 80) scale(0.85)"
           fill={`url(#${id}w)`}
@@ -90,10 +83,9 @@ export default function Wallpaper({ variant = 'home', className, style }) {
         />
         <path transform="translate(8 80) scale(0.85)" d="M20 36C26 43 36 44 46 40C42 45 34 46 28 45C24 44 21 41 20 36Z" fill={v.rim} opacity="0.18" />
       </g>
-      {BUBBLES.map(([x, y, r, d], i) => (
+      {BUBBLES.map(([x, y, r], i) => (
         <circle
           key={i}
-          className="dbw-b"
           cx={x}
           cy={y}
           r={r * 0.6}
@@ -101,7 +93,6 @@ export default function Wallpaper({ variant = 'home', className, style }) {
           stroke="#d6ecff"
           strokeWidth="0.35"
           opacity="0.6"
-          style={{ '--d': `${d}s`, '--l': `${-i * 1.7}s` }}
         />
       ))}
       <rect width="90" height="160" fill={`url(#${id}v)`} />

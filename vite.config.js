@@ -44,6 +44,16 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}'],
         runtimeCaching: [
           {
+            // The News app's drawn pictures (public/news/): fetched the first time a story is opened, then kept
+            urlPattern: /\/news\/[\w-]+\.webp$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'news-art',
+              expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          },
+          {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
             options: {

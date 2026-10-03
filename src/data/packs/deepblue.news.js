@@ -25,7 +25,9 @@
  *      is never the cause, the cover-up or the culprit. Keep it that way.
  *   5. Read on a phone, standing up, in a loud café: short paragraphs.
  *
- * `art` names a scene in src/os/art/NewsArt.jsx.
+ * `art` names a picture: public/news/<art>.webp, drawn in splash-film/news.html
+ * and listed in src/os/art/NewsArt.jsx. Each article has its own, named after
+ * its id.
  */
 
 export const OUTLETS = {
@@ -50,7 +52,7 @@ export const ARTICLES = [
     dek: 'Investigators link deaths across Goa and the coast to an app nobody remembers installing.',
     by: 'Konkan Wire, Panaji',
     time: '06:12',
-    art: 'phone',
+    art: 'nine-dead',
     cap: 'The icon residents describe: a small white whale on a dark blue tile.',
     body: [
       'Nine people have died across Goa in the past three weeks. Investigators now say the cases share one detail: each had an app called DEEP BLUE on their phone, and each came last on its leaderboard the morning before.',
@@ -68,7 +70,7 @@ export const ARTICLES = [
     dek: 'From Fontainhas to Campal, the same blue icon and the same bell.',
     by: 'Mandovi Courier desk',
     time: '06:40',
-    art: 'bell',
+    art: 'seven-am',
     cap: 'It rings at exactly 7:00. Residents say the tone is not one they chose.',
     body: [
       'Ask for a show of hands at any tea stall near the Panjim market and a few will go up. The same whale. The same bell, at exactly 7:00.',
@@ -86,7 +88,7 @@ export const ARTICLES = [
     dek: 'Investigators ask residents to report the icon and not to sit through the timer alone.',
     by: 'Konkan Wire, Panaji',
     time: '07:05',
-    art: 'tape',
+    art: 'stay-together',
     cap: 'Of the nine, seven were last seen alone.',
     body: [
       'Investigators have asked anyone who finds the DEEP BLUE icon on their phone to tell someone nearby, and to stay in company while the morning timer runs.',
@@ -104,7 +106,7 @@ export const ARTICLES = [
     dek: 'A full house is expected in Panjim despite a day of warnings to stay home.',
     by: 'Mandovi Courier desk',
     time: '17:48',
-    art: 'cafe',
+    art: 'greenr-open',
     cap: 'Tables at Greenr were being laid at half past five.',
     body: [
       'Greenr, the café-bar in Panjim, expects a full room tonight, despite a day of messages urging people to stay indoors.',
@@ -126,7 +128,7 @@ export const ARTICLES = [
     dek: 'The toll is now fourteen. A few of those still playing have agreed to talk.',
     by: 'Konkan Wire, Panaji',
     time: '08:20',
-    art: 'run',
+    art: 'ninety-seconds',
     cap: 'Those who have played describe a small whale and a wall with a gap in it.',
     body: [
       'Those who have played describe a small whale on a dark screen, a wall of obstacles with a gap in it, and a clock. Everyone gets about ninety seconds and as many tries as they can stand. The best run counts.',
@@ -144,7 +146,7 @@ export const ARTICLES = [
     dek: 'Commuters, vendors and a traffic constable, all heads down for ninety seconds.',
     by: 'Mandovi Courier desk',
     time: '07:50',
-    art: 'street',
+    art: 'panjim-stops',
     cap: 'Near the Kadamba bus stand, a queue stood still.',
     body: [
       'At 7:00 a.m., a queue near the Kadamba bus stand stopped moving. Nobody was boarding. Nobody was talking. Every head was bent over a phone.',
@@ -161,7 +163,7 @@ export const ARTICLES = [
     dek: '“The bell goes off mid-river and half the deck stops being a deck.”',
     by: 'Fontainhas Dispatch',
     time: '09:10',
-    art: 'ferry',
+    art: 'ferry-crews',
     cap: 'The Mandovi crossings still run to time.',
     body: [
       'Deckhands on the Mandovi crossings have started asking passengers to put their phones in their bags before the boat leaves the bank.',
@@ -181,7 +183,7 @@ export const ARTICLES = [
     dek: 'Reports from Karwar to Ratnagiri. Pathologists say the bodies “say nothing”.',
     by: 'Konkan Wire, Panaji',
     time: '06:55',
-    art: 'board',
+    art: 'twenty-three',
     cap: 'Every morning, the same layout. One name at the bottom.',
     body: [
       'The toll has risen to twenty-three. New cases have been reported in Karwar, Ratnagiri and Mangaluru.',
@@ -199,7 +201,7 @@ export const ARTICLES = [
     dek: 'Venues that stayed open say people want company more than they want safety.',
     by: 'Mandovi Courier desk',
     time: '13:15',
-    art: 'cafe',
+    art: 'bars-split',
     cap: 'Lights on at dusk in a Panjim café.',
     body: [
       'Several Panjim venues have closed their doors for the week. Others are turning people away.',
@@ -216,7 +218,7 @@ export const ARTICLES = [
     dek: 'The leaderboard is not a game. It is a way of making you watch each other.',
     by: 'The Goa Times editorial board',
     time: '16:30',
-    art: 'eyes',
+    art: 'nobody-wins',
     cap: 'Look at the person next to you.',
     body: [
       'A leaderboard has one purpose: it makes you look sideways. Who is above you? Who is below you? Who has gone very quiet?',
@@ -237,7 +239,7 @@ export const ARTICLES = [
     dek: 'In four cases, relatives say the posted number was far lower than the run they watched.',
     by: 'Konkan Wire, Panaji',
     time: '07:40',
-    art: 'board',
+    art: 'scores-dispute',
     cap: 'The last line on the board, in the app’s own colours.',
     body: [
       'Relatives of at least four of the dead say the score posted beside their name was far lower than the run they watched the evening before.',
@@ -275,7 +277,7 @@ export const ARTICLES = [
     dek: 'Phone shops report people swapping handsets. The new phone rings too.',
     by: 'Mandovi Courier desk',
     time: '08:10',
-    art: 'deleted',
+    art: 'cannot-delete',
     cap: 'A factory reset. The icon was back by seven.',
     body: [
       'Phone shops near the Panjim market say customers are arriving with a request: wipe it, replace it, whatever it takes.',
@@ -293,7 +295,7 @@ export const ARTICLES = [
     dek: 'Investigators traced the app to a coastal data centre. Nobody rents the space.',
     by: 'Konkan Wire, Panaji',
     time: '14:30',
-    art: 'servers',
+    art: 'empty-servers',
     cap: 'One rack, lit, with no tenant on record.',
     body: [
       'Investigators say they have traced the app’s traffic to a data centre on the coast. On arrival, officers found one rack of running machines with no tenant on record.',
@@ -313,7 +315,7 @@ export const ARTICLES = [
     dek: 'At 7:00 a message on every phone: the last board is today.',
     by: 'Konkan Wire, Panaji',
     time: '07:02',
-    art: 'bell',
+    art: 'final-board',
     cap: 'The screen at 7:00: FINAL BOARD.',
     body: [
       'At 7:00 this morning, the app put up a new message on every phone that carries it: FINAL BOARD.',
@@ -330,7 +332,7 @@ export const ARTICLES = [
     dek: 'Cafés are staying open late. Nobody is sure what for.',
     by: 'Mandovi Courier desk',
     time: '12:00',
-    art: 'street',
+    art: 'last-call',
     cap: 'Shutters half-down on a Panjim street.',
     body: [
       'By noon the streets around the church square were almost empty. Shops that normally stay open until ten pulled their shutters at four.',
@@ -370,7 +372,7 @@ export const EPILOGUE = {
     dek: 'The app has told every phone: “See you at seven.”',
     by: 'Konkan Wire, Panaji',
     time: '23:59',
-    art: 'ring',
+    art: 'rings-again',
     cap: 'A new message, on every phone, just before midnight.',
     body: [
       'Just before midnight, the app put up one more line on every phone that carries it: SEE YOU AT SEVEN.',

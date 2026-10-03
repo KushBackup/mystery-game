@@ -184,9 +184,7 @@ function PollBubble({ ctx }) {
 /** Chat bubbles: yours green on the right, theirs grey on the left, names when the speaker changes. */
 export function Thread({ messages, me, empty = 'Nothing yet.', poll = null }) {
   const end = useRef(null);
-  useEffect(() => {
-    end.current?.scrollIntoView({ block: 'end' });
-  }, [messages.length]);
+  useEffect(() => toBottom(end.current), [messages.length]);
   if (!messages.length) return <Empty glyph="chat" line={empty} />;
   // "Delivered" sits under your last message, if the last person to speak was you.
   let lastSpoken = -1;
@@ -216,11 +214,19 @@ export function Thread({ messages, me, empty = 'Nothing yet.', poll = null }) {
   );
 }
 
+/**
+ * Pin a thread to its newest message by scrolling its own list, never with
+ * scrollIntoView: on open the thread is still sliding in from the right, and
+ * scrollIntoView would also scroll the phone's screen sideways to reach it.
+ */
+function toBottom(el) {
+  const box = el?.closest('.os-scroll');
+  if (box) box.scrollTop = box.scrollHeight;
+}
+
 function SystemThread({ list, ctx }) {
   const end = useRef(null);
-  useEffect(() => {
-    end.current?.scrollIntoView({ block: 'end' });
-  }, [list.length]);
+  useEffect(() => toBottom(end.current), [list.length]);
   if (!list.length) return <Empty glyph="dots" line="No messages yet." />;
   return (
     <div className="os-thread">

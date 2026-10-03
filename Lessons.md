@@ -670,3 +670,22 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 **What happened:** The Night app branched on `game.phase === 'night'` and sent everything else to its day screen. The icon is also on the phone during `night_locked`, `recruit` and `recruit_locked` (`NIGHTTIME` in PhoneOS.jsx), so a guest who opened Night in those seconds read "Not night yet. Night moves open when night falls", which is false and suggests their move was lost. Found while rebuilding the app; `advance()` passes through the lock so fast that no drive ever saw it.
 
 **What to do instead:** When a screen is shown for a set of phases, branch on the same set, and give each phase in it a state of its own (here: the sealed move, read-only, "Locked in"). To test a phase the host moves through instantly, write it onto the emulator game doc (`updateDoc(game, { phase: 'night_locked' })`) and look.
+
+## 2026-10-03 — "A script to add bots" meant a button, not a terminal command
+
+**What happened:** Asked for "a script that adds a couple of players in the live game as well as bots", I extended `scripts/bots.mjs` with `--live`. The user wanted it inside the host console instead: "press a button and add a new bot player. Simple as that."
+
+**What to do instead:** For anything the host does while running the room, put it in the host console as one button. A terminal command means a second machine or window during a live event. Keep the terminal path for development, and share the behaviour between the two (here `src/firebase/bots.js`) instead of writing it twice.
+
+## 2026-10-03 — scrollIntoView inside a sliding page scrolled the whole phone sideways
+
+**What happened:** Opening a Messages thread slid too far and showed the dark phone behind it. Two causes. The thread pinned itself to the newest message with `scrollIntoView` on mount, while its frame was still translated 45% to the right; `scrollIntoView` scrolls every scrollable ancestor, and `overflow: hidden` (`.os-stage`) still counts, so the stage jumped 133 px sideways and eased back. And the push animated the whole frame from 30% opacity, so the abyss background showed through. Other pushed screens never call `scrollIntoView` on mount, which is why only chats looked broken.
+
+**What to do instead:** To scroll a list, set `scrollTop` on its own scroller (`toBottom` in MessagesApp.jsx), never `scrollIntoView` on something that may be mid-animation. `.os-stage` is now `overflow: clip`, which script cannot scroll. Page transitions move the contents inside an opaque frame (`.os-nav-push > .os-scroll`), never the frame. Verify motion by sampling `scrollLeft`, rects and computed opacity every frame, not by a screenshot.
+
+## 2026-10-03 — A canvas drawing that is cheap on an iPhone can freeze an Android phone
+
+**What happened:** Registration lagged badly on Android and was fine on iPhone. The contact photo was about 6,500 canvas draws (a fill per pigment grain, in `multiply` blend inside a clip), and Setup's brush-on repainted the whole photo 8 times per answer tap. On a desktop GPU a photo took 10 to 20 ms, so nothing looked wrong in development. Under a 4x CPU throttle at Android pixel density the 37 taps of Setup blocked the main thread for 39 s. The wallpaper's SVG animations also repainted the whole screen every frame under a filter and a backdrop blur.
+
+**What to do instead:** Count draw calls, not just milliseconds on this laptop: a fill per mark is the warning sign. Paint an expensive picture once, cache it, and animate by compositing the cached result, never by repainting it per frame. Keep infinite animations out of inline SVG and away from anything under a `filter` or `backdrop-filter`. Measure with the Setup drive (Playwright, `deviceScaleFactor: 2.75`, `Emulation.setCPUThrottlingRate` 4, PerformanceObserver `longtask` and `event`) before and after, and compare against the HEAD files, not against memory.
+

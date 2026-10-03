@@ -53,7 +53,7 @@ function liveStory(s, pack, nameOf) {
   const feed = pack.news;
   const live = feed?.live;
   if (!live) return null;
-  const base = { section: 'room', live: true, day: s.cycle, outlet: feed.outlets.times, by: live.by, art: s.kind === 'dawn' ? 'board' : 'eyes' };
+  const base = { section: 'room', live: true, day: s.cycle, outlet: feed.outlets.times, by: live.by };
 
   if (s.kind === 'dawn') {
     const taken = s.taken ?? s.victims?.[0];
@@ -74,7 +74,8 @@ function liveStory(s, pack, nameOf) {
       ...(s.vanished?.length ? [`${listOf(s.vanished.map(nameOf))} went home. Their secret went with them.`] : []),
       ...t.tail,
     ];
-    return { ...base, id: `l:dawn:${s.cycle}`, kicker: t.kicker, head: fill(t.head, vars), dek: fill(t.dek, vars), time: '07:30', body };
+    const art = key === 'rig' || key === 'deep' ? 'dawn-taken' : 'dawn-clear';   // pictures in public/news/
+    return { ...base, art, id: `l:dawn:${s.cycle}`, kicker: t.kicker, head: fill(t.head, vars), dek: fill(t.dek, vars), time: '07:30', body };
   }
 
   const key = !s.pid ? 'none' : s.team === 'killers' ? 'killer' : 'innocent';
@@ -84,6 +85,7 @@ function liveStory(s, pack, nameOf) {
   const lines = narrate(pack, key === 'none' ? 'banishNone' : key === 'killer' ? 'banishKiller' : 'banishFaithful', who);
   return {
     ...base,
+    art: key === 'none' ? 'vote-none' : 'vote-out',
     id: `l:banish:${s.cycle}:${s.ballot ?? ''}`,
     kicker: t.kicker,
     head: fill(t.head, vars),

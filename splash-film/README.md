@@ -234,3 +234,56 @@ done
 - **Colour.** Red only for the Killers' ring, their tally and the "!"; the
   lamp and the sun are warm light, never gold; gold and green nowhere.
 - **Never graphic.** The ring bounces off the shield; nobody is hurt on screen.
+
+## news.html — the News app's pictures
+
+One still for every story in the News app (The Goa Times), shipped as
+`public/news/<name>.webp`, 1280 × 720. It is a sheet of stills, not a film:
+each scene in the timeline lasts one frame. Files: `news.html` (brief and the
+scene list, in frame order), `news-kit.js` (newsprint, night and sky washes,
+lamplight, the DEEP BLUE handset and whale tile, small editorial figures,
+houses, palms, water, tape, a leaderboard), `news-scenes.js` (the 22 scenes).
+It loads `board-kit.js` for the ink line and the cast's cartoon heads.
+
+| Frame | Picture | Used by |
+|---|---|---|
+| 0–3 | nine-dead, seven-am, stay-together, greenr-open | Day 0 articles |
+| 4–6 | ninety-seconds, panjim-stops, ferry-crews | Day 1 |
+| 7–9 | twenty-three, bars-split, nobody-wins | Day 2 |
+| 10–11 | scores-dispute, vigil | Day 3 |
+| 12–13 | cannot-delete, empty-servers | Day 4 |
+| 14–15 | final-board, last-call | Day 5 |
+| 16–17 | deleted, rings-again | The epilogues (Faithful win, Killers win) |
+| 18–21 | dawn-taken, dawn-clear, vote-out, vote-none | The room's own stories (`src/os/news.js`) |
+
+An authored article's `art` is its own `id`
+(`src/data/packs/deepblue.news.js`); the room's stories pick theirs in
+`liveStory`. `src/os/art/NewsArt.jsx` lists the names and falls back to
+nine-dead for an unknown one.
+
+```bash
+cd splash-film
+export CHROME=".../chrome.exe"
+node render.mjs news.html --only $(seq -s, 0 21) --out out/news     # every picture, full size
+names=(nine-dead seven-am stay-together greenr-open ninety-seconds panjim-stops ferry-crews twenty-three bars-split nobody-wins scores-dispute vigil cannot-delete empty-servers final-board last-call deleted rings-again dawn-taken dawn-clear vote-out vote-none)
+for i in "${!names[@]}"; do
+  ffmpeg -v error -y -i out/news/news-frames/$(printf "%04d" $i).png \
+    -c:v libwebp -quality 80 -compression_level 6 ../public/news/${names[$i]}.webp
+done
+```
+
+A new picture is a new entry at the end of `NEWS_SCENES` in news.html, its
+name at the end of the loop above and in NewsArt.jsx, and its id as the
+article's `art`.
+
+- **Square-safe.** The app also crops a square thumbnail from the middle
+  (`object-fit: cover`), so every subject sits in x 420..1500.
+- **The pack's rules apply to the pictures.** Pure flavour: no picture may
+  look like a real guest, show a method, a body or anyone under 18, or name
+  a real outlet. Greenr is a café with its lights on, never the cause.
+  Faces in a crowd are kept featureless or seen from behind.
+- **Colour.** Ink, newsprint and the phone's blues; one warm lamplight (an
+  illustration colour, never gold); red only for tape, alarms, TAKEN and
+  the marker ring; gold only for scores on a board.
+- **Offline.** The pictures are not precached; the service worker keeps each
+  one after its first view (`news-art` in vite.config.js). About 0.9 MB in all.

@@ -4,6 +4,7 @@ import { GAME } from '../data/killersCopy';
 import { arrive, knock, cancelKnock, deviceCode } from '../firebase/game';
 import Wallpaper from './art/Wallpaper';
 import Portrait from './art/Portrait';
+import { warmPortrait } from './art/portraitCache';
 import { ART_W, ART_H } from './art/portraitArt';
 import { SlideToUnlock } from './chrome';
 import { AppFrame, Section, Btn, ActionSheet } from './ui';
@@ -63,6 +64,27 @@ export default function Setup({ gid, uid, late }) {
 
   useEffect(() => { markSeen(saveKey, { step, name, answers }); }, [saveKey, step, name, answers]);
 
+  // Paint the photos the next tap could show while the phone is idle: every
+  // option of this question, and the next screen's photo. A photo costs a
+  // mid-range Android phone ~100 ms, so a tap that has to paint one lags.
+  useEffect(() => {
+    if (step !== 'name' && typeof step !== 'number') return undefined;
+    const jobs = [];
+    const warm = (traits, at) => jobs.push(() => warmPortrait({ traits, seed: uid, full: true, size: photoSize(at) }));
+    if (typeof step === 'number') {
+      warm(answers, step + 1 < QUESTIONS.length ? step + 1 : 'review');
+      for (const o of QUESTIONS[step].options) warm({ ...answers, [QUESTIONS[step].id]: o.id }, step);
+    } else {
+      warm(answers, 0);
+    }
+    const idle = window.requestIdleCallback ?? ((f) => setTimeout(f, 150));
+    const cancel = window.cancelIdleCallback ?? clearTimeout;
+    let handle = 0;
+    const next = () => { if (jobs.length) handle = idle(() => { jobs.shift()(); next(); }); };
+    next();
+    return () => cancel(handle);
+  }, [step, answers, uid]);
+
   if (!booted) return <Boot onDone={finishBoot} />;
   if (step === 'back') return <SignBackIn gid={gid} uid={uid} onCancel={() => setStep('hello')} />;
   if (step === 'hello') return <Hello onDone={() => { primeSfx(); setStep('terms'); }} onBack={() => { primeSfx(); setStep('back'); }} late={late} />;
@@ -77,7 +99,7 @@ export default function Setup({ gid, uid, late }) {
             if (name.trim()) setStep(0);
           }}
         >
-          <ProfileCard uid={uid} answers={answers} below={230}>
+          <ProfileCard uid={uid} answers={answers} size={photoSize('name')}>
             <p className="text-[22px] leading-tight text-os-ink">{late ? 'You made it.' : `Welcome to ${GAME.title}.`}</p>
             <p className="text-[16px] mt-1 text-os-steel">What should the group call you?</p>
           </ProfileCard>
@@ -96,7 +118,6 @@ export default function Setup({ gid, uid, late }) {
     const trait = QUESTIONS[step];
     const picked = answers[trait.id];
     const last = step + 1 === QUESTIONS.length;
-    const rows = Math.ceil(trait.options.length / 2);
     return (
       <AppFrame
         key={trait.id}
@@ -111,7 +132,7 @@ export default function Setup({ gid, uid, late }) {
           </div>
         )}
       >
-        <ProfileCard uid={uid} answers={answers} name={name} below={150 + rows * 52}>
+        <ProfileCard uid={uid} answers={answers} name={name} size={photoSize(step)}>
           <p className="os-label text-[12px] text-os-steel">{trait.id === GENDER.id ? 'FOR YOUR PHOTO · NEVER A CLUE' : trait.visible ? 'OTHERS CAN SEE THIS' : 'ONLY YOU KNOW THIS'}</p>
           <p className="text-[21px] leading-tight mt-1 text-os-ink">{trait.prompt}</p>
         </ProfileCard>
@@ -166,7 +187,7 @@ export default function Setup({ gid, uid, late }) {
     <AppFrame title="Almost done" onBack={() => setStep(QUESTIONS.length - 1)} backLabel="Back" light overlay={overlay}>
       <div className="flex flex-col items-center px-5 pt-5">
         <div className="os-photo os-rise">
-          <Portrait traits={answers} seed={uid} full size={photoWidth(120)} rounded={3} animate />
+          <Portrait traits={answers} seed={uid} full size={photoSize('review')} rounded={3} animate />
         </div>
         <p className="text-[22px] leading-tight mt-3 text-os-ink">{name.trim()}</p>
         <p className="text-[14px] text-os-steel mt-0.5">How the others will see you</p>
@@ -201,16 +222,23 @@ function photoWidth(below) {
   return Math.round(Math.max(120, Math.min(280, window.innerWidth * 0.62, byHeight)));
 }
 
+/** The photo's width on each screen of Setup: the name, a question (by its rows of options), the review. */
+function photoSize(step) {
+  if (step === 'name') return photoWidth(230);
+  if (typeof step === 'number') return photoWidth(150 + Math.ceil(QUESTIONS[step].options.length / 2) * 52);
+  return photoWidth(120);
+}
+
 /**
  * The guest's contact photo as it is being made, large and centred, with the
  * screen's words under it. Every tap changes the picture at once: Portrait
  * brushes the new answer on (and fades the figure across for a gender change).
  */
-function ProfileCard({ uid, answers, name, below, children }) {
+function ProfileCard({ uid, answers, name, size, children }) {
   return (
     <div className="flex flex-col items-center px-5 pt-4 text-center">
       <div className="os-photo">
-        <Portrait traits={answers} seed={uid} full size={photoWidth(below)} rounded={3} animate />
+        <Portrait traits={answers} seed={uid} full size={size} rounded={3} animate />
       </div>
       <div className="w-full pt-3">
         {name && <p className="os-label text-[12px] text-os-steel truncate mb-1">{name.trim().toUpperCase()}</p>}

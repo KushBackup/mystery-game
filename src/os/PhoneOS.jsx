@@ -173,22 +173,26 @@ export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = 
   useEffect(() => {
     const html = document.documentElement;
     html.classList.add('os-locked');
-    const canScroll = (el, dy) => {
-      for (let n = el; n && n !== html; n = n.parentElement) {
-        const oy = getComputedStyle(n).overflowY;
-        if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight) {
-          if (dy > 0 && n.scrollTop > 0) return true; // finger down: content moves down, needs room above
-          if (dy < 0 && n.scrollTop + n.clientHeight < n.scrollHeight - 1) return true;
-        }
-      }
-      return false;
-    };
+    // The scrollable boxes under the finger are found once, when it lands: a
+    // style lookup per ancestor on every move held up each scroll on Android.
+    let scrollers = [];
+    const canScroll = (dy) => scrollers.some((n) => n.scrollHeight > n.clientHeight && (
+      (dy > 0 && n.scrollTop > 0) // finger down: content moves down, needs room above
+      || (dy < 0 && n.scrollTop + n.clientHeight < n.scrollHeight - 1)
+    ));
     let startY = 0;
-    const onStart = (e) => { startY = e.touches[0]?.clientY ?? 0; };
+    const onStart = (e) => {
+      startY = e.touches[0]?.clientY ?? 0;
+      scrollers = [];
+      for (let n = e.target; n && n !== html && n.nodeType === 1; n = n.parentElement) {
+        const oy = getComputedStyle(n).overflowY;
+        if (oy === 'auto' || oy === 'scroll') scrollers.push(n);
+      }
+    };
     const onMove = (e) => {
       if (e.touches.length > 1) { e.preventDefault(); return; } // pinch
       const dy = (e.touches[0]?.clientY ?? 0) - startY;
-      if (!canScroll(e.target, dy)) e.preventDefault();
+      if (!canScroll(dy)) e.preventDefault();
     };
     document.addEventListener('touchstart', onStart, { passive: true });
     document.addEventListener('touchmove', onMove, { passive: false });
@@ -328,6 +332,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
 
   // Closing an app zooms it back into its icon; the element stays mounted until the zoom ends.
   const [closing, setClosing] = useState(null);
+  const [settled, setSettled] = useState(null); // the open app, once its zoom has finished
   const stageRef = useRef(null);
   // `thread` opens Messages straight into one conversation (a banner from it).
   const open = (name, point, thread = null) => {
@@ -335,11 +340,13 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
     const r = stageRef.current?.getBoundingClientRect();
     if (point && r) origin = `${((point.x - r.left) / r.width) * 100}% ${((point.y - r.top) / r.height) * 100}%`;
     setClosing(null);
+    setSettled(null);
     setNav({ ...current, app: name, key: phaseKey, origin, thread });
   };
   const home = () => {
     if (!app) return;
     sfxLock();
+    setSettled(null);
     if (!prefersLessMotion()) setClosing(app);
     setNav({ ...current, app: null, key: phaseKey });
   };
@@ -559,25 +566,35 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
 
   const shown = app ?? closing;
   const App = shown ? APPS[shown] : null;
+  // Under an app that has finished opening, or the lobby's lock screen, the
+  // home screen is not drawn at all: on Android its blur and filters cost
+  // every frame something above it moves.
+  const homeHidden = (Boolean(app) && settled === app) || (phase === 'lobby' && !unlocked && Boolean(takeover));
   return (
     <PhoneFrame game={game} ghost={ghost} clear={!app || Boolean(takeover)} onHome={home} onOpenApp={open} stageRef={stageRef} time={timeOfDay(phase)} sections={sections} locked={Boolean(takeover)}>
-      <HomeScreen
-        key={homeIn}
-        entering={homeIn > 0}
-        grid={gridFor(phase)}
-        dock={DOCK}
-        badges={badges}
-        ghost={ghost}
-        onOpen={open}
-        lockedApps={lockedApps}
-        now={{ label: dayLabel(game, label), line, urgent: needsNight || needsVote || needsGame, onTap: suggested && (suggested !== 'night' || NIGHTTIME.has(phase)) ? () => open(suggested) : null }}
-      />
+      <div className="os-fill" hidden={homeHidden}>
+        <HomeScreen
+          key={homeIn}
+          entering={homeIn > 0}
+          grid={gridFor(phase)}
+          dock={DOCK}
+          badges={badges}
+          ghost={ghost}
+          onOpen={open}
+          lockedApps={lockedApps}
+          now={{ label: dayLabel(game, label), line, urgent: needsNight || needsVote || needsGame, onTap: suggested && (suggested !== 'night' || NIGHTTIME.has(phase)) ? () => open(suggested) : null }}
+        />
+      </div>
       {App && (
         <div
           key={shown}
           className={`os-fill ${app ? 'os-app-enter' : 'os-app-exit'}`}
           style={{ '--os-origin': current.origin }}
-          onAnimationEnd={(e) => { if (!app && e.target === e.currentTarget) setClosing(null); }}
+          onAnimationEnd={(e) => {
+            if (e.target !== e.currentTarget) return;
+            if (app) setSettled(app);
+            else setClosing(null);
+          }}
         >
           <App ctx={ctx} onClose={home} thread={current.thread} />
         </div>

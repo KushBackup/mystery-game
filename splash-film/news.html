@@ -1,0 +1,64 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>News · the paper's pictures</title>
+<style>body{margin:0;background:#242321;display:grid;place-items:center;min-height:100vh}canvas{max-width:100vw;max-height:100vh;object-fit:contain}</style>
+<canvas id="c"></canvas>
+<script src="core.js"></script>
+<script src="studio.js"></script>
+<script src="cels.js"></script>
+<script src="word-font.js"></script>
+<script src="board-kit.js"></script>
+<script src="news-kit.js"></script>
+<script src="news-scenes.js"></script>
+<script>
+'use strict';
+/* ------------------------------------------------------------------------
+Brief
+  Subject: the pictures in the phone's News app (The Goa Times). One still
+    per story: every authored article and epilogue in
+    src/data/packs/deepblue.news.js, and the four kinds of story the room's
+    own events print (src/os/news.js). This is a sheet of stills, not a
+    film: each scene is one frame, rendered and exported to
+    public/news/<name>.webp.
+  Look: editorial ink and watercolour on newsprint. Navy ballpoint contour,
+    hatching for shadow and night, watercolour washes in the phone's blues;
+    one warm lamplight (an illustration colour, never the score gold); red
+    only for tape, an alarm and TAKEN; gold only for scores on a board.
+  Format: 16:9, 1920 x 1080 units, exported 1280 px wide. The app also cuts
+    a square thumbnail from the middle, so each subject sits in x 420..1500.
+  Rules (from the pack's header): pure flavour, nothing that names or hints
+    at a real guest, never a method, never a body, never anyone under 18,
+    no real people, no real outlets. Greenr is only ever a bystander.
+  Sources: none; everything is drawn here. Patrick Hand: SIL OFL.
+------------------------------------------------------------------------- */
+const NEWS_SCENES = [
+  ['nine-dead', sceneNineDead],
+  ['seven-am', sceneSevenAm],
+  ['stay-together', sceneStayTogether],
+  ['greenr-open', sceneGreenrOpen],
+  ['ninety-seconds', sceneNinetySeconds],
+  ['panjim-stops', scenePanjimStops],
+  ['ferry-crews', sceneFerryCrews],
+  ['twenty-three', sceneTwentyThree],
+  ['bars-split', sceneBarsSplit],
+  ['nobody-wins', sceneNobodyWins],
+  ['scores-dispute', sceneScoresDispute],
+  ['vigil', sceneVigil],
+  ['cannot-delete', sceneCannotDelete],
+  ['empty-servers', sceneEmptyServers],
+  ['final-board', sceneFinalBoard],
+  ['last-call', sceneLastCall],
+  ['deleted', sceneDeleted],
+  ['rings-again', sceneRingsAgain],
+  ['dawn-taken', sceneDawnTaken],
+  ['dawn-clear', sceneDawnClear],
+  ['vote-out', sceneVoteOut],
+  ['vote-none', sceneVoteNone],
+];
+window.__NEWS = NEWS_SCENES.map(([name]) => name);
+FONT_READY.then(() => { defineFilm({
+  palette: makePalette({ paper: NEWSPRINT, ink: INK, finish: 'flat', washBlend: 'multiply' }, 'doodlePastel'),
+  format: { ar: '16:9', width: 1280 },
+  timeline: NEWS_SCENES.map(([name, fn]) => ({ name, dur: 1 / 24, fn })),
+}); }).catch(e => { window.__error = String(e); });
+</script>

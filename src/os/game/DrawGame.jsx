@@ -6,7 +6,7 @@ import { saveDrawing, saveGuesses } from '../../firebase/game';
 import { serverNow } from '../../lib/clockSkew';
 import { assignDrawings, checksOf, guessHits, shownWord, introDay, DRAW_SHOW_MS, DRAW_ASSIGN, STEPS, guessPoints } from '../../lib/engine/minigames.js';
 import { REVEAL_LEAD_MS } from '../../lib/engine/phases.js';
-import { BOARD, SKETCHBOOK, encode, paint } from './strokes';
+import { BOARD, INKS, SKETCHBOOK, encode, paint } from './strokes';
 import { sfxPoint, sfxFlip, sfxSent, sfxStick } from '../sfx';
 import { markSeen, peekSeen, useSeen } from '../seen';
 import { prefersLessMotion } from '../nav';
@@ -225,34 +225,45 @@ function DrawPad({ strokes, ink, onStroke }) {
   // The pills, the word chip, the page's margins and the pen tray stay on screen with it.
   const size = useFit(wrap, { reserve: 268, padX: 20, min: 180, max: 360 });
   const live = useRef(null);
+  const rect = useRef(null);
 
-  const draw = (extra) => {
-    const el = canvas.current;
-    if (!el) return;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    const g = el.getContext('2d');
-    g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    paint(g, extra ? [...strokes, extra] : strokes, size, null);
-  };
   useLayoutEffect(() => {
     const el = canvas.current;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
-    el.width = size * dpr;
-    el.height = size * dpr;
+    // resizing clears and reallocates the canvas, so only when the size changes
+    if (el.width !== size * dpr) { el.width = size * dpr; el.height = size * dpr; }
     const g = el.getContext('2d');
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     paint(g, strokes, size, null);
   }, [strokes, size]);
 
+  // The stroke under the finger is drawn a segment at a time on top of the
+  // page, the same marks paint() makes (opaque inks, round ends), so a move
+  // never repaints the whole drawing.
+  const ink2d = (colour) => {
+    const g = canvas.current.getContext('2d');
+    const k = size / BOARD;
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    g.lineWidth = Math.max(2, 3.2 * k);
+    g.strokeStyle = colour;
+    g.fillStyle = colour;
+    return [g, k];
+  };
   const at = (e) => {
-    const r = canvas.current.getBoundingClientRect();
+    const r = rect.current ?? canvas.current.getBoundingClientRect();
     return [((e.clientX - r.left) / r.width) * BOARD, ((e.clientY - r.top) / r.height) * BOARD];
   };
   const down = (e) => {
     e.preventDefault();
     e.currentTarget.setPointerCapture?.(e.pointerId);
-    live.current = { ink, points: [at(e)] };
-    draw(live.current);
+    rect.current = canvas.current.getBoundingClientRect();
+    const p = at(e);
+    live.current = { ink, points: [p] };
+    const [g, k] = ink2d(INKS[ink] ?? INKS[0]);
+    g.beginPath();
+    g.arc(p[0] * k, p[1] * k, g.lineWidth / 2, 0, Math.PI * 2);
+    g.fill();
   };
   const move = (e) => {
     const stroke = live.current;
@@ -260,13 +271,18 @@ function DrawPad({ strokes, ink, onStroke }) {
     const p = at(e);
     const last = stroke.points.at(-1);
     if (Math.hypot(p[0] - last[0], p[1] - last[1]) < 1.6) return;
-    live.current = { ...stroke, points: [...stroke.points, p] };
-    draw(live.current);
+    stroke.points.push(p);
+    const [g, k] = ink2d(INKS[stroke.ink] ?? INKS[0]);
+    g.beginPath();
+    g.moveTo(last[0] * k, last[1] * k);
+    g.lineTo(p[0] * k, p[1] * k);
+    g.stroke();
   };
   const up = () => {
     const stroke = live.current;
     if (!stroke) return;
     live.current = null;
+    rect.current = null;
     onStroke(stroke);
   };
 
