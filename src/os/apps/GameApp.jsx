@@ -7,25 +7,27 @@ import Glyph from '../icons/Glyph';
 import { submitScore } from '../../firebase/game';
 import { serverNow } from '../../lib/clockSkew';
 import { GAME_GRACE_MS } from '../../lib/engine/phases.js';
+import { deepBlueOpen } from '../../lib/engine/minigames.js';
 
 /**
  * DEEP BLUE, the app: whichever game the morning plays (engine/minigames.js).
  * On a word or drawing day it opens that game from the alarm until the game
  * locks, then keeps its wall or its drawings up, with the answers, until the
  * night. On a run day it is the run below, live only while the game phase is
- * actually open. Any other time (including the alarm's own countdown) it is
- * locked: no practice course, so the app stays a mystery until it is really
- * time to play (user's call, 2026-10-02 — a practice run gave the game away).
+ * actually open. Any other time (including the alarm's own countdown)
+ * `deepBlueOpen` says no, and this is the locked screen: no practice course,
+ * so the app stays a mystery until it is really time to play (user's call,
+ * 2026-10-02 — a practice run gave the game away). The dock icon agrees,
+ * going transparent and inert over the same check (PhoneOS.jsx).
  */
 export default function GameApp({ ctx, onClose }) {
   const { game } = ctx;
   const kind = game.minigame ?? 'run';
-  const today = ['alarm', 'game', 'game_locked'].includes(game.phase);
+  if (!deepBlueOpen(game)) return <LockedGame onClose={onClose} />;
   const shown = game.dayGame?.cycle === game.cycle && game.dayGame.kind === kind ? game.dayGame : null;
-  if (kind === 'word' && (today || shown)) return <WordGame ctx={ctx} onClose={onClose} dayGame={shown} />;
-  if (kind === 'draw' && (today || shown)) return <DrawGame ctx={ctx} onClose={onClose} dayGame={shown} />;
-  if (kind === 'run' && ['game', 'game_locked'].includes(game.phase)) return <RunGame ctx={ctx} onClose={onClose} />;
-  return <LockedGame onClose={onClose} />;
+  if (kind === 'word') return <WordGame ctx={ctx} onClose={onClose} dayGame={shown} />;
+  if (kind === 'draw') return <DrawGame ctx={ctx} onClose={onClose} dayGame={shown} />;
+  return <RunGame ctx={ctx} onClose={onClose} />;
 }
 
 /** Shown whenever it isn't actually time to play: locked, not practice. */

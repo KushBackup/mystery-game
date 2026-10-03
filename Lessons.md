@@ -640,3 +640,15 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 **What happened:** The deal's splash lifted with a CSS animation whose `animation-delay` was set to the time left until the role reveal. With reduced motion on, the global rule in App.css (`*, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; }`) ran the lift at once, so the splash was invisible for its whole run. Caught by testing with Playwright's `reducedMotion: 'reduce'`, not by looking at the default case.
 
 **What to do instead:** Never schedule something with `animation-delay` in this app. Time it in JS (a timeout to the room's instant) and let CSS only animate the change, with a transition. Test every new timed overlay once with reduced motion on.
+
+## 2026-10-03 — A `fill-mode: both` animation holds opacity over a disabled style
+
+**What happened:** The locked DEEP BLUE dock icon was meant to be transparent (`.os-icon[disabled] { opacity: 0.3 }`). It was inert but fully opaque on the user's phone at night. The home screen remounts with `.os-home--enter` after any app closes, and that runs `os-icon-in` with `fill-mode: both`; the last keyframe's `opacity: 1` outranks every normal declaration, so the dimming never showed. It only worked on the very first home screen, the one case checked by eye.
+
+**What to do instead:** Never put a state's opacity (or transform) on an element that an entry animation with `both`/`forwards` also animates. Dim its children instead, as `.os-icon[disabled] > *` now does. Verify with `getComputedStyle` after the animation has run, not on a fresh mount.
+
+## 2026-10-03 — Index.css's un-layered input rules reach inside the phone
+
+**What happened:** On the new Word board, the clue input was meant to be in the handwriting face with a sea underline as its only focus mark. In the browser it rendered in Helvetica inside a red box. `src/index.css` has un-layered `input { font-family: inherit }` and `input:focus-visible { outline: 2px solid var(--color-signal) }` (Evidence Room rules), and un-layered CSS beats everything in os.css's components layer.
+
+**What to do instead:** Put a phone input's face on its parent and let the input inherit it, and turn an unwanted focus ring off with `!important` (a layered `!important` beats un-layered normal). Read every new phone input in a screenshot with focus on it. The same red ring shows on the phone's other inputs; scoping the global rule with `:not(.os-root *)`, like the radius rule, would fix them all.

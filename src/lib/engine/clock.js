@@ -23,8 +23,8 @@
  * null everywhere, and the phone falls back to its fixed table (os/words.js).
  */
 
-import { PHASE, DEFAULT_DURATIONS, ENDGAME_ROUNDS, gameSpan, revealLead } from './phases.js';
-import { gameOfDay } from './minigames.js';
+import { PHASE, DEFAULT_DURATIONS, ENDGAME_ROUNDS, phaseMs, revealLead } from './phases.js';
+import { gameOfDay, introDay } from './minigames.js';
 
 const MIN = 60 * 1000;
 export const DAY_MIN = 24 * 60;
@@ -41,16 +41,18 @@ export const ANCHORS = Object.freeze({
 const FLEX = ['night', 'investigation', 'roundtable', 'endgame'];
 const STRETCH = [0.25, 4];
 
-/** A phase's real length in ms, reveal hold included (phases.js phaseTiming). */
-function lengthOf(phase, durations, kind) {
-  const ms = phase === PHASE.GAME ? gameSpan(kind, durations) : durations[phase] ?? 0;
-  return ms + revealLead(phase);
+/**
+ * A phase's real length in ms, reveal hold included (phases.js phaseTiming).
+ * `intro` is the first Word morning, whose alarm rings longer.
+ */
+function lengthOf(phase, durations, kind, intro = false) {
+  return phaseMs(phase, durations, kind, intro) + revealLead(phase);
 }
 
 /** One day from the alarm to the verdict, in real ms, with the day's game. */
-const dayLength = (durations, kind) =>
+const dayLength = (durations, kind, intro) =>
   [PHASE.ALARM, PHASE.GAME, PHASE.DAWN, PHASE.INVESTIGATION, PHASE.ROUNDTABLE, PHASE.BANISH]
-    .reduce((n, p) => n + lengthOf(p, durations, kind), 0);
+    .reduce((n, p) => n + lengthOf(p, durations, kind, intro), 0);
 
 /**
  * Fit the evening into `minutes` (from the deal to the finale, arrivals not
@@ -64,8 +66,9 @@ const dayLength = (durations, kind) =>
 export function planEvening({ minutes = null, cycles, games, base = DEFAULT_DURATIONS, endgameRounds = ENDGAME_ROUNDS } = {}) {
   const config = { games };
   const kinds = Array.from({ length: cycles }, (_, i) => gameOfDay(config, i + 1));
+  const intros = kinds.map((_, i) => introDay(config, i + 1));
   const fixed = lengthOf(PHASE.CASTING, base)
-    + kinds.reduce((n, k) => n + [PHASE.ALARM, PHASE.GAME, PHASE.DAWN, PHASE.BANISH].reduce((s, p) => s + lengthOf(p, base, k), 0), 0)
+    + kinds.reduce((n, k, i) => n + [PHASE.ALARM, PHASE.GAME, PHASE.DAWN, PHASE.BANISH].reduce((s, p) => s + lengthOf(p, base, k, intros[i]), 0), 0)
     + endgameRounds * lengthOf(PHASE.BANISH, base);
   const flex = cycles * (base.night + base.investigation + base.roundtable) + endgameRounds * base.endgame;
   const wanted = minutes ? (minutes * MIN - fixed) / flex : 1;
@@ -74,7 +77,7 @@ export function planEvening({ minutes = null, cycles, games, base = DEFAULT_DURA
   for (const p of FLEX) durations[p] = Math.round((base[p] * stretch) / 5000) * 5000;
 
   // One speed for the whole evening: the average day fills 07:00 to 22:00.
-  const avgDay = kinds.reduce((n, k) => n + dayLength(durations, k), 0) / kinds.length;
+  const avgDay = kinds.reduce((n, k, i) => n + dayLength(durations, k, intros[i]), 0) / kinds.length;
   const speed = Math.round((((ANCHORS.dusk - ANCHORS.alarm) * MIN) / avgDay) * 10) / 10;
 
   const totalMs = fixed + cycles * (durations.night + durations.investigation + durations.roundtable) + endgameRounds * durations.endgame;
@@ -132,7 +135,8 @@ export function daySchedule(game, now) {
   const s = c.speed / MIN;
   const kind = game.minigame && PART[game.phase] !== 'night' ? game.minigame : gameOfDay(game.config, game.cycle);
   const base = game.cycle * DAY_MIN;
-  const lenOf = (id) => lengthOf(id, durations, kind) * s;
+  const intro = introDay(game.config, game.cycle);
+  const lenOf = (id) => lengthOf(id, durations, kind, intro) * s;
 
   const at = {};
   at.night = base + c.nightAt;

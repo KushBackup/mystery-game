@@ -73,7 +73,9 @@ The game phase plays one of three games, rotated by day. The rules live in [src/
 
   `resolveMorning` then runs unchanged, and the dawn commit also publishes `game.dayGame` (the word, or who drew what).
 - **On the phone.** [GameApp.jsx](src/os/apps/GameApp.jsx) routes on `game.minigame`:
-  - [WordGame.jsx](src/os/game/WordGame.jsx) shows the card, the one-clue form and the live wall. Clues stream in `serverTimestamp` order, numbered. Picks are tap-to-toggle, up to 3.
+  - [WordGame.jsx](src/os/game/WordGame.jsx) is a paper board (2026-10-03). It has the Read · Clue · Pick pills, and the card is dealt face down and flipped by a tap. The clue is written on a sticky note with live "one word" and "no names" checks; on post the note flies to its slot (a FLIP from the pad's rect, started before the write because the wall shows the local copy at once). The wall is a grid of sticky notes in `serverTimestamp` order, numbered. The shade and tilt come from `noteLook(pid)` ([wordLook.js](src/os/game/wordLook.js)). Picks are three gold stars placed on notes, up to 3. After the lock the card's word is revealed for everyone. The pieces (card, note, star tray, pills) are in [wordParts.jsx](src/os/game/wordParts.jsx).
+  - **The Word tutorial.** `introDay(config, cycle)` (minigames.js) is true on the first Word morning of the game. On that day `phaseTiming` gives the alarm `durations.alarm_intro` (75 s; 30 s at Quick pace) instead of `alarm`, through `alarmMs`/`phaseMs` in phases.js. `timed()` in host.js passes the flag, and clock.js counts it in `planEvening` and `daySchedule`. During that alarm's `wait` step, WordGame renders [WordTutorial.jsx](src/os/game/WordTutorial.jsx) until the guest finishes or skips it (`seen.js` key `<gid>.tut.word`). The step turning to `read` at the game's `revealAt` closes it. The "How to play" bar button replays it on any step. The words and clip paths are in [wordTutorial.js](src/data/wordTutorial.js): six clips in `public/tutorial/word-1..6.mp4` with last-frame posters (`.jpg`), rendered from [splash-film/word.html](splash-film/word.html). The phone prefetches them at low priority the night before (PhoneOS). A dev-only check warns if the example word (POPCORN) is a live pair in any pack. The alarm banner, the NowCard and the host's read-aloud each have an intro variant (`dayGames.word.alarmIntro`, `nowLine({ intro })`, `narration.alarmIntro`).
+  - On Word days the phone's "needs you" signals (the DEEP BLUE badge, the Notification Center row) count a posted clue, or a ghost's saved picks, instead of a score (Word writes no score until the board).
   - [DrawGame.jsx](src/os/game/DrawGame.jsx) shows the pad, then the guessing. Strokes are encoded by [strokes.js](src/os/game/strokes.js): hex points on a 256-unit board, about 4 characters per point. The pad autosaves every 1.5 s, and once more when the step ends.
   - Guessing follows `assignDrawings`, a wheel over the inked drawings seeded by the public `courseSeed`, so each drawing gets about the same number of guessers. It follows the drawings as they arrive. Do not freeze the list on the first snapshot: that snapshot can come from the phone's own cache and hold nothing but its own drawing.
   - After the lock, the wall or the drawings stay up, with the answers, until the next night.
@@ -182,7 +184,9 @@ The user asked that a refresh, or closing and reopening the browser, never lose 
 | `<gid>.unlocked`, `<gid>.roleRead` | The lobby lock screen was slid, and the role card was read, so neither replays | PhoneOS.jsx |
 | `<gid>.app` | The open app (and Messages thread); the Night app is dropped outside the night | PhoneOS.jsx |
 | `<gid>.page.{contacts,messages,notes}` | The open page inside an app (`useStack(initial, keep)` in nav.js) | the apps |
-| `<gid>.draft.<channel>`, `<gid>.draft.clue.<cycle>` | Half-typed messages and the Word clue, until sent | MessagesApp `Compose`, WordGame `ClueForm` |
+| `<gid>.draft.<channel>`, `<gid>.draft.clue.<cycle>` | Half-typed messages and the Word clue, until sent | MessagesApp `Compose`, WordGame `Composer` |
+| `<gid>.tut.word` | The Word tutorial was finished or skipped (the first Word morning shows it until then) | WordGame |
+| `<gid>.wordreveal.<cycle>` | The word's reveal stamp has played on this phone | WordGame `Reveal` |
 | `<gid>.draw.<cycle>` | The Sketch drawing so far. Without it a reload started a blank pad that the autosave then wrote over the real drawing | DrawGame `DrawStep` |
 | `<gid>.guessSeen.<cycle>`, `<gid>.guessShown.<cycle>` | Which drawings you have been shown, and when the current one appeared, so a reload neither replays one nor restarts its clock | DrawGame `GuessStep` |
 
@@ -201,6 +205,23 @@ A guest whose phone lost the game (cleared data, a new phone, a private tab, or 
 
 - Every listener is self-healing (`resilient()` in game.js, `listen()` in host.js): an error schedules a retry with backoff.
 - The binding listener ignores pending local writes (see Lessons.md, 2026-09-26).
+- `resilient()` heals only a listener that *errors*. One that stalls silently on bad wifi is what the resync below is for.
+
+### Hold Home to resync (2026-10-03)
+
+The user asked for this because venue internet drops. A guest who holds the home button for 5 seconds reloads their phone, and it catches up with the room. Model: [src/os/resync.js](src/os/resync.js). The button: `HomeBar` in [chrome.jsx](src/os/chrome.jsx). The overlay and the note: `PhoneFrame` in [PhoneOS.jsx](src/os/PhoneOS.jsx), so it works on every screen, including the Boot screens and Setup.
+
+- **The press.** Releasing before 5 s is a normal Home press. A ring fills around the button while it is held, starting after 0.4 s so a tap never flashes it. `touch-action: none`, no callout and a cancelled `contextmenu` stop the browser from taking the long press.
+- **Before the reload.** `resync()` writes `sessionStorage['astral.resync']`, waits up to 3 s for `waitForPendingWrites` (and at least 0.7 s, so the overlay is seen), then calls `location.reload()`.
+- **Why a full reload.** It is the only thing that restarts a stalled Firestore connection, every listener, the clock measurement and the React tree together. Nothing is lost: sign-in persists, queued writes stay in the IndexedDB cache and go out after the reload, and in-progress phone state is in the table above. Never clear or terminate the Firestore cache here: the queued writes would go with it.
+- **No signal and no service worker** (`!navigator.serviceWorker.controller && !navigator.onLine`): a reload would show the browser's offline page, so it restarts the connection in place instead (`disableNetwork` then `enableNetwork`).
+- **After the reload.** The flag is read once, when the module loads. If it is under 60 s old, the pill under the status bar says SYNCING…. It then says IN SYNC once the server answers (sign-in, `waitForPendingWrites`, a server read of `meta/active`), or NO SIGNAL after 10 s. No flag means no check, so it cannot loop.
+- **Lost on a reload, accepted:** the run's in-memory best (the server keeps the real one), the Detective's first trace pick, a ghost's unsent whisper word. A write that lands after its phase locked is refused by the rules, and the phone does not say so.
+- **The clock** ([clockSkew.js](src/lib/clockSkew.js)) got two guards at the same time:
+  - A measurement with a round trip over 2.5 s is thrown away. A write that sat in the offline queue used to put the offset out by half the outage, and the 5-minute throttle then kept the bad value.
+  - Only one measurement runs at a time.
+  - The last good offset is kept in `localStorage['astral.clock']` and used on load if it is under 30 minutes old. A reload therefore starts on server time, and the first beat still measures fresh.
+- **Help** says it twice: in *Your phone* and in *Quick answers*. Nothing else on the phone mentions it.
 
 ### Testing (no test framework, by design)
 

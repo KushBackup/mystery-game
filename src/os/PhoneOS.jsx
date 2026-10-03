@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow, useAllTraits, useKillerGroup } from '../hooks/useKillers';
+import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow, useAllTraits, useKillerGroup, useMyPlay } from '../hooks/useKillers';
 import { serverNow } from '../lib/clockSkew';
 import { nowLine, PHASE_LABEL, deliveryLine, GAME } from '../data/killersCopy';
 import { dayKit, alarmLine } from '../data/packs/index.js';
-import { StatusBar, HomeBar, HomeScreen, LockScreen, Banner, NotificationCenter, NCTile } from './chrome';
+import { StatusBar, HomeBar, SyncNote, HomeScreen, LockScreen, Banner, NotificationCenter, NCTile } from './chrome';
 import { RoleText, IncomingCall, GoneScreen, ChapterCard, TakenScreen } from './takeovers';
 import { threadsFor, preview as threadPreview } from './threads';
 import { useSeen, markSeen, peekSeen } from './seen';
+import { resync, useResyncNote } from './resync';
+import { Hold } from './ui';
 import { useNews } from './news';
 import { useVoice } from './voice';
 import { useMaskedPlayers, BOARD_BEAT, VERDICT_BEAT } from './beats';
@@ -14,6 +16,8 @@ import { prefersLessMotion } from './nav';
 import { dayLabel, photoSource, timeOfDay } from './words';
 import { primeSfx, sfxPing, sfxLock, startAlarm, stopAlarm } from './sfx';
 import { daySchedule, fmtClock } from '../lib/engine/clock.js';
+import { deepBlueOpen, introDay } from '../lib/engine/minigames.js';
+import { prefetchTutorial } from '../data/wordTutorial';
 import MessagesApp from './apps/MessagesApp';
 import GameApp from './apps/GameApp';
 import NewsApp from './apps/NewsApp';
@@ -75,14 +79,19 @@ const SUGGEST = {
 const todayTitle = (g, pack) => dayKit(pack).dayGames[g.minigame ?? 'run']?.title ?? 'The run';
 const skipLine = (alive) => (alive ? ' Skip it and you score zero.' : '');
 const PHASE_BANNER = {
-  alarm: (g, pack, { until, alive }) => ({
-    icon: 'clock',
-    // The pack's line for the day ("DAY 2. The board remembers yesterday."), as the alarm's label.
-    title: alarmLine(pack, g.cycle),
-    text: `${dayKit(pack).dayGames[g.minigame ?? 'run']?.alarm ?? `Today: ${todayTitle(g, pack)}.`}${until ? ` Play before ${until}.` : ''}${skipLine(alive)}`,
-    app: 'deepblue',
-    long: true,
-  }),
+  alarm: (g, pack, { until, alive }) => {
+    const day = dayKit(pack).dayGames[g.minigame ?? 'run'];
+    // The first Word morning says the game is new and DEEP BLUE teaches it (introDay).
+    const today = (introDay(g.config, g.cycle) && day?.alarmIntro) || day?.alarm || `Today: ${todayTitle(g, pack)}.`;
+    return {
+      icon: 'clock',
+      // The pack's line for the day ("DAY 2. The board remembers yesterday."), as the alarm's label.
+      title: alarmLine(pack, g.cycle),
+      text: `${today}${until ? ` Play before ${until}.` : ''}${skipLine(alive)}`,
+      app: 'deepblue',
+      long: true,
+    };
+  },
   game: (g, pack, { until, alive }) => ({
     icon: 'deepblue',
     title: 'DEEP BLUE',
@@ -222,6 +231,16 @@ export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = 
     setNcPull(null);
   };
 
+  // Home held for five seconds: cover the phone while it reloads (os/resync.js).
+  // Only a resync that restarted in place, with no reload, comes back here.
+  const [syncing, setSyncing] = useState(false);
+  const note = useResyncNote();
+  const hold = () => {
+    setNcOpen(false);
+    setSyncing(true);
+    resync().then(() => setSyncing(false));
+  };
+
   return (
     <div ref={root} className={`os-root ${kbd ? 'os-root--kbd' : ''}`} data-time={time}>
       <StatusBar game={game} ghost={ghost} clear={clear} drag={{ onPointerDown: ncDown, onPointerMove: ncMove, onPointerUp: ncUp, onPointerCancel: ncUp }} />
@@ -230,7 +249,9 @@ export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = 
         <NotificationCenter sections={sections} open={ncOpen} pull={ncPull} onOpen={onOpenApp} onClose={ncClose} />
       </div>
       {/* With the panel down, Home puts it away first, the way iOS did. */}
-      <HomeBar onHome={() => (ncOpen ? ncClose() : onHome())} />
+      <HomeBar onHome={() => (ncOpen ? ncClose() : onHome())} onHold={hold} />
+      {note && !syncing && <SyncNote state={note} />}
+      {syncing && <div className="os-resync"><Hold label="SYNCING WITH THE ROOM…" /></div>}
     </div>
   );
 }
@@ -250,10 +271,20 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const mates = useKillerGroup(gid, isKiller);
   const myVote = useMyVote(gid, game.ballot, me.pid);
   const myScore = useMyScore(gid, game.cycle, me.pid);
+  // Word never writes a score until the board, so "played" there is a posted
+  // clue (or, for a ghost, who can only pick, a saved pick).
+  const wordDay = (game.minigame ?? 'run') === 'word' && ['alarm', 'game'].includes(phase);
+  const myClue = useMyPlay(gid, 'clues', game.cycle, me.pid, wordDay && me.status === 'alive');
+  const myPicks = useMyPlay(gid, 'picks', game.cycle, me.pid, wordDay && me.status === 'ghost');
   const action = useMyAction(gid, game.cycle, me.pid);
   const denPicks = useDen(gid, game.cycle, isKiller && phase === 'night');
   // Everyone's arrival answers (Contacts, Notes). Written once at arrival, so this listener is nearly silent.
   const traits = useAllTraits(gid);
+
+  // The night before the first Word morning, fetch the tutorial's clips quietly,
+  // so the longer alarm never waits on the venue's wifi (data/wordTutorial.js).
+  const tutorialSoon = ['night', 'night_locked', 'recruit', 'recruit_locked', 'alarm'].includes(phase) && introDay(game.config, game.cycle);
+  useEffect(() => { if (tutorialSoon) prefetchTutorial(); }, [tutorialSoon]);
 
   // --- Which app is open: only ever the guest's choice. A phase change leaves
   // it alone (except the Night app, which closes at daybreak) and decides
@@ -345,7 +376,8 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const plan = daySchedule(game, serverNow());
   const dawnAt = plan?.parts.find((p) => p.id === 'dawn')?.at;
   const until = dawnAt != null ? fmtClock(dawnAt) : '';
-  const needsGame = ['alarm', 'game'].includes(phase) && ['alive', 'ghost'].includes(me.status) && !myScore;
+  const played = wordDay ? Boolean(me.status === 'ghost' ? myPicks?.picks?.length : myClue) : Boolean(myScore);
+  const needsGame = ['alarm', 'game'].includes(phase) && ['alive', 'ghost'].includes(me.status) && !played;
   const needsVote = ['roundtable', 'revote'].includes(phase) ? me.status === 'alive' && !myVote : phase === 'endgame' && ['alive', 'ghost'].includes(me.status) && !myVote;
   const newsSeenArr = Array.isArray(newsSeen) ? newsSeen : [];
   const badges = {
@@ -479,8 +511,9 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const ghost = me.status === 'ghost';
   const label = (PHASE_LABEL[phase] ?? '').toUpperCase();
   // Role-neutral on purpose: the home screen is what the guest beside you sees.
-  const line = nowLine({ phase, status: me.status, hasActed: acted && phase === 'night', cycle: game.cycle, minigame: game.minigame ?? 'run', pack, until });
+  const line = nowLine({ phase, status: me.status, hasActed: acted && phase === 'night', cycle: game.cycle, minigame: game.minigame ?? 'run', pack, until, intro: introDay(game.config, game.cycle) });
   const suggested = SUGGEST[phase] ?? null;
+  const lockedApps = { deepblue: !deepBlueOpen(game) };
 
   // --- What takes the whole screen right now.
   let takeover = null;
@@ -518,6 +551,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
         badges={badges}
         ghost={ghost}
         onOpen={open}
+        lockedApps={lockedApps}
         now={{ label: dayLabel(game, label), line, urgent: needsNight || needsVote || needsGame, onTap: suggested && (suggested !== 'night' || NIGHTTIME.has(phase)) ? () => open(suggested) : null }}
       />
       {App && (

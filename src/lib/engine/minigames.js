@@ -25,6 +25,24 @@ import { hashString, makeRng, pick, shuffle } from './rng.js';
 export const KINDS = ['word', 'draw', 'run'];
 export const DEFAULT_GAMES = Object.freeze(['word', 'draw', 'run']);
 
+/**
+ * Whether the morning's game has anything to show right now: live play, or
+ * its just-finished recap (`game.dayGame`, same cycle and kind). Word and
+ * Sketch also open during the alarm, because the guest's card is already in
+ * their inbox (and on the first Word morning the tutorial plays there). The
+ * run opens only with the game itself. Everywhere else DEEP BLUE has nothing
+ * open, so GameApp locks the screen and the dock icon goes transparent and
+ * inert (PhoneOS.jsx), rather than offering a practice round that gives the
+ * game away (user's call, 2026-10-02).
+ */
+export function deepBlueOpen(game) {
+  const kind = game.minigame ?? 'run';
+  if (kind === 'run') return ['game', 'game_locked'].includes(game.phase);
+  const today = ['alarm', 'game', 'game_locked'].includes(game.phase);
+  const shown = game.dayGame?.cycle === game.cycle && game.dayGame.kind === kind;
+  return today || shown;
+}
+
 /** Seconds per step, in order. The phase is a little longer (phases.js). */
 export const STEPS = Object.freeze({
   word: [['read', 10], ['clue', 60], ['pick', 50]],
@@ -44,6 +62,18 @@ export function gameOfDay(config, cycle) {
   const list = (config?.games ?? DEFAULT_GAMES).filter((k) => KINDS.includes(k));
   const games = list.length ? list : DEFAULT_GAMES;
   return games[(Math.max(1, cycle) - 1) % games.length];
+}
+
+/**
+ * Whether day `cycle` is the first Word morning of the game. That alarm rings
+ * longer (phases.js `alarm_intro`) and DEEP BLUE plays the Word tutorial in it
+ * (os/game/WordTutorial.jsx), so the room learns the game just before playing
+ * it (user's call, 2026-10-03). With "Run every day" it is never true.
+ */
+export function introDay(config, cycle) {
+  if (!cycle || gameOfDay(config, cycle) !== 'word') return false;
+  for (let c = 1; c < cycle; c++) if (gameOfDay(config, c) === 'word') return false;
+  return true;
 }
 
 /**

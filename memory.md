@@ -55,6 +55,7 @@
   - **Leaving after the deal is final.** The user asked whether a guest could rejoin as someone new. Claude flagged that this would let a cornered Killer escape a vote and come back on the Faithful side (late joiners are always dealt Faithful-team), and would trigger a recruit night. The user chose to keep leaving final.
   - The host can sign any guest who is still playing back in on a new or reset phone ("Already playing?" on the hello screen, then the host console's *Sign back in* panel).
   - Every player's in-progress state is kept on the phone so a reload or a reopened browser carries on.
+- **Hold Home to resync (asked 2026-10-03, the day of the Panjim event).** Players at these venues often lose internet or have bad internet. The user asked for a player-side fix: hold the home button for 5 seconds, and the phone refreshes and syncs with everyone else (pending answers, the registration form, timers). The user called it "very important" because the game is played as a group and every phone must show the same thing at the same time. Claude's choices, unasked: a ring fills while Home is held; releasing early is a normal Home press; the phone says IN SYNC or NO SIGNAL afterwards; Help mentions it twice. A host-side "resync every phone" button was offered, not built.
 - **Venue:** bars and cafes, seated tables of 4–8 plus mingling, mixed friend groups, **no projector**. Every reveal is synced to every phone at once.
 - **Balance** (from `scripts/sim-balance.mjs`):
   - 3 Killers from 12 to 50 players; the count does not scale with room size.
@@ -103,6 +104,13 @@
   - **The role message is sealed (same day, user's ask):** blurred until tapped, kept in the DEEP BLUE thread, and identical in colour, font and layout for every role so a peek at a neighbour's phone shows nothing. No red for Killers.
   - Kept on purpose: the premise ("some of you are Killers", "the lowest score is taken"), input rules, DEEP BLUE's taunts ("Nobody honest scored lower"), clue captions, the Finale's full explanation.
   - Offered, not built: removing the Gallery's hand sketch (an auto-solver), removing looks from the vote list, "X left" events in the Killers' group.
+
+- **The Word tutorial and the paper board (asked 2026-10-03).** The user said the first morning game (Word) was "really badly detailed and badly explained" and asked for a very visual, playful tutorial made with the hand-drawn-canvas-animation skill, seen before the game starts, so players know what to do *and why*, plus a fun, interactive rebuild of the Word screen. Choices they made when asked:
+  - **When:** the first Word morning's alarm runs longer (`alarm_intro`, 75 s) and the tutorial plays in DEEP BLUE then, right before the cards are dealt. They chose this over the lobby and over Night 1.
+  - **A practice slide:** yes. A fake wall for POPCORN where the guest meets the clue written by someone who only saw the hint.
+  - **The look:** a bright paper game board (cream notebook paper, sticky notes, gold stars, a handwriting face), over keeping DEEP BLUE's navy. It is an explicit exception to the phone palette, for this one game.
+  - This is an explicit exception to "players discover the game", like the Night and Help apps.
+  - **Never use a live word pair as an example.** Help's old example (Mango / Fruit) was a live pair, so a Killer shown "Fruit" could guess Mango. The tutorial and Help now use POPCORN / "A snack", which is not in `wordPairs`, and a dev check warns if it ever becomes one. The hint counts too: Cashew's live hint was also "A snack", so it became "A nut" (2026-10-03).
 
 - **The game clock (asked 2026-10-02).** The user wanted the phone's Clock to show the time *in the game*, the clock to run faster than real time, the whole evening to run automatically on it, and its speed to come from the length they choose (their example: "end in 2 hours", adjusted for the number of days). They also said: don't force anyone to play the morning game; just notify them that if they don't play, their score is zero and they may die. Choices Claude made, unasked, that the user may change:
   - one constant speed with two daily jumps (night at 01:00, alarm at 07:00), rather than a different speed for each phase;

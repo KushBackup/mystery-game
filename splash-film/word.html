@@ -1,0 +1,400 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Word · the tutorial clips</title>
+<style>body{margin:0;background:#242321;display:grid;place-items:center;min-height:100vh}canvas{max-width:100vw;max-height:100vh;object-fit:contain}</style>
+<canvas id="c"></canvas>
+<script src="core.js"></script>
+<script src="studio.js"></script>
+<script src="cels.js"></script>
+<script src="word-font.js"></script>
+<script>
+'use strict';
+/* ------------------------------------------------------------------------
+Film brief
+  Subject: the in-app tutorial for WORD, the first morning game. Six short
+    clips, cut apart and shown one at a time beside the rules, each ending
+    on a held, fully composed frame that also serves as its still poster.
+  The game: most guests get a secret word (here POPCORN); the Killers get
+    only its hint ("A snack") and must fake it. Everyone posts ONE word that
+    fits, never the word itself (that scores 0). Clues land on one wall in
+    the order they arrive, numbered; a faker tends to wait and read first,
+    so a late, vague clue stands out. Everyone picks the 3 clues that fit
+    best (gold stars). 100 for a fair clue + 50 a pick. Lowest score dies;
+    skipping scores 0.
+  The example, everywhere: POPCORN / "A snack". Wall: 1 Cinema, 2 Butter,
+    3 Microwave, 4 Kernel, 5 Crunchy (the faker's, late).
+    Never make POPCORN / A snack a live pair in src/data/packs/*.js.
+  Tone: playful, never graphic. LOWEST is a rubber stamp, nothing more.
+  Format: 4:3 (1440 x 1080 units), 640 px wide, 24 fps, no sound. Shown
+    290-360 CSS px wide with object-fit: cover, so everything that matters
+    sits in the middle 92% (x 58..1382, y 43..1037) and words are big.
+  Look: the app's Help notebook. Cream paper #fbf8f0 with a blue dot grid
+    that belongs to the page (cached, never moves). Navy ballpoint #24324f,
+    pressure-tapered; watercolour washes a hair off the line. Sticky notes
+    in the app's four shades. Gold only for stars and points, red only for
+    the X and LOWEST, green only for the tick. Lettering: Patrick Hand
+    (embedded by word-font.js); LOWEST in a heavy stamp face.
+  Cast: four doodle guests, the creator's way (paper skin, pencil-grey hair,
+    the creator's tops), the same four in every clip: Ada (bob, glasses,
+    yellow), Ben (tufts, denim), Cleo (curls, sea blue), Dev (bun, pink).
+    Dev is the faker in this example, marked only by acting (sweat, darting
+    eyes), never by colour. Plus Zed, asleep, who only appears on the board.
+  Exposure: characters on twos with light boil (a new stroke seed at 12 Hz)
+    on their contours, the ring marks and the z's; slaps, flips, stamps and
+    taps on ones. Paper, notes, cards and lettering never boil.
+  Beat sheet (each clip: action, then a ~1.2 s hold that reads on its own)
+    0.00  wake   5.50  four guests asleep at a cafe table, z z; phones buzz
+                       and hop (1.0); they jolt awake (1.5), grab the phones,
+                       look; WORD writes itself on (2.55) and is underlined
+    5.50  cards  5.00  four tent cards, face down; they spin over one by one
+                       (0.75, +0.5 each): POPCORN x3, then "A snack ?";
+                       Dev above card 4 sweats, eyes dart
+   10.50  write  4.75  a pencil writes "Butter" on a big note, a green tick,
+                       a 100 tag; a small "Popcorn" note slides in, a red X
+                       is scribbled over it, it droops, 0
+   15.25  wall   5.50  notes slap onto the wall, numbered 1-4 (0.35 .. 1.55);
+                       Dev peeks round the edge, reading, sweating; at 3.3
+                       note 5 "Crunchy" drifts in, late and slow
+   20.75  pick   5.25  closer on the wall; a fingertip taps Cinema, Butter,
+                       Kernel and a gold star stamps on each; a second hand
+                       taps Butter; its tag ticks 100 > 150 > 200
+   26.00  board  4.75  THE BOARD: 300, 250, 200, 150 and Zed asleep on 0,
+                       phone face-down; LOWEST thumps onto Zed's row
+  Total 30.75 s. Ship: six clips cut at those boundaries (public/tutorial).
+  Sources: none; everything is drawn here. Patrick Hand: SIL OFL.
+------------------------------------------------------------------------- */
+
+// ---------------------------------------------------------------- palette
+const INK = '#24324f', PAPER = '#fbf8f0', SKIN = '#f6f1e6', HAIR = '#bdb7ae', HAIR_D = '#7d786f';
+const SEA = '#3D8BF2', GOLD = '#FFCC33', RED = '#FF3B30', GREEN = '#4CD964';
+const NOTE = { butter: '#FFF2A8', mint: '#D9F5E1', sky: '#DCEAFE', lilac: '#EADFFB' };
+const CARD = '#fffdf8';
+const FONT = '"Patrick Hand", "Segoe Print", cursive';
+const STAMP_FONT = '900 1px Impact, "Arial Black", sans-serif';
+
+// ---------------------------------------------------------------- small maths
+const rot2 = (p, a) => [p[0] * Math.cos(a) - p[1] * Math.sin(a), p[0] * Math.sin(a) + p[1] * Math.cos(a)];
+const put = (pts, x, y, a = 0, s = 1) => pts.map(p => { const q = rot2([p[0] * s, p[1] * s], a); return [x + q[0], y + q[1]]; });
+const add = (a, b) => [a[0] + b[0], a[1] + b[1]], sub = (a, b) => [a[0] - b[0], a[1] - b[1]], mul = (a, k) => [a[0] * k, a[1] * k];
+const norm = v => { const l = Math.hypot(v[0], v[1]) || 1; return [v[0] / l, v[1] / l]; };
+const mixv = (a, b, u) => [lerp(a[0], b[0], u), lerp(a[1], b[1], u)];
+const lin = x => x;
+const win = (tau, a, b) => clamp((tau - a) / (b - a), 0, 1);           // 0..1 across [a, b]
+const bz = i => boil(i, 1);                                              // boil seed: a new drawing every 12 Hz frame
+
+// ---------------------------------------------------------------- marks
+// A ballpoint contour: tapered, a slow wander, never shaking per point.
+function ln(c, pts, w, seed, close = false, col = INK, o = {}) {
+  c.save(); c.strokeStyle = col; c.lineWidth = w; c.lineJoin = 'round'; c.lineCap = 'round';
+  wob(c, pts, o.amp ?? 1.6, seed, close, { pressure: o.p ?? .55, corner: o.corner ?? .8 }); c.restore();
+}
+// A drawn shape: opaque body colour (so the dots never show through skin), a watercolour wash a hair off the line, then the contour.
+function shape(c, pts, col, seed, o = {}) {
+  const { w = 6, base = SKIN, al = .95, line = INK, amp = 1.6, corner = .8, off = 2.5 } = o, path = curvePath(pts, true, corner);
+  if (base) gouache(c, path, base, 1);
+  if (col) wash(c, path, col, { al, off, seed, rim: true });
+  if (line) ln(c, pts, w, seed + 1, true, line, { amp, corner });
+  return path;
+}
+function dot(c, x, y, rx, ry = rx, col = INK, a = 0) { c.save(); c.fillStyle = col; c.beginPath(); c.ellipse(x, y, rx, ry, a, 0, TAU); c.fill(); c.restore(); }
+// A limb as one continuous outline along a bent path.
+function tube(pts, widths) {
+  const q = smoothPts(pts, false, 3, Math.PI), L = [0];
+  for (let k = 1; k < q.length; k++) L.push(L[k - 1] + Math.hypot(q[k][0] - q[k - 1][0], q[k][1] - q[k - 1][1]));
+  const tot = L[L.length - 1] || 1, wAt = u => { const f = u * (widths.length - 1), k = Math.min(widths.length - 2, Math.floor(f)); return lerp(widths[k], widths[k + 1], f - k); };
+  const left = [], right = [];
+  q.forEach((p, k) => { const a = q[Math.max(0, k - 1)], b = q[Math.min(q.length - 1, k + 1)], t = norm(sub(b, a)), n = [-t[1], t[0]], w = wAt(L[k] / tot); left.push(add(p, mul(n, w))); right.push(sub(p, mul(n, w))); });
+  return [...left, ...right.reverse()];
+}
+// Text in Patrick Hand. size in units; fit = max width (shrinks to fit).
+function txt(c, s, x, y, size, o = {}) {
+  const { col = INK, align = 'center', base = 'middle', fit = 0, rot = 0, font = FONT, al = 1 } = o;
+  c.save(); c.translate(x, y); c.rotate(rot); c.font = `${size}px ${font}`;
+  if (fit) { const m = c.measureText(s).width; if (m > fit) c.font = `${size * fit / m}px ${font}`; }
+  c.textAlign = align; c.textBaseline = base; c.fillStyle = col; c.globalAlpha *= al; c.fillText(s, 0, 0); c.restore();
+}
+// Hand lettering that writes itself: glyph by glyph, each wiped on in the writing direction. Returns the pen tip.
+function writeOn(c, s, x, y, size, k, o = {}) {
+  const { col = INK, rot = 0, align = 'center', fit = 0 } = o;
+  c.save(); c.translate(x, y); c.rotate(rot); c.font = `${size}px ${FONT}`;
+  let sz = size; if (fit) { const m = c.measureText(s).width; if (m > fit) { sz = size * fit / m; c.font = `${sz}px ${FONT}`; } }
+  const total = c.measureText(s).width, x0 = align === 'center' ? -total / 2 : align === 'right' ? -total : 0;
+  const n = s.length, f = clamp(k, 0, 1) * n, done = Math.floor(f), part = f - done;
+  c.textAlign = 'left'; c.textBaseline = 'middle'; c.fillStyle = col;
+  let tip = [x0, 0];
+  for (let q = 0; q < n && q <= done; q++) {
+    const before = c.measureText(s.slice(0, q)).width, gw = c.measureText(s[q]).width;
+    if (q < done) { c.fillText(s[q], x0 + before, 0); continue; }
+    if (part <= 0) break;
+    c.save(); c.beginPath(); c.rect(x0 + before - sz * .1, -sz, gw * part + sz * .1, sz * 2); c.clip(); c.fillText(s[q], x0 + before, 0); c.restore();
+    tip = [x0 + before + gw * part, sz * (.18 * Math.sin(part * 9) - .05)];
+  }
+  if (k >= 1) tip = [x0 + total, 0];
+  c.restore();
+  const t = rot2(tip, rot); return [x + t[0], y + t[1]];
+}
+
+// ---------------------------------------------------------------- the page
+// The app's Help paper: cream, and a blue dot grid that belongs to the page (drawn once, never moves).
+let PAGE = null;
+function page(c) {
+  if (!PAGE) {
+    PAGE = layer(); const g = PAGE.getContext('2d'); g.setTransform(S, 0, 0, S, 0, 0);
+    g.fillStyle = PAPER; g.fillRect(0, 0, W, H);
+    g.fillStyle = 'rgba(61,139,242,0.16)'; const step = 54;
+    for (let y = step / 2; y < H; y += step) for (let x = step / 2; x < W; x += step) { g.beginPath(); g.arc(x, y, 3.4, 0, TAU); g.fill(); }
+  }
+  blit(c, PAGE);
+}
+
+// ---------------------------------------------------------------- props
+// A sticky note in local coords, centred. w x h, colour, a soft shadow; lift raises the shadow (0 = flat on the wall).
+function sticky(c, w, h, col, seed, o = {}) {
+  const { lift = 0, curl = 1 } = o, hw = w / 2, hh = h / 2;
+  const pts = warp([[-hw, -hh], [hw, -hh], [hw, hh - 10 * curl], [hw - 14 * curl, hh], [-hw, hh]], seed, 2.2, true, 30);
+  const path = curvePath(pts, true, .5);
+  c.save();
+  c.shadowColor = `rgba(36,50,79,${.22 - lift * .08})`; c.shadowBlur = (10 + lift * 22) * S; c.shadowOffsetX = (3 + lift * 10) * S; c.shadowOffsetY = (7 + lift * 22) * S;
+  c.fillStyle = col; c.fill(path); c.restore();
+  c.save(); c.clip(path); c.fillStyle = 'rgba(36,50,79,.05)'; c.fillRect(-hw, -hh, w, h * .16);       // the glue strip
+  const g = c.createLinearGradient(hw - 60, hh - 60, hw, hh); g.addColorStop(0, 'rgba(36,50,79,0)'); g.addColorStop(1, 'rgba(36,50,79,.10)'); c.fillStyle = g; c.fillRect(hw - 80, hh - 80, 80, 80); c.restore();
+  ln(c, pts, 2.2, seed + 3, true, alpha(INK, .45), { amp: .8, p: .3, corner: .5 });
+  return path;
+}
+// The number badge: a navy disc, the number in paper colour.
+function badge(c, n, x, y, r = 40, k = 1) {
+  if (k <= 0) return;
+  c.save(); c.translate(x, y); c.scale(k, k);
+  const pts = blob(0, 0, r, r, 700 + n, { amp: .03, n: 36 }); c.fillStyle = INK; c.fill(curvePath(pts, true));
+  txt(c, String(n), 0, 3, r * 1.45, { col: PAPER }); c.restore();
+}
+// A five-point star, gold, inked.
+const starPts = (r, inner = .48) => Array.from({ length: 10 }, (_, k) => { const a = k * Math.PI / 5 - Math.PI / 2, rr = k % 2 ? r * inner : r; return [Math.cos(a) * rr, Math.sin(a) * rr]; });
+function star(c, x, y, r, seed, k = 1, rot = 0) {
+  if (k <= 0) return; c.save(); c.translate(x, y); c.rotate(rot); c.scale(k, k);
+  const pts = starPts(r); c.fillStyle = GOLD; c.fill(curvePath(pts, true, .3)); ln(c, pts, 5, seed, true, INK, { corner: .3, amp: 1 });
+  c.restore();
+}
+// The points tag: a gold luggage tag with the score in ink.
+function tag(c, s, x, y, rot, seed, o = {}) {
+  const { w = 150, h = 74, pop = 1 } = o;
+  c.save(); c.translate(x, y); c.rotate(rot); c.scale(pop, pop);
+  const pts = [[-w / 2 + 22, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2 + 22, h / 2], [-w / 2, 0]];
+  c.save(); c.shadowColor = 'rgba(36,50,79,.18)'; c.shadowBlur = 6 * S; c.shadowOffsetY = 3 * S; c.fillStyle = GOLD; c.fill(curvePath(pts, true, .4)); c.restore();
+  ln(c, pts, 4, seed, true, INK, { corner: .4, amp: .8 });
+  c.save(); c.strokeStyle = INK; c.lineWidth = 3; c.beginPath(); c.arc(-w / 2 + 20, 0, 7, 0, TAU); c.stroke(); c.restore();
+  txt(c, s, 12, 3, h * .82, {}); c.restore();
+}
+
+// ---------------------------------------------------------------- the cast
+// Guest units: head radius about 60, y down. A head is drawn at its centre; features follow `turn` (-1 left .. 1 right).
+const CAST = {
+  ada: { top: '#f0b043', hair: 'bob', glasses: true },
+  ben: { top: '#4d6488', hair: 'tufts' },
+  cleo: { top: '#5b9be8', hair: 'curls' },
+  dev: { top: '#d98fa0', hair: 'bun' },
+  zed: { top: '#8fb7a0', hair: 'beanie' },
+};
+const ORDER = ['ada', 'ben', 'cleo', 'dev'];
+const skullPts = (sy = 1) => Array.from({ length: 40 }, (_, k) => { const a = k / 40 * TAU, s = Math.sin(a); return [60 * Math.cos(a) * (1 + .07 * s), 64 * s * sy - (s < 0 ? 0 : 0)]; });
+function scallop(cx, cy, r, from, to, n, bump) {   // a curly edge along an arc
+  const out = []; for (let k = 0; k <= n * 4; k++) { const u = k / (n * 4), a = lerp(from, to, u), rr = r + bump * Math.abs(Math.sin(u * n * Math.PI)); out.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]); } return out;
+}
+function hairBack(c, g, seed, up = 0) {
+  if (g.hair === 'bob') shape(c, [[-74, 48], [-78, 4], [-70, -44], [-40, -76], [0, -84 - up], [40, -76], [70, -44], [78, 4], [74, 48], [46, 54], [-46, 54]], HAIR, seed, { corner: 1.2 });
+  else if (g.hair === 'curls') shape(c, scallop(0, -6, 74, Math.PI * .78, Math.PI * 2.22, 11, 12 + up * .3), HAIR, seed);
+  else if (g.hair === 'bun') { const b = blob(10, -94 - up, 27, 25, seed + 2, { amp: .06 }); shape(c, b, HAIR, seed); hatchIn(c, b, seed + 4, 1.9); }
+}
+function hatchIn(c, pts, seed, angle = 1.9, gap = 7) {
+  const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]), box = [Math.min(...xs), Math.min(...ys), Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys)];
+  hatch(c, curvePath(pts, true), box, { angle, gap, len: 16, color: HAIR_D, alpha: .55, width: 1.6, seed });
+}
+function hairFront(c, g, seed, up = 0) {
+  let pts;
+  if (g.hair === 'bob') pts = [[-64, -8], [-62, -46], [-36, -72], [0, -80 - up], [36, -72], [62, -46], [64, -8], [50, -20], [36, -26], [18, -24], [0, -28], [-18, -24], [-36, -26], [-52, -20]];
+  else if (g.hair === 'tufts') pts = [[-62, -14], [-60, -46], [-40, -66], [-34, -92 - up], [-14, -72], [0, -100 - up * 1.3], [14, -72], [36, -90 - up], [44, -62], [60, -44], [63, -14], [44, -30], [20, -34], [-8, -32], [-36, -34]];
+  else if (g.hair === 'curls') pts = [...scallop(0, -4, 62, Math.PI * 1.08, Math.PI * 1.92, 7, 10 + up * .4), [44, -34], [20, -28], [-8, -30], [-36, -26]];
+  else if (g.hair === 'bun') pts = [[-63, -6], [-61, -44], [-38, -68], [0, -76 - up], [38, -68], [61, -44], [63, -6], [52, -26], [30, -40], [6, -46], [-14, -38], [-40, -30]];
+  else if (g.hair === 'beanie') pts = [[-66, -10], [-64, -50], [-40, -84], [0, -92], [40, -84], [64, -50], [66, -10], [40, -16], [0, -18], [-40, -16]];
+  if (!pts) return;
+  shape(c, pts, g.hair === 'beanie' ? g.top : HAIR, seed, { corner: 1.1 });
+  if (g.hair === 'beanie') { ln(c, [[-62, -20], [0, -26], [62, -20]], 4, seed + 7); dot(c, 0, -100, 15, 15, INK); }
+  else hatchIn(c, pts, seed + 5, g.hair === 'tufts' ? 1.3 : 1.9);
+}
+// The face. f = { eyes, brows, mouth, gaze:[x,y], turn, blush, sweat }
+function face(c, g, f, seed) {
+  const t = (f.turn || 0) * 12, gz = f.gaze || [0, 0], ex = 22, ey = 6;
+  const eyes = f.eyes || 'dot';
+  for (const s of [-1, 1]) {
+    const x = s * ex + t, y = ey;
+    if (eyes === 'dot') dot(c, x + gz[0] * 4, y + gz[1] * 4, 6.5, 8.5);
+    else if (eyes === 'closed') ln(c, [[x - 10, y], [x, y + 6], [x + 10, y]], 4.5, seed + s, false, INK, { amp: .6 });
+    else if (eyes === 'happy') ln(c, [[x - 10, y + 4], [x, y - 5], [x + 10, y + 4]], 4.5, seed + s, false, INK, { amp: .6 });
+    else if (eyes === 'squeeze') ln(c, [[x - 9 * s, y - 7], [x + 6 * s, y], [x - 9 * s, y + 7]], 4.5, seed + s, false, INK, { amp: .5, corner: .3 });
+    else if (eyes === 'wide' || eyes === 'look') {
+      const r = eyes === 'wide' ? 15 : 12;
+      c.save(); c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(x, y - 2, r, r * 1.12, 0, 0, TAU); c.fill(); c.restore();
+      ln(c, ellPts(x, y - 2, r, r * 1.12, 0, 24), 3.5, seed + s * 3, true, INK, { amp: .5 });
+      dot(c, x + gz[0] * r * .45, y - 2 + gz[1] * r * .45, r * .42, r * .48);
+    }
+    // brows
+    const b = f.brows || 'calm', by = y - (eyes === 'wide' ? 30 : 22);
+    const bp = { calm: [[x - 10, by + 1], [x + 10, by - 1]], up: [[x - 11, by - 8], [x, by - 12], [x + 11, by - 8]], worry: [[x - 11 * s, by - 2], [x + 9 * s, by - 10]].map(p => [p[0], p[1]]), low: [[x - 10, by + 5], [x + 10, by + 5]], sleep: [[x - 10, by + 4], [x + 10, by + 3]] }[b];
+    if (bp) ln(c, b === 'worry' ? [[x + 10 * s, by + 2], [x - 10 * s, by - 8]] : bp, 4.2, seed + 10 + s, false, INK, { amp: .5 });
+  }
+  if (g.glasses && eyes !== 'wide') { c.save(); c.strokeStyle = INK; c.lineWidth = 3.4; for (const s of [-1, 1]) { c.beginPath(); c.arc(s * ex + t, ey, 17, 0, TAU); c.stroke(); } c.beginPath(); c.moveTo(-ex + 17 + t, ey - 2); c.quadraticCurveTo(t, ey - 8, ex - 17 + t, ey - 2); c.stroke(); c.restore(); }
+  if (g.glasses && eyes === 'wide') { c.save(); c.strokeStyle = INK; c.lineWidth = 3.4; for (const s of [-1, 1]) { c.beginPath(); c.arc(s * ex + t, ey - 2, 21, 0, TAU); c.stroke(); } c.restore(); }
+  // cheeks
+  if (f.blush !== false) for (const s of [-1, 1]) { c.save(); c.globalCompositeOperation = 'multiply'; const x = s * 36 + t, y = 26, gr = c.createRadialGradient(x, y, 0, x, y, 15); gr.addColorStop(0, 'rgba(232,128,120,.45)'); gr.addColorStop(1, 'rgba(232,128,120,0)'); c.fillStyle = gr; c.fillRect(x - 16, y - 16, 32, 32); c.restore(); }
+  // mouth
+  const m = f.mouth || 'smile', mx = t * 1.1, my = 34;
+  if (m === 'smile') ln(c, [[mx - 13, my - 2], [mx, my + 6], [mx + 13, my - 2]], 4.5, seed + 20, false, INK, { amp: .5 });
+  else if (m === 'grin') { const p = [[mx - 18, my - 4], [mx + 18, my - 4], [mx + 10, my + 10], [mx, my + 13], [mx - 10, my + 10]]; c.save(); c.fillStyle = INK; c.fill(curvePath(p, true, .6)); c.restore(); c.save(); c.clip(curvePath(p, true, .6)); dot(c, mx, my + 14, 10, 6, '#e98b86'); c.restore(); }
+  else if (m === 'flat') ln(c, [[mx - 10, my], [mx + 10, my]], 4.5, seed + 20, false, INK, { amp: .5 });
+  else if (m === 'wobble') ln(c, [[mx - 16, my + 2], [mx - 8, my - 3], [mx, my + 2], [mx + 8, my - 3], [mx + 16, my + 2]], 4, seed + 20, false, INK, { amp: .4, corner: .4 });
+  else if (m === 'o') { dot(c, mx, my + 2, 8, 10); }
+  else if (m === 'O') { dot(c, mx, my + 4, 12, 15); }
+  else if (m === 'sleep') { c.save(); c.strokeStyle = INK; c.lineWidth = 3.5; c.beginPath(); c.ellipse(mx, my + 2, 5, 6, 0, 0, TAU); c.stroke(); c.restore(); }
+  else if (m === 'tight') ln(c, [[mx - 12, my + 3], [mx - 4, my], [mx + 6, my + 1], [mx + 12, my - 2]], 4.2, seed + 20, false, INK, { amp: .4 });
+  if (f.sweat) sweatDrop(c, 60 - t * .3, -30 + f.sweat * 40, 1.3, seed + 30);
+}
+function sweatDrop(c, x, y, k, seed) {
+  const s = 13 * k, d = [[0, -s * 1.6], [s * .8, -s * .1], [s * .7, s * .5], [0, s * .9], [-s * .7, s * .5], [-s * .8, -s * .1]].map(p => [x + p[0], y + p[1]]);
+  c.save(); c.fillStyle = '#cfe3ff'; c.fill(curvePath(d, true, .5)); c.restore(); ln(c, d, 3.2, seed, true, SEA, { amp: .4, corner: .5 });
+  ln(c, [[x - s * .25, y - s * .1], [x - s * .3, y + s * .35]], 2.5, seed + 1, false, '#ffffff', { amp: .2 });
+}
+// A whole head: back hair, skull, face, front hair. o = { tilt, sy (stretch), up (hair lift) }
+function head(c, g, x, y, sc, f, seed, o = {}) {
+  const { tilt = 0, sy = 1, up = 0 } = o;
+  c.save(); c.translate(x, y); c.rotate(tilt); c.scale(sc, sc * sy);
+  hairBack(c, g, seed + 1, up);
+  shape(c, skullPts(), null, seed + 3, { w: 6 });
+  face(c, g, f, seed + 40);
+  hairFront(c, g, seed + 60, up);
+  c.restore();
+}
+// Shoulders and chest, front view, from a neck point down to y = bottom. hw = half width at the shoulder.
+function torso(c, g, sh, hw, bottom, seed, o = {}) {
+  const { lean = 0 } = o, [x, y] = sh;
+  const pts = [[x - 22, y - 4], [x - hw * .7, y + 4], [x - hw, y + 30], [x - hw - 6 + lean, bottom], [x + hw + 6 + lean, bottom], [x + hw, y + 30], [x + hw * .7, y + 4], [x + 22, y - 4]];
+  shape(c, pts, g.top, seed, { w: 6.5, corner: 1.2 });
+  ln(c, [[x - 22, y - 2], [x, y + 18], [x + 22, y - 2]], 4, seed + 4, false, INK, { amp: .6 });      // neckline
+}
+function neck(c, a, b, seed) { shape(c, tube([a, b], [15, 14]), null, seed, { w: 5 }); }
+// An arm, shoulder to hand, one outline; a sleeve over the top half; a mitten hand.
+const ARM = { up: 66, fore: 62 };
+function arm(c, g, shoulder, hand, bend, seed, o = {}) {
+  const { handRot = null, fist = false, elbow = null } = o;
+  const s = elbow ? { joint: elbow, end: hand } : solveLimb(shoulder, hand, ARM.up, ARM.fore, bend);
+  shape(c, tube([shoulder, s.joint, s.end], [15, 13, 11.5]), null, seed, { w: 5.5 });
+  const mid = mixv(shoulder, s.joint, .62);
+  shape(c, tube([add(shoulder, [0, -2]), mid], [19, 17]), g.top, seed + 4, { w: 5.5 });
+  const d = norm(sub(s.end, s.joint)), hp = add(s.end, mul(d, 10)), ang = handRot ?? Math.atan2(d[1], d[0]);
+  shape(c, put(blob(0, 0, fist ? 16 : 18, fist ? 15 : 14, seed + 7, { amp: .06 }), hp[0], hp[1], ang), null, seed + 8, { w: 5 });
+  return s;
+}
+
+// ---------------------------------------------------------------- the wall (clips 4 and 5)
+const WALL = { x0: 70, y0: 62, x1: 1176, y1: 1018 };
+const CLUES = [
+  { word: 'Cinema', col: NOTE.sky, x: 272, y: 312, r: -.04 },
+  { word: 'Butter', col: NOTE.butter, x: 632, y: 300, r: .03 },
+  { word: 'Microwave', col: NOTE.mint, x: 986, y: 318, r: -.02 },
+  { word: 'Kernel', col: NOTE.lilac, x: 300, y: 736, r: .035 },
+  { word: 'Crunchy', col: NOTE.butter, x: 712, y: 766, r: -.07 },
+];
+const NW = 330, NH = 286;
+function wallSheet(c) {
+  const pts = warp(rectPts(WALL.x0, WALL.y0, WALL.x1 - WALL.x0, WALL.y1 - WALL.y0), 81, 3, true, 40), path = curvePath(pts, true, .5);
+  c.save(); c.shadowColor = 'rgba(36,50,79,.20)'; c.shadowBlur = 16 * S; c.shadowOffsetX = 6 * S; c.shadowOffsetY = 8 * S; c.fillStyle = PAPER; c.fill(path); c.restore();
+  c.save(); c.clip(path); blit(c, PAGE); c.restore();
+  ln(c, pts, 4, 82, true, INK, { amp: 1, corner: .5, p: .4 });
+  // two pins at the top
+  for (const [x, s] of [[WALL.x0 + 60, 1], [WALL.x1 - 60, 2]]) { dot(c, x + 3, WALL.y0 + 34, 13, 13, 'rgba(36,50,79,.18)'); dot(c, x, WALL.y0 + 30, 13, 13, SEA); ln(c, ellPts(x, WALL.y0 + 30, 13, 13, 0, 20), 3, 83 + s, true, INK, { amp: .3 }); dot(c, x - 4, WALL.y0 + 25, 4, 4, '#ffffff'); }
+}
+// One clue note on the wall, with its slap: k = time since it landed (negative = in flight).
+function clueNote(c, q, k, o = {}) {
+  const C = CLUES[q], { slow = false, stars = 0, tagged = null, closer = 0 } = o;
+  const inT = slow ? .62 : .17;
+  if (k < -inT) return;
+  let x = C.x, y = C.y, r = C.r, sc = 1, sx = 1, sy = 1, lift = 0, al = 1;
+  if (k < 0) {
+    const u = 1 + k / inT;               // 0..1 in flight
+    if (slow) { const e = easeOutQuint(u); x = lerp(C.x + 300, C.x, e); y = lerp(C.y + 260, C.y, e) - Math.sin(u * Math.PI) * 40; r = C.r + (1 - e) * .5 + Math.sin(u * 7) * .05 * (1 - u); sc = lerp(1.12, 1, e); lift = 1 - e; al = clamp(u * 3, 0, 1); }
+    else { const e = easeIn(u); x = lerp(C.x - 60, C.x, e); y = lerp(C.y - 110, C.y, e); sc = lerp(1.6, 1, e); lift = 1 - e; r = C.r - (1 - e) * .14; }
+  } else if (!slow) {
+    // impact: a squash on the contact frames, an overshoot, then still
+    const f = Math.floor(k * 24);
+    [sx, sy] = f === 0 ? [1.08, .9] : f === 1 ? [1.04, .95] : f === 2 ? [.98, 1.02] : [1, 1];
+  } else { const f = Math.floor(k * 24); [sx, sy] = f === 0 ? [1.03, .97] : [1, 1]; }
+  c.save(); c.globalAlpha *= al; c.translate(x, y); c.rotate(r); c.scale(sc * sx, sc * sy);
+  sticky(c, NW, NH, C.col, 300 + q * 13, { lift });
+  txt(c, C.word, 0, 20, 96, { fit: NW - 50 });
+  // little impact ticks at the corners
+  if (!slow && k >= 0 && k < .13) { const a = 1 - k / .13; c.save(); c.globalAlpha *= a; for (const [px, py, dx, dy] of [[-NW / 2 - 14, -NH / 2 - 8, -1, -1], [NW / 2 + 14, -NH / 2 - 8, 1, -1], [-NW / 2 - 14, NH / 2 + 8, -1, 1], [NW / 2 + 14, NH / 2 + 8, 1, 1]]) ln(c, [[px, py], [px + dx * 26, py + dy * 18]], 5, 310 + q, false, INK, { amp: .3 }); c.restore(); }
+  c.restore();
+  // the badge pops two frames after the slap
+  const bk = k < .06 ? 0 : easeOutBack(clamp((k - .06) / .16, 0, 1));
+  const bp = add([x, y], rot2([-NW / 2 + 18, -NH / 2 + 14], r));
+  badge(c, q + 1, bp[0], bp[1], 42, bk);
+}
+
+// ---------------------------------------------------------------- clip 4: the wall
+function devPeek(c, tau, i) {
+  // Dev leans in from behind the wall's right edge, reads, sweats.
+  const t = twos(tau);
+  const inK = easeOutQuint(win(t, 1.6, 2.05)), back = easeInOutSine(win(t, 3.2, 3.6)) * (1 - easeInOutSine(win(t, 3.95, 4.3)));
+  if (inK <= 0) return;
+  const ex = WALL.x1, hx = lerp(1540, ex + 66, inK) + back * 30, hy = 520 + back * 6;
+  // where the eyes are reading: each note in order, darting on twos
+  const reads = [[1.95, [-1, -.9]], [2.2, [-1, -.7]], [2.42, [-.7, -.6]], [2.62, [-1, .3]], [2.86, [-.6, .2]], [3.06, [-1, .5]], [3.3, [-.7, .9]], [3.7, [-.9, .7]], [4.3, [-1, .1]]];
+  let gaze = [-1, -.6]; for (const [at, gz] of reads) if (t >= at) gaze = gz;
+  const sweat = t > 2.5 ? ((t - 2.5) * .55) % 1 : 0;
+  const f = { eyes: 'look', brows: 'worry', mouth: t > 3.6 ? 'tight' : 'wobble', gaze, turn: -.8, sweat: t > 2.5 ? sweat : 0 };
+  const sc = 1.45, seed = 4000 + bz(i);
+  // the body, behind the wall: neck and a shoulder going out of frame (the near hand grips the edge: devFingers)
+  const g = CAST.dev;
+  neck(c, [hx + 4, hy + 60], [hx + 16, hy + 104], seed + 880);
+  shape(c, [[hx - 34, hy + 104], [hx + 30, hy + 92], [hx + 118, hy + 118], [hx + 172, hy + 210], [hx + 196, H + 40], [hx - 40, H + 40], [hx - 54, hy + 180]], g.top, seed + 900, { w: 6.5, corner: 1.2 });
+  ln(c, [[hx - 10, hy + 98], [hx + 14, hy + 118], [hx + 40, hy + 96]], 4, seed + 905, false, INK, { amp: .5 });
+  head(c, g, hx, hy, sc, f, seed, { tilt: -.2 });
+}
+const devHand = t => { const k = easeOutQuint(win(t, 1.7, 2.1)), back = easeInOutSine(win(t, 3.2, 3.6)) * (1 - easeInOutSine(win(t, 3.95, 4.3))); return [lerp(WALL.x1 + 120, WALL.x1 + 26, k) + back * 10, 690]; };
+// Four fingertips curled round the front of the wall's edge (the palm stays behind it).
+function devFingers(c, tau, i) {
+  const t = twos(tau); if (t < 1.7) return;
+  const k = easeOutQuint(win(t, 1.7, 2.1)), [hx, y] = devHand(t), seed = 4100 + bz(i);
+  for (let q = 0; q < 4; q++) {
+    const fy = y - 44 + q * 27, fx = hx - lerp(10, 44, k) + (q === 0 || q === 3 ? 6 : 0);
+    if (fx > WALL.x1 + 30) continue;
+    shape(c, put(blob(0, 0, 24, 12.5, seed + q, { amp: .05 }), fx, fy, .04 * (q - 1.5)), null, seed + 10 + q, { w: 4.5 });
+  }
+}
+function wallClip(c, tau, i) {
+  page(c); wallSheet(c);
+  for (let q = 0; q < 4; q++) clueNote(c, q, tau - (.35 + q * .4));
+  clueNote(c, 4, tau - 3.92, { slow: true });
+  // Dev is behind the wall: draw the sheet edge over the head again
+  c.save();
+  const edge = new Path2D(); edge.rect(WALL.x1 + 2, 0, W, H);
+  c.clip(edge); devPeek(c, tau, i); c.restore();
+  devFingers(c, tau, i);
+}
+
+</script>
+<script src="word-clips.js"></script>
+<script>
+'use strict';
+FONT_READY.then(() => { defineFilm({
+  palette: makePalette({ paper: PAPER, ink: INK, finish: 'flat', washBlend: 'multiply' }, 'doodlePastel'),
+  format: { ar: '4:3', width: 640 },
+  timeline: [
+    { name: 'wake', dur: 5.5, fn: wakeClip },
+    { name: 'cards', dur: 5.0, fn: cardsClip },
+    { name: 'write', dur: 4.75, fn: writeClip },
+    { name: 'wall', dur: 5.5, fn: wallClip },
+    { name: 'pick', dur: 5.25, fn: pickClip },
+    { name: 'board', dur: 4.75, fn: boardClip },
+  ],
+}); }).catch(e => { window.__error = String(e); });
+</script>

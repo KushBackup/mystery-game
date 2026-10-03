@@ -46,7 +46,7 @@ import {
   ROLE, ROLE_INFO, teamOf, DEFAULT_RATIOS, targetCounts, dealRoles, assignLateJoiner,
   makeRng, freshSeed, resolveNight, resolveRecruit, resolveMorning, DEFAULT_NIGHT_CONFIG,
   tallyBanish, breakTie, checkWin, applyLeaves, recruitNeed, fateRecruit,
-  DEFAULT_GAMES, gameOfDay, pickWord, dealDrawWords, shownWord, scoreWordDay, scoreDrawDay,
+  DEFAULT_GAMES, gameOfDay, introDay, pickWord, dealDrawWords, shownWord, scoreWordDay, scoreDrawDay,
   planEvening, clockAtStart,
 } from '../lib/engine/index.js';
 
@@ -225,9 +225,11 @@ export async function relink(gid, newUid, pid) {
  * stands (engine/clock.js). `cycle` is the day being opened, for a night.
  */
 function timed(game, phase, now = serverNow(), cycle = game.cycle) {
+  // The first Word morning's alarm rings longer: the tutorial plays in it.
+  const intro = phase === PHASE.ALARM && introDay(game.config, cycle);
   return {
     phase,
-    ...phaseTiming(phase, now, game.config?.durations ?? DEFAULT_DURATIONS, game.minigame ?? 'run'),
+    ...phaseTiming(phase, now, game.config?.durations ?? DEFAULT_DURATIONS, game.minigame ?? 'run', intro),
     clockAt: clockAtStart(game, phase, now, cycle),
   };
 }

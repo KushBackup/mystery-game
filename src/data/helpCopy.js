@@ -222,8 +222,9 @@ export const HELP_SECTIONS = [
         tone: 'green',
         sketch: 'word',
         lines: [
-          'Most guests see a secret word, like **Mango**.',
-          'Killers only see a hint, like **Fruit**.',
+          // The tutorial's example (data/wordTutorial.js), never a live pair.
+          'Most guests see a secret word, like **Popcorn**.',
+          'Killers only see a hint, like **A snack**.',
           'Post one word that fits. Never the word itself.',
           'Clues go up on a wall in the order they’re sent.',
           'Then pick the three clues that fit best.',
@@ -415,6 +416,7 @@ export const HELP_SECTIONS = [
           'A red badge means something new.',
           'Pull down from the top for your notifications.',
           'The round button at the bottom takes you home.',
+          'Hold it for 5 seconds to catch up with the room.',
         ],
       },
       {
@@ -448,6 +450,7 @@ export const HELP_SECTIONS = [
           ['Can I lie?', 'Yes. Anyone can say anything.'],
           ['My phone died.', 'Find the host. Bring your device code from Settings.'],
           ['I have to leave.', 'Settings, then Leave the game. Your role stays secret.'],
+          ['My screen is stuck or behind.', 'Hold the round button for 5 seconds.'],
           ['Something looks wrong.', 'Find the host.'],
         ],
       },

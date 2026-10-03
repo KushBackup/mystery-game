@@ -446,13 +446,14 @@ const DRAW = {
   word: (k) => {
     k.wash(64, 54, 40, 26, SEA, 0.25);
     k.box(24, 30, 80, 48, 6);
-    k.text(64, 62, 'MANGO', { size: 17, weight: 700, rot: 0.01 });
+    // The tutorial's example (data/wordTutorial.js), never a live pair: a live one would tell Killers the word.
+    k.text(64, 62, 'POPCORN', { size: 15, weight: 700, rot: 0.01 });
     k.text(64, 96, 'most guests', { size: 13 });
     k.box(216, 30, 80, 48, 6);
-    k.text(256, 62, 'Fruit', { size: 17, rot: 0.01 });
+    k.text(256, 62, 'A snack', { size: 16, rot: 0.01 });
     k.text(256, 96, 'Killers', { size: 13, color: RED });
     // the wall
-    ['sweet', 'yellow', 'summer'].forEach((w, i) => {
+    ['cinema', 'butter', 'kernel'].forEach((w, i) => {
       const x = 106 + i * 54;
       k.box(x - 25, 108 + (i % 2) * 4, 50, 26, 2, { w: 1.4 });
       k.text(x, 125 + (i % 2) * 4, w, { size: 11 });

@@ -8,7 +8,7 @@ import {
 import { useAuthUser, useActiveGameId, useGame, usePlayers, useServerNow } from '../../hooks/useKillers';
 import { cancelKnock } from '../../firebase/game';
 import { PACKS, packFor, narrate, dayKit } from '../../data/packs/index.js';
-import { DEFAULT_GAMES, gameOfDay } from '../../lib/engine/minigames.js';
+import { DEFAULT_GAMES, gameOfDay, introDay } from '../../lib/engine/minigames.js';
 import { PHASE, DEFAULT_DURATIONS, DEFAULT_CYCLES, ENDGAME_ROUNDS, LOCKED } from '../../lib/engine/phases.js';
 import { ROLE_INFO, targetCounts } from '../../lib/engine/roles.js';
 import { planEvening, daySchedule, clockNow, fmtClock } from '../../lib/engine/clock.js';
@@ -31,7 +31,7 @@ import { Screen, PhaseClock, Hold, Action } from '../game/parts';
 const EMPTY = [];
 
 const LENGTHS = [90, 120, 150, 180];
-const QUICK = { casting: 15_000, night: 45_000, recruit: 20_000, alarm: 10_000, game: 40_000, game_word: 50_000, game_draw: 55_000, dawn: 20_000, investigation: 60_000, roundtable: 60_000, revote: 30_000, banish: 15_000, endgame: 60_000 };
+const QUICK = { casting: 15_000, night: 45_000, recruit: 20_000, alarm: 10_000, alarm_intro: 30_000, game: 40_000, game_word: 50_000, game_draw: 55_000, dawn: 20_000, investigation: 60_000, roundtable: 60_000, revote: 30_000, banish: 15_000, endgame: 60_000 };
 
 export default function HostApp() {
   const user = useAuthUser();
@@ -191,7 +191,8 @@ function narrationFor(game, pack, nameOf) {
     case PHASE.CASTING: return narrate(pack, 'casting');
     case PHASE.NIGHT:
     case PHASE.RECRUIT: return narrate(pack, 'night');
-    case PHASE.ALARM: return narrate(pack, 'alarm');
+    // The first Word morning's alarm is longer: the phones teach the game in it.
+    case PHASE.ALARM: return introDay(game.config, game.cycle) ? narrate(pack, 'alarmIntro', '', {}, 'alarm') : narrate(pack, 'alarm');
     case PHASE.GAME: return narrate(pack, 'game');
     case PHASE.DAWN: {
       const d = game.dawn ?? {};

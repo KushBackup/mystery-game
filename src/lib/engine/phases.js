@@ -52,6 +52,10 @@ export const DEFAULT_DURATIONS = Object.freeze({
   night: 3 * MIN,
   recruit: 45 * SEC,
   alarm: 20 * SEC,
+  // The first Word morning rings longer: DEEP BLUE shows how the game is
+  // played before the cards are dealt (os/game/WordTutorial.jsx, introDay in
+  // minigames.js). Every other alarm keeps the short ring.
+  alarm_intro: 75 * SEC,
   game: 90 * SEC,
   // The word and drawing days (minigames.js) need longer than the run.
   game_word: 125 * SEC,
@@ -132,9 +136,25 @@ export function gameSpan(kind, durations = DEFAULT_DURATIONS) {
   return durations[key] ?? DEFAULT_DURATIONS[key] ?? durations.game ?? DEFAULT_DURATIONS.game;
 }
 
-/** Timing fields to write alongside a new phase. `kind` is the day's game, for the game phase. */
-export function phaseTiming(phase, now, durations = DEFAULT_DURATIONS, kind = 'run') {
-  const ms = phase === PHASE.GAME && kind && kind !== 'run' ? gameSpan(kind, durations) : durations[phase] ?? 0;
+/** How long the alarm rings: longer on the morning that teaches Word (`intro`). */
+export function alarmMs(durations = DEFAULT_DURATIONS, intro = false) {
+  if (intro) return durations.alarm_intro ?? DEFAULT_DURATIONS.alarm_intro;
+  return durations.alarm ?? DEFAULT_DURATIONS.alarm;
+}
+
+/** A phase's configured length in ms, without the reveal hold. */
+export function phaseMs(phase, durations = DEFAULT_DURATIONS, kind = 'run', intro = false) {
+  if (phase === PHASE.GAME && kind && kind !== 'run') return gameSpan(kind, durations);
+  if (phase === PHASE.ALARM) return alarmMs(durations, intro);
+  return durations[phase] ?? 0;
+}
+
+/**
+ * Timing fields to write alongside a new phase. `kind` is the day's game, for
+ * the game phase; `intro` is true on the alarm of the first Word morning.
+ */
+export function phaseTiming(phase, now, durations = DEFAULT_DURATIONS, kind = 'run', intro = false) {
+  const ms = phaseMs(phase, durations, kind, intro);
   const lead = revealLead(phase);
   const revealAt = lead ? now + lead : 0;
   return {

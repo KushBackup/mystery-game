@@ -25,6 +25,9 @@
 /* Self-hosted (public/fonts, latin subset, SIL Open Font License) so the PWA
    works offline and a bar's wifi can't leave the phone in a fallback face. */
 @font-face { font-family: 'Inter'; src: url('/fonts/inter-var.woff2') format('woff2'); font-weight: 100 900; font-style: normal; font-display: swap; }
+/* The Word board's handwriting (os/game/wordParts.jsx): Patrick Hand, OFL, latin
+   subset, self-hosted for the same reason. Only the board's words wear it. */
+@font-face { font-family: 'Patrick Hand'; src: url('/fonts/patrick-hand.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
 
 /* ---------------------------------------------------------------- 1. Frame */
 
@@ -157,6 +160,9 @@ html.os-locked body {
   transition: scale 120ms ease-out, filter 120ms ease-out;
 }
 .os-icon:active .os-icon__art { scale: 0.95; filter: brightness(0.6) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5)); }
+/* Dim the children, not the button: the home's entry animation (os-icon-in, fill both) holds the button's own opacity at 1. */
+.os-icon[disabled] { cursor: default; pointer-events: none; }
+.os-icon[disabled] > * { opacity: 0.3; }
 .os-icon__label {
   font-size: 11px;
   font-weight: 500;
@@ -380,7 +386,14 @@ button.os-barbtn::after { content: ''; position: absolute; inset: -7px -4px; }
   border: 1px solid #000;
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.22), 0 0 0 2px #23252b, 0 1px 0 2px rgba(255, 255, 255, 0.06);
   cursor: pointer;
-  touch-action: manipulation;
+  /* Held for five seconds it resyncs the phone (os/resync.js). Nothing the
+     browser does with a long press may cancel that: no pan, no callout, no
+     selection. */
+  position: relative;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .os-homebtn::after {
   content: '';
@@ -390,6 +403,67 @@ button.os-barbtn::after { content: ''; position: absolute; inset: -7px -4px; }
   border-radius: 4.5px;
 }
 .os-homebtn:active { background: radial-gradient(circle at 50% 45%, #1a1c20, #050608 72%); }
+/* The ring that fills while Home is held: 5 s, matching HOLD_MS. Hidden for
+   the first 0.4 s so a plain press never flashes it. Kept under reduced
+   motion: it is progress, not decoration. */
+.os-homering {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 58px;
+  height: 58px;
+  translate: -50% -50%;
+  rotate: -90deg;
+  overflow: visible;
+  pointer-events: none;
+  animation: os-fade 150ms 400ms both;
+}
+.os-homering circle {
+  fill: none;
+  stroke: var(--color-os-foam);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 163.4;
+  stroke-dashoffset: 163.4;
+  animation: os-homering 5s linear forwards;
+}
+@keyframes os-homering { to { stroke-dashoffset: 0; } }
+
+/* While the phone reloads after the hold: over everything, status bar included. */
+.os-resync {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  background: color-mix(in srgb, var(--color-os-abyss) 90%, transparent);
+  animation: os-fade 200ms ease both;
+}
+/* What the phone says once it is back: a pill under the status bar. */
+.os-syncnote {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 28px);
+  left: 0;
+  right: 0;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  margin: 0 auto;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border-radius: 999px;
+  background: #0a0b0e;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+  color: var(--color-os-foam);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  animation: os-rise 320ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+.os-syncnote::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--color-os-chrome); }
+.os-syncnote--synced::before { background: var(--color-os-green); }
 
 /* ------------------------------------------------------- 6. Grouped lists */
 
@@ -1463,7 +1537,7 @@ button.os-field:active .os-field__label, button.os-field:active .os-field__ok, b
 .os-stepbar__time { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .os-stepbar--hot { background: linear-gradient(rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0) 55%), #7a1610; }
 
-/* The card with your word (or your hint). */
+/* SKETCH's card (WORD has its own paper board, section 23). */
 .os-daycard {
   padding: 14px 16px; border-radius: 14px; text-align: center; color: var(--color-os-foam);
   background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 55%), var(--color-os-navy);
@@ -1473,24 +1547,6 @@ button.os-field:active .os-field__label, button.os-field:active .os-field__ok, b
    table must not tell a hint from a word (the same rule as the role message). */
 .os-daycard__word { font-size: 38px; line-height: 1.1; font-weight: 800; letter-spacing: -0.01em; margin-top: 4px; overflow-wrap: anywhere; }
 .os-daycard__word--inline { font-size: 26px; margin-top: 2px; }
-
-/* The wall: every clue in the order it landed. Tappable only while picking. */
-.os-cluewall { list-style: none; margin: 0; padding: 0 12px; display: grid; gap: 6px; }
-.os-cluewall__row {
-  display: flex; align-items: center; gap: 10px; width: 100%; min-height: 46px; padding: 8px 12px; border-radius: 10px; text-align: left;
-  color: var(--color-os-foam); background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(143, 163, 194, 0.25); font: inherit;
-}
-.os-cluewall__row:not(:disabled) { cursor: pointer; touch-action: manipulation; transition: background-color 100ms ease-out; }
-.os-cluewall__row:not(:disabled):not(.os-cluewall__row--on):active { background-color: rgba(255, 255, 255, 0.14); }
-.os-cluewall__row:disabled { cursor: default; }
-.os-cluewall__row--own { border-style: dashed; }
-.os-cluewall__row--on { background: linear-gradient(rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0) 55%), var(--color-os-sea); border-color: #0b4fae; }
-.os-cluewall__n { flex: 0 0 26px; font-size: 13px; font-weight: 800; color: var(--color-os-chrome); font-variant-numeric: tabular-nums; }
-.os-cluewall__row--on .os-cluewall__n { color: #fff; }
-.os-cluewall__clue { flex: 1 1 auto; min-width: 0; font-size: 19px; font-weight: 700; overflow-wrap: anywhere; }
-.os-cluewall__flag { font-size: 12px; font-weight: 700; color: var(--color-os-red); }
-.os-cluewall__who { flex: 0 1 auto; min-width: 0; max-width: 40%; font-size: 13px; color: var(--color-os-chrome); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.os-cluewall__row--on .os-cluewall__who { color: #fff; }
 
 /* Drawing: the pad, the inks, a drawing at any size. */
 .os-pad, .os-sketch { display: block; border-radius: 10px; background: var(--color-os-foam); box-shadow: 0 0 0 1px #000, 0 2px 8px rgba(0, 0, 0, 0.5); }
@@ -1639,4 +1695,275 @@ button.os-field:active .os-field__label, button.os-field:active .os-field__ok, b
 
 @media (prefers-reduced-motion: reduce) {
   .os-sk__line, .os-sk__dot, .os-sk__text, .os-sk__wash { animation: none; }
+}
+
+/* ------------------------------------------------- 23. The Word board (paper) */
+/* WORD is played on paper (user's call, 2026-10-03): cream notebook paper,
+   navy ballpoint ink, sticky notes and a handwriting face, the same world as
+   the tutorial's hand-drawn clips (splash-film/word.html). Like the run's
+   board, the game keeps its own shades inside the phone; the chrome around it
+   (nav bar, buttons) stays the phone's. os/game/WordGame.jsx, wordParts.jsx,
+   WordTutorial.jsx. Two rules carry over: a Killer's hint card is the word card
+   in every way but its words, and a note's shade comes from its poster's id. */
+
+.os-wb {
+  --wb-ink: #24324f;
+  --wb-soft: #4c566c;
+  --wb-paper: #fbf8f0;
+  --wb-card: #fffdf7;
+  --wb-hand: 'Patrick Hand', 'Noteworthy', 'Marker Felt', 'Segoe Print', 'Comic Sans MS', cursive;
+  --wb-lift: 0 1px 1px rgba(36, 50, 79, 0.12), 0 8px 14px -8px rgba(36, 50, 79, 0.45);
+  display: flex;
+  flex-direction: column;
+  color: var(--wb-ink);
+  background-color: var(--wb-paper);
+  background-image: radial-gradient(rgba(61, 139, 242, 0.16) 1px, transparent 1.2px);
+  background-size: 14px 14px;
+  background-position: 7px 7px;
+  background-attachment: local;
+  font-variant-ligatures: none;
+}
+.os-wb > * { flex-shrink: 0; }
+
+/* Read · Clue · Pick, pinned at the top while the board scrolls. */
+.os-wb-steps {
+  position: sticky; top: 0; z-index: 4;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  min-height: 46px; padding: 6px 12px;
+  background: rgba(251, 248, 240, 0.94);
+  box-shadow: 0 1px 0 rgba(36, 50, 79, 0.14), 0 6px 10px -10px rgba(36, 50, 79, 0.6);
+}
+.os-wb-steps__list { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; }
+.os-wb-steps__pill {
+  padding: 5px 11px; border-radius: 999px; font-size: 14px; font-weight: 700; line-height: 1.2;
+  color: rgba(36, 50, 79, 0.5); box-shadow: inset 0 0 0 1.5px rgba(36, 50, 79, 0.18);
+  transition: background-color 200ms ease-out, color 200ms ease-out, box-shadow 200ms ease-out;
+}
+.os-wb-steps__pill.is-past { color: rgba(36, 50, 79, 0.55); box-shadow: none; text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.os-wb-steps__pill.is-on { background: var(--wb-ink); color: #fff; box-shadow: none; }
+.os-wb-steps__time { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.os-wb-steps--hot .os-wb-steps__time { color: var(--color-os-red); }
+.os-wb-steps__time--wait { font-size: 16px; font-weight: 700; color: var(--wb-soft); }
+/* "How to play": a round "?" so the bar title keeps its line at 320 px. */
+.os-wb-help { width: 32px; justify-content: center; padding: 0; border-radius: 50%; font-size: 17px; }
+
+.os-wb-board { display: flex; flex-direction: column; gap: 14px; padding: 14px 14px 28px; }
+/* What to do right now, in the board's own hand. */
+.os-wb-now { font-family: var(--wb-hand); font-size: 22px; line-height: 1.15; text-align: center; text-wrap: balance; }
+
+/* The card. Dealt face down; the flip is a transition, so it can reverse mid-turn. */
+.os-wb-card {
+  position: relative; display: block; width: 100%; max-width: 320px; height: 206px; margin: 0 auto; padding: 0;
+  border: 0; background: none; color: inherit; font: inherit; text-align: center;
+  perspective: 1100px; cursor: pointer; touch-action: manipulation;
+}
+.os-wb-card:disabled { cursor: default; color: inherit; }
+.os-wb-card__turn {
+  position: relative; display: block; width: 100%; height: 100%;
+  transform-style: preserve-3d; transition: transform 480ms cubic-bezier(0.2, 0.75, 0.25, 1), scale 90ms ease-out;
+}
+.os-wb-card.is-up .os-wb-card__turn { transform: rotateY(180deg); }
+.os-wb-card:not(:disabled):active .os-wb-card__turn { scale: 0.96; }
+.os-wb-card__face {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  padding: 14px 16px; border-radius: 14px; backface-visibility: hidden; -webkit-backface-visibility: hidden; box-shadow: var(--wb-lift);
+}
+.os-wb-card__back {
+  color: #fff;
+  background-color: var(--color-os-ocean);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.13) 1.2px, transparent 1.6px);
+  background-size: 12px 12px;
+}
+.os-wb-card__back::before { content: ''; position: absolute; inset: 8px; border: 1.5px dashed rgba(255, 255, 255, 0.55); border-radius: 9px; pointer-events: none; }
+.os-wb-card__wave { width: 96px; height: 32px; fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; }
+.os-wb-card__wave circle { fill: #fff; stroke: none; }
+.os-wb-card__wave2 { opacity: 0.55; }
+.os-wb-card__peek { font-family: var(--wb-hand); font-size: 22px; line-height: 1.1; }
+.os-wb-card__front {
+  transform: rotateY(180deg);
+  color: var(--wb-ink);
+  background-color: var(--wb-card);
+  background-image: repeating-linear-gradient(transparent 0 25px, rgba(61, 139, 242, 0.16) 25px 26px);
+  background-position: 0 12px;
+}
+.os-wb-card__label { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--wb-soft); }
+.os-wb-card__word { font-family: var(--wb-hand); font-size: 50px; line-height: 1.15; padding-bottom: 4px; overflow-wrap: anywhere; }
+.os-wb-card__sub { font-size: 15px; line-height: 1.3; color: var(--wb-soft); text-wrap: balance; }
+/* The slim card pinned above the wall while you write and pick. */
+.os-wb-card--chip { height: 64px; max-width: none; }
+.os-wb-card--chip .os-wb-card__face { flex-direction: row; gap: 12px; padding: 8px 18px; border-radius: 12px; }
+.os-wb-card--chip .os-wb-card__back::before { inset: 5px; border-radius: 8px; }
+.os-wb-card--chip .os-wb-card__wave { width: 54px; height: 20px; stroke-width: 3.4; }
+.os-wb-card--chip .os-wb-card__peek { font-size: 20px; }
+.os-wb-card--chip .os-wb-card__word { font-size: 32px; }
+/* The tutorial's last page shows the back alone. */
+.os-wb-card--still { cursor: default; max-width: 230px; height: 150px; }
+
+/* A sticky note. Its shade and tilt are seeded by who wrote it (wordParts.jsx noteLook). */
+.os-wb-note--butter { --note: #fff2a8; }
+.os-wb-note--mint { --note: #d9f5e1; }
+.os-wb-note--sky { --note: #dceafe; }
+.os-wb-note--lilac { --note: #eadffb; }
+.os-wb-notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; list-style: none; margin: 0; padding: 2px 2px 6px; }
+.os-wb-note {
+  position: relative; display: flex; flex-direction: column; align-items: flex-start; width: 100%; min-height: 96px;
+  padding: 10px 12px 9px; border: 0; border-radius: 3px 3px 12px 3px; text-align: left; font: inherit;
+  color: var(--wb-ink); background: var(--note, #fff2a8);
+  rotate: var(--tilt, 0deg); box-shadow: var(--wb-lift);
+  transition: scale 110ms ease-out, rotate 180ms ease-out, box-shadow 160ms ease-out;
+}
+/* A strip of tape on top. */
+.os-wb-note::before {
+  content: ''; position: absolute; top: -7px; left: 50%; width: 42px; height: 14px; translate: -50% 0; rotate: -3deg;
+  background: rgba(255, 255, 255, 0.6); box-shadow: 0 0 0 1px rgba(36, 50, 79, 0.06);
+}
+.os-wb-note:disabled { cursor: default; color: var(--wb-ink); }
+.os-wb-note.is-pickable { cursor: pointer; touch-action: manipulation; }
+.os-wb-note.is-pickable:active { scale: 0.96; }
+.os-wb-note.is-picked { rotate: 0deg; box-shadow: 0 0 0 2.5px var(--wb-ink), var(--wb-lift); }
+.os-wb-note.is-fresh { animation: os-wb-pop 220ms var(--ease-land); }
+.os-wb-note.is-flying { z-index: 6; transition: translate 560ms cubic-bezier(0.2, 0.8, 0.2, 1), scale 560ms cubic-bezier(0.2, 0.8, 0.2, 1), rotate 560ms ease-out; }
+.os-wb-note__n { font-size: 13px; font-weight: 800; font-variant-numeric: tabular-nums; color: rgba(36, 50, 79, 0.55); }
+.os-wb-note__clue { margin-top: 1px; font-family: var(--wb-hand); font-size: 27px; line-height: 1.05; overflow-wrap: anywhere; }
+.os-wb-note__who { margin-top: auto; padding-top: 6px; max-width: 100%; font-size: 13px; font-weight: 600; color: var(--wb-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.os-wb-note__x { margin-top: 4px; font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-os-red); }
+.os-wb-note__tag { margin-top: 4px; font-family: var(--wb-hand); font-size: 17px; line-height: 1.1; color: var(--color-os-ocean); }
+.os-wb-note__pin {
+  position: absolute; top: 6px; right: 8px; width: 12px; height: 12px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #9cc3ff, var(--color-os-sea) 55%, #164a9c);
+  box-shadow: 0 2px 2px rgba(36, 50, 79, 0.35);
+}
+.os-wb-note__star { position: absolute; top: -10px; right: -8px; animation: os-wb-stamp 260ms var(--ease-land); }
+.os-wb-note.is-own .os-wb-note__who { color: var(--color-os-ocean); }
+
+/* Gold is for points only, so the star is the only gold on the board. */
+.os-wb-star { display: block; flex: 0 0 auto; }
+.os-wb-star path { fill: var(--color-os-gold); stroke: #24324f; stroke-width: 1.4; stroke-linejoin: round; }
+.os-wb-star--off path { fill: transparent; stroke: rgba(36, 50, 79, 0.35); stroke-dasharray: 2.2 2; }
+
+/* The three stars you have left to place. */
+.os-wb-tray {
+  position: sticky; top: 54px; z-index: 3;
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px;
+  background: var(--wb-card); box-shadow: var(--wb-lift);
+}
+.os-wb-tray__stars { display: flex; gap: 2px; }
+.os-wb-tray__line { font-size: 15px; font-weight: 600; line-height: 1.25; color: var(--wb-soft); }
+
+/* Writing your clue: a sticky note you write on. */
+.os-wb-compose { display: grid; gap: 10px; }
+.os-wb-pad {
+  /* index.css sets an un-layered `input { font-family: inherit }`, so the face goes on the pad and the input inherits it. */
+  display: block; padding: 10px 14px 14px; border-radius: 3px 3px 12px 3px; cursor: text; font-family: var(--wb-hand);
+  background: var(--note, #fff2a8); rotate: var(--tilt, 0deg); box-shadow: var(--wb-lift);
+}
+.os-wb-pad__hint { display: block; font-family: var(--font-screen); font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--wb-soft); }
+.os-wb-pad__input {
+  display: block; width: 100%; margin-top: 2px; padding: 2px 0 4px; border: 0; border-bottom: 2px dashed rgba(36, 50, 79, 0.35); border-radius: 0;
+  background: transparent; color: var(--wb-ink); caret-color: var(--color-os-sea); outline: none;
+  font-family: var(--wb-hand); font-size: 36px; line-height: 1.1; user-select: text; -webkit-user-select: text;
+  transition: border-color 150ms ease-out;
+}
+.os-wb-pad__input::placeholder { color: rgba(36, 50, 79, 0.32); }
+.os-wb-pad__input:focus { border-bottom-style: solid; border-bottom-color: var(--color-os-sea); }
+/* The Evidence Room's un-layered red focus ring would box the note; the solid sea underline is the focus mark here. */
+.os-wb-pad__input:focus-visible { outline: none !important; }
+.os-wb-checks { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.os-wb-checks li {
+  display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px 4px 5px; border-radius: 999px;
+  font-size: 14px; font-weight: 600; color: var(--wb-soft); background: rgba(36, 50, 79, 0.06);
+}
+.os-wb-checks li::before {
+  content: ''; display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
+  box-shadow: inset 0 0 0 1.5px rgba(36, 50, 79, 0.3); font-size: 12px; font-weight: 800; color: #fff;
+}
+.os-wb-checks li.is-ok { color: var(--wb-ink); }
+.os-wb-checks li.is-ok::before { content: '\2713'; background: var(--color-os-green); box-shadow: none; }
+.os-wb-checks li.is-bad::before { content: '\2715'; background: var(--color-os-red); box-shadow: none; }
+.os-wb-error { font-size: 15px; font-weight: 700; color: var(--color-os-red); }
+.os-wb-stuck { font-family: var(--wb-hand); font-size: 22px; text-align: center; }
+.os-wb-stuck b { font-weight: 400; font-variant-numeric: tabular-nums; color: var(--color-os-ocean); }
+
+.os-wb-watch {
+  padding: 16px; border-radius: 12px; text-align: center; text-wrap: balance;
+  font-family: var(--wb-hand); font-size: 21px; line-height: 1.2;
+  background: var(--wb-card); box-shadow: inset 0 0 0 1.5px rgba(36, 50, 79, 0.25);
+}
+.os-wb-link {
+  align-self: center; min-height: 44px; padding: 0 12px; border: 0; background: none;
+  font: inherit; font-size: 16px; font-weight: 600; color: var(--color-os-ocean);
+  text-decoration: underline; text-underline-offset: 3px; cursor: pointer; touch-action: manipulation;
+}
+.os-wb-wall { display: flex; flex-direction: column; }
+.os-wb-head { margin: 4px 2px 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--wb-soft); }
+.os-wb-empty { padding: 18px 0; font-family: var(--wb-hand); font-size: 20px; text-align: center; color: rgba(36, 50, 79, 0.5); }
+
+/* After the game: the word, for everyone. */
+.os-wb-reveal {
+  padding: 18px 16px 16px; border-radius: 14px; text-align: center;
+  background-color: var(--wb-card);
+  background-image: repeating-linear-gradient(transparent 0 25px, rgba(61, 139, 242, 0.16) 25px 26px);
+  box-shadow: var(--wb-lift);
+}
+.os-wb-reveal__label { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--wb-soft); }
+.os-wb-reveal__word { margin-top: 2px; font-family: var(--wb-hand); font-size: 52px; line-height: 1.05; overflow-wrap: anywhere; }
+.os-wb-reveal__word--stamp { animation: os-wb-stamp-big 420ms var(--ease-land); }
+.os-wb-reveal__sub { margin-top: 4px; font-size: 16px; color: var(--wb-soft); }
+.os-wb-reveal__sub b { color: var(--wb-ink); }
+.os-wb-reveal__wait { margin-top: 6px; font-family: var(--wb-hand); font-size: 24px; }
+
+@keyframes os-wb-pop { from { opacity: 0; scale: 0.9; translate: 0 -10px; } to { opacity: 1; scale: 1; translate: 0 0; } }
+@keyframes os-wb-stamp { from { opacity: 0; scale: 1.9; } to { opacity: 1; scale: 1; } }
+@keyframes os-wb-stamp-big { from { opacity: 0; scale: 1.7; } 70% { opacity: 1; } to { opacity: 1; scale: 1; } }
+
+/* The tutorial (WordTutorial.jsx): the board's paper, a page at a time. */
+.os-wt {
+  flex: 1 1 auto; min-height: 0; container-type: size;
+  display: flex; flex-direction: column; gap: 10px; padding: 4px 14px 14px;
+  overflow-y: auto; touch-action: pan-y; overscroll-behavior-x: none;
+}
+.os-wt__top { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.os-wt__dots { display: flex; align-items: center; gap: 5px; list-style: none; margin: 0; padding: 0; }
+.os-wt__dots li { width: 7px; height: 7px; border-radius: 999px; background: rgba(36, 50, 79, 0.18); transition: width 220ms var(--ease-enter), background-color 220ms ease-out; }
+.os-wt__dots li.is-past { background: rgba(36, 50, 79, 0.45); }
+.os-wt__dots li.is-on { width: 20px; background: var(--wb-ink); }
+.os-wt__clock { font-size: 14px; font-weight: 600; color: var(--wb-soft); white-space: nowrap; }
+.os-wt__clock b { font-variant-numeric: tabular-nums; color: var(--wb-ink); }
+.os-wt__skip {
+  margin-left: auto; min-height: 44px; padding: 0 6px; border: 0; background: none;
+  font: inherit; font-size: 16px; font-weight: 600; color: var(--color-os-ocean); cursor: pointer; touch-action: manipulation;
+}
+.os-wt__stage { flex: 1 0 auto; display: flex; flex-direction: column; animation: os-wt-in 280ms var(--ease-enter); }
+.os-wt__stage--back { animation-name: os-wt-back; }
+.os-wt__film {
+  display: block; width: min(100%, 46cqh * 4 / 3); aspect-ratio: 4 / 3; margin: 0 auto; padding: 0; border: 0; border-radius: 14px; overflow: hidden;
+  background: var(--wb-paper); box-shadow: 0 0 0 1px rgba(36, 50, 79, 0.12), 0 10px 20px -12px rgba(36, 50, 79, 0.5);
+  cursor: pointer; touch-action: pan-y;
+}
+.os-wt__film video, .os-wt__film img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.os-wt__title { margin-top: 14px; font-family: var(--wb-hand); font-size: 30px; font-weight: 400; line-height: 1.05; text-align: center; text-wrap: balance; }
+.os-wt__line { margin-top: 6px; font-size: 17px; line-height: 1.35; text-align: center; color: #3b4660; text-wrap: pretty; }
+.os-wt__practice .os-wt__title { margin-top: 2px; font-size: 27px; }
+.os-wt__practice { display: flex; flex-direction: column; }
+.os-wt__practice .os-wb-tray { position: static; margin: 12px 0 14px; }
+.os-wb-notes--practice { gap: 12px 10px; }
+.os-wb-notes--practice .os-wb-note { min-height: 66px; }
+.os-wb-notes--practice .os-wb-note__clue { font-size: 24px; }
+.os-wt__why { min-height: 2.5em; margin-top: 8px; font-family: var(--wb-hand); font-size: 20px; line-height: 1.2; text-align: center; text-wrap: balance; }
+.os-wt__why.is-done { color: var(--color-os-ocean); }
+.os-wt__ready { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 0; }
+.os-wt__foot { display: flex; gap: 10px; align-items: stretch; }
+.os-wt__back {
+  flex: 0 0 48px; display: grid; place-items: center; min-height: 48px; border: 0; border-radius: 10px; cursor: pointer; touch-action: manipulation;
+  background: var(--wb-card); box-shadow: inset 0 0 0 1.5px rgba(36, 50, 79, 0.3);
+  transition: scale 90ms ease-out;
+}
+.os-wt__back:active { scale: 0.96; }
+.os-wt__back path { fill: none; stroke: var(--wb-ink); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+@keyframes os-wt-in { from { opacity: 0; translate: 18px 0; } to { opacity: 1; translate: 0 0; } }
+@keyframes os-wt-back { from { opacity: 0; translate: -18px 0; } to { opacity: 1; translate: 0 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .os-wb-card__turn, .os-wb-note, .os-wb-note.is-flying, .os-wb-steps__pill, .os-wt__dots li { transition: none; }
+  .os-wb-note.is-fresh, .os-wb-note__star, .os-wb-reveal__word--stamp, .os-wt__stage { animation: none; }
 }

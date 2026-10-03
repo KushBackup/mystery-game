@@ -53,7 +53,7 @@ export const ROLE_CARD = {
  * the person beside you can see. `until` is when the morning game closes, on
  * the game clock (engine/clock.js), the one deadline the line names.
  */
-export function nowLine({ phase, status, hasActed, cycle, minigame = 'run', pack, until = '' }) {
+export function nowLine({ phase, status, hasActed, cycle, minigame = 'run', pack, until = '', intro = false }) {
   if (status === 'vanished') return 'You left the game. Thanks for playing.';
   if (status === 'ghost' && !['night', 'endgame', 'finale'].includes(phase)) return 'No signal.';
   const title = pack?.dayGames?.[minigame]?.title ?? 'The run';
@@ -66,6 +66,8 @@ export function nowLine({ phase, status, hasActed, cycle, minigame = 'run', pack
     case 'recruit':
       return hasActed ? 'Done for tonight.' : `Night ${cycle}.`;
     case 'alarm':
+      // The first Word morning (minigames.js introDay): the game is new and DEEP BLUE teaches it.
+      if (intro && minigame === 'word') return `Wake up. ${title} is new. Open DEEP BLUE to see how it works.`;
       return until ? `Wake up. Play ${title} before ${until}.` : 'Wake up.';
     case 'game':
       return until ? `${title} is open until ${until}.` : `${title} has started.`;

@@ -46,6 +46,8 @@ export default {
     casting: ['DEEP BLUE has sent you a message. Read it alone.', 'Tell no one what it says.'],
     night: ['Screens dim. The servers hum.', 'Somebody in this room is still awake.'],
     alarm: ['Wake up.', 'Today’s game starts in a moment. Do not come last.'],
+    // The first Word morning: a longer alarm while every phone shows how Word is played.
+    alarmIntro: ['Wake up. Today’s game is new.', 'Open DEEP BLUE. It shows you how to play before it starts.'],
     game: ['Everyone plays today’s game.', 'The board posts when the timer ends.'],
     dawnDeath: ['The board is up.', '{name} came last. The deep has taken them.'],
     dawnRig: ['The board is up.', '{name} came last. Their score reads {score}. They swear it was higher.'],
@@ -193,6 +195,8 @@ export default {
       title: 'WORD',
       rule: 'Post one word that fits. Don’t say the word.',
       alarm: 'Today: WORD.',
+      // The first Word morning (minigames.js introDay), when the tutorial plays.
+      alarmIntro: 'Today: WORD. It’s new, so DEEP BLUE shows you how first.',
     },
     draw: {
       title: 'SKETCH',
@@ -212,7 +216,8 @@ export default {
     { id: 'feni', word: 'Feni', hint: 'A drink' },
     { id: 'ferry', word: 'Ferry', hint: 'A way to travel' },
     { id: 'monsoon', word: 'Monsoon', hint: 'Weather' },
-    { id: 'cashew', word: 'Cashew', hint: 'A snack' },
+    // Not 'A snack': that is the tutorial's hint (data/wordTutorial.js), and a Killer shown it would think of popcorn.
+    { id: 'cashew', word: 'Cashew', hint: 'A nut' },
     { id: 'lighthouse', word: 'Lighthouse', hint: 'A building' },
     { id: 'hammock', word: 'Hammock', hint: 'Something to sit or lie on' },
     { id: 'karaoke', word: 'Karaoke', hint: 'A night out' },

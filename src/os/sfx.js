@@ -146,6 +146,25 @@ export const sfxPing = () => {
 };
 export const sfxSent = () => tone({ type: 'triangle', from: 880, to: 1320, dur: 0.1, vol: 0.05 });
 
+// --- The Word board (paper) ----------------------------------------------------------
+
+/** A card turned over: a short paper swish. */
+export const sfxFlip = () => noise({ dur: 0.09, vol: 0.05, lowpass: 3800 });
+/** A note slapped onto the wall: a soft paper thump and a little rise. */
+export const sfxStick = () => {
+  noise({ dur: 0.06, vol: 0.08, lowpass: 900 });
+  tone({ type: 'triangle', from: 660, to: 990, at: 0.03, dur: 0.09, vol: 0.05 });
+  vibrate(12);
+};
+/** A gold star stamped onto a clue. */
+export const sfxStar = () => {
+  tone({ type: 'triangle', from: 1319, dur: 0.06, vol: 0.06 });
+  tone({ type: 'triangle', from: 1760, at: 0.05, dur: 0.1, vol: 0.05 });
+  vibrate(8);
+};
+/** A star taken back off a clue. */
+export const sfxUnstar = () => tone({ type: 'triangle', from: 1100, to: 700, dur: 0.07, vol: 0.04 });
+
 /** A reveal lands: the board, a banishment, a role. */
 export const sfxSting = () => {
   tone({ type: 'square', from: 392, dur: 0.14, vol: 0.07 });

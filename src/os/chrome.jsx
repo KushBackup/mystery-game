@@ -1,10 +1,11 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import AppIcon from './icons/AppIcon';
 import Glyph, { Battery } from './icons/Glyph';
 import Wallpaper from './art/Wallpaper';
 import { useServerNow } from '../hooks/useKillers';
 import { useWorldClock, useOnline } from './hooks';
-import { sfxUnlock, sfxTap } from './sfx';
+import { sfxUnlock, sfxTap, vibrate } from './sfx';
+import { HOLD_MS } from './resync';
 
 /**
  * The parts of the phone that aren't an app: the status bar, the home screen
@@ -54,10 +55,71 @@ export function StatusBar({ game, ghost = false, clear = false, drag }) {
   );
 }
 
-export const HomeBar = ({ onHome }) => (
-  <div className="os-homebar">
-    <button type="button" className="os-homebtn" aria-label="Home" onClick={() => { sfxTap(); onHome(); }} />
-  </div>
+/**
+ * The home button. A press goes home. Held for five seconds it reloads the
+ * phone and catches it up with the room (os/resync.js). A ring fills while it
+ * is held, because nobody holds a button for five seconds on faith; it stays
+ * hidden for the first moment so a plain press never flashes it.
+ */
+export function HomeBar({ onHome, onHold }) {
+  const [holding, setHolding] = useState(false);
+  const press = useRef(null);
+  useEffect(() => () => clearTimeout(press.current?.timer), []);
+
+  const down = (e) => {
+    if (e.button > 0) return;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    const p = { fired: false };
+    p.timer = setTimeout(() => {
+      p.fired = true;
+      setHolding(false);
+      vibrate(40);
+      onHold?.();
+    }, HOLD_MS);
+    press.current = p;
+    setHolding(true);
+  };
+  const up = (tap) => {
+    const p = press.current;
+    if (!p) return;
+    press.current = null;
+    clearTimeout(p.timer);
+    setHolding(false);
+    if (tap && !p.fired) { sfxTap(); onHome(); }
+  };
+
+  return (
+    <div className="os-homebar">
+      <button
+        type="button"
+        className="os-homebtn"
+        aria-label="Home. Hold for 5 seconds to sync."
+        onPointerDown={down}
+        onPointerUp={() => up(true)}
+        onPointerCancel={() => up(false)}
+        // Pointer presses are handled above; this is Enter or Space only.
+        onClick={(e) => { if (e.detail === 0) { sfxTap(); onHome(); } }}
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        {holding && (
+          <svg className="os-homering" viewBox="0 0 58 58" aria-hidden="true">
+            <circle cx="29" cy="29" r="26" />
+          </svg>
+        )}
+      </button>
+    </div>
+  );
+}
+
+const SYNC_NOTE = {
+  syncing: 'SYNCING…',
+  synced: 'IN SYNC',
+  offline: 'NO SIGNAL. TRY AGAIN SOON.',
+};
+
+/** What the phone says after a resync (os/resync.js), under the status bar. */
+export const SyncNote = ({ state }) => (
+  <div className={`os-syncnote os-syncnote--${state}`} role="status">{SYNC_NOTE[state]}</div>
 );
 
 /**
@@ -239,14 +301,25 @@ export function NotificationCenter({ sections, open, pull, onOpen, onClose }) {
   );
 }
 
-/** One icon on the home screen or dock. `onOpen` gets the icon's centre, for the zoom. */
-function HomeIcon({ app, label, badge, onOpen }) {
+/**
+ * One icon on the home screen or dock. `onOpen` gets the icon's centre, for
+ * the zoom. `locked` (DEEP BLUE, before it's really time to play) renders it
+ * transparent and inert: no tap opens it, so the app stays a mystery until
+ * then (user's call, 2026-10-02).
+ */
+function HomeIcon({ app, label, badge, onOpen, locked }) {
   const open = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
     onOpen(app, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
   };
   return (
-    <button type="button" className="os-icon" onClick={open} aria-label={badge ? `${label}, ${badge} new` : label}>
+    <button
+      type="button"
+      className="os-icon"
+      onClick={open}
+      disabled={locked}
+      aria-label={badge ? `${label}, ${badge} new` : label}
+    >
       <span className="os-icon__art">
         <AppIcon name={app} size={60} />
         {badge ? <span className="os-badge">{badge}</span> : null}
@@ -260,7 +333,7 @@ function HomeIcon({ app, label, badge, onOpen }) {
  * The home screen: the NowCard as a pinned notice, the grid, the glass dock.
  * The four apps a guest opens all night live in the dock; the rest in the grid.
  */
-export function HomeScreen({ grid, dock, badges, now, onOpen, ghost, entering }) {
+export function HomeScreen({ grid, dock, badges, now, onOpen, ghost, entering, lockedApps = {} }) {
   return (
     <div
       className={`os-home ${entering ? 'os-home--enter' : ''} ${ghost ? 'os-haunt' : ''}`}
@@ -287,10 +360,10 @@ export function HomeScreen({ grid, dock, badges, now, onOpen, ghost, entering })
           : <div className="os-now relative">{body}</div>;
       })()}
       <div className="os-grid relative">
-        {grid.map(([app, label]) => <HomeIcon key={app} app={app} label={label} badge={badges[app]} onOpen={onOpen} />)}
+        {grid.map(([app, label]) => <HomeIcon key={app} app={app} label={label} badge={badges[app]} onOpen={onOpen} locked={lockedApps[app]} />)}
       </div>
       <div className="os-dock">
-        {dock.map(([app, label]) => <HomeIcon key={app} app={app} label={label} badge={badges[app]} onOpen={onOpen} />)}
+        {dock.map(([app, label]) => <HomeIcon key={app} app={app} label={label} badge={badges[app]} onOpen={onOpen} locked={lockedApps[app]} />)}
       </div>
     </div>
   );
