@@ -130,6 +130,16 @@ const denFor = async (gid, cycle) =>
     .filter((d) => d.id !== 'meta')
     .map((d) => [d.data().pid, d.data()]));
 
+/** Every ghost's own true clue photos, keyed by pid: what a ghost may pass on at night (engine/night.js). */
+async function ghostClues(gid) {
+  const held = {};
+  for (const d of (await getDocsFromServer(query(col(gid, 'inbox'), where('via', '==', 'ghost')))).docs) {
+    const { to, fact } = d.data();
+    if (to && fact) (held[to] ??= []).push(fact);
+  }
+  return held;
+}
+
 /** One day's docs in `name` (scores, clues, picks, drawings, guesses), keyed by pid. */
 const dayDocs = async (gid, name, cycle) =>
   Object.fromEntries((await getDocsFromServer(query(col(gid, name), where('cycle', '==', cycle)))).docs.map((d) => [d.data().pid, d.data()]));
@@ -417,8 +427,8 @@ async function resolveNightPhase(gid) {
   await lock(gid, PHASE.NIGHT);
   const g = (await getDocFromServer(gameRef(gid))).data();
   const world = await readWorld(gid);
-  const [actions, den] = await Promise.all([actionsFor(gid, g.cycle), denFor(gid, g.cycle)]);
-  const res = resolveNight(nightCtx(gid, g, world, { actions, den }));
+  const [actions, den, held] = await Promise.all([actionsFor(gid, g.cycle), denFor(gid, g.cycle), ghostClues(gid)]);
+  const res = resolveNight(nightCtx(gid, g, world, { actions, den, held }));
   // A recruit night picks the day's game after the answer, in the recruit commit.
   const day = res.recruit ? null : planDayGame(g, world);
 
@@ -528,6 +538,7 @@ function pendingMorning(cycle, res, extra = {}) {
     rig: res.rig ?? 'zero',
     facts: res.facts ?? [],
     trueFacts: res.trueFacts ?? [],
+    witness: res.witness ?? null,
     deliveries: res.deliveries ?? [],
     publicDawn: res.publicDawn ?? { victims: [], attempted: null },
     recruited: false,

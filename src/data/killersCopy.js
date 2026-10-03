@@ -55,7 +55,7 @@ export const ROLE_CARD = {
  */
 export function nowLine({ phase, status, hasActed, cycle, minigame = 'run', pack, until = '', intro = false }) {
   if (status === 'vanished') return 'You left the game. Thanks for playing.';
-  if (status === 'ghost' && !['night', 'endgame', 'finale'].includes(phase)) return 'No signal.';
+  if (status === 'ghost' && !['night', 'alarm', 'game', 'endgame', 'finale'].includes(phase)) return 'No signal.';
   const title = pack?.dayGames?.[minigame]?.title ?? 'The run';
   switch (phase) {
     case 'lobby':
@@ -124,6 +124,7 @@ export function deliveryLine(d, nameOf) {
     case 'check':
       return d.team === 'killers' ? `${nameOf(d.target)} is a KILLER.` : `${nameOf(d.target)} is Faithful.`;
     case 'fact':
+      if (d.via === 'pass') return `${nameOf(d.from)} passed you a photo from beyond. Ghost photos are always true.`;
       return d.via === 'top' ? `You finished #${d.rank ?? 1}. DEEP BLUE sent you a photo.` : 'A photo arrived.';
     case 'trace': {
       const [a, b] = (d.targets ?? []).map(nameOf);
@@ -182,7 +183,12 @@ export const NIGHT = {
     kicker: 'Locked in',
     line: 'The night is over. Your result arrives at dawn.',
     none: 'You made no move, so you dug through the logs.',
-    noneGhost: 'No whisper tonight. Your clue still arrives at dawn.',
+    noneGhost: 'No move tonight. Your own clue photo still arrives at dawn.',
+  },
+  ghost: {
+    line: 'You were taken, but you still play. Help the living find the Killers.',
+    head: 'Choose your move',
+    foot: 'One move a night. Your own clue photo arrives at dawn either way.',
   },
   faithful: {
     line: 'One Killer is out tonight. Pick one move to hunt them.',
@@ -263,9 +269,30 @@ export const NIGHT = {
       barred: 'Protected last night',
       done: (name) => `You’re protecting ${name}.`,
     },
+    pass: {
+      title: 'Pass a photo on',
+      short: 'Give one of your true clue photos to a living guest.',
+      odds: 'Always true',
+      dawn: 'They get a copy, with your name.',
+      none: 'No photo yet. Your first arrives at dawn.',
+      how: [
+        ['Tonight', 'Pick one of your clue photos, then one living guest.'],
+        ['At dawn', 'A copy lands in their Photos, signed with your name. You keep yours.'],
+        ['Why', 'Ghost photos are always true, even on a night the Killers bend the clues.'],
+        ['Careful', 'They can’t prove it came from you. The room has to trust them.'],
+      ],
+      photo: 'Pick a photo',
+      pick: 'Who gets it?',
+      pickFirst: 'Then pick who gets it',
+      hint: (has) => (has ? 'Tap who gets it' : 'Tap a photo first'),
+      verb: (name) => `Photo to ${name}`,
+      done: (name) => `${name} gets your photo at dawn.`,
+    },
     whisper: {
       title: 'Whisper from beyond',
       short: 'Send one word to a living guest.',
+      odds: 'One word',
+      dawn: 'They read it, signed with your name.',
       line: 'You were taken, but you still play. Help the living find the Killers.',
       how: [
         ['Tonight', 'Pick one word, then one living guest.'],

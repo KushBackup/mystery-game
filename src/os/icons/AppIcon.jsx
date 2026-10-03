@@ -114,6 +114,21 @@ const ART = {
     ),
   },
 
+  // A podium under a gold star: the Board app, the morning's scores.
+  board: {
+    stops: ['#b98cf5', '#7442d6', '#3a1a80'],
+    draw: () => (
+      <>
+        <path d="M30 12L32 17.250 37.610 17.530 33.230 21.050 34.700 26.470 30 23.400 25.300 26.470 26.770 21.050 22.390 17.530 28 17.250Z" fill="#ffd84a" stroke="#f5a623" strokeWidth="0.800" strokeLinejoin="round" />
+        <rect x="21.500" y="30" width="17" height="21" rx="1.200" fill="#f6f2ff" />
+        <rect x="8" y="36" width="13" height="15" rx="1.200" fill="#ddd3f3" />
+        <rect x="39" y="40" width="13" height="11" rx="1.200" fill="#ddd3f3" />
+        <rect x="28.900" y="34" width="2.200" height="10" rx="0.800" fill="#7442d6" />
+        <path d="M5 51h50" stroke="#2a1160" strokeWidth="1.400" strokeLinecap="round" />
+      </>
+    ),
+  },
+
   gallery: {
     stops: ['#ffffff', '#e9ecf0', '#bcc3cd'],
     draw: () => (

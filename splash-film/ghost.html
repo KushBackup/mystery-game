@@ -1,0 +1,73 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Ghost · the tutorial clips</title>
+<style>body{margin:0;background:#242321;display:grid;place-items:center;min-height:100vh}canvas{max-width:100vw;max-height:100vh;object-fit:contain}</style>
+<canvas id="c"></canvas>
+<script src="core.js"></script>
+<script src="studio.js"></script>
+<script src="cels.js"></script>
+<script src="word-font.js"></script>
+<script src="board-kit.js"></script>
+<script>
+'use strict';
+/* ------------------------------------------------------------------------
+Film brief
+  Subject: the ghost tutorial (src/data/ghostTutorial.js): six short clips,
+    shown one at a time beside the rules, each ending on a held frame that is
+    also its poster. It plays on a guest's own phone right after SIGNAL LOST,
+    the first time they become a ghost, and again from Help.
+  The ghost's kit: they can read the Room but not post; every night they get
+    a clue photo that is always true; at night they pass one of their photos
+    to a living guest (a signed copy), or whisper one word; they talk with the
+    other ghosts in Spirits; they play the morning games on a ghost board, and
+    vote in the Endgame.
+  Cast: the morning and night tutorials' (board-kit.js). Zed is the ghost
+    throughout (beanie, a sheet for a body, two nubs for hands); Cleo and Dev
+    join him as ghosts in Spirits; Ada gets his photo. Nobody's death is
+    shown: Zed's phone goes to static, a puff, and he floats up, delighted.
+  Format: as night.html. 4:3 (1440 x 1080 units), 640 px wide, 24 fps, no
+    sound; everything that matters in the middle 92%.
+  Look: the kit's paper and ink; night clips use dusk() from night-clips.js
+    (navy multiplied over the paper, pools of light), glowing things after.
+  Colour: no red (nobody here is a Killer); the TRUE stamp and the ballot's
+    tick are the kit's blue; the lamp is warm light, never gold.
+  Exposure: characters on twos with light boil; pops and stamps on ones.
+  Beat sheet (each clip: action, then a held frame that reads on its own)
+    0.00  rise     4.75  Zed on his phone at the café; the screen goes to
+                         static; he jolts; a puff; he floats up as a little
+                         ghost, looks at his sheet, waves; BOO! writes on
+    4.75  mute     4.50  the four chat at the table; Zed floats above and
+                         calls "Hey!" then "HELLO?"; his bubbles are dotted
+                         and sink through them; nobody looks up; he shrugs
+    9.25  truth    4.50  night; a clue photo zigzags down to Zed by the
+                         window; he catches it; TRUE thumps onto it in blue
+   13.75  pass     4.50  night; Zed holds a photo and a word card; picks the
+                         photo; it glides along a dotted line into sleeping
+                         Ada's phone; her screen lights; "from Zed"; she sits
+                         up and stares
+   18.25  spirits  4.50  Zed, Cleo and Dev as ghosts in the dark; bubbles: a
+                         photo, "Ada?", "yes!"; SPIRITS writes on
+   22.75  play     4.75  day; Zed taps at the morning game; a GHOST BOARD
+                         card pops up with him on top; then he drops a ticked
+                         ballot into the FINAL VOTE box
+  Total 27.50 s. Ship: six clips cut at those boundaries (public/tutorial).
+  Sources: none; everything is drawn here. Patrick Hand: SIL OFL.
+------------------------------------------------------------------------- */
+</script>
+<script src="night-clips.js"></script>
+<script src="ghost-clips.js"></script>
+<script>
+'use strict';
+FONT_READY.then(() => { defineFilm({
+  palette: makePalette({ paper: PAPER, ink: INK, finish: 'flat', washBlend: 'multiply' }, 'doodlePastel'),
+  format: { ar: '4:3', width: 640 },
+  timeline: [
+    { name: 'rise', dur: 4.75, fn: riseClip },
+    { name: 'mute', dur: 4.5, fn: muteClip },
+    { name: 'truth', dur: 4.5, fn: truthClip },
+    { name: 'pass', dur: 4.5, fn: passClip },
+    { name: 'spirits', dur: 4.5, fn: spiritsClip },
+    { name: 'play', dur: 4.75, fn: playClip },
+  ],
+}); }).catch(e => { window.__error = String(e); });
+</script>

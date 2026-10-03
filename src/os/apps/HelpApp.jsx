@@ -4,6 +4,7 @@ import Glyph from '../icons/Glyph';
 import AppIcon from '../icons/AppIcon';
 import HelpSketch from '../art/HelpSketch';
 import { sfxTap } from '../sfx';
+import GhostTutorial from '../GhostTutorial';
 import { HELP_HERO, HELP_SECTIONS, HELP_TOPICS, HELP_NOW } from '../../data/helpCopy';
 
 /**
@@ -86,6 +87,15 @@ export default function HelpApp({ ctx, onClose }) {
 function TopicPage({ topic: t, backLabel, onBack, onLink, onNext, enter, isNow }) {
   const at = HELP_TOPICS.indexOf(t);
   const next = HELP_TOPICS[at + 1] ?? null;
+  const [film, setFilm] = useState(false);
+  // The Ghost topic replays the ghost tutorial (GhostTutorial.jsx), the same film on every phone.
+  if (film) {
+    return (
+      <AppFrame title="Ghosts" onBack={() => setFilm(false)} backLabel={t.title} tone="dark" dark bodyClass="os-night os-night--tut" enter="push">
+        <GhostTutorial mode="replay" onDone={() => setFilm(false)} />
+      </AppFrame>
+    );
+  }
   return (
     <AppFrame title={t.title} onBack={onBack} backLabel={backLabel} light enter={enter}>
       {t.sketch && (
@@ -143,6 +153,12 @@ function TopicPage({ topic: t, backLabel, onBack, onLink, onNext, enter, isNow }
         <ul className="os-helplines">
           {t.lines.map((l) => <li key={l}>{rich(l)}</li>)}
         </ul>
+      )}
+
+      {t.id === 'ghost' && (
+        <div className="px-[10px] pt-4">
+          <Btn tone="dark" onClick={() => { sfxTap(); setFilm(true); }}>Watch the ghost film</Btn>
+        </div>
       )}
 
       {t.tip && (

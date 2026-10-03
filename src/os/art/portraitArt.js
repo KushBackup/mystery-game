@@ -30,8 +30,12 @@
 export const ART_W = 300;
 export const ART_H = 400;
 
-/** The square a thumbnail shows: head and shoulders, so the top and glasses read at 24 px. */
-export const FACE_CROP = { x: 103, y: 70, w: 94, h: 94 };
+/**
+ * The square a thumbnail shows: head and shoulders, so the top and glasses read
+ * at 24 px. Its top clears a bun (whose top sits at about y 62 once the head is
+ * scaled), with room to spare inside a round crop too.
+ */
+export const FACE_CROP = { x: 100, y: 57, w: 100, h: 100 };
 
 const TAU = Math.PI * 2;
 const INK = '#2a2622';
@@ -194,35 +198,50 @@ function line(g, pts, o = {}) {
 }
 
 /**
- * Pigment grains, one tile per colour: 96 drawing units square, drawn at 3x so
- * a grain stays crisp on a large photo, about one grain per 14 square units.
+ * Pigment grains: 96 drawing units square, drawn at 3x so a grain stays crisp
+ * on a large photo, about one grain per 14 square units. The grains are drawn
+ * once, as a mask, and each colour's tile is that mask filled with the colour.
+ * Drawing the ~660 grains afresh for every colour cost ~4 ms a colour, and a
+ * new guest's first photo needs ~26 colours: half a second on an Android phone.
  */
 const GRAIN_TILE = 96;
 const GRAIN_RES = 3;
-const GRAINS = new Map(); // colour -> pattern; a pattern copies its canvas, so each is made once
+let grainMask = null;
+function grainTile(color) {
+  const size = GRAIN_TILE * GRAIN_RES;
+  if (!grainMask) {
+    grainMask = document.createElement('canvas');
+    grainMask.width = grainMask.height = size;
+    const t = grainMask.getContext('2d');
+    t.scale(GRAIN_RES, GRAIN_RES);
+    const r = rng(seedOf('grain'));
+    t.beginPath();
+    for (let i = 0; i < (GRAIN_TILE * GRAIN_TILE) / 14; i++) {
+      const rad = 0.25 + r() * 0.8, x = r() * GRAIN_TILE, y = r() * GRAIN_TILE, rot = r() * TAU;
+      t.moveTo(x + rad * 1.4 * Math.cos(rot), y + rad * 1.4 * Math.sin(rot));
+      t.ellipse(x, y, rad * 1.4, rad, rot, 0, TAU);
+    }
+    t.fill();
+  }
+  const c = document.createElement('canvas');
+  c.width = c.height = size;
+  const t = c.getContext('2d');
+  t.drawImage(grainMask, 0, 0);
+  t.globalCompositeOperation = 'source-in';
+  t.fillStyle = color;
+  t.fillRect(0, 0, size, size);
+  return c;
+}
+const GRAINS = new Map(); // colour -> pattern, least recently used first; a pattern copies its canvas, so each is made once
 function grainPattern(g, color, seed) {
   let pat = GRAINS.get(color);
   if (pat === undefined) {
-    pat = null;
-    if (typeof document !== 'undefined') {
-      const c = document.createElement('canvas');
-      c.width = c.height = GRAIN_TILE * GRAIN_RES;
-      const t = c.getContext('2d');
-      t.scale(GRAIN_RES, GRAIN_RES);
-      t.fillStyle = color;
-      const r = rng(seedOf(color));
-      t.beginPath();
-      for (let i = 0; i < (GRAIN_TILE * GRAIN_TILE) / 14; i++) {
-        const rad = 0.25 + r() * 0.8, x = r() * GRAIN_TILE, y = r() * GRAIN_TILE, rot = r() * TAU;
-        t.moveTo(x + rad * 1.4 * Math.cos(rot), y + rad * 1.4 * Math.sin(rot));
-        t.ellipse(x, y, rad * 1.4, rad, rot, 0, TAU);
-      }
-      t.fill();
-      pat = g.createPattern(c, 'repeat');
-    }
-    GRAINS.set(color, pat);
-    if (GRAINS.size > 96) GRAINS.delete(GRAINS.keys().next().value);
+    pat = typeof document !== 'undefined' ? g.createPattern(grainTile(color), 'repeat') : null;
+    if (GRAINS.size >= 96) GRAINS.delete(GRAINS.keys().next().value);
+  } else {
+    GRAINS.delete(color);
   }
+  GRAINS.set(color, pat);
   if (!pat) return null;
   if (pat.setTransform && typeof DOMMatrix !== 'undefined') {
     pat.setTransform(new DOMMatrix([1 / GRAIN_RES, 0, 0, 1 / GRAIN_RES, hash(seed, 9) * GRAIN_TILE, hash(seed, 10) * GRAIN_TILE]));
@@ -702,10 +721,7 @@ function family(g, value, S, topColour) {
   thing(g, outer, { fill: PAPER, color: S.frameRound ? '#a57a52' : '#3d3a39', seed: s, w: 1.3, corner: 0.6 });
   const inner = rectPts(x + 5, y + 5, w - 10, h - 10);
   thing(g, inner, { fill: '#f3ede0', color: '#cfdde6', seed: s + 1, w: 0.8, corner: 0.6, sketch: 0, edge: 0.2 });
-  if (!fam) {
-    g.restore?.();
-    return;
-  }
+  if (!fam) return;
   const n = fam.heights.length + (fam.pet ? 1 : 0);
   const span = w - 18;
   const groundY = y + h - 8;
@@ -747,22 +763,34 @@ function headSpace(g) {
   g.translate(-150, -124);
 }
 
+/**
+ * Hair is pencil, never a colour (see the header). Every hair shape is laid
+ * on this pale ground first, so its grey reads the same over the face, the
+ * shirt and the wall: a bare multiply wash came out light on the paper face
+ * and dark on the wall, which drew a cap over every head.
+ */
+const HAIR_INK = '#4a443e';
+const HAIR_GROUND = mix(PAPER, HAIR_INK, 0.14);
+
 function hairBack(g, style, S) {
   const s = S.seed + 1000;
-  const col = '#4a443e';
+  const col = HAIR_INK;
   if (style === 'long') {
     const p = [[132, 96], [127, 120], [126, 150], [131, 168], [150, 162], [169, 168], [174, 150], [173, 120], [168, 96]];
+    solid(g, p, HAIR_GROUND);
     wash(g, p, col, { seed: s, alpha: 0.36, gran: 0.15, edge: 0.3 });
     line(g, p.slice(0, 5), { w: 1.2, seed: s + 1, sketch: 0.2 });
     line(g, p.slice(4), { w: 1.2, seed: s + 2, sketch: 0.2 });
   }
   if (style === 'wavy') {
     const p = [[133, 98], [128, 114], [132, 126], [127, 140], [135, 150], [150, 146], [165, 150], [173, 140], [168, 126], [172, 114], [167, 98]];
+    solid(g, p, HAIR_GROUND);
     wash(g, p, col, { seed: s, alpha: 0.5, gran: 0.15, edge: 0.3 });
     line(g, p, { w: 1.1, seed: s + 3, sketch: 0.2 });
   }
   if (style === 'bob') {
     const p = [[133, 96], [130, 112], [131, 126], [140, 128], [160, 128], [169, 126], [170, 112], [167, 96]];
+    solid(g, p, HAIR_GROUND);
     wash(g, p, col, { seed: s, alpha: 0.55, gran: 0.15, edge: 0.3 });
     line(g, p, { w: 1.2, seed: s + 4, sketch: 0.2 });
   }
@@ -770,7 +798,7 @@ function hairBack(g, style, S) {
 
 function hairFront(g, style, S) {
   const s = S.seed + 1100;
-  const col = '#4a443e';
+  const col = HAIR_INK;
   const strands = (from, to, n, curl = 0) => {
     for (let i = 0; i < n; i++) {
       const t = (i + 0.5) / n;
@@ -785,23 +813,33 @@ function hairFront(g, style, S) {
       ? [[134, 101], [134, 90], [140, 82], [151, 79], [162, 80], [167, 86], [167, 100], [164, 94], [161, 96], [158, 91], [154, 94], [150, 90], [146, 94], [142, 92], [139, 97], [136, 95]]
       : [[134, 101], [135, 90], [142, 84], [151, 83], [160, 85], [166, 91], [166, 101], [164, 95], [161, 97], [158, 93], [154, 96], [150, 92], [146, 96], [142, 94], [139, 98], [136, 96]];
   } else if (style === 'curls') {
+    // a scalloped crown: round bumps meeting in small dips, never points
     cap = [];
-    for (let k = 0; k <= 14; k++) {
-      const t = Math.PI + (k / 14) * Math.PI;
-      const r = 19 + (k % 2 ? 3.2 : 0);
+    for (let k = 0; k <= 56; k++) {
+      const t = Math.PI + (k / 56) * Math.PI;
+      const r = 19.2 + 2.8 * Math.abs(Math.sin((k / 56) * Math.PI * 7));
       cap.push([150 + Math.cos(t) * r * 0.95, 101 + Math.sin(t) * r]);
     }
-    cap.push([162, 96], [150, 94], [138, 96]);
+    cap.push([164, 99], [157, 97], [150, 96.5], [143, 97], [136, 99]);
   } else {
     // long, bob, wavy, bun: a parted cap
     cap = [[134, 104], [134, 92], [140, 85], [150, 83], [160, 85], [166, 92], [166, 104], [163, 96], [155, 91], [149, 92], [141, 97]];
   }
+  solid(g, cap, HAIR_GROUND, true, 0.9);
   wash(g, cap, col, { seed: s, alpha: 0.42, gran: 0.2, edge: 0.45, corner: 0.9 });
   line(g, cap, { close: true, w: 1.2, seed: s + 1, sketch: 0.25, corner: 0.9 });
   if (style === 'curls') {
-    for (let k = 0; k < 9; k++) {
-      const cx = 136 + (k % 5) * 7 + (k > 4 ? 3.5 : 0), cy = k > 4 ? 90 : 84;
-      pen(g, ellPts(cx, cy + (k % 2), 2.6, 2.2, 10), { w: 0.6, close: true, alpha: 0.7, seed: s + 40 + k, rough: 0.3 });
+    // loose curls on two rings inside the crown, each an open loop
+    const rings = [[15.5, 6, 0.32], [10, 3, 0.95]];
+    let k = 0;
+    for (const [R, n, inset] of rings) {
+      for (let i = 0; i < n; i++, k++) {
+        const a = Math.PI + inset + (i / Math.max(1, n - 1)) * (Math.PI - 2 * inset);
+        const cx = 150 + Math.cos(a) * R * 0.95, cy = 101.5 + Math.sin(a) * R;
+        const loop = [];
+        for (let j = 0; j <= 9; j++) { const b = 0.6 + (j / 9) * 4.6 + k; loop.push([cx + Math.cos(b) * 2.4, cy + Math.sin(b) * 2.1]); }
+        pen(g, loop, { w: 0.65, alpha: 0.75, seed: s + 40 + k, rough: 0.2 });
+      }
     }
   } else if (style === 'crop' || style === 'quiff') {
     strands([[138, 95], [164, 95]], [[143, 85], [161, 85]], 9, 1.5);
@@ -811,9 +849,33 @@ function hairFront(g, style, S) {
   }
   if (style === 'bun') {
     const bun = ellPts(150, 78, 8, 6.5, 16);
+    solid(g, bun, HAIR_GROUND);
     wash(g, bun, col, { seed: s + 5, alpha: 0.6, gran: 0.15 });
     line(g, bun, { close: true, w: 1.1, seed: s + 6, sketch: 0.2 });
     pen(g, [[144, 78], [150, 81], [156, 78]], { w: 0.6, alpha: 0.7, seed: s + 7 });
+  }
+}
+
+/** Long and wavy hair falls forward over the shoulders, so it is drawn again after the shirt. */
+function hairOver(g, style, S) {
+  if (style !== 'long' && style !== 'wavy') return;
+  const s = S.seed + 1150;
+  const outer = style === 'long'
+    ? [[134, 94], [129, 104], [127, 118], [127.5, 134], [130, 148], [134, 156]]
+    : [[134, 96], [128.5, 106], [131, 116], [127, 126], [131, 136], [128, 145], [133, 153]];
+  // the inner edge hugs the jaw, then falls clear of the neck
+  const inner = [[137.5, 147], [139, 134], [140, 121], [137.5, 114], [134.6, 107], [135.2, 98]];
+  for (const side of [-1, 1]) {
+    const m = (pts) => (side < 0 ? pts : pts.map(([x, y]) => [300 - x, y]));
+    const lock = m([...outer, ...inner]);
+    solid(g, lock, HAIR_GROUND, true, 1.2);
+    wash(g, lock, HAIR_INK, { seed: s + side, alpha: style === 'long' ? 0.36 : 0.5, gran: 0.15, edge: 0.3, corner: 1.2, dx: 0, dy: 0 });
+    line(g, m(outer), { w: 1.1, seed: s + 2 + side, sketch: 0.2 });
+    line(g, m(inner.slice(0, 3)), { w: 1, seed: s + 4 + side, sketch: 0 });
+    for (let i = 0; i < 2; i++) {
+      const x = 131 + i * 3.4;
+      pen(g, m([[x, 112 + i * 4], [x - 1 + i, 130], [x + 1, 146 - i * 3]]), { w: 0.5, alpha: 0.6, seed: s + 10 + i + side * 3, pressure: TAPER, rough: 0.3 });
+    }
   }
 }
 
@@ -955,14 +1017,23 @@ function shirt(g, value, S) {
   const { body } = shirtShape(S);
   const col = TOPS[value];
   if (!col) {
-    // not answered yet: the shirt is only a dashed pencil guide, so nobody reads it as white
+    // Not answered yet: a body of paper (so the hair, the wall and its shadow
+    // never show through the chest) with only a dashed pencil guide round it,
+    // so nobody reads it as a white shirt.
+    solid(g, body, PAPER, true, 0.6);
     g.save();
     g.setLineDash([3.2, 2.6]);
     g.strokeStyle = INK;
     g.globalAlpha = 0.5;
     g.lineWidth = 0.9;
     g.lineJoin = 'round';
+    g.lineCap = 'round';
     g.stroke(curve(body, true, 0.6));
+    g.beginPath();
+    g.moveTo(140, 134);
+    g.lineTo(150, 142.5);
+    g.lineTo(160, 134);
+    g.stroke();
     g.restore();
     return;
   }
@@ -1001,14 +1072,7 @@ function shirt(g, value, S) {
 function skirt(g, S) {
   const s = S.seed + 1550;
   const { color } = S.trousers;
-  // bare legs below the hem, then the skirt over them
-  for (const [ax, i] of [[132, 0], [168, 1]]) {
-    const leg = [[ax - 6.4, 286], [ax + 6.4, 286], [ax + 5, 350], [ax - 5, 350]];
-    solid(g, leg);
-    line(g, [[ax - 6.4, 288], [ax - 5.6, 322], [ax - 5, 350]], { w: 1.1, seed: s + i, pressure: EVEN, sketch: 0.2 });
-    line(g, [[ax + 6.4, 288], [ax + 5.6, 322], [ax + 5, 350]], { w: 1.1, seed: s + 2 + i, pressure: EVEN, sketch: 0.2 });
-    pen(g, [[ax - 2, 318], [ax + 1.6, 319.5]], { w: 0.6, alpha: 0.5, seed: s + 4 + i });
-  }
+  // the bare legs under it are drawn by legs(), before the shoes
   const L = [[122, 210], [178, 210], [181, 236], [190, 296], [170, 300], [150, 302], [130, 300], [110, 296], [119, 236]];
   solid(g, L, PAPER, true, 0.9);
   wash(g, L, color, { seed: s + 6, alpha: 0.88, gran: 0.25, edge: 0.4 });
@@ -1045,10 +1109,18 @@ function trousers(g, S) {
   pen(g, [[158, 343], [178, 342]], { w: 0.8, alpha: 0.7, seed: s + 9, pressure: EVEN });
 }
 
-/** Ankles and bare feet, under any shoe. */
+/** Ankles and bare feet, under any shoe; under a skirt, the bare legs down to them. */
 function legs(g, S, bare) {
   const s = S.seed + 1600;
   for (const [ax, i] of [[132, 0], [168, 1]]) {
+    if (S.skirt) {
+      const k = S.seed + 1550;
+      const leg = [[ax - 6.4, 286], [ax + 6.4, 286], [ax + 5, 350], [ax - 5, 350]];
+      solid(g, leg);
+      line(g, [[ax - 6.4, 288], [ax - 5.6, 322], [ax - 5, 350]], { w: 1.1, seed: k + i, pressure: EVEN, sketch: 0.2 });
+      line(g, [[ax + 6.4, 288], [ax + 5.6, 322], [ax + 5, 350]], { w: 1.1, seed: k + 2 + i, pressure: EVEN, sketch: 0.2 });
+      pen(g, [[ax - 2, 318], [ax + 1.6, 319.5]], { w: 0.6, alpha: 0.5, seed: k + 4 + i });
+    }
     const ankle = [[ax - 5, 348], [ax + 5, 348], [ax + 4.6, 362], [ax - 4.6, 362]];
     solid(g, ankle);
     line(g, [[ax - 5, 349], [ax - 4.6, 362]], { w: 1, seed: s + i, pressure: EVEN, sketch: 0 });
@@ -1087,12 +1159,20 @@ const SHOES = {
     },
   },
   boots: {
-    upper: [[-7, -14], [6, -14], [6.5, 4], [9, 10], [19, 13], [26, 16], [27, 19], [-8, 19], [-8, 0]],
-    sole: [[-8.5, 18.5], [27.5, 18.5], [27, 21.5], [0, 21.5], [-1, 23.5], [-8.5, 23.5]],
+    // The shaft is as wide as a trouser hem, so under jeans the boot fills the
+    // gap where other shoes show an ankle: that, the laces and the lug sole are
+    // what read as a boot when the trousers cover the top of it.
+    upper: [[-9.5, -14], [8.5, -14], [8.5, 3], [11, 9], [19, 12.5], [26, 15.5], [27.5, 19], [-10, 19], [-10, 2]],
+    sole: [[-10.5, 18.5], [28, 18.5], [27.5, 22.5], [1.5, 22.5], [0.5, 24.5], [-10.5, 24.5]],
     color: '#a86a3b', soleColor: '#3a2618',
     details(g, s) {
-      pen(g, [[-7, -10.5], [6.2, -10.5]], { w: 0.7, alpha: 0.7, seed: s + 10, pressure: EVEN, rough: 0 });
-      pen(g, [[6.2, -6], [7.2, 8]], { w: 0.6, alpha: 0.6, seed: s + 11, pressure: EVEN, rough: 0 });
+      pen(g, [[-9.4, -10.5], [8.4, -10.5]], { w: 0.7, alpha: 0.7, seed: s + 10, pressure: EVEN, rough: 0 });
+      for (let k = 0; k < 4; k++) {
+        const y = -1 + k * 3.2, x = 6.2 + k * 0.9;
+        pen(g, [[x - 2.2, y - 1], [x + 1.2, y + 1.4]], { w: 0.7, color: '#f3e2cf', alpha: 0.9, seed: s + 11 + k, pressure: EVEN, rough: 0 });
+        pen(g, [[x - 2.2, y + 1.4], [x + 1.2, y - 1]], { w: 0.7, color: '#f3e2cf', alpha: 0.9, seed: s + 15 + k, pressure: EVEN, rough: 0 });
+      }
+      for (let k = 0; k < 7; k++) pen(g, [[-8 + k * 5, 22.6], [-8 + k * 5, 24.2]], { w: 0.6, alpha: 0.6, seed: s + 20 + k, pressure: EVEN, rough: 0 });
       pen(g, [[15, 13], [23, 16]], { w: 1, color: '#ffffff', alpha: 0.6, seed: s + 12, pressure: TAPER, rough: 0 });
     },
   },
@@ -1177,11 +1257,15 @@ function freeArm(g, S) {
   const sx = (sleeveL[0][0] + sleeveL[1][0]) / 2, sy = (sleeveL[0][1] + sleeveL[1][1]) / 2;
   if (S.pose === 'hip') {
     arm(g, [[sx, sy - 1, 6.6], [99, 186, 5.6], [103, 196, 5.2], [114, 205, 4.4]], s);
-    hand(g, 119, 207, s + 4, { rot: -0.9 });
   } else {
     arm(g, [[sx, sy - 1, 6.6], [107, 196, 5.6], [108, 220, 4.6], [109.5, 230, 4.2]], s);
     hand(g, 110, 236, s + 4, { open: true, rot: 0.05 });
   }
+}
+
+/** The free arm's hand in the 'hip' pose: drawn after the shirt, or it vanishes behind the waist. */
+function hipHand(g, S) {
+  hand(g, 117, 206, S.seed + 1804, { rot: -0.9 });
 }
 
 /** The drinks, drawn at the hand: (0,0) is where the fingers close around the glass. */
@@ -1291,7 +1375,7 @@ function wallShadow(g, S) {
   g.fillStyle = shade(S.wall, 0.55);
   g.fill(curve(ellPts(150, 102, 21, 25, 20)));
   g.fill(curve(shirtShape(S).body, true, 0.6));
-  g.fill(curve([[119, 212], [181, 212], [180, 300], [120, 300]], true, 0.6));
+  g.fill(curve(S.skirt ? [[122, 210], [178, 210], [190, 296], [110, 296]] : [[119, 212], [181, 212], [180, 300], [120, 300]], true, 0.6));
   g.restore();
 }
 
@@ -1373,15 +1457,19 @@ export function drawPortrait(g, traits = {}, seed = 0, { face = false, mystery =
   wallShadow(g, S);
   if (!mystery) { g.save(); headSpace(g); hairBack(g, S.hair, S); g.restore(); }
   if (!face) {
-    // the thumbnail crop shows head and shoulders only, so it skips everything below the waist
+    // The thumbnail crop shows head and shoulders only, so it skips everything
+    // below the waist. Back to front: legs, then shoes, then the trousers, so a
+    // hem falls over a boot and never the other way round.
     floorShadow(g, S);
     legs(g, S, !t.shoes);
-    trousers(g, S);
     layer('shoes');
+    trousers(g, S);
   }
   freeArm(g, S);
   theHead();
   layer('top');
+  if (!mystery) { g.save(); headSpace(g); hairOver(g, S.hair, S); g.restore(); }
+  if (S.pose === 'hip') hipHand(g, S); // the hand rests on the hip, over the shirt
   layer('glasses');
   layer('drink');
 }

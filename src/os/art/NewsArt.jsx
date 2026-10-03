@@ -22,6 +22,7 @@ const NEWS_SCENES = [
   'final-board', 'last-call',
   'deleted', 'rings-again',
   'dawn-taken', 'dawn-clear', 'vote-out', 'vote-none',
+  'still-sending',
 ];
 const KNOWN = new Set(NEWS_SCENES);
 

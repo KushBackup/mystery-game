@@ -114,7 +114,7 @@ export const ClueCard = ({ pack, fact, cycle, via }) => {
   return (
     <article className="er-bone er-land p-4">
       <p className="er-mono text-body-bone mb-2">
-        Night {cycle} · {via === 'ghost' ? 'From the other side' : via === 'watch' ? 'You saw it' : 'Clue'}
+        Night {cycle} · {via === 'ghost' ? 'From the other side' : via === 'pass' ? 'Passed on by a ghost' : via === 'watch' ? 'You saw it' : 'Clue'}
       </p>
       <p className="font-typewriter text-[18px] leading-snug text-ink">{flavour}</p>
       <p className="font-mono text-[13px] mt-3 text-body-bone border-t border-line-bone pt-2">
@@ -124,7 +124,7 @@ export const ClueCard = ({ pack, fact, cycle, via }) => {
   );
 };
 
-/** Anything else in the inbox: a watch, a check, a whisper. */
+/** Anything else in the inbox: a watch, a check, a whisper. (A ghost's passed photo is a clue above.) */
 export const DeliveryCard = ({ d, nameOf }) => (
   <article className={`er-card ${d.kind === 'check' && d.team === 'killers' ? 'er-card--signal' : ''} er-enter-quick`}>
     <p className="er-mono mb-1">Night {d.cycle} · {DELIVERY_TAG[d.kind] ?? d.kind}</p>

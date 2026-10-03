@@ -272,6 +272,7 @@ async function selftest(n) {
   let guard = 0;
   let late = null;
   const ranChecks = new Set();
+  let forged = null;
   for (;;) {
     if (guard++ > 140) throw new Error('game did not finish in 140 steps');
     const g = await game();
@@ -279,6 +280,13 @@ async function selftest(n) {
 
     if (g.phase === 'night') {
       await Promise.all(bots.map((b) => act(b, gid, g)));
+      // Once there is a ghost: one of them tries to pass a clue it doesn't hold. The host must drop it.
+      const forger = bots.find((b) => b.status === 'ghost');
+      const mark = bots.find((b) => b.status === 'alive');
+      if (!forged && forger && mark) {
+        forged = { pid: forger.pid, cycle: g.cycle };
+        await setDoc(G(forger, gid, 'actions', `${g.cycle}_${forger.pid}`), { kind: 'pass', target: mark.pid, fact: { trait: 'forged', group: 'forged' }, pid: forger.pid, cycle: g.cycle });
+      }
     } else if (g.phase === 'recruit') {
       await Promise.all(bots.map((b) => answerRecruit(b, gid, g)));
     } else if (g.phase === 'game') {
@@ -343,6 +351,13 @@ async function selftest(n) {
   const inbox = await getDocs(collection(db, 'games', gid, 'inbox'));
   const kinds = inbox.docs.reduce((acc, d) => ({ ...acc, [d.data().kind]: (acc[d.data().kind] ?? 0) + 1 }), {});
   console.log('inbox deliveries by kind:', kinds);
+
+  // Passed photos: real ones arrive as true clues, signed; the forged one never arrives.
+  const passed = inbox.docs.map((d) => d.data()).filter((d) => d.via === 'pass');
+  const ghostHeld = inbox.docs.map((d) => d.data()).filter((d) => d.via === 'ghost');
+  const real = passed.every((p) => ghostHeld.some((h) => h.to === p.from && h.fact.trait === p.fact.trait && h.fact.group === p.fact.group));
+  security.push([real ? 'ok' : 'FAIL', `ghosts pass only clues they hold (${passed.length} passed)`, real ? 'all held' : 'a pass was not held']);
+  if (forged) security.push([passed.some((p) => p.fact.trait === 'forged') ? 'FAIL' : 'ok', 'a forged pass is dropped', `night ${forged.cycle}`]);
 
   // Idempotency: advancing a finished game, or re-running, must change nothing.
   const before = JSON.stringify(await game());

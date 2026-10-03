@@ -115,6 +115,56 @@ export default {
     },
   },
 
+  // The other forms a clue can take (os/evidence.js picks one per delivery).
+  // A still or a clip uses `clueText` above. Same rule as the pictures: say the
+  // group, never a raw answer; no brand, no name, nothing that points at a guest.
+  evidence: {
+    source: {
+      clip: 'CCTV footage',
+      voice: 'Voice note, unknown number',
+      receipt: 'A bar tab, found by the admin terminal',
+      profile: 'Screenshot of the admin account',
+    },
+    // What the witness says in the voice note.
+    voice: {
+      shoes: {
+        rubber: '“Soft squeaks on the tiles. Rubber soles, like gym shoes. Then nothing.”',
+        leather: '“Click. Click. Click. Hard heels, all the way down the corridor.”',
+        open: '“Slap, slap. Their toes were out. Sandals, or heels.”',
+        flat: '“No click at all. Flat soles, padding past the door.”',
+      },
+    },
+    // The one line on the tab. The rest of the receipt is torn or smudged.
+    receipt: {
+      note: 'One drink on it. The name is torn off.',
+      drink: {
+        hops: 'DRAUGHT BEER',
+        grape: 'HOUSE WINE, GLASS',
+        spirit: 'SPIRITS: NEAT OR MIXED',
+        clear: 'CLEAR SPIRIT / COCKTAIL',
+        brewed: 'BEER OR WINE (SMUDGED)',
+        sober: 'SOFT DRINK, CAN',
+        strong: 'LIQUOR, NEAT, NO MIXER',
+      },
+    },
+    // The one field the leak left readable on the admin's profile.
+    profile: {
+      note: 'Someone got into the admin account. Almost all of it is blacked out.',
+      season: {
+        early: 'January to June',
+        late: 'July to December',
+        cool: 'October to March',
+        warm: 'April to September',
+      },
+      siblings: {
+        firstborn: 'first-born',
+        younger: 'the little one',
+        sibling: 'my brother or sister',
+        edge: 'the eldest, or the youngest',
+      },
+    },
+  },
+
   // DEEP BLUE talking to one guest in its own thread (os/voice.js). Never
   // role-specific: a phone face-up on the table must give nothing away.
   // {name} this guest, {day}, {rank} of {n} on the board, {target} who was voted out.
@@ -156,7 +206,7 @@ export default {
       edge: 'Good morning, {name}. #{rank} of {n}. That was close. I noticed.',
       low: 'Good morning, {name}. Nobody honest scored lower than you. Try harder tomorrow.',
       none: 'Good morning, {name}. You didn’t play. I noticed that too.',
-      ghost: 'Morning, {name}. You can’t sink any lower now. Watch the living.',
+      ghost: 'Morning, {name}. You can’t sink any lower now. Pass your little photos. See who believes you.',
     },
     banish: {
       killer: '{target} had the password. Clever group. The others are still logged in.',

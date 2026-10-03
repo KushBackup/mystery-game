@@ -81,12 +81,21 @@ define(['./workbox-5d155c7a'], (function (workbox) { 'use strict';
     "revision": "8fa5598104fdc436e4ff585bf7d794d4"
   }, {
     "url": "index.html",
-    "revision": "0.fh7cko3e5k8"
+    "revision": "0.s3apve96p94"
   }], {});
   workbox.cleanupOutdatedCaches();
   workbox.registerRoute(new workbox.NavigationRoute(workbox.createHandlerBoundToURL("index.html"), {
     allowlist: [/^\/$/]
   }));
+  workbox.registerRoute(/\/news\/[\w-]+\.webp$/i, new workbox.CacheFirst({
+    "cacheName": "news-art",
+    plugins: [new workbox.ExpirationPlugin({
+      maxEntries: 40,
+      maxAgeSeconds: 2592000
+    }), new workbox.CacheableResponsePlugin({
+      statuses: [0, 200]
+    })]
+  }), 'GET');
   workbox.registerRoute(/^https:\/\/fonts\.googleapis\.com\/.*/i, new workbox.CacheFirst({
     "cacheName": "google-fonts-cache",
     plugins: [new workbox.ExpirationPlugin({

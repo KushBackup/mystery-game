@@ -18,14 +18,14 @@ The new game uses authentication and locked-down rules ([firestore.rules](firest
 | `killers/{pid}` | membership marker | host | Killers, host |
 | `den/{cycle}_{pid}`, `den/meta` | a Killer's night pick. The phone's poll sends only `victim` or `recruit` (since 2026-10-02); `hand`, `rig`, `frame` are still honoured if present. Tonight's den status | that Killer, only during `night` / host | Killers, host |
 | `denChat/*` | the Killers' group chat (a Messages thread titled with their names) | Killers | Killers, host |
-| `actions/{cycle}_{pid}` | one night action (watch, scour, protect, trace, whisper, recruitAnswer) | self, only during `night` / `recruit` | self, host |
+| `actions/{cycle}_{pid}` | one night action (watch, scour, protect, trace, whisper, pass `{ target, fact }`, recruitAnswer) | self, only during `night` / `recruit` | self, host |
 | `scores/{cycle}_{pid}` | `{pid, cycle, best, runs, at}`: the day's best run, an int 0–999 that can only go up | self, only during `game` | self, host (private until the board) |
 | `clues/{cycle}_{pid}` | `{pid, cycle, clue, at}`: one word on the Word game's wall. Created once, never edited, so its order is the order it landed | self, alive, only during `game` on a Word day | everyone |
 | `picks/{cycle}_{pid}` | `{pid, cycle, picks: [≤3 pids], at}`: the clues you thought fit best | self (alive or ghost), Word day `game` only | self, host |
 | `drawings/{cycle}_{pid}` | `{pid, cycle, strokes (≤30 KB, see os/game/strokes.js), checks (word fingerprints), at}` | self, alive, Sketch day `game` only | everyone |
 | `guesses/{cycle}_{pid}` | `{pid, cycle, answers: {drawerPid: {text, ms}}, at}`; the host re-checks every text | self (alive or ghost), Sketch day `game` only | self, host |
 | `votes/{ballot}_{pid}` | `{target, ballot}` | self, only on the open ballot | self, host |
-| `inbox/{cycle}-{step}-{i}` | fragments (`via`: search, watch, ghost, top), watch results, traces, whispers, recruit offers. Steps: `night` (recruit offer only), `morning` (everything else) | host | the addressee only (query with `where('to','==',pid)`) |
+| `inbox/{cycle}-{step}-{i}` | fragments (`via`: search, watch, ghost, top, pass: a ghost's photo passed on, with `from`), watch results, traces, whispers, recruit offers. Steps: `night` (recruit offer only), `morning` (everything else) | host | the addressee only (query with `where('to','==',pid)`) |
 | `inbox/{cycle}-day-{pid}` | the morning game's card, written when the alarm rings: Word `{kind:'word', word, hint}` for the Faithful team, `{kind:'word', hint}` for Killers; Sketch `{kind:'draw', word}` | host | the addressee only |
 | `chat/*`, `spiritsChat/*` | room chat (living players); Spirits, the ghosts' own chat (renamed from `mediumChat` on 2026-10-02, when the Medium was removed) | living players; ghosts | everyone; ghosts and the host |
 | `presence/{pid}` | heartbeat, and the clock-skew stamp | self | self, host |

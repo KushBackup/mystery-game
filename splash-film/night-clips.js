@@ -457,8 +457,9 @@ function traceClip(c, tau, i) {
 }
 
 // ---------------------------------------------------------------- clip 7: the ghost
-// Zed, a little ghost now, floats among three word cards; picks HURRY; it drifts to Ada's ear. She sits up.
-const WORDS7 = [{ w: 'Door', x: 640, y: 250, r: -.08, col: NOTE.sky }, { w: 'Hurry', x: 700, y: 520, r: .06, col: NOTE.butter }, { w: 'Liar', x: 600, y: 790, r: -.04, col: NOTE.lilac }];
+// Zed, a little ghost now, floats among two word cards and a clue photo (he could pass it instead); picks HURRY;
+// it drifts to Ada's ear. She sits up.
+const WORDS7 = [{ w: 'Door', x: 640, y: 250, r: -.08, col: NOTE.sky }, { w: 'Hurry', x: 700, y: 520, r: .06, col: NOTE.butter }, { w: 'photo', photo: true, x: 600, y: 800, r: -.04 }];
 const PICK_AT = 1.45, FLY = [1.85, 2.85];
 function ghost(c, x, y, f, seed, t) {
   c.save(); c.translate(x, y);
@@ -492,8 +493,16 @@ function ghostClip(c, tau, i) {
     } else if (picked) al = 1 - win(tau, PICK_AT, PICK_AT + .3) * .75;
     if (al <= 0) return;
     c.save(); c.globalAlpha = al; c.translate(x, y); c.rotate(r); c.scale(s, s);
-    sticky(c, 230, 120, Wd.col, 10400 + q);
-    txt(c, Wd.w, 0, 6, 70, { fit: 190 });
+    if (Wd.photo) {   // a ghost can pass one of its true clue photos instead of a word
+      const pts = warp(rectPts(-80, -80, 160, 176), 10450, 1.5, true, 30);
+      c.save(); c.shadowColor = 'rgba(36,50,79,.3)'; c.shadowBlur = 10 * S; c.shadowOffsetY = 6 * S; c.fillStyle = '#ffffff'; c.fill(curvePath(pts, true, .4)); c.restore();
+      c.fillStyle = '#e9eef8'; c.fillRect(-68, -68, 136, 116);
+      glassesDoodle(c, 0, -10, .42, 10460);
+      ln(c, pts, 2.4, 10451, true, alpha(INK, .35), { amp: .4 });
+    } else {
+      sticky(c, 230, 120, Wd.col, 10400 + q);
+      txt(c, Wd.w, 0, 6, 70, { fit: 190 });
+    }
     c.restore();
   });
   // Zed's pointing, as a little wisp from the sheet to the card

@@ -10,6 +10,7 @@ import { SlideToUnlock } from './chrome';
 import { AppFrame, Section, Btn, ActionSheet } from './ui';
 import { useSeen, markSeen, peekSeen } from './seen';
 import { primeSfx, sfxTap, sfxDeny, sfxBoot } from './sfx';
+import { useKeyboard } from './keyboard';
 
 /**
  * Arrival, as a new phone's setup assistant. The first time a phone opens the
@@ -46,6 +47,11 @@ import { primeSfx, sfxTap, sfxDeny, sfxBoot } from './sfx';
 // Module-level so it is the same function every render: Boot's timer depends on it.
 const finishBoot = () => markSeen('booted', true);
 
+// A first name: capitalised, never "corrected", and the keyboard's return key reads Next.
+const NAME_FIELD = { type: 'text', autoComplete: 'given-name', autoCapitalize: 'words', autoCorrect: 'off', spellCheck: false, enterKeyHint: 'next' };
+// The name screen's photo while the keyboard is up, so the field and Next stay above the keys.
+const NAME_PHOTO_KEYBOARD = 66;
+
 const HELLOS = ['hello', 'namaste', 'hola', 'bonjour', 'ciao', 'olá', 'hallo'];
 
 // Gender first, for the photo only (never a clue: see GENDER in data/traits.js), then the six.
@@ -61,19 +67,28 @@ export default function Setup({ gid, uid, late }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [sheet, setSheet] = useState(null); // on the review: the question being changed in place
+  // With the keyboard up the name screen has a third of the height: the photo
+  // drops to a thumbnail so the field and Next stay above the keys.
+  const keyboard = useKeyboard();
 
   useEffect(() => { markSeen(saveKey, { step, name, answers }); }, [saveKey, step, name, answers]);
 
   // Paint the photos the next tap could show while the phone is idle: every
   // option of this question, and the next screen's photo. A photo costs a
   // mid-range Android phone ~100 ms, so a tap that has to paint one lags.
+  // The Terms screen paints the name screen's photo (both its sizes), which
+  // is also the first photo the phone ever paints, and the slowest.
   useEffect(() => {
-    if (step !== 'name' && typeof step !== 'number') return undefined;
+    if (step !== 'terms' && step !== 'name' && typeof step !== 'number') return undefined;
     const jobs = [];
-    const warm = (traits, at) => jobs.push(() => warmPortrait({ traits, seed: uid, full: true, size: photoSize(at) }));
+    const warm = (traits, at, size = photoSize(at)) => jobs.push(() => warmPortrait({ traits, seed: uid, full: true, size }));
     if (typeof step === 'number') {
-      warm(answers, step + 1 < QUESTIONS.length ? step + 1 : 'review');
+      // the options first: a tap comes before Next
       for (const o of QUESTIONS[step].options) warm({ ...answers, [QUESTIONS[step].id]: o.id }, step);
+      warm(answers, step + 1 < QUESTIONS.length ? step + 1 : 'review');
+    } else if (step === 'terms') {
+      warm(answers, 'name');
+      warm(answers, 'name', NAME_PHOTO_KEYBOARD);
     } else {
       warm(answers, 0);
     }
@@ -99,12 +114,12 @@ export default function Setup({ gid, uid, late }) {
             if (name.trim()) setStep(0);
           }}
         >
-          <ProfileCard uid={uid} answers={answers} size={photoSize('name')}>
+          <ProfileCard uid={uid} answers={answers} size={keyboard ? NAME_PHOTO_KEYBOARD : photoSize('name')}>
             <p className="text-[22px] leading-tight text-os-ink">{late ? 'You made it.' : `Welcome to ${GAME.title}.`}</p>
             <p className="text-[16px] mt-1 text-os-steel">What should the group call you?</p>
           </ProfileCard>
           <Section head="Your first name">
-            <input className="os-input" autoFocus value={name} maxLength={24} autoComplete="given-name" onChange={(e) => setName(e.target.value)} />
+            <input className="os-input" autoFocus value={name} maxLength={24} {...NAME_FIELD} onChange={(e) => setName(e.target.value)} />
           </Section>
           <Section>
             <Btn type="submit" disabled={!name.trim()}>Next</Btn>
@@ -216,9 +231,18 @@ export default function Setup({ gid, uid, late }) {
  * of question and answers fit under it (plus the bars), never wider than 62%
  * of the screen, never under 120 (a short phone scrolls a little instead).
  */
+// The screen's height with no keyboard up: a keyboard (and Android resizing the
+// page for one) only ever makes it shorter, so keep the tallest seen at this width.
+let room = { w: 0, h: 0 };
+function roomHeight() {
+  if (room.w !== window.innerWidth) room = { w: window.innerWidth, h: 0 };
+  room.h = Math.max(room.h, window.innerHeight);
+  return room.h;
+}
+
 function photoWidth(below) {
   if (typeof window === 'undefined') return 220;
-  const byHeight = ((window.innerHeight - 44 - 56 - 40 - below) * ART_W) / ART_H;
+  const byHeight = ((roomHeight() - 44 - 56 - 40 - below) * ART_W) / ART_H;
   return Math.round(Math.max(120, Math.min(280, window.innerWidth * 0.62, byHeight)));
 }
 
@@ -340,7 +364,7 @@ function SignBackIn({ gid, uid, onCancel }) {
           <p className="text-[16px] mt-1 text-os-steel">If this phone lost the game, the host can sign you back in.</p>
         </div>
         <Section head="The name you joined with">
-          <input className="os-input" autoFocus value={name} maxLength={24} autoComplete="given-name" onChange={(e) => setName(e.target.value)} />
+          <input className="os-input" autoFocus value={name} maxLength={24} {...NAME_FIELD} onChange={(e) => setName(e.target.value)} />
         </Section>
         <Section>
           <Btn type="submit" disabled={!name.trim()}>Ask the host</Btn>

@@ -8,6 +8,8 @@ import { pollQuestion } from '../threads';
 import { submitAction } from '../../firebase/game';
 import { useDen, useDenMeta, useMyAction, useServerNow } from '../../hooks/useKillers';
 import { NIGHT } from '../../data/killersCopy';
+import Evidence from '../art/Evidence';
+import { clueWords } from '../../data/packs/index.js';
 import { markSeen, useSeen } from '../seen';
 import { prefersLessMotion } from '../nav';
 import { sfxSent, sfxTap } from '../sfx';
@@ -173,10 +175,10 @@ function Bar({ hint, label, faces = [], traits, onConfirm, kind }) {
 // --- Pieces ---------------------------------------------------------------------------------
 
 /** A move on the list: its picture, what it is for, what dawn brings. Opens the move. */
-function MoveCard({ kind, on, onClick }) {
+function MoveCard({ kind, on, off, onClick }) {
   const m = NIGHT.moves[kind];
   return (
-    <button type="button" className={`os-nt-move ${on ? 'is-on' : ''}`} aria-pressed={on} onClick={() => { sfxTap(); onClick(); }}>
+    <button type="button" className={`os-nt-move ${on ? 'is-on' : ''}`} aria-pressed={on} disabled={Boolean(off)} onClick={() => { sfxTap(); onClick(); }}>
       <MoveArt kind={kind} size={56} done={on} />
       <span className="os-nt-move__main">
         <span className="os-nt-move__top">
@@ -184,7 +186,7 @@ function MoveCard({ kind, on, onClick }) {
           {m.odds && <span className="os-nt-pill">{m.odds}</span>}
         </span>
         <span className="os-nt-move__short">{m.short}</span>
-        {m.dawn && <span className="os-nt-move__dawn"><Sun /> {m.dawn}</span>}
+        {off ? <span className="os-nt-move__dawn">{off}</span> : m.dawn && <span className="os-nt-move__dawn"><Sun /> {m.dawn}</span>}
         {on && <span className="os-nt-tag">{NIGHT.saved}</span>}
       </span>
       <svg className="os-nt-move__chev" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="m8.5 4 8 8-8 8" /></svg>
@@ -538,24 +540,37 @@ function KillerNight(props) {
 
 // --- Ghosts ----------------------------------------------------------------------------------
 
-function GhostNight({ gid, game, me, living, pack, nameOf, traits, players, onClose, locked, onHelp }) {
+/** The true clue photos this ghost holds (their own, via 'ghost'), one per clue, newest first. */
+function heldPhotos(inbox) {
+  const out = [];
+  for (const d of [...(inbox ?? [])].sort((a, b) => (b.at ?? 0) - (a.at ?? 0))) {
+    if (d.kind !== 'fact' || d.via !== 'ghost' || !d.fact) continue;
+    if (!out.some((h) => h.fact.trait === d.fact.trait && h.fact.group === d.fact.group)) out.push(d);
+  }
+  return out;
+}
+
+/**
+ * A ghost's night: pass one of their true clue photos to a living guest
+ * (engine/night.js checks they really hold it), or whisper one word. The same
+ * list → move → sealed flow as the Faithful's.
+ */
+function GhostNight({ gid, game, me, living, pack, nameOf, traits, players, inbox, onClose, locked, onHelp }) {
   const action = useMyAction(gid, game.cycle, me.pid);
-  const nav = useNightNav(action?.kind === 'whisper' && action.target ? action : null);
+  const nav = useNightNav(['whisper', 'pass'].includes(action?.kind) && action.target ? action : null);
   const [word, setWord] = useState(null);
+  const [photo, setPhoto] = useState(null); // the inbox id of the photo picked to pass
   const [sel, setSel] = useState(null);
-  const m = NIGHT.moves.whisper;
-  const chosen = word ?? nav.saved?.word ?? null;
-  const target = sel ?? (word ? null : nav.saved?.target ?? null);
-  const pickRef = useScrollTo(Boolean(word));
-  const sky = <Sky game={game} line={m.line} players={players} locked={locked} />;
-  const send = () => {
+  const held = heldPhotos(inbox);
+  const sky = <Sky game={game} line={NIGHT.ghost.line} players={players} locked={locked} />;
+  const reset = () => { setWord(null); setPhoto(null); setSel(null); };
+  const send = (a) => {
     sfxTap();
-    const a = { kind: 'whisper', word: chosen, target };
     nav.commit(a);
-    setWord(null);
-    setSel(null);
+    reset();
     save(() => submitAction(gid, game.cycle, me.pid, a), nav.fail);
   };
+  const lineOf = (a) => (a.kind === 'pass' ? NIGHT.moves.pass.done(nameOf(a.target)) : NIGHT.moves.whisper.done(nameOf(a.target), a.word));
 
   if (locked || nav.view === 'done') {
     const a = nav.saved;
@@ -563,37 +578,94 @@ function GhostNight({ gid, game, me, living, pack, nameOf, traits, players, onCl
       <Frame key="done" onBack={onClose} enter={enterFor(nav)} onHelp={onHelp}>
         {sky}
         <Sealed
-          kind="whisper"
+          kind={a?.kind ?? 'whisper'}
           locked={locked}
           fresh={nav.fresh}
-          line={a ? m.done(nameOf(a.target), a.word) : NIGHT.over.noneGhost}
+          line={a ? lineOf(a) : NIGHT.over.noneGhost}
           faces={facesOf(a)}
           traits={traits}
-          onChange={nav.change}
+          onChange={() => { reset(); nav.change(); }}
         />
       </Frame>
     );
   }
-  const bar = chosen && target
-    ? <Bar faces={[target]} traits={traits} label={m.verb(nameOf(target), chosen)} onConfirm={send} />
-    : <Bar hint={m.hint(chosen)} />;
+
+  if (nav.view === 'move') {
+    const k = nav.open;
+    const m = NIGHT.moves[k];
+    const current = nav.saved?.kind === k ? nav.saved : null;
+    const back = () => { reset(); nav.pop(); };
+    if (k === 'pass') {
+      const same = (d) => current?.fact && d.fact.trait === current.fact.trait && d.fact.group === current.fact.group;
+      const picked = photo ? held.find((d) => d.id === photo) : held.find(same) ?? null;
+      const target = sel ?? (photo ? null : current?.target ?? null);
+      const bar = picked && target
+        ? <Bar faces={[target]} traits={traits} label={m.verb(nameOf(target))} onConfirm={() => send({ kind: 'pass', target, fact: picked.fact })} />
+        : <Bar hint={m.hint(Boolean(picked))} />;
+      return (
+        <Frame key="move" onBack={back} backLabel="Night" enter="push" onHelp={onHelp} bar={bar}>
+          <Sky game={game} compact />
+          <MoveHead kind="pass" rows={m.how.slice(0, 2)} />
+          <Section head={<><span className="os-nt-num">1</span>{m.photo}</>}>
+            <div className="os-nt-photos">
+              {held.map((d) => (
+                <button key={d.id} type="button" aria-pressed={picked?.id === d.id} onClick={() => { sfxTap(); setPhoto(d.id); setSel(null); }} className={`os-nt-photo ${picked?.id === d.id ? 'is-on' : ''}`}>
+                  <Evidence fact={d.fact} seed={d.id} pack={pack} stamp={`D${d.cycle}`} thumb />
+                  <span className="os-nt-photo__cap">{clueWords(pack, d.fact).plain}</span>
+                </button>
+              ))}
+            </div>
+          </Section>
+          <PickStep ready={Boolean(picked)} head={picked ? m.pick : m.pickFirst}>
+            <GuestPicker guests={living} traits={traits} value={target} disabled={() => !picked} onPick={(pid) => { sfxTap(); setSel(pid); }} />
+          </PickStep>
+          <More rows={m.how.slice(2)} />
+        </Frame>
+      );
+    }
+    const chosen = word ?? current?.word ?? null;
+    const target = sel ?? (word ? null : current?.target ?? null);
+    const bar = chosen && target
+      ? <Bar faces={[target]} traits={traits} label={m.verb(nameOf(target), chosen)} onConfirm={() => send({ kind: 'whisper', word: chosen, target })} />
+      : <Bar hint={m.hint(chosen)} />;
+    return (
+      <Frame key="move" onBack={back} backLabel="Night" enter="push" onHelp={onHelp} bar={bar}>
+        <Sky game={game} compact />
+        <MoveHead kind="whisper" rows={m.how.slice(0, 2)} />
+        <Section head={<><span className="os-nt-num">1</span>{m.word}</>}>
+          <div className="os-nt-words">
+            {pack.whispers.map((w) => (
+              <button key={w} type="button" aria-pressed={chosen === w} onClick={() => { sfxTap(); setWord(w); setSel(null); }} className={`os-nt-word ${chosen === w ? 'is-on' : ''}`}>{w}</button>
+            ))}
+          </div>
+        </Section>
+        <PickStep ready={Boolean(chosen)} head={chosen ? m.pick(chosen) : m.pickFirst}>
+          <GuestPicker guests={living} traits={traits} value={target} disabled={() => !chosen} onPick={(pid) => { sfxTap(); setSel(pid); }} />
+        </PickStep>
+        <More rows={m.how.slice(2)} />
+      </Frame>
+    );
+  }
+
   return (
-    <Frame key="list" onBack={onClose} enter={enterFor(nav)} onHelp={onHelp} bar={bar}>
-      <Sky game={game} compact />
-      <MoveHead kind="whisper" rows={m.how.slice(0, 2)} />
-      <Section head={<><span className="os-nt-num">1</span>{m.word}</>}>
-        <div className="os-nt-words">
-          {pack.whispers.map((w) => (
-            <button key={w} type="button" aria-pressed={chosen === w} onClick={() => { sfxTap(); setWord(w); setSel(null); }} className={`os-nt-word ${chosen === w ? 'is-on' : ''}`}>{w}</button>
-          ))}
+    <Frame key="list" onBack={onClose} enter={enterFor(nav)} onHelp={onHelp} bar={<Bar hint={NIGHT.bar.move} />}>
+      {sky}
+      <Section head={NIGHT.ghost.head} foot={NIGHT.ghost.foot}>
+        <div className="os-nt-moves">
+          <MoveCard kind="pass" on={nav.saved?.kind === 'pass'} off={held.length ? null : NIGHT.moves.pass.none} onClick={() => nav.push('pass')} />
+          <MoveCard kind="whisper" on={nav.saved?.kind === 'whisper'} onClick={() => nav.push('whisper')} />
         </div>
       </Section>
-      <div ref={pickRef} className={`os-nt-step2 ${chosen ? '' : 'is-waiting'}`}>
-        <Section head={<><span className="os-nt-num">2</span>{chosen ? m.pick(chosen) : m.pickFirst}</>}>
-          <GuestPicker guests={living} traits={traits} value={target} disabled={() => !chosen} onPick={(pid) => { sfxTap(); setSel(pid); }} />
-        </Section>
-      </div>
-      <More rows={m.how.slice(2)} />
     </Frame>
+  );
+}
+
+/** Step 2 of a two-step move: dimmed until step 1 is chosen, then scrolled into view. */
+function PickStep({ ready, head, children }) {
+  const ref = useScrollTo(ready);
+  return (
+    <div ref={ref} className={`os-nt-step2 ${ready ? '' : 'is-waiting'}`}>
+      <Section head={<><span className="os-nt-num">2</span>{head}</>}>{children}</Section>
+    </div>
   );
 }

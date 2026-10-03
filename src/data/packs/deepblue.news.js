@@ -13,6 +13,8 @@
  * RULES FOR EVERYTHING IN THIS FILE
  *   1. Pure flavour. Killers are dealt live from whoever turned up, so no line
  *      here may name, describe or hint at a real guest, or teach a rule. The
+ *      one exception is `live.witness`: the engine's true clue about the
+ *      night's hand, said as a group, like a clue photo (2026-10-03). The
  *      public only knows what the setting already tells everyone: an app that
  *      rings every morning, a leaderboard, and last place found dead.
  *   2. Every story must be true whatever happens in the room. Stories unlock by
@@ -225,6 +227,25 @@ export const ARTICLES = [
       'DEEP BLUE asks nothing else of us. It does not need a clever trick. It needs forty people in a room, and a number beside each name.',
       'The sensible response is not to scroll faster. It is to ask why the person at the table beside you is so calm.',
       'We do not know who is reading these scores. We know who is reading each other.',
+    ],
+  },
+
+  {
+    id: 'still-sending',
+    day: 2,
+    outlet: 'dispatch',
+    kicker: 'NIGHT',
+    head: 'The phones of the dead are still sending photos.',
+    dek: 'Families say messages keep arriving after midnight, from numbers that should be silent.',
+    by: 'Fontainhas Dispatch',
+    time: '21:40',
+    art: 'still-sending',
+    cap: 'A photo from a sister’s number, delivered at 03:12.',
+    body: [
+      'Her sister’s phone was switched off and put in a drawer. At 03:12, it sent her a photo.',
+      'At least six families in Panjim describe the same thing. The pictures are blurred and taken in the dark: a glass on a table, a pair of shoes by a door, the back of someone’s jacket.',
+      '“It’s not a message. It’s a photo of somewhere,” said one, who asked not to be named. “Like she’s showing me what she saw.”',
+      'Investigators say the photos were taken the same night they arrived. They cannot say by whom. Some families have started showing them to each other.',
     ],
   },
 
@@ -441,6 +462,51 @@ export const LIVE = {
     },
   },
   endgameTail: 'This was an endgame vote.',
+  // The witness box in a morning's story (news.js): one true fact about the
+  // night's hand, from the engine (night.js `witness`). The ONE place in this
+  // file allowed to describe a guest, and only ever as a group, the way a clue
+  // photo does. Unnamed witness, no method, nothing about the victim's body.
+  witness: {
+    head: 'A witness came forward overnight',
+    by: 'Asked not to be named',
+    top: {
+      dark: '“They were in something dark. Black, grey or navy.”',
+      pale: '“A pale top. White, grey or yellow. It caught the light.”',
+      vivid: '“Loud colour, or a print. You couldn’t miss it.”',
+      plain: '“One solid colour. No print, no pattern.”',
+    },
+    glasses: {
+      glasses: '“Glasses. The screen flashed in them.”',
+      bare: '“No glasses. I saw their eyes in the screen light.”',
+    },
+    shoes: {
+      rubber: '“Sneakers. I heard the rubber squeak.”',
+      leather: '“Hard soles. Formal shoes, boots or heels.”',
+      open: '“Their toes were out. Sandals, or heels.”',
+      flat: '“Flat shoes. No heel at all.”',
+    },
+    drink: {
+      hops: '“They’d been drinking beer.”',
+      grape: '“A glass of wine in their hand.”',
+      spirit: '“Something distilled in the glass. Not beer, not wine.”',
+      clear: '“A clear drink, or a cocktail.”',
+      brewed: '“Beer or wine. Nothing harder.”',
+      sober: '“Not drinking. A soft drink.”',
+      strong: '“Liquor, neat. No mixer.”',
+    },
+    season: {
+      early: '“They said their birthday is in the first half of the year.”',
+      late: '“They said their birthday is in the second half of the year.”',
+      cool: '“Birthday in the cool months, they said. October to March.”',
+      warm: '“Birthday in the warm months, they said. April to September.”',
+    },
+    siblings: {
+      firstborn: '“They talked about being the first-born.”',
+      younger: '“They said they were one of the younger ones at home.”',
+      sibling: '“They mentioned a brother or sister.”',
+      edge: '“The eldest or the youngest. Never the middle, they said.”',
+    },
+  },
 };
 
 /** The crawl under the masthead: each line appears from its `day` on. */
@@ -453,6 +519,7 @@ export const TICKER = [
   { day: 1, text: 'FERRY CREWS ASK PASSENGERS TO BAG PHONES' },
   { day: 2, text: 'TOLL STANDS AT 23 · KARWAR TO MANGALURU' },
   { day: 2, text: 'BARS SPLIT: SOME SHUT, SOME FULL' },
+  { day: 2, text: 'PHONES OF THE DEAD STILL SENDING PHOTOS' },
   { day: 3, text: 'TOLL STANDS AT 31 · FAMILIES DISPUTE SCORES' },
   { day: 3, text: 'PROMENADE VIGIL DOWN TO FORTY' },
   { day: 4, text: 'TOLL STANDS AT 40 · THE APP CANNOT BE DELETED' },

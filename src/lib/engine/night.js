@@ -25,7 +25,12 @@
  *      "Neither" clears nobody of being a Killer, only of tonight. (The older single `check`, which reveals one
  *      guest's team until checks run out, still resolves if sent.)
  *   6. Scourers (and anyone who did nothing) each receive one clue fragment.
- *   7. Ghosts each receive one *true* clue, and deliver their whispers.
+ *   7. The paper's witness: one more true fact about the hand, printed for
+ *      everyone in the morning News (`witness`, see clues.js witnessFact).
+ *   8. Ghosts each receive one *true* clue, and deliver their whispers, or
+ *      pass one of their own true clue photos to a living guest (`pass`).
+ *      A ghost can only pass a clue it really holds: `ctx.held` lists each
+ *      ghost's own clue photos (their via 'ghost' inbox), read by the host.
  *
  * A recruit night (see roster.js) swaps step 1 for an offer, and the murder,
  * if the offer is refused, happens in `resolveRecruit`.
@@ -48,12 +53,16 @@
 
 import { makeRng, pick, chance } from './rng.js';
 import { ROLE, teamOf } from './roles.js';
-import { nightClues, distributeFragments } from './clues.js';
+import { nightClues, distributeFragments, witnessFact } from './clues.js';
 
 export const RIG_VALUES = Object.freeze(['zero', 'under']);
 
 export const DEFAULT_NIGHT_CONFIG = Object.freeze({
-  clueBudget: [2, 2, 3, 3, 3], // clues per night at `sizePivot` players, by cycle; the last entry repeats
+  // Private clues per night at `sizePivot` players, by cycle; the last entry
+  // repeats. The paper's witness adds one public clue on top, so the room
+  // gets 2, 3, 3, 3, 4. Was [2, 2, 3, 3, 3] before the witness (2026-10-03):
+  // the sim put the Faithful at 56/48/55% (20/35/45 guests) then, 59/47/51% now.
+  clueBudget: [1, 2, 2, 2, 3],
   // A bigger room needs more clues to find the same hand among more faces, and
   // a smaller one fewer. One clue more or less per `sizeStep` guests either side
   // of the pivot, tuned with scripts/sim-balance.mjs.
@@ -63,6 +72,12 @@ export const DEFAULT_NIGHT_CONFIG = Object.freeze({
   // The night the engine frames someone on the Killers' behalf, or null for never.
   // Off: see the header for the sim numbers. Try it with `sim-balance.mjs --frame 2`.
   autoFrameFrom: null,
+  // The morning paper prints a witness: one extra true fact about the hand,
+  // public to the whole room (clues.js witnessFact). `publicBand` is the share
+  // of the narrowed room it may fit; higher means vaguer. Tuned with the sim.
+  // At [0.4, 0.8] with the old budget the Faithful won 85% at 35 guests.
+  publicWitness: true,
+  publicBand: [0.55, 0.85],
 });
 
 const sorted = (xs) => [...xs].sort();
@@ -135,10 +150,16 @@ function murderOutcome(ctx, { victim, hand, framePid, protectedSet, scourers, ex
     if (trueFacts.length) deliveries.push({ to: pid, kind: 'fact', via: 'ghost', fact: strip(trueFacts[i % trueFacts.length]) });
   });
 
+  // The paper's witness, drawn last so it leaves every other draw tonight unchanged.
+  const witness = config.publicWitness
+    ? witnessFact({ traitDefs, traitsByPid, pool, handPid: hand, facts: trueFacts, band: config.publicBand ?? [0.55, 0.85], rng })
+    : null;
+
   return {
     deaths,
     saved,
     facts,
+    witness,
     trueFacts: trueFacts.map(strip),
     plantUsed: Boolean(framePid) && !plantFailed,
     deliveries,
@@ -154,7 +175,8 @@ const strip = ({ trait, group }) => ({ trait, group });
  *
  * @param ctx.players   { [pid]: { status } }, the host's full view
  * @param ctx.roles     { [pid]: role }
- * @param ctx.actions   { [pid]: { kind: 'watch'|'scour'|'protect'|'check'|'whisper', target, word } }
+ * @param ctx.actions   { [pid]: { kind: 'watch'|'scour'|'protect'|'check'|'whisper'|'pass', target, word, fact } }
+ * @param ctx.held      { [ghostPid]: [{ trait, group }] }, the true clue photos each ghost holds
  * @param ctx.den       { [killerPid]: { victim, hand, frame, recruit } }
  * @param ctx.secret    { lastProtected, checksLeft, plantUsed, recruitDue, hands }
  */
@@ -225,12 +247,18 @@ export function resolveNight(ctx) {
     }
   }
 
-  // --- Ghost whispers --------------------------------------------------------
+  // --- Ghost whispers, and passed clues ---------------------------------------
+  // A pass carries a copy of one of the ghost's own true clue photos; a fact the
+  // ghost doesn't hold (a forged action) is dropped, like any invalid move.
   const whisperDeliveries = [];
+  const holds = (pid, f) => Boolean(f) && (ctx.held?.[pid] ?? []).some((h) => h.trait === f.trait && h.group === f.group);
   for (const pid of ghosts) {
     const a = actions[pid];
-    if (a?.kind === 'whisper' && a.target && players[a.target]?.status === 'alive' && a.word) {
+    if (!a?.target || players[a.target]?.status !== 'alive') continue;
+    if (a.kind === 'whisper' && a.word) {
       whisperDeliveries.push({ to: a.target, kind: 'whisper', from: pid, word: a.word });
+    } else if (a.kind === 'pass' && holds(pid, a.fact)) {
+      whisperDeliveries.push({ to: a.target, kind: 'fact', via: 'pass', from: pid, fact: strip(a.fact) });
     }
   }
 
@@ -281,6 +309,7 @@ export function resolveNight(ctx) {
     trueFacts: out.trueFacts,
     deliveries: [...deliveries, ...out.deliveries, ...whisperDeliveries],
     publicDawn: out.publicDawn,
+    witness: out.witness,
     protectedList: sorted(protectedSet),
     rig,
     // Who the frame landed on, for the finale's account of the night (null when none).
@@ -311,7 +340,7 @@ export function resolveRecruit(ctx, { target, hand, accepted, scourers, protecte
     victim: target, hand, framePid: null, protectedSet: new Set(protectedList), scourers, extraFactTo: [],
   });
   return {
-    rolePatch: {}, victim: target, saved: out.saved, deaths: out.deaths, facts: out.facts, trueFacts: out.trueFacts,
+    rolePatch: {}, victim: target, saved: out.saved, deaths: out.deaths, facts: out.facts, trueFacts: out.trueFacts, witness: out.witness,
     deliveries: out.deliveries, publicDawn: out.publicDawn, hand, protectedList,
   };
 }

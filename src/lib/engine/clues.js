@@ -50,7 +50,7 @@ export function candidatesFor(traitDefs, traitsByPid, pool, facts) {
  * night. `pool` is everyone the room could suspect (the living). Returns facts
  * in the order chosen.
  */
-export function generateClues({ traitDefs, traitsByPid, pool, mustFit, budget, rng, avoidTraits = [] }) {
+export function generateClues({ traitDefs, traitsByPid, pool, mustFit, budget, rng, avoidTraits = [], band = SHARE_BAND }) {
   const facts = [];
   const used = new Set(avoidTraits);
   let remaining = pool.slice();
@@ -64,7 +64,7 @@ export function generateClues({ traitDefs, traitsByPid, pool, mustFit, budget, r
         if (!mustFit.every((pid) => fits(traitDefs, traitsByPid[pid], fact))) continue;
         const matching = remaining.filter((pid) => fits(traitDefs, traitsByPid[pid], fact));
         const share = matching.length / remaining.length;
-        if (share < SHARE_BAND[0] || share > SHARE_BAND[1]) continue;
+        if (share < band[0] || share > band[1]) continue;
         // A little jitter so two rooms with the same shape don't always get the same clue.
         const score = Math.abs(share - 0.5) + rng() * 0.06;
         if (!best || score < best.score) best = { fact, matching, score };
@@ -114,6 +114,22 @@ export function nightClues({ traitDefs, traitsByPid, pool, handPid, framePid, bu
     return { facts, trueFacts: facts, plantFailed: true };
   }
   return { facts: [...trueFacts, { ...plant.fact, planted: true }], trueFacts };
+}
+
+/**
+ * The morning paper's witness: one more true fact about the hand, printed for
+ * the whole room. It narrows from where tonight's true clues left the room and
+ * never repeats one of tonight's traits. Its band is wider and higher than a
+ * private clue's (`band`, from the night config), so a witness is a blurrier
+ * thing than a photo: it rules out less. Null when nothing fits the band.
+ */
+export function witnessFact({ traitDefs, traitsByPid, pool, handPid, facts, band, rng }) {
+  const narrowed = candidatesFor(traitDefs, traitsByPid, pool, facts.filter((f) => !f.planted));
+  const [fact] = generateClues({
+    traitDefs, traitsByPid, pool: narrowed.length > 1 ? narrowed : pool, mustFit: [handPid], budget: 1, rng,
+    avoidTraits: facts.map((f) => f.trait), band,
+  });
+  return fact ?? null;
 }
 
 /**

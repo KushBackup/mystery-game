@@ -42,7 +42,7 @@ export function scoreOf(scores, pid) {
  * @param ctx.roles    { [pid]: role }
  * @param ctx.scores   { [pid]: { best, runs } }, this day's score docs
  * @param ctx.pending  the stashed night: { victim, saved, protectedList, rig,
- *                     facts, trueFacts, deliveries, publicDawn, recruited }
+ *                     facts, trueFacts, witness, deliveries, publicDawn, recruited }
  */
 export function resolveMorning({ seed, cycle, players, roles, scores = {}, pending = {} }) {
   const rng = makeRng(seed, cycle, 'morning');
@@ -111,6 +111,8 @@ export function resolveMorning({ seed, cycle, players, roles, scores = {}, pendi
       cause,
       taken,
       rigged,
+      // The paper's witness (night.js): public from the board's reveal onwards.
+      witness: pending.witness ? strip(pending.witness) : null,
     },
   };
 }

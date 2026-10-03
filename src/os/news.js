@@ -75,7 +75,10 @@ function liveStory(s, pack, nameOf) {
       ...t.tail,
     ];
     const art = key === 'rig' || key === 'deep' ? 'dawn-taken' : 'dawn-clear';   // pictures in public/news/
-    return { ...base, art, id: `l:dawn:${s.cycle}`, kicker: t.kicker, head: fill(t.head, vars), dek: fill(t.dek, vars), time: '07:30', body };
+    // The paper's witness (night.js): a true clue about the night's hand, for everyone.
+    const w = s.witness && live.witness;
+    const witness = w ? { ...s.witness, quote: w[s.witness.trait]?.[s.witness.group] ?? '', head: w.head, by: w.by } : null;
+    return { ...base, art, id: `l:dawn:${s.cycle}`, kicker: witness ? 'WITNESS' : t.kicker, head: fill(t.head, vars), dek: fill(t.dek, vars), time: '07:30', body, witness };
   }
 
   const key = !s.pid ? 'none' : s.team === 'killers' ? 'killer' : 'innocent';

@@ -206,7 +206,7 @@ screen lights it; what glows (screens, eyes, chalk lettering) is drawn after.
 | 4 | dig | 13.75 s | 4.50 s | 330–437 | Ben under a desk lamp; a log curls out of his phone; a magnifier stops on a line; a clue photo (glasses) pops up |
 | 5 | doctor | 18.25 s | 4.50 s | 438–545 | Ben asleep; Cleo throws up a shield; a red ring homes in, clangs off and fades |
 | 6 | trace | 22.75 s | 4.50 s | 546–653 | Two phones on the table; a held phone sends a dotted line to each; they ping; a loop round both; "yes or no?" |
-| 7 | ghost | 27.25 s | 4.50 s | 654–761 | Zed the ghost among three word cards picks HURRY; it drifts to Ada's ear; she sits up |
+| 7 | ghost | 27.25 s | 4.50 s | 654–761 | Zed the ghost among two word cards and a clue photo (2026-10-03: a ghost may pass a photo instead) picks HURRY; it drifts to Ada's ear; she sits up |
 | 8 | dawn | 31.75 s | 4.75 s | 762–875 | The sun comes up, the dark lifts; phones buzz, everyone wakes; each phone throws up a result; DAWN |
 
 ```bash
@@ -235,6 +235,44 @@ done
   lamp and the sun are warm light, never gold; gold and green nowhere.
 - **Never graphic.** The ring bounces off the shield; nobody is hurt on screen.
 
+## ghost.html — the ghost tutorial clips
+
+Six short clips that teach a guest what a ghost does, shipped as
+`public/tutorial/ghost-1.mp4` … `ghost-6.mp4` with last-frame posters. The
+guest's own phone plays them right after SIGNAL LOST (src/os/GhostTutorial.jsx,
+words in src/data/ghostTutorial.js), and Help → Ghost replays them. Same
+format, paper, cast and ship recipe as night.html. Files: `ghost.html` (brief,
+beat sheet, timeline) and `ghost-clips.js` (the six clips, `spook()` for a
+ghost of any cast member with nubs for hands, `bubble()`, `polaroid()`,
+`puff()`). It loads `night-clips.js` for `dusk()`, the window, the lamp and
+`figure()`.
+
+| # | Clip | Starts | Length | Frames | What happens |
+|---|---|---|---|---|---|
+| 1 | rise | 0.00 s | 4.75 s | 0–113 | Zed's phone goes to static; a puff; he floats up as a ghost and waves; BOO! |
+| 2 | mute | 4.75 s | 4.50 s | 114–221 | The four chat; Zed calls "Hey!", "HELLO?"; his dotted bubbles sink through them; he shrugs |
+| 3 | truth | 9.25 s | 4.50 s | 222–329 | Night; a clue photo zigzags down to Zed; TRUE thumps onto it |
+| 4 | pass | 13.75 s | 4.50 s | 330–437 | Zed picks the photo over a word card; it glides into Ada's phone, "from Zed"; she wakes |
+| 5 | spirits | 18.25 s | 4.50 s | 438–545 | Zed, Cleo and Dev as ghosts; bubbles: a photo, "Ada?", "yes!"; SPIRITS |
+| 6 | play | 22.75 s | 4.75 s | 546–659 | Zed plays; GHOST BOARD with him on top; a ticked ballot into FINAL VOTE |
+
+```bash
+cd splash-film
+node render.mjs ghost.html --grid 24 --out out      # quick look
+node render.mjs ghost.html --out out                # master: out/ghost.mp4, out/ghost-frames/
+F=out/ghost-frames; n=1
+for seg in 0:114 114:108 222:108 330:108 438:108 546:114; do
+  s=${seg%%:*}; c=${seg##*:}; last=$(printf "%04d" $((s+c-1)))
+  ffmpeg -y -framerate 24 -start_number $s -i $F/%04d.png -frames:v $c     -c:v libx264 -preset slow -crf 28 -profile:v high -pix_fmt yuv420p -movflags +faststart -an     ../public/tutorial/ghost-$n.mp4
+  ffmpeg -y -i $F/$last.png -q:v 4 ../public/tutorial/ghost-$n.jpg
+  n=$((n+1))
+done
+```
+
+- **Nobody's death is shown.** Zed's phone goes to static and he pops out of a puff, delighted.
+- **No red, no gold.** Nobody here is a Killer; the TRUE stamp and the ballot's tick are the kit's blue.
+- **True to the engine.** The words beside each clip follow engine/night.js (the true clue, the pass, the whisper), morning.js (the ghost board) and the Endgame votes.
+
 ## news.html — the News app's pictures
 
 One still for every story in the News app (The Goa Times), shipped as
@@ -255,6 +293,7 @@ It loads `board-kit.js` for the ink line and the cast's cartoon heads.
 | 14–15 | final-board, last-call | Day 5 |
 | 16–17 | deleted, rings-again | The epilogues (Faithful win, Killers win) |
 | 18–21 | dawn-taken, dawn-clear, vote-out, vote-none | The room's own stories (`src/os/news.js`) |
+| 22 | still-sending | Day 2 (added 2026-10-03, after ghosts began passing photos) |
 
 An authored article's `art` is its own `id`
 (`src/data/packs/deepblue.news.js`); the room's stories pick theirs in
@@ -264,8 +303,8 @@ nine-dead for an unknown one.
 ```bash
 cd splash-film
 export CHROME=".../chrome.exe"
-node render.mjs news.html --only $(seq -s, 0 21) --out out/news     # every picture, full size
-names=(nine-dead seven-am stay-together greenr-open ninety-seconds panjim-stops ferry-crews twenty-three bars-split nobody-wins scores-dispute vigil cannot-delete empty-servers final-board last-call deleted rings-again dawn-taken dawn-clear vote-out vote-none)
+node render.mjs news.html --only $(seq -s, 0 22) --out out/news     # every picture, full size
+names=(nine-dead seven-am stay-together greenr-open ninety-seconds panjim-stops ferry-crews twenty-three bars-split nobody-wins scores-dispute vigil cannot-delete empty-servers final-board last-call deleted rings-again dawn-taken dawn-clear vote-out vote-none still-sending)
 for i in "${!names[@]}"; do
   ffmpeg -v error -y -i out/news/news-frames/$(printf "%04d" $i).png \
     -c:v libwebp -quality 80 -compression_level 6 ../public/news/${names[$i]}.webp

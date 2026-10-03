@@ -6,6 +6,8 @@
  *   node scripts/sim-balance.mjs --n 35 --games 5000 --verbose
  *   node scripts/sim-balance.mjs --n 35 --watchP 0.5 --budget 2,2,2,3,3 --endgame 2
  *   node scripts/sim-balance.mjs --frame 2                 # the engine frames someone on night 2
+ *   node scripts/sim-balance.mjs --witness off --last 0    # without the paper's witness or last words
+ *   node scripts/sim-balance.mjs --lie 0.3 --sight 0.5     # Killers lie about clues; ghosts catch some
  *
  * Plays whole games with the real engine (src/lib/engine) and bot players:
  *
@@ -18,6 +20,17 @@
  *             watch people they already suspect, and vote for the most
  *             suspicious guest with noise, because a real room is not a
  *             perfect Bayesian.
+ *   Ghosts    a Faithful ghost passes one of its true clue photos to a
+ *             random living guest (--pass, default 0.8 a night); a Faithful
+ *             receiver shares it, so a missed or planted night gets a true clue.
+ *             A Faithful guest taken at dawn posts their true photo as last
+ *             words (--last, default 0.7); the whole room sees it.
+ *   The paper  prints one more true fact about the hand each murder night
+ *             (night.js `witness`). Everyone reads it; nobody can lie about it.
+ *   Lies      with --lie p, a Killer who holds a clue nobody Faithful spoke
+ *             for announces a false one instead. With --sight q a Faithful
+ *             ghost (who sees every clue the living got) exposes the lie with
+ *             probability q: the false clue is dropped and the liar suspected.
  *
  * The bots are a model, not a prediction. The point is comparison: does a
  * change make the Faithful win more or less, do clues narrow the room at the
@@ -49,12 +62,18 @@ const ENDGAME_ROUNDS = Number(args.endgame ?? DEFAULT_ENDGAME);
 const VERBOSE = args.verbose === 'true';
 const NOISE = Number(args.noise ?? 0.6); // how far a real room strays from the best guess
 const SHARE_Q = Number(args.share ?? 0.75); // chance one fragment-holder speaks up
+const PASS_P = Number(args.pass ?? 0.8); // chance a Faithful ghost passes one of its true clue photos to a living guest (0 = whispers only)
+const LAST_P = Number(args.last ?? 0.7); // chance a Faithful guest taken at dawn posts their true photo as last words
+const LIE_P = Number(args.lie ?? 0); // chance a Killer holding an unspoken clue announces a false one
+const SIGHT_P = Number(args.sight ?? 0); // chance a Faithful ghost exposes such a lie (ghost sight)
 const config = {
   ...DEFAULT_NIGHT_CONFIG,
   watchP: Number(args.watchP ?? DEFAULT_NIGHT_CONFIG.watchP),
   sizeStep: Number(args.step ?? DEFAULT_NIGHT_CONFIG.sizeStep),
   clueBudget: args.budget ? args.budget.split(',').map(Number) : DEFAULT_NIGHT_CONFIG.clueBudget,
   autoFrameFrom: args.frame ? Number(args.frame) : DEFAULT_NIGHT_CONFIG.autoFrameFrom, // --frame N: auto-frame on night N
+  publicWitness: args.witness ? args.witness !== 'off' : DEFAULT_NIGHT_CONFIG.publicWitness,
+  publicBand: args.publicBand ? args.publicBand.split(',').map(Number) : DEFAULT_NIGHT_CONFIG.publicBand,
 };
 
 // ---------------------------------------------------------------------------
@@ -117,6 +136,7 @@ function playGame(n, ratios, gameSeed) {
   const claims = {}; // pid -> suspicion weight from watch/detective claims
   const cleared = new Set(); // publicly confirmed Faithful (banished Faithful are dead anyway)
   let detectiveClaimed = null;
+  const ghostHeld = {}; // ghost pid -> [{ fact, cycle }], their own true clue photos
 
   function suspicion(p) {
     let notHand = 1;
@@ -202,32 +222,86 @@ function playGame(n, ratios, gameSeed) {
       }
     }
 
-    const out = resolveNight({ seed: gameSeed, cycle, players, roles, traitsByPid: traits, traitDefs: TRAITS, actions, den, secret, config });
+    // --- Ghosts: a Faithful ghost passes a held photo to a random living guest.
+    const passOrigin = {};
+    for (const g of Object.keys(ghostHeld)) {
+      if (players[g].status !== 'ghost' || isKiller(g) || !ghostHeld[g].length || !chance(rng, PASS_P)) continue;
+      const h = pick(ghostHeld[g], rng);
+      actions[g] = { kind: 'pass', target: pick(living, rng), fact: h.fact };
+      passOrigin[g] = h.cycle;
+    }
+    const held = Object.fromEntries(Object.entries(ghostHeld).map(([g, list]) => [g, list.map((h) => h.fact)]));
+
+    const out = resolveNight({ seed: gameSeed, cycle, players, roles, traitsByPid: traits, traitDefs: TRAITS, actions, den, secret, config, held });
     Object.assign(secret, out.secretPatch);
     secret.hands = { ...secret.hands, [cycle]: out.hand ?? null };
     const scores = Object.fromEntries(alive().filter(() => chance(rng, 0.95)).map((p) => [p, { best: Math.floor(skill[p] * (0.5 + rng() * 0.5)) }]));
     const morning = resolveMorning({
       seed: gameSeed, cycle, players, roles, scores,
-      pending: { victim: out.victim, saved: out.saved, protectedList: out.protectedList, facts: out.facts, trueFacts: out.trueFacts, deliveries: out.deliveries },
+      pending: { victim: out.victim, saved: out.saved, protectedList: out.protectedList, facts: out.facts, trueFacts: out.trueFacts, witness: out.witness, deliveries: out.deliveries },
     });
     for (const d of morning.deaths) players[d.pid].status = 'ghost';
+    for (const d of morning.deliveries) if (d.kind === 'fact' && d.via === 'ghost') (ghostHeld[d.to] ??= []).push({ fact: d.fact, cycle });
     if (morning.cause === 'deep') stats.deep = (stats.deep ?? 0) + 1;
     if (morning.cause === 'deep' && isKiller(morning.deaths[0].pid)) stats.deepKiller = (stats.deepKiller ?? 0) + 1;
 
     // --- What reaches the room
     const pool = alive();
     const heard = [];
+    const lies = [];
+    const faithfulGhost = Object.keys(players).some((p) => players[p].status === 'ghost' && !isKiller(p));
     for (const f of out.facts) {
       // Searchers and the day's top three hold the night's clues.
       const holders = morning.deliveries.filter((d) => d.kind === 'fact' && (!d.via || d.via === 'top') && d.fact.trait === f.trait && d.fact.group === f.group);
       const faithfulHolders = holders.filter((d) => !isKiller(d.to)).length;
-      if (1 - (1 - SHARE_Q) ** faithfulHolders > rng()) heard.push(f);
+      if (1 - (1 - SHARE_Q) ** faithfulHolders > rng()) {
+        heard.push(f);
+      } else {
+        // Nobody Faithful spoke for it. A Killer who holds it may claim a false one.
+        const liar = holders.find((d) => isKiller(d.to) && players[d.to].status === 'alive');
+        const t = TRAITS.find((x) => x.id === f.trait);
+        const wrong = t.groups.filter((g) => !g.members.includes(traits[out.hand]?.[f.trait]));
+        if (liar && wrong.length && chance(rng, LIE_P)) {
+          stats.lies = (stats.lies ?? 0) + 1;
+          if (faithfulGhost && chance(rng, SIGHT_P)) {
+            claims[liar.to] = (claims[liar.to] ?? 0) + 0.6;
+            stats.liesCaught = (stats.liesCaught ?? 0) + 1;
+          } else {
+            lies.push({ trait: f.trait, group: pick(wrong, rng).id, planted: true });
+          }
+        }
+      }
       stats.factShare.push(pool.filter((p) => fits(TRAITS, traits[p], f)).length / pool.length);
       stats.facts++;
+    }
+    heard.push(...lies);
+    // The paper's witness: everyone reads it, and it is always true.
+    if (out.witness) {
+      heard.unshift(out.witness);
+      stats.witness = (stats.witness ?? 0) + 1;
+    }
+    // Last words: a Faithful guest the board took posts their true photo to the room.
+    for (const d of morning.deaths) {
+      const mine = morning.deliveries.find((x) => x.to === d.pid && x.kind === 'fact' && x.via === 'ghost')
+        ?? out.deliveries.find((x) => x.to === d.pid && x.kind === 'fact' && x.via === 'ghost');
+      if (mine && !isKiller(d.pid) && chance(rng, LAST_P) && !heard.some((f) => f.trait === mine.fact.trait && f.group === mine.fact.group)) {
+        heard.unshift(mine.fact);
+        stats.lastWords = (stats.lastWords ?? 0) + 1;
+      }
     }
     // A contradiction (nobody fits) tells the room one fact is a lie; they drop the newest.
     while (heard.length && candidatesFor(TRAITS, traits, pool, heard).length === 0) heard.pop();
     nights.push({ cycle, facts: heard, pool });
+    // Passed photos: a Faithful receiver tells the room, and the clue joins the night it came from.
+    for (const d of morning.deliveries) {
+      if (d.via !== 'pass' || isKiller(d.to) || !chance(rng, SHARE_Q)) continue;
+      const nt = nights.find((x) => x.cycle === passOrigin[d.from]);
+      if (nt && !nt.facts.some((f) => f.trait === d.fact.trait && f.group === d.fact.group)) {
+        nt.facts = nt.facts.filter((f) => f.trait !== d.fact.trait || !f.planted);
+        nt.facts.push(d.fact);
+        stats.passHeard = (stats.passHeard ?? 0) + 1;
+      }
+    }
     const trueHeard = heard.filter((f) => !f.planted);
     const cands = candidatesFor(TRAITS, traits, pool, trueHeard).length;
     stats.candAfter[cycle] = stats.candAfter[cycle] ?? [];
@@ -330,6 +404,7 @@ if (VERBOSE || !args.n) {
   console.log(`  facts outside 0.2–0.8: ${pct(out / shares.length)}; nights where heard clues named the hand outright: ${pct(stats.namedOutright / stats.nights)}`);
   console.log(`
 Mornings where a Firewall held and the deep took the lowest score: ${stats.deep ?? 0} (a Killer ${stats.deepKiller ?? 0} times)`);
+  console.log(`Witnesses printed: ${stats.witness ?? 0} of ${stats.nights} murder nights; last words posted: ${stats.lastWords ?? 0}; Killer lies: ${stats.lies ?? 0} (caught by ghosts ${stats.liesCaught ?? 0})`);
   console.log('\nBanishments that caught a Killer, by cycle:');
   for (const [c, k] of Object.entries(stats.banishByCycle)) {
     console.log(`  cycle ${c}: ${pct((stats.hitsByCycle[c] ?? 0) / k)}`);

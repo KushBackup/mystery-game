@@ -9,20 +9,24 @@ import { threadsFor, preview as threadPreview } from './threads';
 import { useSeen, markSeen, peekSeen } from './seen';
 import { resync, useResyncNote } from './resync';
 import { Hold } from './ui';
+import { KeyboardContext, KEYBOARD_MIN, isTyping, revealField } from './keyboard';
 import { useNews } from './news';
 import { useVoice } from './voice';
 import { useMaskedPlayers, BOARD_BEAT, VERDICT_BEAT } from './beats';
 import { prefersLessMotion } from './nav';
 import { dayLabel, photoSource, timeOfDay } from './words';
+import { mediaFor, FORM_NAME } from './evidence';
 import { primeSfx, sfxPing, sfxLock, startAlarm, stopAlarm } from './sfx';
 import { daySchedule, fmtClock } from '../lib/engine/clock.js';
 import { deepBlueOpen, introDay, gameOfDay } from '../lib/engine/minigames.js';
 import { prefetchTutorial } from '../data/wordTutorial';
 import { prefetchSketchTutorial } from '../data/sketchTutorial';
 import { prefetchNightTutorial } from '../data/nightTutorial';
+import { prefetchGhostTutorial } from '../data/ghostTutorial';
 import MessagesApp from './apps/MessagesApp';
 import GameApp from './apps/GameApp';
 import NewsApp from './apps/NewsApp';
+import BoardApp from './apps/BoardApp';
 import GalleryApp from './apps/GalleryApp';
 import ClockApp from './apps/ClockApp';
 import ContactsApp from './apps/ContactsApp';
@@ -112,7 +116,7 @@ const PHASE_BANNER = {
 /** Phases that open with a chapter card (takeovers.jsx). */
 const CHAPTERS = new Set(['night', 'investigation', 'roundtable', 'endgame']);
 
-const GRID = [['clock', 'Clock'], ['contacts', 'Contacts'], ['night', 'Night'], ['weather', 'Weather'], ['settings', 'Settings'], ['help', 'Help']];
+const GRID = [['board', 'Board'], ['clock', 'Clock'], ['contacts', 'Contacts'], ['night', 'Night'], ['weather', 'Weather'], ['settings', 'Settings'], ['help', 'Help']];
 /** The Night app is on the phone only while it is night; by day it is gone, and an open one closes. */
 const NIGHTTIME = new Set(['night', 'night_locked', 'recruit', 'recruit_locked']);
 const gridFor = (phase) => (NIGHTTIME.has(phase) ? GRID : GRID.filter(([id]) => id !== 'night'));
@@ -122,6 +126,7 @@ const APPS = {
   messages: MessagesApp,
   deepblue: GameApp,
   news: NewsApp,
+  board: BoardApp,
   gallery: GalleryApp,
   clock: ClockApp,
   contacts: ContactsApp,
@@ -140,28 +145,63 @@ const NC_PULL_DIST = 110;
  * The phone's frame: status bar, the stage, the home button, and the
  * Notification Center dragged down from the status bar. Also used before a
  * guest exists. On a phone it tracks the visual viewport, so when the
- * keyboard opens the compose bar rides up above it instead of hiding under it.
+ * keyboard opens the whole phone fits the room left above it: the nav bar
+ * stays on top, the compose bar rides up, and the field being typed in is
+ * scrolled into view (keyboard.js).
  */
 export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = () => {}, children, stageRef, time = 'day', sections = [], locked = false }) {
   const root = useRef(null);
   const [kbd, setKbd] = useState(false);
   useEffect(() => {
     const vv = window.visualViewport;
-    if (!vv) return undefined;
+    let full = 0; // the tallest visible height seen at this width: the phone with no keyboard
+    let width = 0;
+    let frame = 0;
+    let wasOpen = false;
+    const timers = [];
     const fit = () => {
       const el = root.current;
       if (!el) return;
-      el.style.height = `${vv.height}px`;
-      el.style.top = `${vv.offsetTop}px`;
-      el.style.bottom = 'auto';
-      setKbd(vv.height < window.innerHeight * 0.78);
+      const h = vv ? vv.height : window.innerHeight;
+      if (Math.abs(window.innerWidth - width) > 1) { width = window.innerWidth; full = 0; } // turned: measure again
+      full = Math.max(full, h, window.innerHeight);
+      if (vv) {
+        el.style.height = `${h}px`;
+        el.style.top = `${vv.offsetTop}px`;
+        el.style.bottom = 'auto';
+      }
+      const open = h < full - KEYBOARD_MIN && isTyping(document.activeElement);
+      setKbd(open);
+      // Once the keys are up the list is shorter: bring the field back into it.
+      if (open) {
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(() => revealField(document.activeElement));
+      } else if (wasOpen && (window.scrollX || window.scrollY)) {
+        window.scrollTo(0, 0); // iOS can leave the page nudged after the keys go
+      }
+      wasOpen = open;
+    };
+    // A field gaining or losing focus: check now, and again once the keyboard
+    // has finished sliding (some browsers report its size late, or not at all).
+    const later = () => {
+      fit();
+      timers.forEach(clearTimeout);
+      timers.splice(0, timers.length, setTimeout(fit, 120), setTimeout(fit, 450));
     };
     fit();
-    vv.addEventListener('resize', fit);
-    vv.addEventListener('scroll', fit);
+    vv?.addEventListener('resize', fit);
+    vv?.addEventListener('scroll', fit);
+    window.addEventListener('resize', fit);
+    document.addEventListener('focusin', later);
+    document.addEventListener('focusout', later);
     return () => {
-      vv.removeEventListener('resize', fit);
-      vv.removeEventListener('scroll', fit);
+      vv?.removeEventListener('resize', fit);
+      vv?.removeEventListener('scroll', fit);
+      window.removeEventListener('resize', fit);
+      document.removeEventListener('focusin', later);
+      document.removeEventListener('focusout', later);
+      cancelAnimationFrame(frame);
+      timers.forEach(clearTimeout);
     };
   }, []);
 
@@ -251,7 +291,7 @@ export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = 
     <div ref={root} className={`os-root ${kbd ? 'os-root--kbd' : ''}`} data-time={time}>
       <StatusBar game={game} ghost={ghost} clear={clear} drag={{ onPointerDown: ncDown, onPointerMove: ncMove, onPointerUp: ncUp, onPointerCancel: ncUp }} />
       <div ref={stageRef} className="os-stage">
-        {children}
+        <KeyboardContext.Provider value={kbd}>{children}</KeyboardContext.Provider>
         <NotificationCenter sections={sections} open={ncOpen} pull={ncPull} onOpen={onOpenApp} onClose={ncClose} />
       </div>
       {/* With the panel down, Home puts it away first, the way iOS did. */}
@@ -305,6 +345,9 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   // fetch its clips while the roles are being dealt, and again on Night 1 for a late arrival.
   const nightSoon = phase === 'casting' || (phase === 'night' && game.cycle <= 1);
   useEffect(() => { if (nightSoon) prefetchNightTutorial(); }, [nightSoon]);
+  // Any night could make this guest a ghost: warm the ghost tutorial's clips during one (data/ghostTutorial.js).
+  const ghostSoon = phase === 'night' && realMe.status === 'alive';
+  useEffect(() => { if (ghostSoon) prefetchGhostTutorial(); }, [ghostSoon]);
 
   // --- Which app is open: only ever the guest's choice. A phase change leaves
   // it alone (except the Night app, which closes at daybreak) and decides
@@ -388,6 +431,14 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
     if (app === 'news') markSeen(`${gid}.news`, newsKey ? newsKey.split('|') : []);
   }, [app, gid, newsKey]);
 
+  // A new board badges Board until it is seen there, or in News's dawn reveal.
+  // Never before the reveal shows the death (news.held), so the badge can't spoil it.
+  const boardSeen = useSeen(`${gid}.board`, 0);
+  const boardDay = game.board?.rows?.length && !(news.held && phase === 'dawn') ? game.board.cycle : 0;
+  useEffect(() => {
+    if (boardDay && (app === 'board' || (app === 'news' && phase === 'dawn'))) markSeen(`${gid}.board`, boardDay);
+  }, [app, phase, gid, boardDay]);
+
   // DEEP BLUE's own lines to this guest (voice.js), shown in its Messages thread.
   const voice = useVoice(gid, game, me, pack, nameOf);
 
@@ -409,6 +460,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
     messages: threads.reduce((n, t) => n + t.unread, 0) || null,
     gallery: inbox.filter((d) => d.kind === 'fact' && !gallerySeen.includes(d.id)).length || null,
     news: news.ids.filter((id) => !newsSeenArr.includes(id)).length || null,
+    board: boardDay && boardSeen !== boardDay ? 1 : null,
     night: needsNight ? '!' : null,
     deepblue: needsGame ? '!' : null,
   };
@@ -434,7 +486,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
     .filter((d) => d.kind === 'fact' && !gallerySeen.includes(d.id))
     .sort((a, b) => (b.at ?? 0) - (a.at ?? 0))
     .slice(0, NC_LIMIT)
-    .map((d) => ({ id: d.id, icon: 'gallery', title: 'Photos', text: `New photo · ${photoSource(d)}`, app: 'gallery' }));
+    .map((d) => ({ id: d.id, icon: 'gallery', title: 'Photos', text: `New ${FORM_NAME[mediaFor(d)].toLowerCase()} · ${photoSource(d, nameOf)}`, app: 'gallery' }));
   const ncNews = news.all
     .filter((s) => !newsSeenArr.includes(s.id))
     .slice(0, NC_LIMIT)
@@ -476,7 +528,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
       if ((d.at ?? 0) <= mountAt || ['recruitOffer', 'word', 'draw'].includes(d.kind)) continue;
       const photo = d.kind === 'fact';
       if (photo && app === 'gallery') continue;
-      fresh.push({ id: d.id, at: d.at, icon: photo ? 'gallery' : 'messages', title: photo ? 'Photos' : 'DEEP BLUE', text: photo ? `New photo · ${photoSource(d)}` : deliveryLine(d, nameOf), app: photo ? 'gallery' : 'messages', kind: photo ? 'photo' : 'system' });
+      fresh.push({ id: d.id, at: d.at, icon: photo ? 'gallery' : 'messages', title: photo ? 'Photos' : 'DEEP BLUE', text: photo ? `New ${FORM_NAME[mediaFor(d)].toLowerCase()} · ${photoSource(d, nameOf)}` : deliveryLine(d, nameOf), app: photo ? 'gallery' : 'messages', kind: photo ? 'photo' : 'system' });
     }
     if (app !== 'messages') {
       for (const t of threads) {

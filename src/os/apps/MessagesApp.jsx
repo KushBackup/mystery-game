@@ -14,6 +14,7 @@ import { threadsFor, preview, systemText, pollQuestion } from '../threads';
 import KillPoll from './KillPoll';
 import RoleMessage from '../RoleMessage';
 import { useDenMeta } from '../../hooks/useKillers';
+import { useKeyboard } from '../keyboard';
 
 /**
  * Messages: the group chat everyone is in, plus the threads nobody chose.
@@ -185,6 +186,9 @@ function PollBubble({ ctx }) {
 export function Thread({ messages, me, empty = 'Nothing yet.', poll = null }) {
   const end = useRef(null);
   useEffect(() => toBottom(end.current), [messages.length]);
+  // The keyboard coming up shortens the list: keep the newest message just above the compose bar.
+  const keyboard = useKeyboard();
+  useEffect(() => { if (keyboard) toBottom(end.current); }, [keyboard]);
   if (!messages.length) return <Empty glyph="chat" line={empty} />;
   // "Delivered" sits under your last message, if the last person to speak was you.
   let lastSpoken = -1;

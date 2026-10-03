@@ -71,6 +71,10 @@ export async function act(bot, gid, game) {
   const action = (a) => setDoc(G(bot, gid, 'actions', `${c}_${bot.pid}`), { ...a, pid: bot.pid, cycle: c });
 
   if (bot.status === 'ghost') {
+    // Pass one of its own clue photos on, or whisper a word (engine/night.js).
+    const mine = await getDocs(query(collection(bot.db, 'games', gid, 'inbox'), where('to', '==', bot.pid)));
+    const held = mine.docs.map((d) => d.data()).filter((d) => d.kind === 'fact' && d.via === 'ghost' && d.fact);
+    if (held.length && Math.random() < 0.6) return action({ kind: 'pass', target: rnd(alive).pid, fact: rnd(held).fact });
     return action({ kind: 'whisper', target: rnd(alive).pid, word: rnd(PACKS[DEFAULT_PACK_ID].whispers) });
   }
   if (bot.status !== 'alive') return;

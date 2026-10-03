@@ -8,6 +8,7 @@ import { BOARD_BEAT, VERDICT_BEAT } from '../beats';
 import NewsPaper from './NewsPaper';
 import Finale from './Finale';
 import { useStage, useStageSounds } from './stage';
+import { BoardList, MyPlace, Podium } from './BoardApp';
 
 /**
  * News: where the room finds out.
@@ -22,6 +23,8 @@ import { useStage, useStageSounds } from './stage';
  *   else     the paper (NewsPaper.jsx): world stories by day, plus every
  *            morning and every vote so far, printed as articles (news.js).
  *
+ * The board at rest, to open any time, is its own app (BoardApp.jsx).
+ *
  * Sounds only play for a beat reached while the app is open, so opening
  * News five minutes later doesn't replay the fanfare.
  */
@@ -32,19 +35,12 @@ const BEAT = BOARD_BEAT;
 export default function NewsApp({ ctx, onClose }) {
   const { game } = ctx;
   // 'auto' plays the phase's reveal if it has one and the paper otherwise; the
-  // guest can step from the reveal into the paper, and from there to the board.
+  // guest can step from the reveal into the paper.
   const [view, setView] = useState('auto');
   const live = view === 'auto' && ['dawn', 'banish', 'finale'].includes(game.phase);
 
-  if (view === 'board' && game.board) {
-    return (
-      <AppFrame title="Latest board" onBack={() => setView('paper')} backLabel="Paper" tone="dark" dark>
-        <BoardList ctx={ctx} />
-      </AppFrame>
-    );
-  }
   if (!live) {
-    return <NewsPaper ctx={ctx} onBack={view === 'paper' ? () => setView('auto') : onClose} backLabel={view === 'paper' ? 'Live' : 'Home'} onBoard={game.board && !ctx.news.held ? () => setView('board') : null} />;
+    return <NewsPaper ctx={ctx} onBack={view === 'paper' ? () => setView('auto') : onClose} backLabel={view === 'paper' ? 'Live' : 'Home'} />;
   }
 
   const title = game.phase === 'banish' ? 'Breaking' : game.phase === 'finale' ? 'Special edition' : 'News';
@@ -92,24 +88,7 @@ function BoardReveal({ ctx }) {
       </div>
 
       {/* The podium */}
-      <div className="grid grid-cols-3 items-end gap-2 px-3 pt-4">
-        {[1, 0, 2].map((i) => {
-          const r = rows.filter((x) => x.pid !== takenPid)[i];
-          if (!r) return <div key={i} />;
-          return (
-            <div key={r.pid} className="os-pop text-center" style={{ animationDelay: `${i * 350}ms` }}>
-              <div className="inline-block"><Face traits={ctx.traits} pid={r.pid} size={i === 0 ? 56 : 44} round className={i === 0 ? 'os-face--gold' : ''} /></div>
-              <p className="text-[14px] mt-1 truncate">{nameOf(r.pid)}</p>
-              <div className="mt-1 mx-auto rounded-t-md bg-os-deep border border-os-chrome/30 grid place-items-center" style={{ height: [72, 52, 40][i] }}>
-                <div>
-                  <p className="os-arcade text-os-gold text-[18px]">{r.score}</p>
-                  <p className="os-label text-[11px] text-os-chrome mt-1">#{i + 1}</p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <Podium ctx={ctx} rows={rows} takenPid={takenPid} animate />
 
       {/* Last place */}
       {at('last') && (
@@ -164,72 +143,6 @@ function BoardReveal({ ctx }) {
         </div>
       )}
     </div>
-  );
-}
-
-/**
- * Where you landed, in one line: the first thing every guest looks for on a
- * leaderboard. Near the bottom it says so, because tomorrow the bottom kills.
- */
-function MyPlace({ rows, me, takenPid, cycle }) {
-  const mine = rows.find((r) => r.pid === me.pid);
-  if (!mine) return null;
-  const n = rows.length;
-  const fromDeep = n - mine.rank - (takenPid && rows.at(-1)?.pid === takenPid ? 1 : 0);
-  let tone = 'calm';
-  let line = `#${mine.rank} of ${n}. Safe, for today.`;
-  if (mine.rank <= 3) {
-    tone = 'top';
-    line = `#${mine.rank} of ${n}. DEEP BLUE sent you a photo.`;
-  } else if (fromDeep <= 0) {
-    tone = 'edge';
-    line = `#${mine.rank} of ${n}. Nobody honest scored lower.`;
-  } else if (fromDeep <= 2) {
-    tone = 'edge';
-    line = `#${mine.rank} of ${n}. ${fromDeep === 1 ? 'One place' : 'Two places'} above the deep.`;
-  }
-  return (
-    <div className={`os-myplace os-myplace--${tone} mx-3 mt-4`}>
-      <span className="os-myplace__score">{mine.score}</span>
-      <div className="min-w-0">
-        <p className="os-label text-[11px] opacity-80">YOUR SCORE · DAY {cycle}</p>
-        <p className="text-[17px] font-bold leading-snug">{line}</p>
-      </div>
-    </div>
-  );
-}
-
-/** The whole board, you highlighted, the taken row marked. Also used by the paper. */
-function BoardList({ ctx }) {
-  const { game, me, nameOf } = ctx;
-  const [ghostsOpen, setGhostsOpen] = useState(false);
-  const rows = game.board?.rows ?? [];
-  const ghosts = game.board?.ghosts ?? [];
-  const taken = game.dawn?.cycle === game.board?.cycle ? (game.dawn?.taken ?? game.dawn?.victims?.[0]) : null;
-  return (
-    <>
-      <Section head={`Day ${game.board?.cycle ?? ''} board · ${rows.length} players`}>
-        <div className="os-group os-group--dark !p-0">
-          {rows.map((r) => (
-            <div key={r.pid} className={`os-board-row ${r.pid === me.pid ? 'os-board-row--me' : ''} ${r.rank <= 3 && r.pid !== taken ? 'os-board-row--top' : ''} ${r.pid === taken ? 'os-board-row--dead' : ''}`}>
-              <span className="os-board-rank">{r.rank <= 3 && r.pid !== taken ? <Glyph name={r.rank === 1 ? 'crown' : 'star'} size={14} /> : `#${r.rank}`}</span>
-              <span className="truncate text-[16px] flex items-center gap-2 min-w-0"><Face traits={ctx.traits} pid={r.pid} size={24} round ghost={r.pid === taken} /><span className="truncate">{nameOf(r.pid)}{r.pid === me.pid ? ' (you)' : ''}{!r.played && r.pid !== taken ? <span className="text-os-chrome text-[13px]"> · didn’t play</span> : null}</span></span>
-              <span className="flex items-center gap-2">{r.pid === taken && <span className="os-taken !text-[12px]">TAKEN</span>}<span className="os-board-score">{r.score}</span></span>
-            </div>
-          ))}
-        </div>
-      </Section>
-      {ghosts.length > 0 && (
-        <Section>
-          <button type="button" className="os-btn os-btn--dark os-btn--sm" onClick={() => setGhostsOpen((v) => !v)}>{ghostsOpen ? 'Hide' : 'Show'} the ghost board ({ghosts.length})</button>
-          {ghostsOpen && (
-            <Group dark className="mt-2">
-              {ghosts.map((r, i) => <Cell key={r.pid} title={`${i + 1}. ${nameOf(r.pid)}`} value={<span className="os-arcade text-[14px] text-os-chrome">{r.score}</span>} />)}
-            </Group>
-          )}
-        </Section>
-      )}
-    </>
   );
 }
 

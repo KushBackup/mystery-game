@@ -47,15 +47,23 @@ export const alarmLine = (pack, cycle) => {
  * vodka / rum, Whisky / brandy or A cocktail". The flavour can be evocative
  * because the plain line underneath always says exactly what it means.
  */
-export function clueWords(pack, fact) {
+export function clueWords(pack, fact, form = 'still') {
   const trait = TRAIT_BY_ID[fact.trait];
   const group = trait?.groups.find((g) => g.id === fact.group);
   if (!trait || !group) return { flavour: '', plain: '' };
   const labels = group.members.map((m) => trait.options.find((o) => o.id === m)?.label ?? m);
   const list = labels.length > 1 ? `${labels.slice(0, -1).join(', ')} or ${labels.at(-1)}` : labels[0];
   const say = PLAIN[trait.id];
+  // A voice note's flavour is what the witness said; a receipt or a screenshot
+  // has a fixed line (os/evidence.js). A still or a clip, or a pack without
+  // `evidence`, uses the CCTV caption.
+  const ev = pack.evidence;
+  const flavour = (form === 'voice' && ev?.voice?.[fact.trait]?.[fact.group])
+    || ((form === 'receipt' || form === 'profile') && ev?.[form]?.note)
+    || pack.clueText?.[fact.trait]?.[fact.group]
+    || '';
   return {
-    flavour: pack.clueText?.[fact.trait]?.[fact.group] ?? '',
+    flavour,
     plain: say ? say(list, group.members) : `The killer: ${list}`,
   };
 }

@@ -15,6 +15,7 @@
 
 import { deliveryLine } from '../data/killersCopy';
 import { photoSource } from './words';
+import { mediaFor, FORM_NAME } from './evidence';
 
 const SYSTEM_KINDS = new Set(['check', 'trace', 'saved', 'quiet', 'recruited', 'fact']);
 const UNKNOWN_KINDS = new Set(['whisper', 'watch']);
@@ -96,6 +97,6 @@ export function systemText(d, ctx) {
   if (d.kind === 'voice') return d.text;
   // The same words on every phone: the list row must not say the role.
   if (d.kind === 'role') return 'Your role. Read it alone.';
-  if (d.kind === 'fact') return `New photo · ${photoSource(d)}`;
+  if (d.kind === 'fact') return `New ${FORM_NAME[mediaFor(d)].toLowerCase()} · ${photoSource(d, ctx.nameOf)}`;
   return deliveryLine(d, ctx.nameOf);
 }

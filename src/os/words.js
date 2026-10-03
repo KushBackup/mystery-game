@@ -32,9 +32,10 @@ export function dayLabel(game, phaseLabel) {
   return game.cycle > 0 ? `DAY ${game.cycle} · ${phaseLabel}` : phaseLabel;
 }
 
-/** How a clue photo came to you. */
-export function photoSource(d) {
+/** How a clue photo came to you. A passed one names its ghost when `nameOf` is given. */
+export function photoSource(d, nameOf) {
   if (d.via === 'ghost') return 'From the other side';
+  if (d.via === 'pass') return nameOf ? `Passed on by ${nameOf(d.from)}, a ghost` : 'Passed on by a ghost';
   if (d.via === 'watch') return 'You saw it yourself';
   if (d.via === 'top') return `#${d.rank ?? 1} on the board`;
   return 'Dug out of the logs';

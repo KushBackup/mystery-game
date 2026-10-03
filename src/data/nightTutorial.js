@@ -34,7 +34,7 @@ export const FILM_SLIDES = Object.freeze([
   { id: 'dig', n: 4, title: 'Or dig through the logs.', line: 'A sure clue photo at dawn: one answer the Killer gave when they arrived.' },
   { id: 'doctor', n: 5, title: 'The Doctor keeps one guest safe.', line: 'If the Killers chose them, they live. Never the same guest twice in a row.' },
   { id: 'trace', n: 6, title: 'The Detective traces two phones.', line: 'At dawn: did one of those two strike tonight? Yes or no.' },
-  { id: 'ghost', n: 7, title: 'The dead still play.', line: 'Ghosts whisper one word to a living guest. Their clues are always true.' },
+  { id: 'ghost', n: 7, title: 'The dead still play.', line: 'Ghosts pass a true clue photo, or whisper one word, to a living guest.' },
   { id: 'dawn', n: 8, title: 'Your result arrives at dawn.', line: 'No move? You dig through the logs. You can change your move until night ends.' },
 ].map((s) => ({ ...s, kind: 'film', clip: clip(s.n), poster: poster(s.n) })));
 

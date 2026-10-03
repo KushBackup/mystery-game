@@ -689,3 +689,15 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 
 **What to do instead:** Count draw calls, not just milliseconds on this laptop: a fill per mark is the warning sign. Paint an expensive picture once, cache it, and animate by compositing the cached result, never by repainting it per frame. Keep infinite animations out of inline SVG and away from anything under a `filter` or `backdrop-filter`. Measure with the Setup drive (Playwright, `deviceScaleFactor: 2.75`, `Emulation.setCPUThrottlingRate` 4, PerformanceObserver `longtask` and `event`) before and after, and compare against the HEAD files, not against memory.
 
+## 2026-10-03 — The character creator was only ever checked with every answer filled in
+
+**What happened:** The user reported boots drawn on top of jeans and a broken body silhouette, worst on the first question (gender). Rendering every gender with no other answers showed the cause at once: an unanswered shirt was only a dashed line, so the torso was see-through, and long hair, the wall and its shadow showed through the chest. The shoes layer was painted after the trousers, so a boot shaft sat on the jeans. Hair was a bare multiply wash, so it came out light over the paper face and dark over the wall, which drew a cap or helmet on every head; curls were a spiky crown; long hair was hidden behind the shirt. Earlier checks had looked at finished photos only.
+
+**What to do instead:** Audit a layered drawing in the states a guest actually sees, in order: nothing answered, then each answer added one at a time, for every look. Render a grid of all of them with a throwaway Playwright page that imports the art module from the dev server, and zoom in on each joint (hem over shoe, hair over face, sleeve over arm). Anything that should hide what is behind it needs an opaque fill, not just a wash or a line. Write the paint order down (TECHNICAL_DOCUMENTATION.md) so a new layer goes in the right place.
+
+### 2026-10-03 — `.os-night` on an `.os-alarm` takeover silently drops its absolute position, and `cqh` goes to 0
+
+**What happened:** The ghost tutorial runs inside the death screen in a `div.os-alarm.os-night.os-night--tut`. In a browser check the film area was 0 × 0, though the video had loaded (`readyState` 4). `.os-night` comes later in os.css and sets `position: relative`, which beat `.os-alarm`'s `position: absolute; inset: 0`. The wrapper still measured 844 px tall (from `min-height: 100%`), but its height was no longer definite, so `.os-wt` (a `container-type: size` flex child) resolved `cqh` to 0 and `.os-wt__film` (`width: min(100%, 46cqh * 4 / 3)`) collapsed. `cqw` still worked, which hid the cause.
+
+**What to do instead:** When two `.os-*` surface classes share an element, check `position` and height in computed style, not only the box. Anything sized in `cqh` needs its container's height to be definite: an absolutely positioned, inset parent, or an explicit height. Measure the chain with `getBoundingClientRect` and `getComputedStyle(...).width` set to `46cqh`; a 0 there names the bug at once.
+

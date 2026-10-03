@@ -503,6 +503,40 @@ function sceneVigil(c) {
   printFinish(c, .2);
 }
 
+// Still sending: in the dark, a hand holds a phone. A thread from "Didi" (an older sister): a photo, sent at 03:12.
+function sceneStillSending(c) {
+  newsprint(c);
+  nightWash(c, 1);
+  screenLight(c, 960, 520, 760, .7);
+  // the window behind: the moon, the curtain
+  solid(c, rrPts(1300, 90, 300, 360, 10), '#1b2c57', 2300, { w: 5, al: .9 });
+  ln(c, [[1450, 90], [1450, 450]], 5, 2301); ln(c, [[1300, 270], [1600, 270]], 5, 2302);
+  dot(c, 1530, 170, 34, 34, LAMP_HI); dot(c, 1514, 160, 32, 32, '#1b2c57');
+  solid(c, [[1270, 70], [1340, 70], [1320, 480], [1250, 500]], '#5a6888', 2303, { w: 4, al: .8 });
+  const P = { x: 960, y: 500, w: 330, h: 620 }, fingers = holdingHand(c, P.x, P.y, P.w, P.h, 2310, { sleeve: '#7d8aa6' });
+  handset(c, P.x, P.y, P.w, P.h, -.04, 2311, (g, sx, sy, sw, sh) => {
+    g.save(); g.fillStyle = '#eef2f8'; g.fillRect(sx, sy, sw, sh); g.restore();
+    g.save(); g.fillStyle = '#c9d3e3'; g.fillRect(sx, sy, sw, sh * .12); g.restore();
+    textOn(g, 'Didi', sx + sw / 2, sy + sh * .065, sw * .08, { col: NAVY, weight: 700 });
+    textOn(g, 'TODAY 03:12', sx + sw / 2, sy + sh * .17, sw * .05, { col: CHROME, weight: 600 });
+    // the photo she sent: a dark room, a glass on a table, out of focus
+    const bx = sx + sw * .1, by = sy + sh * .22, bw = sw * .62, bh = sh * .42;
+    g.save(); g.fillStyle = '#ffffff'; g.fill(roundRectPath(bx - 8, by - 8, bw + 16, bh + 16, 14)); g.restore();
+    g.save(); g.beginPath(); g.rect(bx, by, bw, bh); g.clip();
+    const gr = g.createLinearGradient(0, by, 0, by + bh); gr.addColorStop(0, '#2b3550'); gr.addColorStop(1, '#141a2a'); g.fillStyle = gr; g.fillRect(bx, by, bw, bh);
+    g.filter = 'blur(3px)';
+    g.fillStyle = '#7d6a52'; g.fillRect(bx, by + bh * .72, bw, bh * .28);
+    g.fillStyle = 'rgba(207,227,255,.75)'; g.fillRect(bx + bw * .42, by + bh * .38, bw * .16, bh * .36);
+    g.fillStyle = 'rgba(244,196,124,.6)'; g.beginPath(); g.arc(bx + bw * .8, by + bh * .2, bw * .12, 0, TAU); g.fill();
+    g.filter = 'none'; g.restore();
+    textOn(g, 'Delivered', sx + sw * .9, sy + sh * .7, sw * .05, { col: CHROME, weight: 500, align: 'right' });
+    // the reply box, empty
+    g.save(); g.fillStyle = '#ffffff'; g.fill(roundRectPath(sx + sw * .06, sy + sh * .86, sw * .88, sh * .08, sh * .04)); g.restore();
+  });
+  fingers();
+  printFinish(c, .25);
+}
+
 // ---------------------------------------------------------------- day 4
 // Cannot delete: a phone shop counter, a brand-new phone in its box, already ringing.
 function sceneCannotDelete(c) {

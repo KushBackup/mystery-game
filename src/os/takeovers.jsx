@@ -8,6 +8,8 @@ import { Btn } from './ui';
 import { useSyncedReveal, useMyAction } from '../hooks/useKillers';
 import { submitAction } from '../firebase/game';
 import RoleMessage from './RoleMessage';
+import GhostTutorial from './GhostTutorial';
+import { prefetchGhostTutorial } from '../data/ghostTutorial';
 import { narrate } from '../data/packs/index.js';
 import { sfxSting, sfxPing, sfxNightfall, sfxDaybreak, sfxStatic } from './sfx';
 
@@ -147,19 +149,29 @@ export function ChapterCard({ game, pack }) {
 
 /**
  * Taken. The moment your own phone finds out you're dead: the signal dies in
- * static, and that is all it says. What a ghost can still do, the phone shows
- * by doing it (Spirits appears in Messages, Night lights up at night). Shown
+ * static, the card says so, and then the ghost tutorial (GhostTutorial.jsx,
+ * the user's ask on 2026-10-03) shows what a ghost does from now on. Shown
  * once per death, only after the room has seen it on the board (beats.js),
- * never before.
+ * never before; Continue on the last slide (or Skip) marks it seen.
  */
 export function TakenScreen({ me, onDone }) {
   const [lost, setLost] = useState(true);
+  const [tour, setTour] = useState(false);
   useEffect(() => {
     sfxStatic();
+    prefetchGhostTutorial();
     const id = setTimeout(() => setLost(false), 1600);
     return () => clearTimeout(id);
   }, []);
   const banished = me.cause === 'banished';
+  if (tour) {
+    return (
+      // .os-night sets position: relative; the tutorial needs the alarm's full, definite height (its film is sized in cqh).
+      <div className="os-alarm os-night os-night--tut" style={{ position: 'absolute', inset: 0 }}>
+        <GhostTutorial onDone={onDone} />
+      </div>
+    );
+  }
   return (
     <div className="os-alarm overflow-hidden">
       <div className="os-static" style={{ opacity: lost ? 0.45 : 0.12 }} />
@@ -173,7 +185,7 @@ export function TakenScreen({ me, onDone }) {
             <p className="text-[18px] leading-snug mt-4 text-os-foam os-balance">
               {banished ? 'The group voted you out. ' : ''}Your phone is haunted now.
             </p>
-            <div className="mt-7"><Btn tone="dark" onClick={onDone}>Continue</Btn></div>
+            <div className="mt-7"><Btn tone="dark" onClick={() => setTour(true)}>Enter the spirit world</Btn></div>
           </div>
         )}
       </div>

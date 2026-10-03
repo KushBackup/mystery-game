@@ -69,7 +69,9 @@ export default function Portrait({ traits, seed, size = 84, full = false, myster
     const before = shown.current;
     const sized = canvas.width === pw && canvas.height === ph;
     const moving = animate && before && sized && !reduceMotion();
-    const changed = moving ? LAYERS.filter((l) => (before[l] ?? null) !== (traits?.[l] ?? null)) : [];
+    // The family photo wears the shirt's colour, so a new top brushes that on too.
+    const differs = (l) => (before[l] ?? null) !== (traits?.[l] ?? null) || (l === 'siblings' && differs('top'));
+    const changed = moving ? LAYERS.filter(differs) : [];
     const refigure = moving && (before.gender ?? null) !== (traits?.gender ?? null);
     shown.current = traits;
 

@@ -544,12 +544,14 @@ const DRAW = {
   },
 
   ghost: (k) => {
-    k.ghost(110, 30, { s: 1.6 });
-    k.bubble(160, 26, 92, 36, { tail: 'left' });
-    k.text(206, 50, '“shoes”', { size: 15 });
-    k.person(266, 80, { arms: 'ear', face: 'wow', s: 0.9 });
-    k.sparkle(60, 30, 4).sparkle(170, 104, 3).sparkle(40, 110, 3.5);
-    k.text(110, 146, 'still playing', { size: 15 });
+    // A ghost passes a true photo to a living guest; a whispered word floats beside it.
+    k.ghost(78, 30, { s: 1.6 });
+    k.photo(136, 30, 50, 60, { rot: 8, label: 'true' });
+    k.arrow(196, 64, 236, 72, { bend: -0.2 });
+    k.person(272, 80, { arms: 'up', face: 'wow', s: 0.9 });
+    k.text(160, 112, '“Hurry”', { size: 13 });
+    k.sparkle(36, 30, 4).sparkle(214, 104, 3).sparkle(30, 110, 3.5);
+    k.text(160, 146, 'still playing', { size: 15 });
   },
 
   clues: (k) => {

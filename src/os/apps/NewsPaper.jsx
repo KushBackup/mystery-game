@@ -5,6 +5,7 @@ import NewsArt from '../art/NewsArt';
 import { useStack } from '../nav';
 import { markSeen, useSeen } from '../seen';
 import { editionLabel, tickerLines } from '../news';
+import { clueWords } from '../../data/packs/index.js';
 
 /**
  * The paper: what News shows whenever there is no reveal to play.
@@ -23,7 +24,7 @@ import { editionLabel, tickerLines } from '../news';
 const TABS = [['top', 'Top'], ['room', 'The Room'], ['world', 'Panjim']];
 const asList = (v) => (Array.isArray(v) ? v : []);
 
-export default function NewsPaper({ ctx, onBack, backLabel, onBoard }) {
+export default function NewsPaper({ ctx, onBack, backLabel }) {
   const { game, gid, pack, news } = ctx;
   const [tab, setTab] = useState('top');
   const { top: openId, dir, push, pop } = useStack();
@@ -40,7 +41,7 @@ export default function NewsPaper({ ctx, onBack, backLabel, onBoard }) {
     const siblings = news.all.filter((s) => s.section === story.section && s.id !== story.id).slice(0, 3);
     return (
       <AppFrame title={story.outlet.name} onBack={pop} backLabel={TABS.find(([k]) => k === tab)?.[1] ?? 'Paper'} tone="dark" paper enter={dir === 'push' ? 'push' : undefined}>
-        <Article s={story} />
+        <Article s={story} pack={pack} />
         {siblings.length > 0 && (
           <div className="os-news pb-8">
             <p className="os-news__head">More {story.section === 'room' ? 'from the room' : 'in Panjim'}</p>
@@ -89,7 +90,6 @@ export default function NewsPaper({ ctx, onBack, backLabel, onBoard }) {
                 {rest.length > 4 && <div className="px-3 pt-3"><Btn tone="grey" small onClick={() => setTab('world')}>All {news.world.length} stories from Panjim</Btn></div>}
               </>
             )}
-            {onBoard && <div className="px-3 pt-4"><Btn tone="dark" onClick={onBoard}><Glyph name="trophy" size={14} /> Latest board · day {game.board.cycle}</Btn></div>}
           </>
         )}
 
@@ -100,7 +100,6 @@ export default function NewsPaper({ ctx, onBack, backLabel, onBoard }) {
             <>
               <p className="os-news__head">Every morning, every vote</p>
               <StoryList stories={news.room} read={read} onOpen={open} />
-              {onBoard && <div className="px-3 pt-4"><Btn tone="dark" onClick={onBoard}><Glyph name="trophy" size={14} /> Latest board · day {game.board.cycle}</Btn></div>}
             </>
           )
         )}
@@ -198,7 +197,7 @@ function Quiet({ title, line }) {
   );
 }
 
-function Article({ s }) {
+function Article({ s, pack }) {
   return (
     <article className={`os-news os-article ${s.live ? '' : 'os-article--cap'}`}>
       <div className="os-article__top">
@@ -214,9 +213,22 @@ function Article({ s }) {
         <div className="os-article__art"><NewsArt scene={s.art} label={s.cap} /></div>
         {s.cap && <figcaption>{s.cap}</figcaption>}
       </figure>
+      {s.witness && <Witness w={s.witness} pack={pack} />}
       <div className="os-article__body os-selectable">
         {s.body.map((p, i) => <p key={i}>{p}</p>)}
       </div>
     </article>
+  );
+}
+
+/** The witness box: one true clue about the night's hand, printed for the whole room (news.js). */
+function Witness({ w, pack }) {
+  return (
+    <aside className="os-witness" aria-label="Witness statement">
+      <p className="os-witness__kick">{w.head}</p>
+      <p className="os-witness__quote os-selectable">{w.quote}</p>
+      <p className="os-witness__by">{w.by}</p>
+      <p className="os-witness__plain os-selectable">{clueWords(pack, w).plain}</p>
+    </aside>
   );
 }

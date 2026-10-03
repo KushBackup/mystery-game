@@ -176,6 +176,19 @@ const ART = {
       <path d="M35 14c3 1 5 3 5 6M36 8c5 2 8 6 8 12" {...L} strokeWidth={2.2} />
     </>
   ),
+  // A photo handed on: a polaroid tilted out of a ghost's sheet.
+  pass: (
+    <>
+      <path d="M4 42V26a9 9 0 0 1 18 0v16l-3-2.4-3 2.4-3-2.4-3 2.4-3-2.4Z" {...L} strokeWidth={2.3} />
+      <circle cx="10" cy="27" r="1.6" fill="currentColor" />
+      <circle cx="16" cy="27" r="1.6" fill="currentColor" />
+      <g transform="rotate(12 34 18)">
+        <rect x="24" y="6" width="20" height="23" rx="1.6" {...L} />
+        <rect x="27.5" y="9.5" width="13" height="11" fill="currentColor" opacity="0.55" />
+      </g>
+      <path d="M19 18c2-2 4-3 6-3" {...L} strokeWidth={2} strokeDasharray="1 3.4" />
+    </>
+  ),
   // A ballot with one name ringed: the Killers' poll.
   hunt: (
     <>
