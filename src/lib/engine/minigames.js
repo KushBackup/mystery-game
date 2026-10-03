@@ -29,7 +29,7 @@ export const DEFAULT_GAMES = Object.freeze(['word', 'draw', 'run']);
  * Whether the morning's game has anything to show right now: live play, or
  * its just-finished recap (`game.dayGame`, same cycle and kind). Word and
  * Sketch also open during the alarm, because the guest's card is already in
- * their inbox (and on the first Word morning the tutorial plays there). The
+ * their inbox (and on the first Word or Sketch morning the tutorial plays there). The
  * run opens only with the game itself. Everywhere else DEEP BLUE has nothing
  * open, so GameApp locks the screen and the dock icon goes transparent and
  * inert (PhoneOS.jsx), rather than offering a practice round that gives the
@@ -64,15 +64,21 @@ export function gameOfDay(config, cycle) {
   return games[(Math.max(1, cycle) - 1) % games.length];
 }
 
+/** The games DEEP BLUE teaches with a tutorial the first morning they are played. */
+export const TAUGHT = Object.freeze(['word', 'draw']);
+
 /**
- * Whether day `cycle` is the first Word morning of the game. That alarm rings
- * longer (phases.js `alarm_intro`) and DEEP BLUE plays the Word tutorial in it
- * (os/game/WordTutorial.jsx), so the room learns the game just before playing
- * it (user's call, 2026-10-03). With "Run every day" it is never true.
+ * Whether day `cycle` is the first morning of a taught game (Word or Sketch).
+ * That alarm rings longer (phases.js `alarm_intro`) and DEEP BLUE plays the
+ * game's tutorial in it (os/game/WordTutorial.jsx, SketchTutorial.jsx), so the
+ * room learns the game just before playing it (user's calls, 2026-10-03). The
+ * run is never taught; with "Run every day" it is never true.
  */
 export function introDay(config, cycle) {
-  if (!cycle || gameOfDay(config, cycle) !== 'word') return false;
-  for (let c = 1; c < cycle; c++) if (gameOfDay(config, c) === 'word') return false;
+  if (!cycle) return false;
+  const kind = gameOfDay(config, cycle);
+  if (!TAUGHT.includes(kind)) return false;
+  for (let c = 1; c < cycle; c++) if (gameOfDay(config, c) === kind) return false;
   return true;
 }
 
@@ -198,6 +204,16 @@ export function scoreWordDay({ clues = {}, picks = {}, word = '' }) {
   }
   return Object.fromEntries(Object.keys(clues).map((pid) => [pid, { best: fair.has(pid) ? Math.min(CAP, 100 + 50 * (got[pid] ?? 0)) : 0 }]));
 }
+
+/**
+ * What one right guess scores after `ms` on screen: 50, plus up to 50 for
+ * speed. The phone shows it live (os/game/sketchParts.jsx); scoreDrawDay below
+ * is the same sum, and the one the board uses.
+ */
+export const guessPoints = (ms) => {
+  const t = Math.max(0, Math.min(DRAW_SHOW_MS, Number.isFinite(ms) ? ms : DRAW_SHOW_MS));
+  return 50 + Math.round(50 * (1 - t / DRAW_SHOW_MS));
+};
 
 /**
  * The drawing game's board. A guesser earns 50 plus up to 50 for speed for

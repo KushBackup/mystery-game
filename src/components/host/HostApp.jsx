@@ -191,7 +191,7 @@ function narrationFor(game, pack, nameOf) {
     case PHASE.CASTING: return narrate(pack, 'casting');
     case PHASE.NIGHT:
     case PHASE.RECRUIT: return narrate(pack, 'night');
-    // The first Word morning's alarm is longer: the phones teach the game in it.
+    // The first Word or Sketch morning's alarm is longer: the phones teach the game in it.
     case PHASE.ALARM: return introDay(game.config, game.cycle) ? narrate(pack, 'alarmIntro', '', {}, 'alarm') : narrate(pack, 'alarm');
     case PHASE.GAME: return narrate(pack, 'game');
     case PHASE.DAWN: {

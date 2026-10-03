@@ -1,0 +1,86 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Night · the tutorial clips</title>
+<style>body{margin:0;background:#242321;display:grid;place-items:center;min-height:100vh}canvas{max-width:100vw;max-height:100vh;object-fit:contain}</style>
+<canvas id="c"></canvas>
+<script src="core.js"></script>
+<script src="studio.js"></script>
+<script src="cels.js"></script>
+<script src="word-font.js"></script>
+<script src="board-kit.js"></script>
+<script>
+'use strict';
+/* ------------------------------------------------------------------------
+Film brief
+  Subject: the Night app's tutorial (src/data/nightTutorial.js): eight short
+    clips, cut apart and shown one at a time beside the rules, each ending on
+    a held, fully composed frame that is also its still poster. It plays the
+    first time a guest opens Night in a game, and from the "?" in its bar.
+  The night: everyone makes one secret move. The Killers vote in a poll;
+    their pick's score sinks to the bottom of the morning board. Faithful
+    watch a guest (they may see a Killer slip out, about 6 in 10) or dig
+    through the logs (a sure clue photo: one arrival answer of the Killer who
+    struck). The Doctor protects one guest (never the same one twice running).
+    The Detective traces two phones (did one of them strike tonight?). Ghosts
+    whisper one word to a living guest. Results arrive at dawn.
+  Role-neutral: every phone sees every clip. The Killers are hooded shadows
+    with two glints for eyes, never a cast member, so nobody reads the cast's
+    looks (Ada's glasses, Ben's denim) as a hint about real guests.
+  Cast: the morning tutorials' (board-kit.js): Ada, Ben, Cleo, Dev at the
+    café table; Ben digs and sleeps under the Doctor's shield; Cleo holds the
+    shield; Ada watches and hears the whisper; Zed is the ghost (beanie, a
+    sheet for a body). Nobody is hurt: the ring bounces off; nothing graphic.
+  Format: as word.html. 4:3 (1440 x 1080 units), 640 px wide, 24 fps, no
+    sound; everything that matters in the middle 92% (x 58..1382, y 43..1037).
+  Look: the kit's paper, ink and washes, then night laid over it: navy
+    multiplied over the frame, with pools where a lamp, a doorway or a screen
+    lights it (dusk() in night-clips.js). What glows (screens, the shadows'
+    eyes, chalk lettering) is drawn after the dusk, in pale cream or blue.
+  Colour: red only for the Killers' ring, its tally and the "!"; the sun and
+    the lamp are warm light, never os-gold; green nowhere.
+  Exposure: characters on twos with light boil; taps, stamps and pops on ones.
+  Beat sheet (each clip: action, then a held frame that reads on its own)
+    0.00  fall     4.75  four chat at the café table; the lamp clicks off; the
+                         moon is in the window; phones light their faces one
+                         by one; they hunch over them; NIGHT writes on
+    4.75  killers  4.50  two hooded shadows over one phone: a poll of Ada,
+                         Ben, Cleo; each taps Ben (two tally marks); a red
+                         ring closes round his row; their eyes narrow
+    9.25  watch    4.50  Ada peeks over a newspaper; a shadow sneaks behind
+                         the counter to a lit door; her eyes follow; "!",
+                         a dotted line of sight
+   13.75  dig      4.50  Ben at his desk under a lamp; a log curls out of his
+                         phone; a magnifier runs along it, stops; a clue photo
+                         (glasses) pops up; Ben grins
+   18.25  doctor   4.50  Ben asleep; Cleo throws up a shield; a red ring homes
+                         in, clangs off it and fades; Cleo grins
+   22.75  trace    4.50  two phones on the table; a held phone sends a dotted
+                         line to each; they ping; a loop round both;
+                         "yes or no?"
+   27.25  ghost    4.50  Zed the ghost floats among three word cards; picks
+                         HURRY; it drifts to Ada's ear; she sits up
+   31.75  dawn     4.75  the sun comes up in the window, the dark lifts;
+                         phones buzz, everyone wakes; each phone throws up a
+                         result (an eye, a photo, a shield, a word); DAWN
+  Total 36.50 s. Ship: eight clips cut at those boundaries (public/tutorial).
+  Sources: none; everything is drawn here. Patrick Hand: SIL OFL.
+------------------------------------------------------------------------- */
+</script>
+<script src="night-clips.js"></script>
+<script>
+'use strict';
+FONT_READY.then(() => { defineFilm({
+  palette: makePalette({ paper: PAPER, ink: INK, finish: 'flat', washBlend: 'multiply' }, 'doodlePastel'),
+  format: { ar: '4:3', width: 640 },
+  timeline: [
+    { name: 'fall', dur: 4.75, fn: fallClip },
+    { name: 'killers', dur: 4.5, fn: killersClip },
+    { name: 'watch', dur: 4.5, fn: watchClip },
+    { name: 'dig', dur: 4.5, fn: digClip },
+    { name: 'doctor', dur: 4.5, fn: doctorClip },
+    { name: 'trace', dur: 4.5, fn: traceClip },
+    { name: 'ghost', dur: 4.5, fn: ghostClip },
+    { name: 'dawn', dur: 4.75, fn: dawnClip },
+  ],
+}); }).catch(e => { window.__error = String(e); });
+</script>

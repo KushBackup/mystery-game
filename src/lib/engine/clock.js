@@ -43,7 +43,7 @@ const STRETCH = [0.25, 4];
 
 /**
  * A phase's real length in ms, reveal hold included (phases.js phaseTiming).
- * `intro` is the first Word morning, whose alarm rings longer.
+ * `intro` is the first Word or Sketch morning, whose alarm rings longer.
  */
 function lengthOf(phase, durations, kind, intro = false) {
   return phaseMs(phase, durations, kind, intro) + revealLead(phase);

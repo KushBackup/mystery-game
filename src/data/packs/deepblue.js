@@ -46,7 +46,7 @@ export default {
     casting: ['DEEP BLUE has sent you a message. Read it alone.', 'Tell no one what it says.'],
     night: ['Screens dim. The servers hum.', 'Somebody in this room is still awake.'],
     alarm: ['Wake up.', 'Today’s game starts in a moment. Do not come last.'],
-    // The first Word morning: a longer alarm while every phone shows how Word is played.
+    // The first Word or Sketch morning: a longer alarm while every phone shows how the game is played.
     alarmIntro: ['Wake up. Today’s game is new.', 'Open DEEP BLUE. It shows you how to play before it starts.'],
     game: ['Everyone plays today’s game.', 'The board posts when the timer ends.'],
     dawnDeath: ['The board is up.', '{name} came last. The deep has taken them.'],
@@ -195,13 +195,15 @@ export default {
       title: 'WORD',
       rule: 'Post one word that fits. Don’t say the word.',
       alarm: 'Today: WORD.',
-      // The first Word morning (minigames.js introDay), when the tutorial plays.
+      // The first Word morning (minigames.js introDay), when its tutorial plays.
       alarmIntro: 'Today: WORD. It’s new, so DEEP BLUE shows you how first.',
     },
     draw: {
       title: 'SKETCH',
       rule: 'Draw your word. Then guess the others.',
       alarm: 'Today: SKETCH.',
+      // The first Sketch morning (minigames.js introDay), when its tutorial plays.
+      alarmIntro: 'Today: SKETCH. It’s new, so DEEP BLUE shows you how first.',
     },
     run: {
       title: 'THE RUN',

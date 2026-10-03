@@ -13,8 +13,12 @@
 export const BOARD = 256;
 
 // The phone's own colours (src/index.css, --color-os-*), as canvas needs literal values.
-export const INKS = ['#0E1626', '#FF3B30', '#3D8BF2']; // ink, red, sea
+// A stroke stores its ink's index, so the order is fixed: add pens at the end, never in between.
+export const INKS = ['#0E1626', '#FF3B30', '#3D8BF2', '#4CD964', '#FF7A59']; // ink, red, sea, green, coral
+export const INK_NAMES = ['Black', 'Red', 'Blue', 'Green', 'Orange'];
 export const PAPER = '#EAF3FF'; // foam
+// The Sketch board's sketchbook page (os.css .os-sb-*): the Word board's paper.
+export const SKETCHBOOK = '#FFFDF7';
 
 const hex2 = (n) => Math.max(0, Math.min(BOARD - 1, Math.round(n))).toString(16).padStart(2, '0');
 
@@ -36,11 +40,15 @@ export function decode(str) {
   }).filter((s) => s.points.length);
 }
 
-/** Paint strokes onto a 2D context `size` pixels square. */
-export function paint(g, strokes, size) {
+/** Paint strokes onto a 2D context `size` pixels square, on `paper` (or a clear canvas if null). */
+export function paint(g, strokes, size, paper = PAPER) {
   const k = size / BOARD;
-  g.fillStyle = PAPER;
-  g.fillRect(0, 0, size, size);
+  if (paper) {
+    g.fillStyle = paper;
+    g.fillRect(0, 0, size, size);
+  } else {
+    g.clearRect(0, 0, size, size);
+  }
   g.lineCap = 'round';
   g.lineJoin = 'round';
   g.lineWidth = Math.max(2, 3.2 * k);

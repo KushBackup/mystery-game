@@ -747,7 +747,6 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 }
 
 .os-compose__error { flex: 1 0 100%; padding: 0 8px 1px; font-size: 13px; font-weight: 600; color: #c71c12; }
-.os-term .os-compose__error { color: var(--color-os-red); }
 
 .os-pinned {
   flex: 0 0 auto;
@@ -1192,73 +1191,230 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 .os-splash--lift { opacity: 0; visibility: hidden; }
 .os-splash__film { width: 100%; height: 100%; object-fit: cover; display: block; background: #fff; }
 
-/* --- The Night app: every role's Night app wears the same dark skin, so a
-       glance across the table can't tell a Killer's screen from anyone's. ---- */
-.os-term {
+/* --- The Night app (apps/NightApp.jsx, art/NightArt.jsx): a moonlit sky over
+       Panjim on top, the move in glass cards on the night, and an iOS 6
+       toolbar along the bottom that always says the next thing to do. Every
+       role's Night app wears exactly this skin and layout, so a glance across
+       the table can't tell a Killer's screen from anyone's; only small type
+       differs. Blue is choosing (the sea), green is yours and sent, as on
+       the rest of the phone. The lamplight yellow of the windows and the sun
+       is art on this surface, never os-gold (DESIGN_LANGUAGE §II.2). ---- */
+.os-night {
+  --nt-card: linear-gradient(#172a5c, #101e45);
+  --nt-lift: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 1px 0 rgba(0, 0, 0, 0.45), 0 12px 24px -16px rgba(0, 0, 0, 0.9);
+  --nt-soft: #a9bbdb;
+  --nt-label: #8fb2ee;
+  --nt-sun: #ffcf7a;
   position: relative;
   min-height: 100%;
-  padding-bottom: 24px;
-  background-color: #111721;
+  padding-bottom: 28px;
+  color: #eaf3ff;
+  background-color: #070f26;
   background-image:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 4px),
-    radial-gradient(120% 60% at 50% 0%, #1b2740 0%, #111721 70%);
-  color: #dbe6f7;
+    radial-gradient(1px 1px at 22px 34px, rgba(234, 243, 255, 0.35), transparent),
+    radial-gradient(1px 1px at 96px 120px, rgba(234, 243, 255, 0.22), transparent),
+    radial-gradient(1px 1px at 160px 58px, rgba(234, 243, 255, 0.28), transparent),
+    linear-gradient(#081633, #060c1f 70%);
+  background-size: 190px 170px, 190px 170px, 190px 170px, 100% 100%;
+  -webkit-font-smoothing: antialiased;
 }
-.os-term .os-section__head { color: #9fb6d9 !important; text-shadow: 0 -1px 0 #000 !important; }
-.os-term .os-section__foot { color: #8da2c3 !important; }
-.os-term .os-group { background: #1c2535; border-color: #000; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.06); color: #e6eefb; }
-.os-term .os-cell + .os-cell { border-top-color: rgba(255, 255, 255, 0.08); }
-.os-term .os-cell__sub { color: #8da2c3; }
-.os-term button.os-cell:active, .os-term .os-cell--on { background: linear-gradient(#5ee079, #1f9d38); color: #03210b; }
-.os-term .os-cell--on .os-cell__sub, .os-term button.os-cell:active .os-cell__sub { color: #0a3a17; }
-.os-term .os-search { background: #0c121b; border-color: #000; color: #8da2c3; }
-.os-term .os-search input { color: #e6eefb; }
-.os-term .os-btn:not(.os-btn--dark) { background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.08) 50%, rgba(0, 0, 0, 0.06) 51%, rgba(0, 0, 0, 0)), linear-gradient(#5ee079, #1f9d38); border-color: #11691f; color: #03210b; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.3); }
-.os-term .os-bubble { background: #26344d; border-color: #000; color: #e6eefb; }
-.os-term .os-bubble--me { background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0) 52%), #6bdc7e; color: #03210b; }
-.os-term .os-bubble-name, .os-term .os-stamp-time { color: #7fe48e; text-shadow: none; }
-.os-term .os-compose { background: linear-gradient(#2b3548, #151c29); border-top-color: #000; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12); }
-.os-term .os-compose input { background: #0c121b; border-color: #000; color: #e6eefb; box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6); }
+.os-night .os-section__head { color: #9fb6d9 !important; text-shadow: 0 -1px 0 #000 !important; display: flex; align-items: center; }
+.os-night .os-section__foot { color: #8da2c3 !important; text-shadow: none !important; }
+.os-night .os-group { background: rgba(16, 30, 69, 0.92); border-color: #000; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.07); color: #eaf3ff; }
+.os-night .os-cell + .os-cell { border-top-color: rgba(255, 255, 255, 0.07); }
+.os-night .os-cell__sub { color: #8fa3c2; }
+.os-night .os-search { background: #050b1c; border-color: #000; color: #8da2c3; }
+.os-night .os-search input { color: #eaf3ff; }
 
-/* The night card: which night, and what the night is for. */
-.os-nightcard { display: flex; gap: 12px; margin: 14px 10px 0; padding: 14px; border-radius: 12px; background: linear-gradient(#1f2b40, #151d2b); border: 1px solid #000; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 1px 0 rgba(255, 255, 255, 0.06); }
-.os-nightcard__moon { flex: 0 0 auto; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #2f4266, #0c1220); color: #dbe6f7; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18); }
-.os-nightcard__title { font-size: 22px; font-weight: 700; line-height: 1.15; color: #fff; }
-.os-nightcard__line { margin-top: 4px; font-size: 15.5px; line-height: 1.35; color: #dbe6f7; }
-.os-nightcard__foot { margin-top: 8px; font-size: 14px; line-height: 1.3; color: #7fe48e; }
-.os-nightcard__count { margin-top: 8px; font-size: 12.5px; font-weight: 600; color: #8da2c3; }
+/* The help button in the bar: the Word board's round "?". */
+.os-nt-help { width: 32px; justify-content: center; padding: 0; border-radius: 50%; font-size: 17px; font-weight: 700; }
 
-/* A move: a big card that says what it is for and opens the move in full. */
-.os-moves { display: grid; gap: 10px; }
-.os-move { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 12px; text-align: left; border-radius: 12px; border: 1px solid #000; background: #1c2535; color: #e6eefb; font: inherit; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 1px 0 rgba(255, 255, 255, 0.08); cursor: pointer; touch-action: manipulation; transition: background-color 120ms ease; }
-.os-move:active { background: #26344d; }
-.os-move--on { border-color: #1f9d38; box-shadow: inset 0 0 0 1px #5ee079, 0 1px 0 rgba(255, 255, 255, 0.08); }
-.os-move__icon { flex: 0 0 auto; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 11px; color: #03210b; background: linear-gradient(rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.08) 50%, rgba(0, 0, 0, 0.06) 51%, rgba(0, 0, 0, 0)), linear-gradient(#5ee079, #1f9d38); border: 1px solid #11691f; }
-.os-move__icon--lg { width: 64px; height: 64px; border-radius: 15px; }
-.os-move__main { flex: 1 1 auto; min-width: 0; display: block; }
-.os-move__title { display: block; font-size: 18px; font-weight: 700; line-height: 1.2; color: #fff; }
-.os-move__short { display: block; margin-top: 3px; font-size: 14.5px; line-height: 1.3; color: #b4c4dc; }
-.os-move__tag { display: inline-block; margin-top: 7px; padding: 2px 8px; border-radius: 9px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #03210b; background: #6bdc7e; }
-.os-move__chev { flex: 0 0 auto; display: flex; color: #8da2c3; }
+/* The sky. The picture fills the box, anchored to the river; the words sit over the sky part. */
+.os-nt-sky { position: relative; min-height: 250px; overflow: hidden; isolation: isolate; }
+.os-nt-sky__art { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; display: block; }
+.os-nt-sky__text { padding: 14px 16px 84px; }
+.os-nt-sky__kicker {
+  display: inline-flex; align-items: center; min-height: 24px; padding: 0 10px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 700; letter-spacing: 0.02em; font-variant-numeric: tabular-nums;
+  color: #dfe9ff; background: rgba(255, 255, 255, 0.1); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+.os-nt-sky__title { margin-top: 8px; font-size: 38px; font-weight: 200; line-height: 1; letter-spacing: -0.01em; color: #fff; text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5); }
+.os-nt-sky__line { max-width: min(92%, 330px); margin-top: 10px; font-size: 15.5px; line-height: 1.35; color: #d3e0f6; text-wrap: pretty; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6); }
+.os-nt-sky__count { margin-top: 6px; font-size: 12.5px; font-weight: 600; color: #8fa3c2; font-variant-numeric: tabular-nums; }
+.os-nt-sky--day .os-nt-sky__title { font-size: 30px; }
+.os-nt-sky--compact { min-height: 150px; }
+.os-nt-sky--compact .os-nt-sky__text { padding-bottom: 40px; }
+/* A short phone (iPhone 5) keeps the moves above the fold: a lower sky, a smaller title. */
+@media (max-height: 640px) {
+  .os-nt-sky { min-height: 180px; }
+  .os-nt-sky__text { padding-bottom: 50px; }
+  .os-nt-sky__title { margin-top: 6px; font-size: 32px; }
+  .os-nt-sky__line { margin-top: 6px; font-size: 15px; }
+  .os-nt-sky--compact { min-height: 120px; }
+  .os-nt-sky--compact .os-nt-sky__text { padding-bottom: 34px; }
+}
+.os-nt-sky__tw { opacity: 0.3; animation: os-nt-twinkle 4.4s ease-in-out infinite; }
+@keyframes os-nt-twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
 
-/* A move in full: its head, then how it plays out, one labelled row each. */
-.os-movehead { padding: 22px 20px 4px; text-align: center; }
-.os-movehead .os-move__icon { margin: 0 auto; }
-.os-movehead__title { margin-top: 12px; font-size: 24px; font-weight: 700; line-height: 1.15; color: #fff; }
-.os-movehead__short { margin-top: 4px; font-size: 16px; line-height: 1.35; color: #b4c4dc; }
-.os-howto { margin: 16px 10px 0; border-radius: 12px; border: 1px solid #000; background: #1c2535; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); overflow: hidden; }
-.os-howto__row { display: grid; grid-template-columns: 76px 1fr; gap: 10px; padding: 11px 12px; }
-.os-howto__row + .os-howto__row { border-top: 1px solid rgba(255, 255, 255, 0.08); }
-.os-howto dt { padding-top: 2px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #7fe48e; }
-.os-howto dd { margin: 0; font-size: 15px; line-height: 1.38; color: #e6eefb; }
+/* A move's picture: a glossy deep-blue tile, foam lines. A tick when it is yours. */
+.os-nt-art {
+  position: relative; flex: 0 0 auto; display: inline-grid; place-items: center; border-radius: 23%;
+  color: #eaf3ff;
+  background: radial-gradient(circle at 30% 18%, #4277d6, #1b3f8c 58%, #0f275c);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), inset 0 -3px 6px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+.os-nt-art::before {
+  content: ''; position: absolute; inset: 1px 1px 50% 1px; border-radius: 22% 22% 40% 40% / 30% 30% 12% 12%;
+  background: linear-gradient(rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.03));
+  pointer-events: none;
+}
+.os-nt-art svg { position: relative; overflow: visible; }
+.os-nt-art__tick {
+  position: absolute; right: -5px; bottom: -5px; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%;
+  color: #fff; background: linear-gradient(#6fe384, #2fb24a); box-shadow: 0 0 0 2.5px #0d1a3d, 0 2px 4px rgba(0, 0, 0, 0.5);
+}
 
-/* The move is saved. */
-.os-nightdone { margin: 14px 10px 0; padding: 26px 18px 22px; text-align: center; border-radius: 12px; border: 1px solid #000; background: #1c2535; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); }
-.os-nightdone__tick { display: inline-grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; color: #03210b; background: linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.05) 52%, rgba(0, 0, 0, 0) 53%), linear-gradient(#5ee079, #1f9d38); border: 1px solid #11691f; }
-.os-nightdone__kicker { margin-top: 12px; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #7fe48e; }
-.os-nightdone__line { margin-top: 6px; font-size: 19px; font-weight: 700; line-height: 1.3; color: #fff; }
-.os-nightdone__line svg { display: inline-block; margin-right: 2px; vertical-align: -2px; color: #7fe48e; }
-.os-nightdone__sub { margin-top: 10px; font-size: 14.5px; line-height: 1.45; color: #b4c4dc; }
+/* The moves on the list. */
+.os-nt-moves { display: grid; gap: 10px; }
+.os-nt-move {
+  width: 100%; display: flex; align-items: center; gap: 14px; padding: 14px 10px 14px 14px; border: 0; border-radius: 16px;
+  text-align: left; font: inherit; color: #eaf3ff; background: var(--nt-card); box-shadow: var(--nt-lift);
+  cursor: pointer; touch-action: manipulation; transition: scale 120ms ease-out, box-shadow 160ms ease-out;
+}
+.os-nt-move:active { scale: 0.96; }
+.os-nt-move.is-on { box-shadow: inset 0 0 0 1.5px rgba(111, 227, 132, 0.85), var(--nt-lift); }
+.os-nt-move__main { flex: 1 1 auto; min-width: 0; display: block; }
+.os-nt-move__top { display: flex; align-items: flex-start; gap: 8px; }
+.os-nt-move__title { flex: 1 1 auto; min-width: 0; font-size: 18px; font-weight: 700; line-height: 1.2; color: #fff; }
+.os-nt-move__short { display: block; margin-top: 3px; font-size: 14.5px; line-height: 1.32; color: var(--nt-soft); text-wrap: pretty; }
+.os-nt-move__dawn { display: flex; align-items: center; gap: 6px; margin-top: 7px; font-size: 13.5px; font-weight: 600; line-height: 1.25; color: #d7e3f8; }
+.os-nt-move__chev { flex: 0 0 auto; fill: none; stroke: #6f86b3; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.os-nt-pill {
+  flex: 0 0 auto; padding: 3px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; line-height: 1.25; white-space: nowrap;
+  color: #a9cdff; background: rgba(61, 139, 242, 0.2); box-shadow: inset 0 0 0 1px rgba(61, 139, 242, 0.35);
+}
+.os-nt-tag { display: inline-block; margin-top: 8px; padding: 2px 8px; border-radius: 9px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #052b10; background: #6fe384; }
+.os-nt-sun { flex: 0 0 auto; fill: none; stroke: var(--nt-sun); stroke-width: 2.2; stroke-linecap: round; }
+.os-nt-sun circle { fill: var(--nt-sun); stroke: none; }
+.os-nt-moon { flex: 0 0 auto; fill: #dfe9ff; }
+
+/* A move in full: the head card, and its two beats from the moon to the sun. */
+.os-nt-head { margin: 14px 10px 0; padding: 16px 14px 14px; border-radius: 18px; background: var(--nt-card); box-shadow: var(--nt-lift); }
+.os-nt-head__row { display: flex; align-items: center; gap: 14px; }
+.os-nt-head__title { font-size: 21px; font-weight: 700; line-height: 1.15; color: #fff; text-wrap: balance; }
+.os-nt-head__short { margin-top: 4px; font-size: 15px; line-height: 1.32; color: var(--nt-soft); text-wrap: pretty; }
+.os-nt-steps { position: relative; list-style: none; margin: 16px 0 0; padding: 14px 0 0; display: grid; gap: 14px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
+.os-nt-steps::before { content: ''; position: absolute; left: 13px; top: 42px; bottom: 26px; border-left: 2px dotted rgba(223, 233, 255, 0.28); }
+.os-nt-steps__row { position: relative; display: grid; grid-template-columns: 28px 1fr; column-gap: 12px; row-gap: 1px; }
+.os-nt-steps__dot { grid-row: span 2; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #0b1838; box-shadow: inset 0 0 0 1.5px rgba(223, 233, 255, 0.22); }
+.os-nt-steps__label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--nt-label); }
+.os-nt-steps__text { font-size: 15px; line-height: 1.38; color: #e6eefb; text-wrap: pretty; }
+.os-nt-num { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 8px; border-radius: 50%; font-size: 12px; font-weight: 800; color: #dfe9ff; background: rgba(61, 139, 242, 0.32); text-shadow: none; }
+
+/* The rows under the list. */
+.os-nt-more { border-radius: 14px; background: rgba(16, 30, 69, 0.75); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); overflow: hidden; }
+.os-nt-more__row { display: grid; grid-template-columns: 78px 1fr; gap: 10px; padding: 11px 12px; }
+.os-nt-more__row + .os-nt-more__row { border-top: 1px solid rgba(255, 255, 255, 0.07); }
+.os-nt-more dt { padding-top: 2px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nt-label); }
+.os-nt-more dd { margin: 0; font-size: 15px; line-height: 1.38; color: #dbe6f7; text-wrap: pretty; }
+
+/* The toolbar along the bottom: the next thing to do, then who it is for and Confirm. */
+.os-nt-bar {
+  flex: 0 0 auto; display: flex; align-items: center; gap: 10px; min-height: 64px;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(#1f2c4a, #0d1427); border-top: 1px solid #000; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+.os-nt-bar__hint { flex: 1; text-align: center; font-size: 15.5px; font-weight: 600; color: #a9bbdb; text-shadow: 0 -1px 0 #000; }
+.os-nt-bar__who { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; animation: os-nt-in 200ms ease-out; }
+.os-nt-bar__faces { flex: 0 0 auto; display: flex; }
+.os-nt-bar__faces > * + * { margin-left: -10px; }
+.os-nt-bar__faces .os-face { box-shadow: 0 0 0 2px #121a30; }
+.os-nt-bar__label { min-width: 0; font-size: 16.5px; font-weight: 700; line-height: 1.2; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.os-nt-bar__label small { display: block; margin-top: 2px; font-size: 12.5px; font-weight: 600; color: #a9bbdb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.os-nt-go {
+  flex: 0 0 auto; min-height: 44px; padding: 0 20px; border-radius: 10px; border: 1px solid #1d7a31;
+  font: inherit; font-size: 17px; font-weight: 700; color: #fff; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.35);
+  background: linear-gradient(rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.08) 50%, rgba(0, 0, 0, 0.06) 51%, rgba(0, 0, 0, 0)), linear-gradient(#6fe384, #2fb24a);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  cursor: pointer; touch-action: manipulation; transition: scale 120ms ease-out;
+}
+.os-nt-go:active { scale: 0.96; }
+@keyframes os-nt-in { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
+
+/* The sealed move. */
+.os-nt-sealed {
+  margin: 16px 10px 0; padding: 26px 18px 22px; text-align: center; border-radius: 20px;
+  background: radial-gradient(120% 70% at 50% 0%, rgba(111, 227, 132, 0.1), transparent 60%), var(--nt-card); box-shadow: var(--nt-lift);
+}
+.os-nt-sealed__pic { display: inline-flex; align-items: center; }
+.os-nt-sealed__face { margin-left: -14px; box-shadow: 0 0 0 3px #13224b, 0 4px 10px rgba(0, 0, 0, 0.5); }
+.os-nt-sealed__face + .os-nt-sealed__face { margin-left: -18px; }
+.os-nt-sealed__kicker { margin-top: 16px; font-size: 12px; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: #6fe384; }
+.os-nt-sealed__line { margin-top: 6px; font-size: 20px; font-weight: 700; line-height: 1.3; color: #fff; text-wrap: balance; }
+.os-nt-sealed__sub { margin-top: 8px; font-size: 15px; line-height: 1.45; color: var(--nt-soft); text-wrap: pretty; }
+.os-nt-change {
+  margin-top: 18px; min-height: 44px; padding: 0 18px; border: 0; border-radius: 10px;
+  font: inherit; font-size: 16px; font-weight: 600; color: #dfe9ff; background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+  cursor: pointer; touch-action: manipulation; transition: scale 120ms ease-out, background-color 120ms ease-out;
+}
+.os-nt-change:active { scale: 0.96; background-color: rgba(255, 255, 255, 0.14); }
+.os-nt-sealed.is-fresh { animation: os-nt-seal 420ms var(--ease-enter); }
+.os-nt-sealed.is-fresh .os-nt-art__tick { animation: os-nt-tick 560ms cubic-bezier(0.2, 0, 0, 1); }
+@keyframes os-nt-seal { from { opacity: 0; scale: 0.94; translate: 0 10px; } to { opacity: 1; scale: 1; translate: 0 0; } }
+/* The tick waits inside its own keyframes (never animation-delay: Lessons 2026-10-02). */
+@keyframes os-nt-tick { 0%, 40% { opacity: 0; scale: 0.25; filter: blur(4px); } 100% { opacity: 1; scale: 1; filter: blur(0); } }
+
+/* The Killers' partners. */
+.os-nt-partners { list-style: none; margin: 0; padding: 0 0 2px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.os-nt-partners::-webkit-scrollbar { display: none; }
+.os-nt-partner { flex: 0 0 auto; display: flex; align-items: center; gap: 9px; max-width: 220px; padding: 6px 14px 6px 6px; border-radius: 999px; background: rgba(16, 30, 69, 0.92); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
+.os-nt-partner b { display: block; font-size: 15px; font-weight: 700; line-height: 1.2; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.os-nt-partner small { display: block; font-size: 12.5px; line-height: 1.25; color: #8fa3c2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.os-nt-partner small.is-in { color: #a9cdff; font-weight: 600; }
+.os-nt-alone { padding: 2px 4px; font-size: 15px; line-height: 1.4; color: var(--nt-soft); }
+
+/* A ghost's words, then the guest. */
+.os-nt-words { display: flex; flex-wrap: wrap; gap: 8px; }
+.os-nt-word {
+  min-height: 40px; padding: 0 15px; border: 0; border-radius: 999px; font: inherit; font-size: 16px; font-weight: 600;
+  color: #dfe9ff; background: rgba(255, 255, 255, 0.07); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+  cursor: pointer; touch-action: manipulation; transition: scale 120ms ease-out, background-color 120ms ease-out;
+}
+.os-nt-word:active { scale: 0.96; }
+.os-nt-word.is-on { color: #fff; background: linear-gradient(#4a9bf5, #0b6fe3); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
+.os-nt-step2 { scroll-margin-top: 8px; transition: opacity 200ms ease-out; }
+.os-nt-step2.is-waiting { opacity: 0.45; }
+
+/* The tutorial on the night sky (Tutorial.jsx tone="night"). */
+.os-night--tut {
+  --wb-ink: #eaf3ff;
+  --wb-soft: #a9bbdb;
+  --wb-paper: #fbf8f0;
+  --wb-card: rgba(255, 255, 255, 0.08);
+  --wb-hand: 'Patrick Hand', 'Noteworthy', 'Marker Felt', 'Segoe Print', 'Comic Sans MS', cursive;
+  display: flex; flex-direction: column; padding-bottom: 0;
+}
+.os-wt--night .os-wt__stage { justify-content: center; }
+.os-wt--night .os-wt__dots li { background: rgba(234, 243, 255, 0.2); }
+.os-wt--night .os-wt__dots li.is-past { background: rgba(234, 243, 255, 0.45); }
+.os-wt--night .os-wt__dots li.is-on { background: #eaf3ff; }
+.os-wt--night .os-wt__skip { color: #8fb9ff; }
+.os-wt--night .os-wt__film { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12), 0 16px 30px -14px rgba(0, 0, 0, 0.95); }
+.os-wt--night .os-wt__title { color: #fff; }
+.os-wt--night .os-wt__line { color: #c9d8f2; }
+.os-wt--night .os-wt__back { background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); }
+.os-nt-ready__fan { position: relative; width: 250px; height: 118px; margin-bottom: 8px; }
+.os-nt-ready__card {
+  position: absolute; left: 50%; top: 22px; margin-left: -29px;
+  rotate: var(--r); translate: var(--x) var(--y);
+  animation: os-nt-fan 520ms var(--ease-enter) both;
+}
+@keyframes os-nt-fan { from { opacity: 0; rotate: 0deg; translate: 0 18px; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .os-nt-sky__tw, .os-nt-bar__who, .os-nt-sealed.is-fresh, .os-nt-sealed.is-fresh .os-nt-art__tick, .os-nt-ready__card { animation: none; }
+  .os-nt-sky__tw { opacity: 0.6; }
+}
 
 /* --- Taken: the signal dies. ------------------------------------------------- */
 .os-static {
@@ -1966,4 +2122,227 @@ button.os-field:active .os-field__label, button.os-field:active .os-field__ok, b
 @media (prefers-reduced-motion: reduce) {
   .os-wb-card__turn, .os-wb-note, .os-wb-note.is-flying, .os-wb-steps__pill, .os-wt__dots li { transition: none; }
   .os-wb-note.is-fresh, .os-wb-note__star, .os-wb-reveal__word--stamp, .os-wt__stage { animation: none; }
+}
+
+/* ------------------------------------------------- 24. The Sketch board (paper) */
+/* SKETCH is played on the Word board's paper (user's call, 2026-10-03): a
+   spiral sketchbook page to draw on, felt-tip pens, and every drawing as a
+   polaroid. os/game/DrawGame.jsx, sketchParts.jsx, SketchTutorial.jsx. It sits
+   inside `.os-wb`, so it borrows its ink, paper, hand and lift. A polaroid's
+   tilt comes from the drawer's id, never their role. Gold stays points only:
+   the stars, the score and the live "+N". */
+
+/* The waiting card: the game's name and its three steps, drawn. */
+.os-sb-hello {
+  padding: 12px 12px 14px; border-radius: 14px; text-align: center;
+  background: var(--wb-card); box-shadow: var(--wb-lift);
+}
+.os-sb-hello__title { font-family: var(--wb-hand); font-size: 44px; line-height: 1; }
+.os-sb-how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; list-style: none; margin: 10px 0 0; padding: 0; }
+.os-sb-how li { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+.os-sb-how svg { width: 34px; height: 34px; margin-bottom: 2px; fill: none; stroke: var(--wb-ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.os-sb-how .os-wb-star { width: 34px; height: 34px; }
+.os-sb-how .os-wb-star path { stroke-width: 1.4; }
+.os-sb-how b { font-family: var(--wb-hand); font-size: 22px; font-weight: 400; line-height: 1; }
+.os-sb-how span { font-size: 12px; font-weight: 600; line-height: 1.2; color: var(--wb-soft); text-wrap: balance; }
+
+/* Drawing: the card, the sketchbook, the pens. */
+.os-sb-draw { display: flex; flex-direction: column; gap: 12px; }
+.os-sb-book { display: flex; justify-content: center; }
+.os-sb-book__page {
+  position: relative; padding: 18px 10px 10px; border-radius: 6px 6px 14px 14px;
+  background-color: var(--wb-card);
+  background-image: radial-gradient(rgba(36, 50, 79, 0.13) 1px, transparent 1.3px);
+  background-size: 16px 16px; background-position: 2px 10px;
+  box-shadow: 0 0 0 1px rgba(36, 50, 79, 0.08), var(--wb-lift);
+}
+/* The spiral: a row of rings along the top edge. */
+.os-sb-book__rings {
+  position: absolute; top: -7px; left: 14px; right: 14px; height: 16px; pointer-events: none;
+  background-image: radial-gradient(circle at 50% 50%, transparent 3.2px, #8a93a6 3.6px, #c9ced8 5px, transparent 5.6px);
+  background-size: 18px 16px; background-repeat: space no-repeat;
+}
+.os-sb-book__pad { display: block; touch-action: none; cursor: crosshair; }
+.os-sb-book__hint {
+  position: absolute; inset: 18px 10px 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none;
+  font-family: var(--wb-hand); font-size: 26px; line-height: 1.1; text-align: center; color: rgba(36, 50, 79, 0.22);
+}
+.os-sb-book__hint small { display: block; font-size: 17px; }
+
+.os-sb-tray {
+  display: flex; align-items: flex-end; justify-content: space-between; gap: 8px;
+  padding: 0 4px; border-radius: 12px; overflow: hidden;
+  background: var(--wb-card); box-shadow: inset 0 0 0 1.5px rgba(36, 50, 79, 0.16);
+}
+.os-sb-pens { display: flex; align-items: flex-end; }
+/* A pen sits low in the tray; the chosen one stands up and leans. */
+.os-sb-pen {
+  display: flex; align-items: flex-end; justify-content: center; width: 36px; height: 64px; padding: 0; border: 0; background: none;
+  cursor: pointer; touch-action: manipulation;
+}
+.os-sb-pen__svg { display: block; translate: 0 18px; transition: translate 160ms var(--ease-land), rotate 160ms ease-out, scale 90ms ease-out; }
+.os-sb-pen.is-on .os-sb-pen__svg { translate: 0 2px; rotate: -8deg; }
+.os-sb-pen:active .os-sb-pen__svg { scale: 0.96; }
+.os-sb-tools { display: flex; gap: 0; align-self: center; }
+.os-sb-tool {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  min-width: 44px; min-height: 52px; padding: 2px 2px; border: 0; border-radius: 10px; background: none;
+  font: inherit; font-size: 12px; font-weight: 700; color: var(--wb-ink); cursor: pointer; touch-action: manipulation;
+  transition: scale 90ms ease-out, background-color 150ms ease-out, color 150ms ease-out;
+}
+.os-sb-tool svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.os-sb-tool:active:not(:disabled) { scale: 0.96; }
+.os-sb-tool:disabled { opacity: 0.35; cursor: default; }
+.os-sb-tool.is-sure { color: #fff; background: var(--color-os-red); }
+
+/* A drawing as a polaroid. */
+.os-sb-pol {
+  position: relative; display: inline-flex; flex-direction: column; align-items: center; margin: 0;
+  padding: 9px 9px 8px; border: 0; border-radius: 3px; background: #fff; color: var(--wb-ink); font: inherit;
+  rotate: var(--tilt, 0deg); box-shadow: 0 0 0 1px rgba(36, 50, 79, 0.06), var(--wb-lift);
+}
+.os-sb-pol__ink { display: block; border-radius: 1px; }
+.os-sb-pol__cap { display: flex; flex-direction: column; align-items: center; max-width: 100%; padding-top: 6px; line-height: 1.1; }
+.os-sb-pol__cap b { font-family: var(--wb-hand); font-size: 24px; font-weight: 400; overflow-wrap: anywhere; text-align: center; }
+.os-sb-pol__cap span { max-width: 100%; font-family: var(--wb-hand); font-size: 18px; color: var(--wb-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.os-sb-pol__cap b + span { font-family: var(--font-screen); font-size: 12px; font-weight: 600; }
+.os-sb-pol__pin { top: 5px; right: 6px; }
+.os-sb-pol--open { cursor: pointer; touch-action: manipulation; transition: scale 110ms ease-out, rotate 180ms ease-out; }
+.os-sb-pol--open:active { scale: 0.96; rotate: 0deg; }
+/* The next drawing is dealt onto the stage (never the first, so nothing moves on open). */
+.os-sb-pol--deal { animation: os-sb-deal 260ms var(--ease-land); }
+
+.os-sb-stamp {
+  position: absolute; top: 38%; left: 50%; display: flex; align-items: center; gap: 6px; padding: 6px 12px 6px 8px;
+  translate: -50% -50%; rotate: -8deg; border-radius: 10px;
+  background: #fff; box-shadow: inset 0 0 0 3px var(--color-os-green), 0 6px 14px -6px rgba(36, 50, 79, 0.6);
+  font-family: var(--wb-hand); font-size: 28px; line-height: 1; white-space: nowrap;
+  animation: os-sb-stamp 300ms var(--ease-land);
+}
+.os-sb-stamp b { padding: 2px 8px; border-radius: 999px; font-family: var(--font-screen); font-size: 18px; font-weight: 800; font-variant-numeric: tabular-nums; background: var(--color-os-gold); color: var(--wb-ink); }
+.os-sb-timeup {
+  position: absolute; top: 38%; left: 50%; translate: -50% -50%; rotate: 6deg; padding: 4px 14px; border-radius: 10px;
+  font-family: var(--wb-hand); font-size: 34px; line-height: 1; color: var(--color-os-red);
+  background: #fff; box-shadow: inset 0 0 0 3px var(--color-os-red);
+  animation: os-sb-stamp 260ms var(--ease-land);
+}
+
+/* The speed bar: the pencil line running down, and what a right guess earns now. */
+.os-sb-speed { display: flex; align-items: center; gap: 10px; }
+.os-sb-speed__track { flex: 1; height: 8px; border-radius: 999px; background: rgba(36, 50, 79, 0.1); overflow: hidden; }
+.os-sb-speed__track i { display: block; height: 100%; border-radius: inherit; background: var(--wb-ink); transform-origin: left center; transition: scale 200ms linear; }
+.os-sb-speed__pts {
+  min-width: 52px; padding: 3px 9px; border-radius: 999px; text-align: center;
+  font-size: 16px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--wb-ink); background: var(--color-os-gold);
+}
+
+/* The guess box: a sticky note you type on, and the misses crossed out under it. */
+.os-sb-guess__row { display: flex; gap: 8px; align-items: stretch; }
+.os-sb-guess__pad {
+  flex: 1; min-width: 0; display: block; padding: 6px 12px 8px; border-radius: 3px 3px 12px 3px; cursor: text;
+  font-family: var(--wb-hand); background: #d9f5e1; box-shadow: var(--wb-lift);
+}
+.os-sb-guess__input {
+  display: block; width: 100%; padding: 2px 0; border: 0; border-bottom: 2px dashed rgba(36, 50, 79, 0.35); border-radius: 0;
+  background: transparent; color: var(--wb-ink); caret-color: var(--color-os-sea); outline: none;
+  font-family: var(--wb-hand); font-size: 28px; line-height: 1.15; user-select: text; -webkit-user-select: text;
+  transition: border-color 150ms ease-out;
+}
+.os-sb-guess__input::placeholder { color: rgba(36, 50, 79, 0.35); }
+.os-sb-guess__input:focus { border-bottom-style: solid; border-bottom-color: var(--color-os-sea); }
+.os-sb-guess__input:focus-visible { outline: none !important; }
+.os-sb-guess__go {
+  flex: 0 0 auto; min-width: 76px; min-height: 48px; padding: 0 14px; border: 0; border-radius: 12px;
+  font: inherit; font-size: 17px; font-weight: 700; color: #fff; background: var(--wb-ink); cursor: pointer; touch-action: manipulation;
+  box-shadow: var(--wb-lift); transition: scale 90ms ease-out, opacity 150ms ease-out;
+}
+.os-sb-guess__go:active:not(:disabled) { scale: 0.96; }
+.os-sb-guess__go:disabled { opacity: 0.4; cursor: default; }
+.os-sb-guess__under { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-top: 4px; }
+.os-sb-guess__under .os-sb-pass { flex: 0 0 auto; margin-top: -4px; }
+.os-sb-guess__misses { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; gap: 0 14px; min-height: 30px; margin: 2px 0 0; padding: 0 4px; list-style: none; }
+.os-sb-guess__misses li {
+  font-family: var(--wb-hand); font-size: 22px; line-height: 1.2; color: rgba(36, 50, 79, 0.6);
+  text-decoration: line-through; text-decoration-color: var(--color-os-red); text-decoration-thickness: 2.5px;
+}
+.os-sb-guess__misses li:first-child { animation: os-sb-drop 220ms var(--ease-land); }
+
+/* Today's drawings to guess, as a strip of frames. */
+.os-sb-strip { display: flex; gap: 5px; list-style: none; margin: 0; padding: 0; }
+.os-sb-strip__slot {
+  display: grid; place-items: center; width: 26px; height: 26px; border-radius: 5px;
+  font-size: 13px; font-weight: 800; color: var(--color-os-red); background: #fff;
+  box-shadow: 0 0 0 1px rgba(36, 50, 79, 0.12), 0 2px 4px -2px rgba(36, 50, 79, 0.5);
+}
+.os-sb-strip__slot.is-now { box-shadow: 0 0 0 2.5px var(--wb-ink); }
+.os-sb-strip__slot.is-next { background: transparent; box-shadow: inset 0 0 0 1.5px rgba(36, 50, 79, 0.25); }
+.os-sb-strip__slot.is-miss { background: rgba(255, 255, 255, 0.6); }
+
+.os-sb-guessing { display: flex; flex-direction: column; gap: 10px; }
+.os-sb-guessing__top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.os-sb-score {
+  min-width: 56px; padding: 3px 12px; border-radius: 999px; text-align: center;
+  font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--wb-ink); background: var(--color-os-gold);
+}
+.os-sb-stage { display: flex; justify-content: center; padding: 4px 0; }
+.os-sb-pass:disabled { opacity: 0.4; cursor: default; }
+
+.os-sb-done { display: flex; flex-direction: column; align-items: center; gap: 12px; padding-top: 4px; text-align: center; }
+.os-sb-done .os-wb-head { margin: 0; }
+.os-sb-done__score {
+  padding: 4px 22px; border-radius: 999px; font-size: 44px; font-weight: 800; line-height: 1.1;
+  font-variant-numeric: tabular-nums; color: var(--wb-ink); background: var(--color-os-gold); box-shadow: var(--wb-lift);
+}
+.os-sb-done__line { font-family: var(--wb-hand); font-size: 21px; line-height: 1.2; text-wrap: balance; }
+
+.os-sb-waiting { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 28px 12px; text-align: center; }
+.os-sb-waiting p { font-family: var(--wb-hand); font-size: 26px; }
+.os-sb-waiting span { font-size: 14px; color: var(--wb-soft); }
+.os-sb-wiggle { width: 44px; height: 44px; fill: none; stroke: var(--wb-ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; animation: os-sb-wiggle 1.4s ease-in-out infinite; transform-origin: 20% 80%; }
+
+/* After the board: everyone's polaroids, with their words. */
+.os-sb-wall { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 10px; list-style: none; margin: 0; padding: 4px 0 8px; }
+.os-sb-wall li { display: flex; justify-content: center; min-width: 0; }
+.os-sb-wall .os-sb-pol { max-width: 100%; }
+.os-sb-big { position: absolute; inset: 0; z-index: 50; display: grid; place-items: center; padding: 16px; }
+.os-sb-big__scrim { position: absolute; inset: 0; border: 0; background: rgba(14, 22, 38, 0.55); animation: os-fade 180ms ease both; cursor: default; }
+.os-sb-big__card {
+  position: relative; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 12px 12px 10px;
+  border-radius: 4px; background: #fff; color: #24324f; box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.6);
+  animation: os-sb-deal 240ms var(--ease-land);
+}
+.os-sb-big__card .os-sketch { max-width: calc(100vw - 56px); height: auto !important; aspect-ratio: 1; }
+.os-sb-big__card figcaption { display: flex; flex-direction: column; align-items: center; padding-top: 8px; }
+.os-sb-big__card b { font-family: 'Patrick Hand', 'Noteworthy', 'Marker Felt', cursive; font-size: 32px; font-weight: 400; line-height: 1.1; }
+.os-sb-big__card span { font-size: 14px; font-weight: 600; color: #4c566c; }
+
+/* PENS DOWN: the drawing step ends under your eyes. */
+.os-sb-down {
+  position: absolute; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  background: rgba(251, 248, 240, 0.9); color: #24324f; pointer-events: none;
+}
+.os-sb-down__stamp {
+  padding: 4px 18px; border-radius: 12px; rotate: -6deg;
+  font-family: 'Patrick Hand', 'Noteworthy', 'Marker Felt', cursive; font-size: 54px; line-height: 1.05;
+  box-shadow: inset 0 0 0 4px #24324f; animation: os-wb-stamp-big 380ms var(--ease-land);
+}
+.os-sb-down__pol { animation: os-sb-shrink 520ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+.os-sb-practice .os-sb-stage { padding: 10px 0 6px; }
+.os-sb-practice .os-sb-speed { margin-bottom: 10px; }
+.os-sb-practice__again { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+/* A short phone: the title says enough, so the drawing and the guess box keep the room. */
+@container (max-height: 520px) {
+  .os-sb-practice > .os-wt__line { display: none; }
+}
+
+@keyframes os-sb-deal { from { opacity: 0; scale: 0.92; translate: 24px 0; } to { opacity: 1; scale: 1; translate: 0 0; } }
+@keyframes os-sb-stamp { from { opacity: 0; scale: 1.8; } to { opacity: 1; scale: 1; } }
+@keyframes os-sb-drop { from { opacity: 0; translate: 0 -8px; } to { opacity: 1; translate: 0 0; } }
+@keyframes os-sb-shrink { from { opacity: 0; scale: 1.7; } 40% { opacity: 1; } to { opacity: 1; scale: 1; } }
+@keyframes os-sb-wiggle { 0%, 100% { rotate: -6deg; } 50% { rotate: 6deg; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .os-sb-pen__svg, .os-sb-speed__track i, .os-sb-pol--open, .os-sb-tool { transition: none; }
+  .os-sb-pol--deal, .os-sb-stamp, .os-sb-timeup, .os-sb-guess__misses li:first-child, .os-sb-big__card, .os-sb-down__stamp, .os-sb-down__pol, .os-sb-wiggle { animation: none; }
 }

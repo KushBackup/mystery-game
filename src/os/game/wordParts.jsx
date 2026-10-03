@@ -140,16 +140,16 @@ export function PickTray({ used, total = 3, line, shake = 0 }) {
 
 const PILLS = [['read', 'Read'], ['clue', 'Clue'], ['pick', 'Pick']];
 
-/** Where the room is: Read · Clue · Pick, and the time left on this step (or until the cards). */
-export function StepPills({ step, left, hot = false, waitLabel = '' }) {
-  const at = PILLS.findIndex(([id]) => id === step);
+/** Where the room is: Read · Clue · Pick (or `pills`), and the time left on this step (or until it starts). */
+export function StepPills({ step, left, hot = false, waitLabel = '', pills = PILLS }) {
+  const at = pills.findIndex(([id]) => id === step);
   const done = step === 'done';
   const mm = Math.floor(left / 60);
   const ss = String(left % 60).padStart(2, '0');
   return (
     <div className={`os-wb-steps ${hot && left <= 10 && left > 0 ? 'os-wb-steps--hot' : ''}`}>
       <ol className="os-wb-steps__list">
-        {PILLS.map(([id, label], i) => (
+        {pills.map(([id, label], i) => (
           <li key={id} className={`os-wb-steps__pill ${i === at ? 'is-on' : ''} ${done || (at >= 0 && i < at) ? 'is-past' : ''}`} aria-current={i === at ? 'step' : undefined}>
             {label}
           </li>

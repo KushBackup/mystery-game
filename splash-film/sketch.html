@@ -1,0 +1,72 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Sketch · the tutorial clips</title>
+<style>body{margin:0;background:#242321;display:grid;place-items:center;min-height:100vh}canvas{max-width:100vw;max-height:100vh;object-fit:contain}</style>
+<canvas id="c"></canvas>
+<script src="core.js"></script>
+<script src="studio.js"></script>
+<script src="cels.js"></script>
+<script src="word-font.js"></script>
+<script src="board-kit.js"></script>
+<script>
+'use strict';
+/* ------------------------------------------------------------------------
+Film brief
+  Subject: the in-app tutorial for SKETCH, the second morning game. Six short
+    clips, cut apart and shown one at a time beside the rules, each ending on
+    a held, fully composed frame that also serves as its still poster. The
+    sequel to word.html: same paper, same cast, same first and last beats.
+  The game: every living guest (Killers too: Sketch has no roles in it) gets
+    a different secret word and draws it with a finger for 45 seconds. Then
+    they guess other people's drawings by typing, 15 seconds each, up to six.
+    A right guess scores 50 plus up to 50 for speed; a drawing scores its
+    drawer 30 each time someone names it. Lowest score dies; skipping scores 0.
+  The words, everywhere: TEAPOT (Ada), PENGUIN (Ben), CUPCAKE (Cleo),
+    WINDMILL (Dev). None is a live draw word (src/data/packs/*.js drawWords).
+    The teapot is the practice slide's teapot (src/data/sketchTutorial.js).
+    Ben's penguin is comically bad, and still everyone gets it.
+  Tone: playful, never graphic. LOWEST is a rubber stamp, nothing more.
+  Format: as word.html. 4:3 (1440 x 1080 units), 640 px wide, 24 fps, no
+    sound; everything that matters in the middle 92% (x 58..1382, y 43..1037).
+  Look: as word.html (board-kit.js). The drawings the guests make are phone
+    drawings: flat round-capped lines in the phone's pen inks (strokes.js
+    INKS), on the cream sketchbook page, never boiled.
+  Colour: gold only for stars and points, red only for the X, a wrong guess
+    and LOWEST, green only for the Correct stamp's rim. The guests' own
+    drawings are the exception: they are drawn with the phone's five pens.
+  Exposure: characters on twos with light boil; stamps, flips and typing on
+    ones; the drawings draw on continuously (they are the phone's own lines).
+  Beat sheet (each clip: action, then a ~1.2 s hold that reads on its own)
+    0.00  wake   5.50  as Word's clip 1: asleep, buzz, jolt, phones;
+                       SKETCH writes itself on
+    5.50  cards  5.00  four tent cards spin over one by one: TEAPOT,
+                       PENGUIN, CUPCAKE, WINDMILL, each with its doodle; all
+                       four grin; Ada puts a finger to her lips (shh)
+   10.50  draw   5.50  four sketchbook pages; everyone draws at once while a
+                       stopwatch runs 0:45 > 0:00; Ben sweats; PENS DOWN!
+   16.00  guess  5.50  Ben's penguin on a polaroid; Ada types "bird": red
+                       strike, it drops away; "penguin": CORRECT, a star,
+                       +73, while the speed tag runs down from +100
+   21.50  score  5.00  Cleo, Dev and Ada each shout "penguin!"; three +30
+                       tags fly to Ben, whose tag counts 0 > 90; he grins
+   26.50  board  4.75  THE BOARD, Zed asleep on 0; LOWEST thumps down
+  Total 31.25 s. Ship: six clips cut at those boundaries (public/tutorial).
+  Sources: none; everything is drawn here. Patrick Hand: SIL OFL.
+------------------------------------------------------------------------- */
+</script>
+<script src="sketch-clips.js"></script>
+<script>
+'use strict';
+FONT_READY.then(() => { defineFilm({
+  palette: makePalette({ paper: PAPER, ink: INK, finish: 'flat', washBlend: 'multiply' }, 'doodlePastel'),
+  format: { ar: '4:3', width: 640 },
+  timeline: [
+    { name: 'wake', dur: 5.5, fn: wakeClip },
+    { name: 'cards', dur: 5.0, fn: cardsClip },
+    { name: 'draw', dur: 5.5, fn: drawClip },
+    { name: 'guess', dur: 5.5, fn: guessClip },
+    { name: 'score', dur: 5.0, fn: scoreClip },
+    { name: 'board', dur: 4.75, fn: boardClip },
+  ],
+}); }).catch(e => { window.__error = String(e); });
+</script>

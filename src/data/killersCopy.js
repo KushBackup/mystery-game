@@ -66,8 +66,8 @@ export function nowLine({ phase, status, hasActed, cycle, minigame = 'run', pack
     case 'recruit':
       return hasActed ? 'Done for tonight.' : `Night ${cycle}.`;
     case 'alarm':
-      // The first Word morning (minigames.js introDay): the game is new and DEEP BLUE teaches it.
-      if (intro && minigame === 'word') return `Wake up. ${title} is new. Open DEEP BLUE to see how it works.`;
+      // The first Word or Sketch morning (minigames.js introDay): the game is new and DEEP BLUE teaches it.
+      if (intro) return `Wake up. ${title} is new. Open DEEP BLUE to see how it works.`;
       return until ? `Wake up. Play ${title} before ${until}.` : 'Wake up.';
     case 'game':
       return until ? `${title} is open until ${until}.` : `${title} has started.`;
@@ -162,24 +162,50 @@ export const DELIVERY_TAG = {
  * and why a player would pick it. Every line here must stay true to
  * engine/night.js and engine/morning.js; change them together.
  *
- * `how` rows are [label, text]. 25 words or fewer per text.
+ * `how` rows are [label, text]. 25 words or fewer per text. The first two
+ * rows (Tonight, At dawn) sit above the guest list; the rest sit below it as
+ * "Good to know". `odds` and `dawn` are the move card's summary on the list,
+ * `verb` the confirm bar ("Watch Priya").
+ *
+ * Big type on a Night screen is the same on every phone ("Night 2"); only the
+ * small lines differ by role, so a glance across the table reads nothing.
  */
 export const NIGHT = {
   title: (cycle) => `Night ${cycle}`,
+  /** The hero's countdown: minutes, then seconds; never m:ss (it would read as a time of day). */
+  left: (s) => (s >= 60 ? `${Math.ceil(s / 60)} min left` : s > 0 ? `${s} s left` : 'Ending'),
   day: {
     title: 'Not night yet',
     line: 'Night moves open when night falls. DEEP BLUE will ping you.',
   },
-  faithful: {
-    line: 'Each night, one Killer goes out to strike. Pick one move to hunt them.',
-    foot: 'Make no move and you dig through the logs.',
-    head: 'Your move tonight',
+  over: {
+    kicker: 'Locked in',
+    line: 'The night is over. Your result arrives at dawn.',
+    none: 'You made no move, so you dug through the logs.',
+    noneGhost: 'No whisper tonight. Your clue still arrives at dawn.',
   },
+  faithful: {
+    line: 'One Killer is out tonight. Pick one move to hunt them.',
+    foot: 'No move? You dig through the logs.',
+    head: 'Choose your move',
+  },
+  more: 'Good to know',
+  bar: {
+    move: 'Choose a move above',
+    confirm: 'Confirm',
+    saving: 'Saving…',
+  },
+  saved: 'Tonight’s move',
+  wait: 'Your result arrives at dawn. Until then, act normal.',
+  help: 'How the night works',
   moves: {
     watch: {
-      glyph: 'eye',
       title: 'Watch a guest',
       short: 'Try to catch a Killer in the act.',
+      odds: 'About 6 in 10',
+      dawn: 'You may see them slip away.',
+      hint: 'Tap a guest to watch',
+      verb: (name) => `Watch ${name}`,
       how: [
         ['Tonight', 'Pick one guest and keep an eye on them all night.'],
         ['At dawn', 'If they went out to kill, you probably saw them slip away. About 6 times in 10.'],
@@ -191,9 +217,11 @@ export const NIGHT = {
       done: (name) => `You’re watching ${name}.`,
     },
     scour: {
-      glyph: 'search',
       title: 'Dig through the logs',
       short: 'Get one sure clue about tonight’s Killer.',
+      odds: 'Sure clue',
+      dawn: 'A clue photo of the Killer.',
+      hint: 'No guest to pick. Just dig.',
       how: [
         ['Tonight', 'You go through DEEP BLUE’s logs instead of watching anyone.'],
         ['At dawn', 'A clue photo lands in Photos. It shows one answer the Killer who struck gave when they arrived.'],
@@ -204,9 +232,12 @@ export const NIGHT = {
       done: () => 'You’re digging through the logs.',
     },
     trace: {
-      glyph: 'signal',
       title: 'Trace two phones',
       short: 'Find out if one of two guests struck tonight.',
+      odds: 'Yes or no',
+      dawn: 'Was one of them the Killer?',
+      hint: (n) => (n === 1 ? 'Tap one more guest' : 'Tap two guests to trace'),
+      verb: (a, b) => `Trace ${a} + ${b}`,
       how: [
         ['Tonight', 'Pick two guests. DEEP BLUE checks their phones against tonight’s logs.'],
         ['At dawn', 'You learn whether either of them was tonight’s Killer. Not which one.'],
@@ -217,10 +248,11 @@ export const NIGHT = {
       done: (a, b) => `You’re tracing ${a} and ${b}.`,
     },
     protect: {
-      glyph: 'shield',
       title: 'Protect a guest',
       short: 'Keep one guest safe from the Killers tonight.',
-      line: 'Each night, one Killer goes out to strike. You can keep one guest safe.',
+      line: 'One Killer is out tonight. You can keep one guest safe.',
+      hint: 'Tap a guest to protect',
+      verb: (name) => `Protect ${name}`,
       how: [
         ['Tonight', 'Pick one guest to protect. It can be you.'],
         ['At dawn', 'If the Killers chose them, they live. DEEP BLUE tells you if you saved someone.'],
@@ -232,7 +264,6 @@ export const NIGHT = {
       done: (name) => `You’re protecting ${name}.`,
     },
     whisper: {
-      glyph: 'chat',
       title: 'Whisper from beyond',
       short: 'Send one word to a living guest.',
       line: 'You were taken, but you still play. Help the living find the Killers.',
@@ -243,11 +274,25 @@ export const NIGHT = {
       ],
       word: 'Pick a word',
       pick: (word) => `Who hears “${word}”?`,
+      pickFirst: 'Then pick who hears it',
+      hint: (word) => (word ? `Tap who hears “${word}”` : 'Tap a word first'),
+      verb: (name, word) => `“${word}” to ${name}`,
       done: (name, word) => `${name} will hear “${word}”.`,
     },
   },
   killer: {
     line: 'Pick tonight’s target with your partners. Most votes wins.',
+    partners: 'Your partners',
+    alone: 'You’re alone tonight. Your vote decides.',
+    noPick: 'No vote yet',
+    picked: (name) => `Votes ${name}`,
+    hint: 'Tap a name to vote',
+    mineBar: (name) => `Your vote: ${name}`,
+    lead: (n) => `${n} vote${n === 1 ? '' : 's'} · leading`,
+    leads: (name) => `${name} leads`,
+    top: (name) => `Most votes: ${name}`,
+    tied: 'Tied · DEEP BLUE breaks it',
+    closed: 'The poll is closed.',
     how: [
       ['At dawn', 'DEEP BLUE drops their score to the bottom of the morning board, and the deep takes them.'],
       ['Unless', 'A Doctor protected them. Then the lowest real score is taken instead, and that could be one of you.'],
@@ -264,7 +309,6 @@ export const NIGHT = {
     ],
   },
   result: 'Your result arrives at dawn.',
-  change: 'You can change your move until the night ends.',
   changeBtn: 'Change my move',
   count: (alive, gone) => `${alive} still in the game${gone ? ` · ${gone} taken` : ''}`,
 };

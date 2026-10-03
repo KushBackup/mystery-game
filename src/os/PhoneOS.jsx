@@ -16,8 +16,10 @@ import { prefersLessMotion } from './nav';
 import { dayLabel, photoSource, timeOfDay } from './words';
 import { primeSfx, sfxPing, sfxLock, startAlarm, stopAlarm } from './sfx';
 import { daySchedule, fmtClock } from '../lib/engine/clock.js';
-import { deepBlueOpen, introDay } from '../lib/engine/minigames.js';
+import { deepBlueOpen, introDay, gameOfDay } from '../lib/engine/minigames.js';
 import { prefetchTutorial } from '../data/wordTutorial';
+import { prefetchSketchTutorial } from '../data/sketchTutorial';
+import { prefetchNightTutorial } from '../data/nightTutorial';
 import MessagesApp from './apps/MessagesApp';
 import GameApp from './apps/GameApp';
 import NewsApp from './apps/NewsApp';
@@ -81,7 +83,7 @@ const skipLine = (alive) => (alive ? ' Skip it and you score zero.' : '');
 const PHASE_BANNER = {
   alarm: (g, pack, { until, alive }) => {
     const day = dayKit(pack).dayGames[g.minigame ?? 'run'];
-    // The first Word morning says the game is new and DEEP BLUE teaches it (introDay).
+    // The first Word or Sketch morning says the game is new and DEEP BLUE teaches it (introDay).
     const today = (introDay(g.config, g.cycle) && day?.alarmIntro) || day?.alarm || `Today: ${todayTitle(g, pack)}.`;
     return {
       icon: 'clock',
@@ -276,15 +278,29 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const wordDay = (game.minigame ?? 'run') === 'word' && ['alarm', 'game'].includes(phase);
   const myClue = useMyPlay(gid, 'clues', game.cycle, me.pid, wordDay && me.status === 'alive');
   const myPicks = useMyPlay(gid, 'picks', game.cycle, me.pid, wordDay && me.status === 'ghost');
+  // Sketch never writes a score before the board: a saved drawing (or a ghost's guesses) is what counts as playing.
+  const drawDay = (game.minigame ?? 'run') === 'draw' && ['alarm', 'game'].includes(phase);
+  const myDrawing = useMyPlay(gid, 'drawings', game.cycle, me.pid, drawDay && me.status === 'alive');
+  const myGuesses = useMyPlay(gid, 'guesses', game.cycle, me.pid, drawDay && me.status === 'ghost');
   const action = useMyAction(gid, game.cycle, me.pid);
   const denPicks = useDen(gid, game.cycle, isKiller && phase === 'night');
   // Everyone's arrival answers (Contacts, Notes). Written once at arrival, so this listener is nearly silent.
   const traits = useAllTraits(gid);
 
-  // The night before the first Word morning, fetch the tutorial's clips quietly,
-  // so the longer alarm never waits on the venue's wifi (data/wordTutorial.js).
-  const tutorialSoon = ['night', 'night_locked', 'recruit', 'recruit_locked', 'alarm'].includes(phase) && introDay(game.config, game.cycle);
-  useEffect(() => { if (tutorialSoon) prefetchTutorial(); }, [tutorialSoon]);
+  // The night before the first Word or Sketch morning, fetch that tutorial's clips
+  // quietly, so the longer alarm never waits on the venue's wifi (data/wordTutorial.js,
+  // data/sketchTutorial.js).
+  const tutorialSoon = ['night', 'night_locked', 'recruit', 'recruit_locked', 'alarm'].includes(phase) && introDay(game.config, game.cycle)
+    ? gameOfDay(game.config, game.cycle)
+    : null;
+  useEffect(() => {
+    if (tutorialSoon === 'word') prefetchTutorial();
+    if (tutorialSoon === 'draw') prefetchSketchTutorial();
+  }, [tutorialSoon]);
+  // The Night tutorial plays the first time a guest opens Night (data/nightTutorial.js):
+  // fetch its clips while the roles are being dealt, and again on Night 1 for a late arrival.
+  const nightSoon = phase === 'casting' || (phase === 'night' && game.cycle <= 1);
+  useEffect(() => { if (nightSoon) prefetchNightTutorial(); }, [nightSoon]);
 
   // --- Which app is open: only ever the guest's choice. A phase change leaves
   // it alone (except the Night app, which closes at daybreak) and decides
@@ -376,7 +392,9 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const plan = daySchedule(game, serverNow());
   const dawnAt = plan?.parts.find((p) => p.id === 'dawn')?.at;
   const until = dawnAt != null ? fmtClock(dawnAt) : '';
-  const played = wordDay ? Boolean(me.status === 'ghost' ? myPicks?.picks?.length : myClue) : Boolean(myScore);
+  const played = wordDay ? Boolean(me.status === 'ghost' ? myPicks?.picks?.length : myClue)
+    : drawDay ? Boolean(me.status === 'ghost' ? Object.keys(myGuesses?.answers ?? {}).length : (myDrawing?.strokes ?? '').length > 4)
+    : Boolean(myScore);
   const needsGame = ['alarm', 'game'].includes(phase) && ['alive', 'ghost'].includes(me.status) && !played;
   const needsVote = ['roundtable', 'revote'].includes(phase) ? me.status === 'alive' && !myVote : phase === 'endgame' && ['alive', 'ghost'].includes(me.status) && !myVote;
   const newsSeenArr = Array.isArray(newsSeen) ? newsSeen : [];

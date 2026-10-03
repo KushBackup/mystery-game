@@ -225,7 +225,7 @@ export async function relink(gid, newUid, pid) {
  * stands (engine/clock.js). `cycle` is the day being opened, for a night.
  */
 function timed(game, phase, now = serverNow(), cycle = game.cycle) {
-  // The first Word morning's alarm rings longer: the tutorial plays in it.
+  // The first Word or Sketch morning's alarm rings longer: the tutorial plays in it.
   const intro = phase === PHASE.ALARM && introDay(game.config, cycle);
   return {
     phase,

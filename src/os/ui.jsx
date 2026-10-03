@@ -150,7 +150,9 @@ export const Empty = ({ glyph = 'dots', title, line }) => (
 /**
  * Pick one guest, as a grouped list with a check mark. A search field shows
  * once the list is long. Pass `traits` (ctx.traits) to show each guest's
- * drawn photo and their look, so a choice can be made from across the room. `disabled` greys a row but keeps it, so a Doctor sees
+ * drawn photo and their look, so a choice can be made from across the room.
+ * `value` is one pid, or an array for a pick of several (the Detective's
+ * trace). `disabled` greys a row but keeps it, so a Doctor sees
  * *why* they can't pick someone.
  */
 export function GuestPicker({ guests, value, onPick, disabled = () => false, note = () => null, dark = true, emptyLine = 'Nobody to choose.', traits = null }) {
@@ -176,7 +178,7 @@ export function GuestPicker({ guests, value, onPick, disabled = () => false, not
             title={g.name}
             icon={traits ? <Face traits={traits} pid={g.pid} size={36} /> : undefined}
             sub={note(g) ?? (traits ? lookLine(traits[g.pid]) : null) ?? null}
-            on={value === g.pid}
+            on={Array.isArray(value) ? value.includes(g.pid) : value === g.pid}
             disabled={disabled(g)}
             onClick={() => onPick(g.pid)}
           />

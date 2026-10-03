@@ -1,5 +1,5 @@
 import React, { useLayoutEffect, useMemo, useRef } from 'react';
-import { decode, paint } from './strokes';
+import { decode, paint, PAPER } from './strokes';
 
 /**
  * The pieces the word and drawing games share: the bar that says what to do
@@ -18,8 +18,8 @@ export function StepBar({ label, left, hot = false }) {
   );
 }
 
-/** A drawing, painted once per change at the size it is shown. */
-export function Sketch({ strokes, size = 140, className = '' }) {
+/** A drawing, painted once per change at the size it is shown, on `paper`. */
+export function Sketch({ strokes, size = 140, className = '', paper = PAPER, label = 'A guest’s drawing' }) {
   const ref = useRef(null);
   const parsed = useMemo(() => decode(strokes), [strokes]);
   useLayoutEffect(() => {
@@ -30,7 +30,7 @@ export function Sketch({ strokes, size = 140, className = '' }) {
     c.height = size * dpr;
     const g = c.getContext('2d');
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
-    paint(g, parsed, size);
-  }, [parsed, size]);
-  return <canvas ref={ref} className={`os-sketch ${className}`} style={{ width: size, height: size }} aria-label="A guest's drawing" />;
+    paint(g, parsed, size, paper);
+  }, [parsed, size, paper]);
+  return <canvas ref={ref} className={`os-sketch ${className}`} style={{ width: size, height: size }} aria-label={label} />;
 }

@@ -652,3 +652,21 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 **What happened:** On the new Word board, the clue input was meant to be in the handwriting face with a sea underline as its only focus mark. In the browser it rendered in Helvetica inside a red box. `src/index.css` has un-layered `input { font-family: inherit }` and `input:focus-visible { outline: 2px solid var(--color-signal) }` (Evidence Room rules), and un-layered CSS beats everything in os.css's components layer.
 
 **What to do instead:** Put a phone input's face on its parent and let the input inherit it, and turn an unwanted focus ring off with `!important` (a layered `!important` beats un-layered normal). Read every new phone input in a screenshot with focus on it. The same red ring shows on the phone's other inputs; scoping the global rule with `:not(.os-root *)`, like the radius rule, would fix them all.
+
+## 2026-10-03 — A string replace on a CRLF file does nothing, and says nothing
+
+**What happened:** While building the Sketch board, a Node script edited `dayParts.jsx` with `s.replace(a, b)` using multi-line strings joined by `\n`. The file has CRLF line endings, so the multi-line patterns never matched, `replace` returned the string unchanged, and the script reported nothing. Only a later grep showed the edit missing. Some files in this repo are CRLF (`dayParts.jsx`, `DrawGame.jsx`, `splash-film/word.html`, `word-clips.js`); most are LF.
+
+**What to do instead:** In any scripted edit, throw when the pattern is not found (`if (!s.includes(a)) throw`), never a bare `replace`. For a CRLF file, normalise to `\n` on read and write it back with `\r\n`, so the diff stays small. Check line endings first with `file <path>`.
+
+## 2026-10-03 — A paper screen that fits 390 × 844 can hide its controls at 320 × 568
+
+**What happened:** The first Sketch board fixed the drawing pad at the board's width and the guess polaroid at 248 px. In the 390 × 844 browser drive everything fit. At 320 × 568 the pen tray, Undo and Clear were below the fold while drawing, and the guess box was below the fold while guessing. A player would have had to scroll during a 45-second or 15-second timer.
+
+**What to do instead:** Size the main square (pad or drawing) from the scrolling page's height as well as its width (`useFit` in src/os/game/useFit.js), and measure in the drive that the last control's bottom is above the scroll container's bottom at 320 × 568. A timed step must never need a scroll.
+
+## 2026-10-03 — A phase-gated screen showed "Not night yet" during the night's own lock
+
+**What happened:** The Night app branched on `game.phase === 'night'` and sent everything else to its day screen. The icon is also on the phone during `night_locked`, `recruit` and `recruit_locked` (`NIGHTTIME` in PhoneOS.jsx), so a guest who opened Night in those seconds read "Not night yet. Night moves open when night falls", which is false and suggests their move was lost. Found while rebuilding the app; `advance()` passes through the lock so fast that no drive ever saw it.
+
+**What to do instead:** When a screen is shown for a set of phases, branch on the same set, and give each phase in it a state of its own (here: the sealed move, read-only, "Locked in"). To test a phase the host moves through instantly, write it onto the emulator game doc (`updateDoc(game, { phase: 'night_locked' })`) and look.

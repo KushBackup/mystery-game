@@ -117,7 +117,7 @@ export const HELP_SECTIONS = [
           'Ghosts make a move too.',
           'Your result arrives in the morning.',
         ],
-        tip: 'You can change your move until night ends. The Night app explains every move.',
+        tip: 'Pick, then Confirm. You can change your move until night ends. Tap ? in Night to see how it works.',
       },
       {
         id: 'morning',
