@@ -25,3 +25,7 @@ public/adtn/*.jpg
 # The feel-good brand reel: same rule (src/adfg/footage.ts rebuilds them).
 public/adfg/*.mp4
 public/adfg/*.jpg
+
+# The Three Knives Out promo: same rule (src/adtk/footage.ts rebuilds them).
+public/adtk/sfx-raw.wav
+public/adtk/*.mp4

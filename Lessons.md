@@ -559,6 +559,14 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 
 **What to do instead:** Keep the player route gated, but provide `/mystery-game/host` as a host-only portal that deliberately ignores persisted player state and renders only the host credential form. Ship a `public/404.html` redirect that restores the route into the Vite SPA for direct GitHub Pages loads.
 
+## 2026-10-03 — Tightening a write schema also changes adversarial test data
+
+**What happened:** The live-game audit tightened action writes to require the same server timestamp every phone sends. The emulator self-test then stopped mid-game because its deliberately forged ghost action overwrote a valid action without `at`; the rejection was uncaught, so the test looked like a gameplay failure rather than a malformed negative probe.
+
+**Why it was wrong:** I treated an adversarial test write as exempt from the client contract. A negative test should violate exactly the property it claims to test, not a different new schema rule first.
+
+**What to do instead:** When a rule schema changes, grep every direct Firestore write in the emulator harness. Keep malicious probes structurally valid, then assert the intended semantic rejection or engine behavior. Here the forged pass carries `serverTimestamp()` and still proves the resolver drops a clue the ghost never held.
+
 <!-- Add new lessons above this line, newest first or oldest first — keep one consistent order. Current order: oldest first. -->
 
 ### 2026-09-27 — Whisper drifts on a robotic TTS voice; use the TTS's own word timings
@@ -713,3 +721,16 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 **What happened:** The paper's witness, one extra public clue per murder night, at the same share band as a photo (0.4 to 0.8 of the room) and on top of the old budget, put the Faithful at 85% at 35 guests in `npm run sim`. Even with the budget cut, small rooms stayed high (68% at 16 guests) until the room-size step went from 20 to 15.
 
 **What to do instead:** Treat any new source of information as a balance change, even one that "only" adds a public line. Sweep 16 to 45 guests, not one size: room size changes how much one clue is worth. Adjust the vagueness (`publicBand`), the private budget and the size step together, and record the before and after numbers in the code comment and in PROJECT_CONTEXT.md.
+
+## 2026-10-11 — The Three Knives Out 16:9 4K promo
+
+- **Check rotation, not just width and height.** 12 of the user's 22 "horizontal 4K" clips were 1920×1080 with `rotation=-90`, which means vertical 1080p iPhone footage. Read `side_data rotation` in ffprobe before planning a landscape edit, and tell the user early. They chose split-screen panels.
+- **iPhone footage is HLG HDR.** Untreated, it renders flat and grey in Remotion. Tonemap `arib-std-b67` masters at cut time. On Windows, ffprobe output ends in `\r`, so a strict string compare silently misses HLG; strip it.
+- **The caption markup `!` only works at the start of a line.** "are !*killers.*" printed a literal "!" on screen in the first render. The check and the stills overlay didn't catch it; the 2 fps flipbook of the encoded file did. Put an XL word on its own line (`... are / !*killers.*`).
+- **A phrase-start snap needs a floor.** Snapping each phrase to the nearest silence end within 0.5s let two quick phrases ("So you talk, you bluff") collapse onto the same gap, which gave one caption zero length. Snap only to a gap that starts after the previous phrase's first word.
+
+## 2026-10-11 — The hand-drawn explainer's first full render ran out of memory
+
+**What happened:** `video/drawn/` rendered fine in sheets and strips, then the full 1080×1920 render died at 50 s with ffmpeg "Cannot allocate memory". Node's RSS grew about 40 MB per frame. The claude-animation skill pins `@napi-rs/canvas ^0.1.x`, whose pattern fills and `createPattern` leak native memory that V8 never sees, so GC never runs to free it.
+
+**What to do instead:** Use `@napi-rs/canvas` 1.0.x and render with `node --expose-gc` (the vendored `lib/film.mjs` calls `gc()` every 48 frames and prints RSS). Before any long render, run `node film.mjs probe 0 48` and check RSS stays flat. A sheet that works proves nothing about memory over 2,000 frames.

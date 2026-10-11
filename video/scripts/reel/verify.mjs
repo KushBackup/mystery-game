@@ -3,7 +3,7 @@
  *
  *   node scripts/reel/verify.mjs <instance>   -> out/<out>-verify/ + a report
  *
- *   spec       1080×1920, 30fps, the expected frame count, H.264 + AAC
+ *   spec       the reel's size (× renderScale), 30fps, the expected frame count, H.264 + AAC
  *   loudness   integrated −14 ±1 LUFS, true peak ≤ −1 dBTP
  *   dropouts   per-frame luminance: any frame darker than YAVG 14 is listed
  *   cuts       the first frame of every shot, tiled: each must be a clean, lit frame of THAT
@@ -23,6 +23,9 @@ const t = await inst.timeline();
 const mp4 = `${inst.outBase}.mp4`;
 if (!existsSync(mp4)) die(`no ${mp4} — run render.mjs first`);
 const out = ensureDir(`${inst.outBase}-verify`);
+const LAND = inst.REEL.width > inst.REEL.height;
+const TW = LAND ? 320 : 180;
+const TH = LAND ? 180 : 320;
 const lines = [];
 const note = (s) => {
   console.log(s);
@@ -40,7 +43,7 @@ const eb = ffLog(["-i", mp4, "-af", "ebur128=peak=true", "-f", "null", "-"]);
 note(`loudness  ${eb.match(/I:\s+(-?[\d.]+) LUFS/g)?.pop() ?? "?"}   ${eb.match(/Peak:\s+(-?[\d.]+) dBFS/g)?.pop() ?? "?"}   (target −14 LUFS, ≤ −1 dBTP)`);
 
 // dropouts
-ff(["-i", mp4, "-vf", "scale=270:480,signalstats,metadata=print:key=lavfi.signalstats.YAVG:file=yavg.txt", "-f", "null", "-"], { cwd: out });
+ff(["-i", mp4, "-vf", `scale=${LAND ? "480:270" : "270:480"},signalstats,metadata=print:key=lavfi.signalstats.YAVG:file=yavg.txt`, "-f", "null", "-"], { cwd: out });
 const y = [...readFileSync(join(out, "yavg.txt"), "utf8").matchAll(/YAVG=([\d.]+)/g)].map((m) => +m[1]);
 const dark = y.map((v2, i) => [i, v2]).filter(([, v2]) => v2 < 14).map(([i]) => i);
 note(`dropouts  ${y.length} frames, min YAVG ${Math.min(...y).toFixed(1)}; dark frames: ${dark.length ? dark.join(",") : "none"}`);
@@ -50,17 +53,17 @@ const cutsDir = ensureDir(join(out, "cuts"));
 const cutFiles = [];
 for (const s of t.SHOTS) {
   const f = join(cutsDir, `f${String(s.from).padStart(4, "0")}.png`);
-  ff(["-i", mp4, "-vf", `select=eq(n\\,${s.from}),scale=180:320`, "-frames:v", "1", f]);
+  ff(["-i", mp4, "-vf", `select=eq(n\\,${s.from}),scale=${TW}:${TH}`, "-frames:v", "1", f]);
   cutFiles.push(f);
 }
-tile(cutFiles, join(out, "cuts.png"), { cols: 10, w: 180, h: 320 });
+tile(cutFiles, join(out, "cuts.png"), { cols: LAND ? 6 : 10, w: TW, h: TH });
 note(`cuts      ${join(out, "cuts.png")} (first frame of each of ${t.SHOTS.length} shots — look for flashes of the wrong shot or black)`);
 
 // flipbook
 const flipDir = ensureDir(join(out, "flip"));
-ff(["-i", mp4, "-vf", "fps=2,scale=180:320", join(flipDir, "f%03d.png")]);
+ff(["-i", mp4, "-vf", `fps=2,scale=${TW}:${TH}`, join(flipDir, "f%03d.png")]);
 const flips = readdirSync(flipDir).filter((f) => f.endsWith(".png")).sort().map((f) => join(flipDir, f));
-chunk(flips, 36).forEach((g, k) => tile(g, join(out, `flip_${k}.png`), { cols: 12, w: 180, h: 320 }));
+chunk(flips, 36).forEach((g, k) => tile(g, join(out, `flip_${k}.png`), { cols: LAND ? 6 : 12, w: TW, h: TH }));
 note(`flipbook  ${Math.ceil(flips.length / 36)} sheet(s) at 2 fps in ${out}`);
 
 // sync

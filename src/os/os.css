@@ -471,7 +471,8 @@ button.os-barbtn::after { content: ''; position: absolute; inset: -7px -4px; }
   animation: os-rise 320ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
 }
 .os-syncnote::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--color-os-chrome); }
-.os-syncnote--synced::before { background: var(--color-os-green); }
+.os-syncnote--synced::before, .os-syncnote--saved::before { background: var(--color-os-green); }
+.os-syncnote--failed::before { background: var(--color-os-red); }
 
 /* ------------------------------------------------------- 6. Grouped lists */
 

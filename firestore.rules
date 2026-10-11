@@ -50,6 +50,20 @@ service cloud.firestore {
       // Ids of the form "<key>_<pid>" belong to that pid.
       function ownsId(id) { return hasBinding() && id.matches('^[A-Za-z0-9-]+_' + me() + '$'); }
       function shortText(t) { return t is string && t.size() > 0 && t.size() <= 280; }
+      function myRole() { return get(/databases/$(database)/documents/games/$(gid)/roles/$(me())).data.role; }
+      function isAlive(pid) {
+        return pid is string
+          && exists(/databases/$(database)/documents/games/$(gid)/players/$(pid))
+          && get(/databases/$(database)/documents/games/$(gid)/players/$(pid)).data.status == 'alive';
+      }
+      function isFaithfulTarget(pid) {
+        return isAlive(pid) && !exists(/databases/$(database)/documents/games/$(gid)/killers/$(pid));
+      }
+      function validFact(fact) {
+        return fact is map && fact.keys().hasOnly(['trait', 'group'])
+          && fact.keys().hasAll(['trait', 'group'])
+          && fact.trait is string && fact.group is string;
+      }
 
       allow read: if signedIn();
       allow write: if isHost();
@@ -117,13 +131,26 @@ service cloud.firestore {
         allow write: if isHost();
       }
 
-      // One doc per Killer per night: "<cycle>_<pid>" → { victim, hand, frame, recruit }.
+      // One doc per Killer per night: "<cycle>_<pid>" → { victim } or { recruit }.
+      // The hand, rig and frame are engine decisions. They never come from a phone.
       match /den/{id} {
         allow read: if isHost() || isKiller();
         allow create, update: if isHost() || (isKiller() && ownsId(id)
+          && myStatus() == 'alive'
           && game().phase == 'night'
           && id == string(game().cycle) + '_' + me()
-          && request.resource.data.pid == me());
+          && request.resource.data.pid == me()
+          && request.resource.data.cycle == game().cycle
+          && request.resource.data.at == request.time
+          && (
+            (request.resource.data.keys().hasOnly(['pid', 'cycle', 'at', 'victim'])
+              && request.resource.data.keys().hasAll(['pid', 'cycle', 'at', 'victim'])
+              && isFaithfulTarget(request.resource.data.victim))
+            ||
+            (request.resource.data.keys().hasOnly(['pid', 'cycle', 'at', 'recruit'])
+              && request.resource.data.keys().hasAll(['pid', 'cycle', 'at', 'recruit'])
+              && isFaithfulTarget(request.resource.data.recruit))
+          ));
       }
 
       match /denChat/{id} {
@@ -140,9 +167,48 @@ service cloud.firestore {
           && request.resource.data.pid == me()
           && id == string(game().cycle) + '_' + me()
           && request.resource.data.cycle == game().cycle
+          && request.resource.data.at == request.time
           && (
-            (game().phase == 'night' && myStatus() in ['alive', 'ghost'])
-            || (game().phase == 'recruit' && request.resource.data.kind == 'recruitAnswer')
+            (game().phase == 'night' && (
+              (myStatus() == 'alive' && myRole() == 'doctor'
+                && request.resource.data.keys().hasOnly(['pid', 'cycle', 'kind', 'target', 'at'])
+                && request.resource.data.kind == 'protect' && isAlive(request.resource.data.target))
+              ||
+              (myStatus() == 'alive' && myRole() == 'detective' && (
+                (request.resource.data.keys().hasOnly(['pid', 'cycle', 'kind', 'target', 'targets', 'at'])
+                  && request.resource.data.kind == 'trace' && request.resource.data.target == null
+                  && request.resource.data.targets is list && request.resource.data.targets.size() == 2
+                  && request.resource.data.targets[0] != me() && request.resource.data.targets[1] != me()
+                  && request.resource.data.targets[0] != request.resource.data.targets[1]
+                  && isAlive(request.resource.data.targets[0]) && isAlive(request.resource.data.targets[1]))
+                ||
+                (request.resource.data.keys().hasOnly(['pid', 'cycle', 'kind', 'target', 'at'])
+                  && request.resource.data.kind == 'scour' && request.resource.data.target == null)
+              ))
+              ||
+              (myStatus() == 'alive' && myRole() == 'faithful' && (
+                (request.resource.data.keys().hasOnly(['pid', 'cycle', 'kind', 'target', 'at'])
+                  && request.resource.data.kind == 'watch' && request.resource.data.target != me()
+                  && isAlive(request.resource.data.target))
+                ||
+                (request.resource.data.keys().hasOnly(['pid', 'cycle', 'kind', 'target', 'at'])
+                  && request.resource.data.kind == 'scour' && request.resource.data.target == null)
+              ))
+              ||
+              (myStatus() == 'ghost' && (
+                (request.resource.data.keys().hasOnly(['pid', 'cycle', 'kind', 'target', 'word', 'at'])
+                  && request.resource.data.kind == 'whisper' && isAlive(request.resource.data.target)
+                  && shortText(request.resource.data.word))
+                ||
+                (request.resource.data.keys().hasOnly(['pid', 'cycle', 'kind', 'target', 'fact', 'at'])
+                  && request.resource.data.kind == 'pass' && isAlive(request.resource.data.target)
+                  && validFact(request.resource.data.fact))
+              ))
+            ))
+            || (game().phase == 'recruit'
+              && request.resource.data.keys().hasOnly(['pid', 'cycle', 'kind', 'accept', 'at'])
+              && request.resource.data.kind == 'recruitAnswer'
+              && request.resource.data.accept is bool)
           );
       }
 
@@ -152,6 +218,12 @@ service cloud.firestore {
         allow create, update: if ownsId(id)
           && request.resource.data.pid == me()
           && id == game().ballot + '_' + me()
+          && request.resource.data.keys().hasOnly(['target', 'pid', 'ballot', 'at'])
+          && request.resource.data.keys().hasAll(['target', 'pid', 'ballot', 'at'])
+          && request.resource.data.ballot == game().ballot
+          && request.resource.data.at == request.time
+          && request.resource.data.target != me()
+          && isAlive(request.resource.data.target)
           && (
             (game().phase in ['roundtable', 'revote'] && myStatus() == 'alive')
             || (game().phase == 'endgame' && myStatus() in ['alive', 'ghost'])

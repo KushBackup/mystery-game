@@ -55,7 +55,11 @@
     "promofg:audio": "npm run reel:soundtrack -- src/adfg",
     "promofg:check": "npm run reel:check -- src/adfg",
     "promofg:render": "node --no-warnings scripts/reel/render.mjs src/adfg --concurrency 2",
-    "promofg:verify": "npm run reel:verify -- src/adfg"
+    "promofg:verify": "npm run reel:verify -- src/adfg",
+    "promotk:audio": "npm run reel:sfx -- src/adtk && npm run reel:mix -- src/adtk",
+    "promotk:check": "npm run reel:check -- src/adtk",
+    "promotk:render": "npm run reel:render -- src/adtk",
+    "promotk:verify": "npm run reel:verify -- src/adtk"
   },
   "sideEffects": [
     "*.css"

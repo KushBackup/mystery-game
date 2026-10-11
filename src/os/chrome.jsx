@@ -115,6 +115,10 @@ const SYNC_NOTE = {
   syncing: 'SYNCING…',
   synced: 'IN SYNC',
   offline: 'NO SIGNAL. TRY AGAIN SOON.',
+  saving: 'SAVING…',
+  saved: 'SAVED',
+  failed: 'NOT SAVED. TRY AGAIN.',
+  reconnecting: 'RECONNECTING…',
 };
 
 /** What the phone says after a resync (os/resync.js), under the status bar. */

@@ -43,6 +43,69 @@ export async function ensureAnonymous() {
 const docData = (snap) => (snap.exists() ? { id: snap.id, ...snap.data() } : null);
 const listData = (snap) => snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
+// A Firestore write can sit in the offline queue long after the phone has
+// updated optimistically. Surface its server acknowledgement in PhoneFrame so
+// a guest never mistakes a refused vote or night move for a saved one.
+let writeState = null;
+let writeTimer = null;
+let visibleWrites = 0;
+const writeListeners = new Set();
+const setWriteState = (next, clearAfter = 0) => {
+  writeState = next;
+  clearTimeout(writeTimer);
+  if (clearAfter) {
+    writeTimer = setTimeout(() => {
+      setWriteState(visibleWrites ? 'saving' : null);
+    }, clearAfter);
+  }
+  writeListeners.forEach((listener) => listener());
+};
+
+export const subscribeWriteState = (listener) => {
+  writeListeners.add(listener);
+  return () => writeListeners.delete(listener);
+};
+export const getWriteState = () => writeState;
+
+const failedStreams = new Set();
+const streamListeners = new Set();
+const notifyStreams = () => streamListeners.forEach((listener) => listener());
+const markStreamFailed = (token) => {
+  if (failedStreams.has(token)) return;
+  failedStreams.add(token);
+  notifyStreams();
+};
+const markStreamReady = (token) => {
+  if (!failedStreams.delete(token)) return;
+  notifyStreams();
+};
+export const subscribeStreamState = (listener) => {
+  streamListeners.add(listener);
+  return () => streamListeners.delete(listener);
+};
+export const getStreamState = () => (failedStreams.size ? 'reconnecting' : null);
+
+const trackWrite = (promise, { quiet = false } = {}) => {
+  if (!quiet) {
+    visibleWrites += 1;
+    setWriteState('saving');
+  }
+  return promise.then(
+    (value) => {
+      if (!quiet) {
+        visibleWrites -= 1;
+        if (visibleWrites === 0 && writeState !== 'failed') setWriteState('saved', 1600);
+      }
+      return value;
+    },
+    (error) => {
+      if (!quiet) visibleWrites -= 1;
+      setWriteState('failed', 5000);
+      throw error;
+    },
+  );
+};
+
 /**
  * A listener that heals itself. If Firestore refuses or drops it (a rule that
  * isn't satisfied *yet*, a wifi blip), it retries with backoff instead of
@@ -55,29 +118,35 @@ function resilient(label, start) {
   let timer = null;
   let stopped = false;
   let attempt = 0;
+  const token = Symbol(label);
   const run = () => {
     unsub = start((err) => {
       console.warn(`[killers] ${label}:`, err.code ?? err.message);
+      markStreamFailed(token);
       unsub = null;
       if (stopped) return;
       attempt += 1;
       timer = setTimeout(run, Math.min(10_000, 400 * 2 ** attempt));
-    });
+    }, () => markStreamReady(token));
   };
   run();
   return () => {
     stopped = true;
     clearTimeout(timer);
     unsub?.();
+    markStreamReady(token);
   };
 }
 
-const watchDoc = (label, ref, cb) => resilient(label, (onError) => onSnapshot(ref, (s) => cb(docData(s)), onError));
+const watchDoc = (label, ref, cb) => resilient(label, (onError, onReady) =>
+  onSnapshot(ref, (s) => { onReady(); cb(docData(s)); }, onError));
 const watchList = (label, q, cb, filter = () => true) =>
-  resilient(label, (onError) => onSnapshot(q, (s) => cb(listData(s).filter(filter)), onError));
+  resilient(label, (onError, onReady) =>
+    onSnapshot(q, (s) => { onReady(); cb(listData(s).filter(filter)); }, onError));
 
 export const subscribeActive = (cb) =>
-  resilient('meta/active', (onError) => onSnapshot(doc(db, 'meta', 'active'), (s) => cb(s.exists() ? s.data().gameId ?? null : null), onError));
+  resilient('meta/active', (onError, onReady) =>
+    onSnapshot(doc(db, 'meta', 'active'), (s) => { onReady(); cb(s.exists() ? s.data().gameId ?? null : null); }, onError));
 
 export const subscribeGame = (gid, cb) => watchDoc('game', gameRef(gid), cb);
 
@@ -89,8 +158,9 @@ export const subscribeGame = (gid, cb) => watchDoc('game', gameRef(gid), cb);
  * before it exists and be refused.
  */
 export const subscribeBinding = (gid, uid, cb) =>
-  resilient('binding', (onError) =>
+  resilient('binding', (onError, onReady) =>
     onSnapshot(sub(gid, 'bindings', uid), { includeMetadataChanges: true }, (s) => {
+      onReady();
       if (s.metadata.hasPendingWrites) return;
       cb(s.exists() ? s.data().pid : null);
     }, onError));
@@ -100,7 +170,8 @@ export const subscribeMyRole = (gid, pid, cb) => watchDoc('role', sub(gid, 'role
 export const subscribeMyTraits = (gid, pid, cb) => watchDoc('traits', sub(gid, 'traits', pid), cb);
 /** Every guest's arrival answers, as { pid: answers }. Public; written once at arrival, never edited. */
 export const subscribeAllTraits = (gid, cb) =>
-  resilient('traits', (onError) => onSnapshot(col(gid, 'traits'), (s) => cb(Object.fromEntries(s.docs.map((d) => [d.id, d.data()]))), onError));
+  resilient('traits', (onError, onReady) =>
+    onSnapshot(col(gid, 'traits'), (s) => { onReady(); cb(Object.fromEntries(s.docs.map((d) => [d.id, d.data()]))); }, onError));
 export const subscribeInbox = (gid, pid, cb) => watchList('inbox', query(col(gid, 'inbox'), where('to', '==', pid)), cb);
 export const subscribeMyAction = (gid, cycle, pid, cb) => watchDoc('action', sub(gid, 'actions', `${cycle}_${pid}`), cb);
 export const subscribeMyVote = (gid, ballot, pid, cb) => watchDoc('vote', sub(gid, 'votes', `${ballot}_${pid}`), cb);
@@ -109,7 +180,8 @@ export const subscribeMyScore = (gid, cycle, pid, cb) => watchDoc('score', sub(g
 // Killer-only. The rules deny these to everyone else, so only mount them for a Killer.
 /** The Killers' group, Killer-only: `[{ id, at, recruited }]`. `at` is when DEEP BLUE added them. */
 export const subscribeKillers = (gid, cb) =>
-  resilient('killers', (onError) => onSnapshot(col(gid, 'killers'), (s) => cb(s.docs.map((d) => ({ id: d.id, ...d.data() }))), onError));
+  resilient('killers', (onError, onReady) =>
+    onSnapshot(col(gid, 'killers'), (s) => { onReady(); cb(s.docs.map((d) => ({ id: d.id, ...d.data() }))); }, onError));
 export const subscribeDen = (gid, cycle, cb) =>
   watchList('den', query(col(gid, 'den'), where('cycle', '==', cycle)), cb, (d) => d.id !== 'meta');
 /** Tonight's den status: is it a recruit night, is the frame spent. Killer-only. */
@@ -117,8 +189,8 @@ export const subscribeDenMeta = (gid, cb) => watchDoc('den meta', sub(gid, 'den'
 
 /** One channel: 'chat', 'denChat' or 'spiritsChat'. Newest 100, returned oldest-first. */
 export const subscribeChannel = (gid, channel, cb) =>
-  resilient(channel, (onError) =>
-    onSnapshot(query(col(gid, channel), orderBy('at', 'desc'), limit(100)), (s) => cb(listData(s).reverse()), onError));
+  resilient(channel, (onError, onReady) =>
+    onSnapshot(query(col(gid, channel), orderBy('at', 'desc'), limit(100)), (s) => { onReady(); cb(listData(s).reverse()); }, onError));
 
 // --- Writes --------------------------------------------------------------------
 
@@ -131,7 +203,7 @@ export async function arrive(gid, uid, { name, traits }) {
   batch.set(sub(gid, 'bindings', uid), { pid: uid });
   batch.set(sub(gid, 'players', uid), { name: name.trim().slice(0, 24), status: 'alive', joinedAt: Date.now() });
   batch.set(sub(gid, 'traits', uid), { ...traits });
-  await batch.commit();
+  await trackWrite(batch.commit());
 }
 
 /**
@@ -146,21 +218,21 @@ export async function leaveBeforeStart(gid, uid, pid) {
   batch.delete(sub(gid, 'players', pid));
   batch.delete(sub(gid, 'traits', pid));
   batch.delete(sub(gid, 'bindings', uid));
-  await batch.commit();
+  await trackWrite(batch.commit());
 }
 
 export const submitAction = (gid, cycle, pid, action) =>
-  setDoc(sub(gid, 'actions', `${cycle}_${pid}`), { ...action, pid, cycle, at: serverTimestamp() });
+  trackWrite(setDoc(sub(gid, 'actions', `${cycle}_${pid}`), { ...action, pid, cycle, at: serverTimestamp() }));
 
 export const submitDen = (gid, cycle, pid, choice) =>
-  setDoc(sub(gid, 'den', `${cycle}_${pid}`), { ...choice, pid, cycle, at: serverTimestamp() }, { merge: true });
+  trackWrite(setDoc(sub(gid, 'den', `${cycle}_${pid}`), { ...choice, pid, cycle, at: serverTimestamp() }, { merge: true }));
 
 export const submitVote = (gid, ballot, pid, target) =>
-  setDoc(sub(gid, 'votes', `${ballot}_${pid}`), { target, pid, ballot, at: serverTimestamp() });
+  trackWrite(setDoc(sub(gid, 'votes', `${ballot}_${pid}`), { target, pid, ballot, at: serverTimestamp() }));
 
 /** A new best for today's run. Only ever called with a higher score (the rules refuse a lower one). */
 export const submitScore = (gid, cycle, pid, best, runs) =>
-  setDoc(sub(gid, 'scores', `${cycle}_${pid}`), { pid, cycle, best, runs, at: Date.now() });
+  trackWrite(setDoc(sub(gid, 'scores', `${cycle}_${pid}`), { pid, cycle, best, runs, at: Date.now() }), { quiet: true });
 
 // --- The morning games (lib/engine/minigames.js). One doc per guest per day. -----------
 
@@ -173,29 +245,30 @@ export const subscribeMyPlay = (gid, name, cycle, pid, cb) => watchDoc(name, sub
 
 /** Post your one clue. Once: the rules refuse an edit, so the wall's order is the order they landed. */
 export const postClue = (gid, cycle, pid, clue) =>
-  setDoc(sub(gid, 'clues', `${cycle}_${pid}`), { pid, cycle, clue: clue.trim().slice(0, 20), at: serverTimestamp() });
+  trackWrite(setDoc(sub(gid, 'clues', `${cycle}_${pid}`), { pid, cycle, clue: clue.trim().slice(0, 20), at: serverTimestamp() }));
 
 export const savePicks = (gid, cycle, pid, picks) =>
-  setDoc(sub(gid, 'picks', `${cycle}_${pid}`), { pid, cycle, picks: picks.slice(0, 3), at: Date.now() });
+  trackWrite(setDoc(sub(gid, 'picks', `${cycle}_${pid}`), { pid, cycle, picks: picks.slice(0, 3), at: Date.now() }), { quiet: true });
 
 export const saveDrawing = (gid, cycle, pid, strokes, checks) =>
-  setDoc(sub(gid, 'drawings', `${cycle}_${pid}`), { pid, cycle, strokes, checks, at: serverTimestamp() });
+  trackWrite(setDoc(sub(gid, 'drawings', `${cycle}_${pid}`), { pid, cycle, strokes, checks, at: serverTimestamp() }), { quiet: true });
 
 export const saveGuesses = (gid, cycle, pid, answers) =>
-  setDoc(sub(gid, 'guesses', `${cycle}_${pid}`), { pid, cycle, answers, at: Date.now() });
+  trackWrite(setDoc(sub(gid, 'guesses', `${cycle}_${pid}`), { pid, cycle, answers, at: Date.now() }), { quiet: true });
 
 /** Ghost sight: one doc per night, every clue the living got (rules: ghosts only). */
 export const subscribeGhostSight = (gid, cb) =>
-  resilient('ghostSight', (onError) => onSnapshot(col(gid, 'ghostSight'), (s) => cb(s.docs.map((d) => ({ id: d.id, ...d.data() }))), onError));
+  resilient('ghostSight', (onError, onReady) =>
+    onSnapshot(col(gid, 'ghostSight'), (s) => { onReady(); cb(s.docs.map((d) => ({ id: d.id, ...d.data() }))); }, onError));
 
 /** Last words: a guest taken this morning posts one true clue photo to the room, once (rules: lastWords). */
 export const postLastWords = (gid, pid, name, clue) =>
-  setDoc(sub(gid, 'chat', `last_${pid}`), {
+  trackWrite(setDoc(sub(gid, 'chat', `last_${pid}`), {
     kind: 'last', pid, name, inboxId: clue.id, fact: { trait: clue.fact.trait, group: clue.fact.group }, at: Date.now(),
-  });
+  }));
 
 export const sendToChannel =(gid, channel, pid, name, text) =>
-  addDoc(col(gid, channel), { pid, name, text: text.trim().slice(0, 280), at: Date.now() });
+  trackWrite(addDoc(col(gid, channel), { pid, name, text: text.trim().slice(0, 280), at: Date.now() }));
 
 /** What the host reads off a phone to sign it back in: the first six of its uid. */
 export const deviceCode = (uid) => (uid ?? '').slice(0, 6).toUpperCase();
@@ -207,12 +280,12 @@ export const deviceCode = (uid) => (uid ?? '').slice(0, 6).toUpperCase();
  * (host.js `relink`); the phone's binding listener then opens the game.
  */
 export const knock = (gid, uid, name) =>
-  setDoc(sub(gid, 'knocks', uid), { name: name.trim().slice(0, 24), code: deviceCode(uid), at: Date.now() });
-export const cancelKnock = (gid, uid) => deleteDoc(sub(gid, 'knocks', uid));
+  trackWrite(setDoc(sub(gid, 'knocks', uid), { name: name.trim().slice(0, 24), code: deviceCode(uid), at: Date.now() }));
+export const cancelKnock = (gid, uid) => trackWrite(deleteDoc(sub(gid, 'knocks', uid)));
 
-export const requestLeave = (gid, pid) => updateDoc(sub(gid, 'players', pid), { leaveRequestedAt: Date.now() });
+export const requestLeave = (gid, pid) => trackWrite(updateDoc(sub(gid, 'players', pid), { leaveRequestedAt: Date.now() }));
 
-export const cancelLeave = (gid, pid) => updateDoc(sub(gid, 'players', pid), { leaveRequestedAt: null });
+export const cancelLeave = (gid, pid) => trackWrite(updateDoc(sub(gid, 'players', pid), { leaveRequestedAt: null }));
 
 /**
  * A heartbeat only the host reads, never on a doc every phone listens to

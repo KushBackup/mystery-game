@@ -138,6 +138,11 @@ async function lobbyChecks(bots, gid, host) {
   const knockGone = await getDoc(G(lost, gid, 'knocks', lost.uid)).then((d) => !d.exists(), () => false);
   results.push([knockGone ? 'ok' : 'FAIL', 'signing in clears the knock', knockGone ? 'cleared' : 'still there']);
   await expectAllowed('the signed-back-in phone acts as its guest', () => updateDoc(G(lost, gid, 'players', a.pid), { table: '3' }), results);
+  await expectDenied('signing in revokes the former phone', () => updateDoc(G(a, gid, 'players', a.pid), { table: '4' }), results);
+  // Restore the bot that the rest of the suite uses, proving the replacement
+  // binding is revoked when the guest returns to their original phone too.
+  await expectAllowed('host restores the original phone', () => host.relink(gid, a.uid, a.pid), results);
+  await expectDenied('restoring a phone revokes its replacement', () => updateDoc(G(lost, gid, 'players', a.pid), { table: '5' }), results);
   return results;
 }
 
@@ -286,6 +291,30 @@ async function runChecks(bots, gid, game) {
   return { results, fix: a.pid };
 }
 
+/** Rule checks for the two client-controlled poll documents. */
+async function pollPayloadChecks(bots, gid, game) {
+  const results = [];
+  const killer = bots.find((b) => b.status === 'alive' && b.role === 'killer');
+  const faithful = bots.find((b) => b.status === 'alive' && b.role !== 'killer');
+  if (!killer || !faithful) return results;
+  await expectDenied('killer cannot inject hand or rig fields into the den', () => setDoc(
+    G(killer, gid, 'den', `${game.cycle}_${killer.pid}`),
+    { victim: faithful.pid, hand: killer.pid, rig: 'zero', pid: killer.pid, cycle: game.cycle, at: serverTimestamp() },
+  ), results);
+  return results;
+}
+
+async function ballotPayloadChecks(bots, gid, game) {
+  const results = [];
+  const voter = bots.find((b) => b.status === 'alive');
+  if (!voter) return results;
+  await expectDenied('guest cannot vote for themself', () => setDoc(
+    G(voter, gid, 'votes', `${game.ballot}_${voter.pid}`),
+    { target: voter.pid, pid: voter.pid, ballot: game.ballot, at: serverTimestamp() },
+  ), results);
+  return results;
+}
+
 // --- Self-test: a whole game ---------------------------------------------------------
 
 async function selftest(n) {
@@ -324,13 +353,19 @@ async function selftest(n) {
     if (g.phase === 'finale') break;
 
     if (g.phase === 'night') {
+      if (!ranChecks.has('poll-payload')) {
+        ranChecks.add('poll-payload');
+        security.push(...await pollPayloadChecks(bots, gid, g));
+      }
       await Promise.all(bots.map((b) => act(b, gid, g)));
       // Once there is a ghost: one of them tries to pass a clue it doesn't hold. The host must drop it.
       const forger = bots.find((b) => b.status === 'ghost');
       const mark = bots.find((b) => b.status === 'alive');
       if (!forged && forger && mark) {
         forged = { pid: forger.pid, cycle: g.cycle };
-        await setDoc(G(forger, gid, 'actions', `${g.cycle}_${forger.pid}`), { kind: 'pass', target: mark.pid, fact: { trait: 'forged', group: 'forged' }, pid: forger.pid, cycle: g.cycle });
+        await setDoc(G(forger, gid, 'actions', `${g.cycle}_${forger.pid}`), {
+          kind: 'pass', target: mark.pid, fact: { trait: 'forged', group: 'forged' }, pid: forger.pid, cycle: g.cycle, at: serverTimestamp(),
+        });
       }
     } else if (g.phase === 'recruit') {
       await Promise.all(bots.map((b) => answerRecruit(b, gid, g)));
@@ -352,6 +387,10 @@ async function selftest(n) {
       if (kind === 'run') await Promise.all(bots.map((b) => play(b, gid, g)));
       else for (const stage of [0, 1]) await Promise.all(bots.map((b) => playDay(b, gid, g, stage)));
     } else if (['roundtable', 'revote', 'endgame'].includes(g.phase)) {
+      if (!ranChecks.has('ballot-payload')) {
+        ranChecks.add('ballot-payload');
+        security.push(...await ballotPayloadChecks(bots, gid, g));
+      }
       await Promise.all(bots.map((b) => vote(b, gid, g)));
     } else if (g.phase === 'dawn' && !ranChecks.has('last-early')) {
       // Last words are refused before the investigation opens, even for today's taken guest.

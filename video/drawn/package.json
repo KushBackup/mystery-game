@@ -1,0 +1,14 @@
+{
+  "name": "three-knives-explainer",
+  "private": true,
+  "type": "module",
+  "description": "Hand-drawn explainer for Three Knives Out (brush ink + watercolour), rendered frame-exact with node canvas + ffmpeg. lib/ is a vendored copy of the claude-animation skill's library.",
+  "scripts": {
+    "sheet": "node film.mjs sheet",
+    "render": "node --expose-gc film.mjs render",
+    "verify": "node film.mjs verify"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^1.0.11"
+  }
+}

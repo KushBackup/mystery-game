@@ -23,7 +23,7 @@ const dirArg = process.argv[2];
 const inst = await loadInstance(dirArg);
 const force = process.argv.includes("--force");
 const ci = process.argv.indexOf("--concurrency");
-const conc = ci > 0 ? process.argv[ci + 1] : "4";
+const conc = ci > 0 ? process.argv[ci + 1] : (inst.REEL.renderScale ?? 1) > 1 ? "3" : "4";
 
 if (!force) {
   const r = spawnSync(process.execPath, ["--no-warnings", join(here, "check.mjs"), dirArg], { stdio: "inherit" });
@@ -38,6 +38,11 @@ const args = [
   "--codec=h264", "--crf=17", "--pixel-format=yuv420p",
   "--audio-codec=aac", "--audio-bitrate=320k",
   "--offthreadvideo-cache-size-in-bytes=3000000000", `--concurrency=${conc}`,
+  // A 4K reel is authored on a 1920×1080 canvas and rendered at 2×.
+  ...((inst.REEL.renderScale ?? 1) > 1 ? [`--scale=${inst.REEL.renderScale}`] : []),
+  // 4K frames can take longer than Remotion's 30s default to extract under load.
+  ...((inst.REEL.renderScale ?? 1) > 1 ? ["--timeout=120000"] : []),
+  ...process.argv.filter((a) => a.startsWith("--frames=")),
 ];
 console.log(`rendering ${inst.REEL.id} -> ${outFile} (log: ${logFile})`);
 const r = spawnSync("npx", args, { cwd: ROOT, shell: true, encoding: "utf8", maxBuffer: 1 << 30 });

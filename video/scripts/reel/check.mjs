@@ -8,7 +8,7 @@
  *               at 1x (the last frame shown must exist — a short clip freezes)
  * 3. KEEP-CLEAR no caption sits on a head, a face or an important thing, or on
  *               a graphic — every frame, with the lens move applied
- * 4. SAFE ZONE  every caption inside the Meta safe box (y 270–1232)
+ * 4. SAFE ZONE  every caption inside the safe box (config.ts `safe`; 9:16 default y 270–1232)
  * 5. PHOTOS     every photo and logo the reel uses exists
  */
 
@@ -34,13 +34,14 @@ if (!warns.length) say(true, `all ${t.CAPTIONS.length} captions align to the VO`
 warns.forEach((w) => say(false, w));
 
 console.log("\n2. coverage (real speed: a clip must outlast its shot)");
-for (const s of t.SHOTS) {
-  const file = join(inst.pub, `${s.src}.${s.kind === "clip" ? "mp4" : "jpg"}`);
+for (const s of t.LAYERS ?? t.SHOTS) {
+  if (!s.src) continue;
+  const file = join(inst.pub, `${s.src}.${s.kind === "photo" ? "jpg" : "mp4"}`);
   if (!existsSync(file)) {
     say(false, `${s.key}: missing ${file}`);
     continue;
   }
-  if (s.kind !== "clip") continue;
+  if (s.kind === "photo") continue;
   const d = duration(file);
   const ok = d >= (s.dur - 0.5) / t.FPS;
   say(ok, `${s.key.padEnd(11)} ${s.src.padEnd(13)} shot ${(s.dur / t.FPS).toFixed(2)}s  clip ${d.toFixed(2)}s`);
@@ -51,13 +52,14 @@ const hits = t.checkCaptions();
 if (!hits.length) say(true, "no caption overlaps a keep-clear band");
 for (const h of hits) say(false, `${h.caption} y ${Math.round(h.captionY[0])}–${Math.round(h.captionY[1])} sits on ${h.against} (y ${Math.round(h.bandY[0])}–${Math.round(h.bandY[1])}) at frame ${h.frame}`);
 
-console.log("\n4. safe zone (captions inside y 270–1232)");
+const SAFE = inst.REEL.safe ?? { left: 0, right: inst.REEL.width, top: 270, bottom: 1232 };
+console.log(`\n4. safe zone (captions inside x ${SAFE.left}–${SAFE.right}, y ${SAFE.top}–${SAFE.bottom})`);
 let outOfSafe = 0;
 for (const c of t.CAPTIONS) {
   const b = t.captionBox(c);
-  if (b.y[0] < 270 || b.y[1] > 1232) {
+  if (b.y[0] < SAFE.top || b.y[1] > SAFE.bottom || b.x[0] < SAFE.left - 1 || b.x[1] > SAFE.right + 1) {
     outOfSafe++;
-    say(false, `"${c.text}" spans y ${Math.round(b.y[0])}–${Math.round(b.y[1])}`);
+    say(false, `"${c.text}" spans x ${Math.round(b.x[0])}–${Math.round(b.x[1])}, y ${Math.round(b.y[0])}–${Math.round(b.y[1])}`);
   }
 }
 if (!outOfSafe) say(true, "every caption is inside the safe box");

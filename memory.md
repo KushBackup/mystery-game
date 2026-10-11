@@ -39,6 +39,12 @@
 - On 2026-09-27 the user gave the same event as "Greenr, Panjim, Goa, 3rd Oct 6PM" for the Murder Mystery Experience ad (`video/src/adtn/`), so that card says **6 PM** with no end time. The Meta button for that ad is **Book now**. The user attached a white Greenr logo (EST. 2015) and the ASTRAL PROJECT.IN logo for it.
 - On 2026-09-27 the user chose **"The Murder Mystery Experience"** (by Astral Project) as the public name in the ad (`video/src/adtn/`). The ad's voiceover (their ElevenLabs take, `KillersNarration.mp3`) says "Traitors" in the hook and the twist and "Killers" elsewhere. The captions follow the voiceover word for word.
 
+### Next event (supplied 2026-10-11)
+
+- **Friday 16 October 2026 at Backroom, Anjuna (Goa), in collaboration with SideQuest Club.** SideQuest Club hosts it at their venue; Astral Project runs its own original game. **No start time** goes on the ad's end card (the user's call). The Meta button is **Book now**. The user confirmed that "come solo or bring your crew" is true for this event.
+- **The game's public name is now "Three Knives Out"** (the user's call, 2026-10-11, replacing "The Murder Mystery Experience" in ads). The user described it as six games mashed into one, an homage to classic social-deduction games: **Mafia, Among Us, Undercover, Pictionary, Flappy Bird and Cluedo**. In-app `GAME.title` in `src/data/killersCopy.js` still says the old name; changing it was not asked for.
+- The 16:9 4K ad for it is `video/src/adtk/` (see video/README.md). The SideQuest Club logo is the user's `Sidequest logo.png` (Downloads), cropped into `video/public/adtk/logo-sidequest.png`. The footage folder is `S:\Kush\Videos`: 10 horizontal 4K clips from the 3 Oct Greenr Panjim night and 12 vertical 1080p clips from older venues, most of them HLG HDR.
+
 ### Killers Night: the new format (decided 2026-09-26, build in progress)
 
 - **Why:** player feedback was that there was too much reading, it got long and boring, and most players had nothing to do. The host's problems were writing a new story per event, and absent killers or key witnesses breaking the case.

@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow, useAllTraits, useKillerGroup, useMyPlay, useGhostSight } from '../hooks/useKillers';
+import { getStreamState, getWriteState, subscribeStreamState, subscribeWriteState } from '../firebase/game';
 import { serverNow } from '../lib/clockSkew';
 import { nowLine, PHASE_LABEL, deliveryLine, GAME, LAST_WORDS } from '../data/killersCopy';
 import { dayKit, alarmLine } from '../data/packs/index.js';
@@ -281,6 +282,8 @@ export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = 
   // Only a resync that restarted in place, with no reload, comes back here.
   const [syncing, setSyncing] = useState(false);
   const note = useResyncNote();
+  const writeNote = useSyncExternalStore(subscribeWriteState, getWriteState, () => null);
+  const streamNote = useSyncExternalStore(subscribeStreamState, getStreamState, () => null);
   const hold = () => {
     setNcOpen(false);
     setSyncing(true);
@@ -296,7 +299,7 @@ export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = 
       </div>
       {/* With the panel down, Home puts it away first, the way iOS did. */}
       <HomeBar onHome={() => (ncOpen ? ncClose() : onHome())} onHold={hold} />
-      {note && !syncing && <SyncNote state={note} />}
+      {(note || writeNote || streamNote) && !syncing && <SyncNote state={note ?? writeNote ?? streamNote} />}
       {syncing && <div className="os-resync"><Hold label="SYNCING WITH THE ROOM…" /></div>}
     </div>
   );

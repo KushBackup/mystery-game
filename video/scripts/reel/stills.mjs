@@ -39,6 +39,8 @@ for (const frame of frames) {
 }
 chunk(files, 6).forEach((group, k) => {
   const sheet = join(out, `sheet_${String(k).padStart(2, "0")}.png`);
-  tile(group, sheet, { cols: 6, w: 360, h: 640 });
+  // Tiles keep the reel's aspect: 360×640 for 9:16, 640×360 for 16:9.
+  const land = inst.REEL.width > inst.REEL.height;
+  tile(group, sheet, land ? { cols: 3, w: 640, h: 360 } : { cols: 6, w: 360, h: 640 });
   console.log(`${sheet}: ${group.map((g) => g.match(/f(\d+)\.png$/)[1]).join(" ")}`);
 });

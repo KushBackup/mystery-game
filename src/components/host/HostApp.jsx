@@ -247,11 +247,32 @@ function Console({ gid, game }) {
   const ghosts = players.filter((p) => p.status === 'ghost');
 
   // Measure the host clock against the server once (reveals are timed on it), and keep the screen awake.
+  // Browsers revoke wake locks when a tab is hidden, so request a fresh one
+  // whenever the console comes back instead of silently trusting the old lock.
   useEffect(() => {
     syncHostClock(gid);
     let lock = null;
-    navigator.wakeLock?.request('screen').then((l) => { lock = l; }).catch(() => {});
-    return () => lock?.release?.();
+    let disposed = false;
+    const keepAwake = async () => {
+      if (disposed || document.visibilityState !== 'visible' || lock) return;
+      try {
+        lock = await navigator.wakeLock?.request('screen');
+        lock?.addEventListener('release', () => { lock = null; });
+      } catch {
+        // The console keeps running without Wake Lock; autopilot retries each
+        // due phase below and the host can still advance manually.
+      }
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') keepAwake();
+    };
+    keepAwake();
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      disposed = true;
+      document.removeEventListener('visibilitychange', onVisibility);
+      lock?.release?.();
+    };
   }, [gid]);
 
   const run = async (fn) => {
@@ -266,18 +287,33 @@ function Console({ gid, game }) {
     }
   };
 
-  // Autopilot: press Next when the phase timer runs out. Keyed per phase so it fires once.
+  // Autopilot: press Next when the phase timer runs out. A momentary wifi drop
+  // must not strand the room on an expired phase, so a failed write retries
+  // until either it lands or another host moves the shared game state on.
   const fired = useRef('');
   useEffect(() => {
     if (!game.autopilot || !game.phaseEndsAt || game.phase === PHASE.FINALE) return undefined;
     const key = `${game.phase}:${game.cycle}:${game.ballot ?? ''}:${game.phaseEndsAt}`;
     const wait = Math.max(0, game.phaseEndsAt - serverNow());
-    const id = setTimeout(() => {
-      if (fired.current === key) return;
-      fired.current = key;
-      advance(gid).catch((e) => setError(e.message));
-    }, wait + 400);
-    return () => clearTimeout(id);
+    let retryId = null;
+    let stopped = false;
+    const moveOn = async () => {
+      if (stopped || fired.current === key) return;
+      try {
+        await advance(gid);
+        fired.current = key;
+      } catch (e) {
+        if (stopped) return;
+        setError(`Autopilot retrying: ${e.message ?? String(e)}`);
+        retryId = setTimeout(moveOn, 2000);
+      }
+    };
+    const id = setTimeout(moveOn, wait + 400);
+    return () => {
+      stopped = true;
+      clearTimeout(id);
+      clearTimeout(retryId);
+    };
   }, [gid, game.autopilot, game.phase, game.cycle, game.ballot, game.phaseEndsAt]);
 
   // Late arrivals are dealt in as soon as they finish their answers.

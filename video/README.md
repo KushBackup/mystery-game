@@ -486,3 +486,102 @@ npm run promofg:check; npm run promofg:render; npm run promofg:verify
   it's fine.
 
 **The footage is not in git** (`public/adfg/*.mp4`); `reel:cut` rebuilds it from the master.
+
+# The Three Knives Out promo (`src/adtk/`)
+
+A **62-second horizontal 16:9 ad, delivered in 4K**, for the Friday 16 October event at
+Backroom, Anjuna, with SideQuest Club. It was built with the `footage-reel-ad` skill and is timed
+word by word to the user's ElevenLabs VO (`VoiceoverFridaay.mp3`, 58.8s). It is the first ad
+for the game under its public name, **Three Knives Out**. The hook names the six games it pays
+homage to: Mafia, Among Us, Undercover, Pictionary, Flappy Bird and Cluedo. The game's
+trademarks are never shown; each game gets a drawn mark.
+
+| | |
+|---|---|
+| **Output** | `out/adtk-16x9-4k.mp4`: 3840×2160, 30fps, 1854 frames (61.8s), H.264 CRF 17, AAC 320k |
+| **Canvas** | authored at 1920×1080 and rendered with `--scale=2` (`config.ts` `renderScale`) |
+| **Audio** | the user's VO (`public/adtk/vo.mp3`) + synthesized SFX ducked under it, no music |
+| **Compositions** | `Promo-ThreeKnives` · `Promo-ThreeKnives-SafeZone` · `Promo-ThreeKnives-Probe` |
+
+```bash
+npm run reel:cut -- src/adtk        # rebuild the clips from S:\Kush\Videos (not in git)
+npm run promotk:check; npm run promotk:audio; npm run promotk:render; npm run promotk:verify
+node --no-warnings scripts/reel/stills.mjs src/adtk 12,500 --clean   # the ad itself -> out/adtk-16x9-4k-clean/
+```
+
+The full render takes about 11 minutes at concurrency 3 on 16 GB.
+
+**What is new in the toolkit for this reel.** Each change is backward compatible: the 9:16
+reels still cut, check and render as before.
+
+- **Landscape.** `config.ts` carries `safe` (the words box), `cut` (clip sizes in output px)
+  and `renderScale`. `check`, `stills`, `verify` and `render` read them.
+- **HLG.** `cut.mjs` tonemaps every `arib-std-b67` master (the iPhone HDR clips) to SDR BT.709
+  with zscale + hable. Without it, the footage plays flat and grey. A clip's `vf` runs after
+  the tonemap: `hflip` for the mirrored selfie, and `crop=iw/3` to take a third of a 4K take.
+- **Split screens.** 12 of the 22 clips are vertical 1080p from older venues. A `panes` shot
+  puts three vertical clips side by side, each cut to 1280×2160 (about 1.2× upscale).
+  - Every pane has its own lens and keep-clear bands, in pane-local px. `LAYERS` in
+    `timeline.ts` flattens shots and panes for the renderer, the cutter, the probe and the check.
+  - A pane with a later `at` sits dimmed from the shot's start and lights up on its word.
+  - A pane can be a drawn `card` instead of a clip. The hook's six game cards are cards, and so
+    is the "Sneakers?" clue photo: no clip shows feet, so the clue is drawn rather than faked.
+- **Probe** draws a pane in its own 640×1080 box with a labelled x and y grid.
+
+**Choices made in the edit:**
+
+- **Dropped clips:** the drive to the venue (off-topic) and `CameraZoomingOnPlayersScreen` (it
+  shows the old game's UI). Also dropped: every whip-pan and blur found on 2 fps contact
+  sheets of the vertical takes.
+- **The name sticker** in the "Black top?" pane is unreadable at that size. It is not treated as
+  text in shot, so the caption may touch it.
+- **The event card says no time** (the user's call). The button reads **Book now**, matching the Meta CTA.
+
+**The footage is not in git** (`public/adtk/*.mp4`); `reel:cut` rebuilds it from the masters.
+
+# The hand-drawn game explainer (`drawn/`)
+
+A friendly, fully animated walk through how **Three Knives Out** is played, for an Instagram post.
+It is not an ad: no date, price, venue or "book now". 9:16, 1080×1920, 24 fps; everything that
+matters sits inside the central 4:5 band (y 285–1635) so the feed crop never cuts it.
+
+`drawn/` is **its own little node project**, not Remotion: brush ink + watercolour drawn in code with
+node canvas, frame-exact, encoded by ffmpeg. `drawn/lib/` is a vendored copy of the
+`claude-animation` skill's library, so it re-renders without the skill installed.
+
+```powershell
+cd video/drawn
+npm install                              # @napi-rs/canvas only
+node film.mjs sheet 6.8,14.8,22.7        # look at moments  -> out/sheet.png
+node film.mjs strip 43.7 12              # 12 consecutive frames (fast actions)
+node film.mjs verify                     # frames must not depend on render order
+node --expose-gc film.mjs render         # out/three-knives-explainer.mp4 (picture only; gc keeps native memory flat)
+node film.mjs cues                       # out/cues.json, SFX from the same timeline
+```
+
+| File | What it is |
+|---|---|
+| `script.md` | The voiceover script handed to the user (line table + one paragraph for the voice generator) |
+| `timeline.mjs` | The same script as data. Word times are estimated until `words.json` exists, then the script is aligned to the real recording |
+| `transcribe.mjs` | `node transcribe.mjs path/to/vo.mp3` → `words.json` (whisper.cpp from `../node_modules`) |
+| `film.mjs` | Brief + style bible at the top, then the ten scenes (one per VO line) and the SFX cue list |
+| `cast.mjs` | The six friends. Their traits are chosen so three clues narrow six people to one (dark top → glasses → gin) |
+| `props.mjs` | Knives, envelopes, role cards, the arrival card, Contacts cards, polaroids, the board, the wave, the doodles |
+| `set.mjs` | The bar, the table, the door and the plain "limbo" page, baked once |
+| `sound.mjs` | Vendored from the skill: synthesises every SFX on the cue times, mixes an optional bed (the VO goes here as a 16-bit wav), loudnorms, muxes |
+| `fonts/` | Caveat Brush, Patrick Hand, Gochi Hand (Google Fonts, OFL) |
+
+**Final mix, once the VO exists.**
+
+```powershell
+node transcribe.mjs path	oo.mp3                    # words.json; every cut follows
+node --expose-gc film.mjs render; node film.mjs cues
+ffmpeg -i vo.mp3 -ar 48000 -ac 1 -c:a pcm_s16le out/vo.wav
+node sound.mjs out/cues.json out/three-knives-explainer.mp4 out/three-knives-explainer-final.mp4 --bed out/vo.wav --bed-vol 1 --lufs -14
+```
+
+**Timing.** Every cue is asked for as `cue(line, "word")`: the start of the word that names the thing.
+Swapping in the real VO (`transcribe.mjs`) retimes every cut, pop and sound with no film edits.
+
+**Rules this piece keeps.** Red is for the Killers and the knives only. Facts match the in-game rule
+book (`src/data/helpCopy.js`). Never "Traitor(s)". No music bed (SFX only) unless the user asks.

@@ -68,7 +68,7 @@ export async function act(bot, gid, game) {
   const alive = players.filter((p) => p.status === 'alive' && p.pid !== bot.pid);
   if (!alive.length) return;
   const c = game.cycle;
-  const action = (a) => setDoc(G(bot, gid, 'actions', `${c}_${bot.pid}`), { ...a, pid: bot.pid, cycle: c });
+  const action = (a) => setDoc(G(bot, gid, 'actions', `${c}_${bot.pid}`), { ...a, pid: bot.pid, cycle: c, at: serverTimestamp() });
 
   if (bot.status === 'ghost') {
     // Pass one of its own clue photos on, or whisper a word (engine/night.js).
@@ -81,17 +81,22 @@ export async function act(bot, gid, game) {
   if (bot.role === 'killer') {
     const mates = (await getDocs(collection(bot.db, 'games', gid, 'killers'))).docs.map((d) => d.id);
     const faithful = alive.filter((p) => !mates.includes(p.pid));
-    // Only what the phone's poll sends (KillPoll): the engine picks the hand and the rig.
-    const choice = { victim: rnd(faithful)?.pid ?? null, pid: bot.pid, cycle: c };
-    if (Math.random() < 0.5) choice.recruit = rnd(faithful)?.pid ?? null;
-    return setDoc(G(bot, gid, 'den', `${c}_${bot.pid}`), choice);
+    const meta = await getDoc(G(bot, gid, 'den', 'meta'));
+    const choiceKey = meta.data()?.recruitDue ? 'recruit' : 'victim';
+    // Only what the phone's poll sends: the engine picks the hand and the rig.
+    return setDoc(G(bot, gid, 'den', `${c}_${bot.pid}`), {
+      [choiceKey]: rnd(faithful)?.pid ?? null,
+      pid: bot.pid,
+      cycle: c,
+      at: serverTimestamp(),
+    });
   }
   if (bot.role === 'doctor') return action({ kind: 'protect', target: rnd(alive).pid });
   if (bot.role === 'detective') {
     const two = [...alive].sort(() => Math.random() - 0.5).slice(0, 2).map((p) => p.pid);
-    return two.length === 2 ? action({ kind: 'trace', targets: two, target: null }) : action({ kind: 'scour' });
+    return two.length === 2 ? action({ kind: 'trace', targets: two, target: null }) : action({ kind: 'scour', target: null });
   }
-  return Math.random() < 0.4 ? action({ kind: 'watch', target: rnd(alive).pid }) : action({ kind: 'scour' });
+  return Math.random() < 0.4 ? action({ kind: 'watch', target: rnd(alive).pid }) : action({ kind: 'scour', target: null });
 }
 
 /**
@@ -183,7 +188,9 @@ export async function vote(bot, gid, game) {
   let targets = players.filter((p) => p.status === 'alive' && p.pid !== bot.pid).map((p) => p.pid);
   if (game.phase === 'revote') targets = (game.tied ?? []).filter((p) => p !== bot.pid);
   if (!targets.length) return;
-  await setDoc(G(bot, gid, 'votes', `${game.ballot}_${bot.pid}`), { target: rnd(targets), pid: bot.pid, ballot: game.ballot });
+  await setDoc(G(bot, gid, 'votes', `${game.ballot}_${bot.pid}`), {
+    target: rnd(targets), pid: bot.pid, ballot: game.ballot, at: serverTimestamp(),
+  });
 }
 
 /**
@@ -208,7 +215,9 @@ export async function answerRecruit(bot, gid, game) {
   const inbox = await getDocs(query(collection(bot.db, 'games', gid, 'inbox'), where('to', '==', bot.pid)));
   const offered = inbox.docs.some((d) => d.data().kind === 'recruitOffer' && d.data().cycle === game.cycle);
   if (!offered) return;
-  await setDoc(G(bot, gid, 'actions', `${game.cycle}_${bot.pid}`), { kind: 'recruitAnswer', accept: Math.random() < 0.5, pid: bot.pid, cycle: game.cycle });
+  await setDoc(G(bot, gid, 'actions', `${game.cycle}_${bot.pid}`), {
+    kind: 'recruitAnswer', accept: Math.random() < 0.5, pid: bot.pid, cycle: game.cycle, at: serverTimestamp(),
+  });
 }
 
 // --- Driving: every bot acts on every phase -------------------------------------------

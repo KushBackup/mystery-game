@@ -218,7 +218,14 @@ export const cancelRemove = (gid, pid) => updateDoc(sub(gid, 'players', pid), { 
  * final, so a guest who left (vanished) is never signed back in.
  */
 export async function relink(gid, newUid, pid) {
+  // A player may have lost access to an old browser, but that browser can come
+  // back online later. Keep exactly one binding for the pid so it cannot cast
+  // a second vote or overwrite an action after the replacement phone is live.
+  const existing = await getDocsFromServer(query(col(gid, 'bindings'), where('pid', '==', pid)));
   const batch = writeBatch(db);
+  existing.forEach((binding) => {
+    if (binding.id !== newUid) batch.delete(binding.ref);
+  });
   batch.set(sub(gid, 'bindings', newUid), { pid });
   batch.delete(sub(gid, 'knocks', newUid));
   await batch.commit();

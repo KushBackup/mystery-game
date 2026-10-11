@@ -19,6 +19,7 @@ import { Promo, PROMO_FRAMES } from "./ad/Promo";
 import { Compositions as FootagePromo } from "./ad60/Compositions";
 import { Compositions as KillersPromo } from "./adtn/Compositions";
 import { Compositions as FeelGoodReel } from "./adfg/Compositions";
+import { Compositions as ThreeKnivesReel } from "./adtk/Compositions";
 import { SCENES, TOTAL_FRAMES } from "./scenes/manifest";
 import { S01Cold } from "./scenes/S01Cold";
 import { S02Problem } from "./scenes/S02Problem";
@@ -116,6 +117,7 @@ export const RemotionRoot: React.FC = () => {
       <FootagePromo />
       <KillersPromo />
       <FeelGoodReel />
+      <ThreeKnivesReel />
 
       <Folder name="Scenes-Vertical">
         {SCENES.map((scene) => (
