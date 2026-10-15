@@ -354,6 +354,7 @@ export function HomeScreen({ grid, dock, badges, now, onOpen, ghost, entering, l
                 {now.label}
               </span>
               <span className="os-now__line block">{now.line}</span>
+              {now.sub && <span className="os-now__sub block">{now.sub}</span>}
             </span>
             {now.onTap && <span className="os-now__chev" aria-hidden="true"><Glyph name="forward" size={12} /></span>}
           </>

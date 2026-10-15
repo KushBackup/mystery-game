@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import AppIcon from './icons/AppIcon';
 import Glyph from './icons/Glyph';
 import Wallpaper from './art/Wallpaper';
@@ -11,6 +11,7 @@ import RoleMessage from './RoleMessage';
 import GhostTutorial from './GhostTutorial';
 import { prefetchGhostTutorial } from '../data/ghostTutorial';
 import { narrate } from '../data/packs/index.js';
+import { HIJACK } from '../data/killersCopy';
 import { sfxSting, sfxPing, sfxNightfall, sfxDaybreak, sfxStatic } from './sfx';
 
 /**
@@ -31,11 +32,15 @@ export function RoleText({ game, role, onDone }) {
   const phase = useSyncedReveal(game.revealAt);
   // The stamp tells the game's time, like the status bar above it, not the room's.
   const clock = useWorldClock(game);
-  const shown = phase === 'show' && Boolean(role);
+  const [hijacked, setHijacked] = useState(false);
+  const shown = phase === 'show' && Boolean(role) && hijacked;
 
   useEffect(() => {
     if (shown) sfxSting();
   }, [shown]);
+
+  // Every phone, the same instant: DEEP BLUE takes over and says what it is, then the role arrives.
+  if (phase === 'show' && !hijacked) return <Hijack onDone={() => setHijacked(true)} />;
 
   if (!shown) {
     return (
@@ -62,6 +67,39 @@ export function RoleText({ game, role, onDone }) {
         </div>
         <div className="px-2 pt-6 pb-4 os-rise" style={{ animationDelay: '1100ms' }}>
           <Btn onClick={onDone}>Got it. Tell no one.</Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The hijack (HIJACK in killersCopy): three glitching beats that tell the
+ * premise, on every phone at the deal's reveal. Each beat holds a few
+ * seconds; a tap moves on once the first has been seen. Role-neutral.
+ */
+const HIJACK_BEAT_MS = 3800;
+
+export function Hijack({ onDone }) {
+  const [i, setI] = useState(0);
+  // The parent re-renders with the clock; keep the latest onDone without restarting the beat.
+  const done = useRef(onDone);
+  useEffect(() => { done.current = onDone; }, [onDone]);
+  useEffect(() => {
+    sfxStatic();
+    const id = setTimeout(() => (i + 1 < HIJACK.length ? setI(i + 1) : done.current()), HIJACK_BEAT_MS);
+    return () => clearTimeout(id);
+  }, [i]);
+  const beat = HIJACK[i];
+  return (
+    <div className="os-alarm overflow-hidden" onClick={() => { if (i > 0 || HIJACK.length === 1) { if (i + 1 < HIJACK.length) setI(i + 1); else onDone(); } }} role="presentation">
+      <div className="os-static" style={{ opacity: 0.3 }} />
+      <div key={i} className="relative flex-1 grid place-items-center px-7 text-center os-glitch">
+        <div>
+          <p className="os-label text-[11px] text-os-chrome">DEEP BLUE · {i + 1} / {HIJACK.length}</p>
+          <p className="os-arcade text-[24px] leading-snug mt-4 text-white os-rgb">{beat.big}</p>
+          <p className="text-[17px] leading-snug mt-5 text-os-foam os-balance">{beat.small}</p>
+          {i > 0 && <p className="os-label text-[10px] mt-8 text-os-chrome">TAP TO CONTINUE</p>}
         </div>
       </div>
     </div>
@@ -123,7 +161,7 @@ export const GoneScreen = () => (
 const CHAPTERS = {
   night: (g, pack) => ({ title: `NIGHT ${g.cycle}`, sub: narrate(pack, 'night')[0], glyph: 'moon', sound: sfxNightfall }),
   investigation: (g, pack) => ({ title: 'DAYLIGHT', sub: narrate(pack, 'investigation')[0], glyph: 'eye', sound: sfxDaybreak }),
-  roundtable: () => ({ title: 'THE VOTE', sub: 'Who gets logged out?', glyph: 'vote', sound: sfxDaybreak }),
+  roundtable: () => ({ title: 'THE VOTE', sub: 'Who does the room kill?', glyph: 'vote', sound: sfxDaybreak }),
   endgame: (g) => ({ title: 'ENDGAME', sub: `Final vote ${g.endgameRound ?? 1}.`, glyph: 'skull', sound: sfxNightfall }),
 };
 
@@ -177,13 +215,13 @@ export function TakenScreen({ me, onDone }) {
       <div className="os-static" style={{ opacity: lost ? 0.45 : 0.12 }} />
       <div className="relative flex-1 grid place-items-center px-7 text-center">
         {lost ? (
-          <p className="os-arcade text-[26px] text-white os-rgb">SIGNAL LOST</p>
+          <p className="os-arcade text-[26px] text-white os-rgb">YOU WERE KILLED</p>
         ) : (
           <div className="os-rise">
             <div className="inline-grid place-items-center w-20 h-20 rounded-2xl bg-os-steel/40 text-os-foam"><Glyph name="ghost" size={44} /></div>
-            <p className="os-arcade text-[23px] leading-snug mt-6 text-white">{banished ? 'LOGGED OUT' : 'TAKEN BY THE DEEP'}</p>
+            <p className="os-arcade text-[23px] leading-snug mt-6 text-white">YOU WERE KILLED</p>
             <p className="text-[18px] leading-snug mt-4 text-os-foam os-balance">
-              {banished ? 'The group voted you out. ' : ''}Your phone is haunted now.
+              {banished ? 'The room voted to kill you. ' : 'You came last on the board. '}You still play, as a ghost.
             </p>
             <div className="mt-7"><Btn tone="dark" onClick={() => setTour(true)}>Enter the spirit world</Btn></div>
           </div>

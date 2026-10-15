@@ -30,8 +30,8 @@ const poster = (n) => `${BASE}tutorial/ghost-${n}.jpg`;
 
 /** The film slides, in order. `title` is the big line, `line` the small one. */
 export const FILM_SLIDES = Object.freeze([
-  { id: 'rise', n: 1, title: 'Welcome to the spirit world.', line: 'You were taken, but you’re still in the game. Your side can still win.' },
-  { id: 'mute', n: 2, title: 'The living can’t hear you.', line: 'You can read the Room, but not post. Except once: on the day you’re taken, post one photo there.' },
+  { id: 'rise', n: 1, title: 'Welcome to the spirit world.', line: 'You were killed, but you’re still in the game. Your side can still win.' },
+  { id: 'mute', n: 2, title: 'The living can’t hear you.', line: 'You can read the Room, but not post. Except once: on the morning you’re killed, post one photo there.' },
   { id: 'truth', n: 3, title: 'Every night, a true clue photo.', line: 'Ghost photos never lie. In Photos, The Room shows every clue the living got.' },
   { id: 'pass', n: 4, title: 'Pass a photo to a living guest.', line: 'Open Night, pick a photo, then a guest. Or whisper them one word.' },
   { id: 'spirits', n: 5, title: 'Plot with the dead in Spirits.', line: 'Spirits is in Messages. Only ghosts can read it.' },

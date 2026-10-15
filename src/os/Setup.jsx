@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { TRAITS, GENDER } from '../data/traits';
-import { GAME } from '../data/killersCopy';
+import { GAME, CASE } from '../data/killersCopy';
 import { arrive, knock, cancelKnock, deviceCode } from '../firebase/game';
 import Wallpaper from './art/Wallpaper';
 import Portrait from './art/Portrait';
@@ -11,6 +11,7 @@ import { AppFrame, Section, Btn, ActionSheet } from './ui';
 import { useSeen, markSeen, peekSeen } from './seen';
 import { primeSfx, sfxTap, sfxDeny, sfxBoot } from './sfx';
 import { useKeyboard } from './keyboard';
+import { avatarFile, canShareFile, shareAvatar, saveAvatar } from './avatarImage';
 
 /**
  * Arrival, as a new phone's setup assistant. The first time a phone opens the
@@ -61,7 +62,7 @@ export default function Setup({ gid, uid, late }) {
   const booted = useSeen('booted', false);
   const saveKey = `${gid}.setup`;
   const [resume] = useState(() => peekSeen(saveKey) ?? {});
-  const [step, setStep] = useState(resume.step ?? 'hello'); // (boot) | hello | back | terms | name | 0..5 | review
+  const [step, setStep] = useState(resume.step ?? 'hello'); // (boot) | hello | back | case | terms | name | 0..5 | review
   const [name, setName] = useState(resume.name ?? '');
   const [answers, setAnswers] = useState(resume.answers ?? {});
   const [busy, setBusy] = useState(false);
@@ -102,8 +103,9 @@ export default function Setup({ gid, uid, late }) {
 
   if (!booted) return <Boot onDone={finishBoot} />;
   if (step === 'back') return <SignBackIn gid={gid} uid={uid} onCancel={() => setStep('hello')} />;
-  if (step === 'hello') return <Hello onDone={() => { primeSfx(); setStep('terms'); }} onBack={() => { primeSfx(); setStep('back'); }} late={late} />;
-  if (step === 'terms') return <Terms onAgree={() => setStep('name')} />;
+  if (step === 'hello') return <Hello onDone={() => { primeSfx(); setStep('case'); }} onBack={() => { primeSfx(); setStep('back'); }} late={late} />;
+  if (step === 'case') return <Case onNext={() => setStep('terms')} />;
+  if (step === 'terms') return <Terms onAgree={() => setStep('name')} onBack={() => setStep('case')} />;
 
   if (step === 'name') {
     return (
@@ -152,7 +154,7 @@ export default function Setup({ gid, uid, late }) {
           <p className="text-[21px] leading-tight mt-1 text-os-ink">{trait.prompt}</p>
         </ProfileCard>
         {/* a tap dresses the photo straight away; Next moves on, so a guest can try each option on */}
-        <div className="os-chips px-4 pt-3">
+        <div className={`os-chips ${chipCols(trait) === 3 ? 'os-chips--3' : ''} px-4 pt-3`}>
           {trait.options.map((o) => (
             <button
               key={o.id}
@@ -206,6 +208,7 @@ export default function Setup({ gid, uid, late }) {
         </div>
         <p className="text-[22px] leading-tight mt-3 text-os-ink">{name.trim()}</p>
         <p className="text-[14px] text-os-steel mt-0.5">How the others will see you</p>
+        <AvatarActions traits={answers} seed={uid} name={name} />
       </div>
       <Section head="Your answers" foot="Tap one to change it. Once your phone is ready, they can’t be changed.">
         <div className="os-group">
@@ -246,10 +249,16 @@ function photoWidth(below) {
   return Math.round(Math.max(120, Math.min(280, window.innerWidth * 0.62, byHeight)));
 }
 
+// A long question's options go three across, so its rows don't push the photo down to a thumbnail.
+const chipCols = (trait) => (trait.options.length > 8 ? 3 : 2);
+
 /** The photo's width on each screen of Setup: the name, a question (by its rows of options), the review. */
 function photoSize(step) {
   if (step === 'name') return photoWidth(230);
-  if (typeof step === 'number') return photoWidth(150 + Math.ceil(QUESTIONS[step].options.length / 2) * 52);
+  if (typeof step === 'number') {
+    const q = QUESTIONS[step];
+    return photoWidth(150 + Math.ceil(q.options.length / chipCols(q)) * 52);
+  }
   return photoWidth(120);
 }
 
@@ -268,6 +277,56 @@ function ProfileCard({ uid, answers, name, size, children }) {
         {name && <p className="os-label text-[12px] text-os-steel truncate mb-1">{name.trim().toUpperCase()}</p>}
         {children}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Share and Save under the finished photo on the review. The image file is
+ * painted ahead (os/avatarImage.js) and again after any answer changes, so a
+ * tap opens the share sheet at once, as iOS requires. Share only shows when
+ * the phone can share an image file.
+ */
+function AvatarActions({ traits, seed, name }) {
+  const [painted, setPainted] = useState({ key: '', file: null });
+  const [note, setNote] = useState('');
+  const [shareable] = useState(() => canShareFile());
+  const key = `${JSON.stringify(traits)}|${seed}|${name}`;
+  // a photo painted for answers that have since changed is not this photo
+  const file = painted.key === key ? painted.file : null;
+
+  useEffect(() => {
+    let live = true;
+    const idle = window.requestIdleCallback ?? ((f) => setTimeout(f, 300));
+    const cancel = window.cancelIdleCallback ?? clearTimeout;
+    const handle = idle(() => { avatarFile({ traits, seed, name }).then((f) => { if (live) setPainted({ key, file: f }); }); });
+    return () => { live = false; cancel(handle); };
+    // `key` stands in for `traits`, which is a new object on every render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+
+  useEffect(() => {
+    if (!note) return undefined;
+    const id = setTimeout(() => setNote(''), 2400);
+    return () => clearTimeout(id);
+  }, [note]);
+
+  const share = async () => {
+    if (!(await shareAvatar(file))) setNote('Couldn’t share. Try Save.');
+  };
+  const save = async () => {
+    const how = await saveAvatar(file);
+    if (how === 'downloaded') setNote('Saved to your downloads');
+    else if (how === 'failed') setNote('Couldn’t save. Try again.');
+  };
+
+  return (
+    <div className="w-full flex flex-col items-center mt-3">
+      <div className="flex gap-2">
+        {shareable && <Btn small tone="grey" busy={!file} onClick={share}>Share image</Btn>}
+        <Btn small tone="grey" busy={!file} onClick={save}>Save image</Btn>
+      </div>
+      <p className="text-[13px] text-os-steel h-5 mt-1" role="status">{note}</p>
     </div>
   );
 }
@@ -399,24 +458,65 @@ function Boot({ onDone }) {
 }
 
 /**
- * The Terms of Service. Every guest reads the rules without being handed
- * rules: they're a contract with a cursed app. "Disagree" doesn't work, which
- * is the most important clause.
+ * The case, before anything else (2026-10-15). After the 3 Oct game, guests
+ * reached the questions without knowing what DEEP BLUE was, who the Killers
+ * were or what they were playing for. Three short panels say it plainly:
+ * the app, the Killers, the goal (CASE in data/killersCopy.js). The same for
+ * every guest; no role exists yet.
+ */
+function Case({ onNext }) {
+  return (
+    <AppFrame
+      title={GAME.title}
+      light
+      enter="push"
+      footer={(
+        <div className="os-compose !items-center !px-3 !py-2">
+          <Btn small className="flex-1" onClick={() => { sfxTap(); onNext(); }}>Got it</Btn>
+        </div>
+      )}
+    >
+      <div className="px-4 pt-5 pb-6 space-y-3">
+        <p className="os-label text-[12px] text-os-steel">THE CASE · READ THIS FIRST</p>
+        {CASE.map((panel, i) => (
+          <div key={panel.kicker} className="os-paper rounded-md px-4 py-3">
+            <p className="flex items-baseline gap-2">
+              <span className="os-arcade text-[13px] text-os-steel">{i + 1}.</span>
+              <span className="text-[18px] font-bold leading-tight">{panel.kicker}</span>
+            </p>
+            <div className="mt-2 space-y-1.5">
+              {panel.lines.map((l) => <p key={l} className="text-[16px] leading-snug">{l}</p>)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </AppFrame>
+  );
+}
+
+/**
+ * The Terms of Service. Every guest reads the rules as a contract with a
+ * cursed app. "Disagree" doesn't work, which is the most important clause.
+ * They restate the case (above) as rules, and end on why the questions that
+ * follow matter: the Killers' answers are in there too.
  */
 const CLAUSES = [
-  'Every morning, DEEP BLUE wakes you up.',
-  'Every morning, everyone plays a short game.',
-  'Whoever gets the lowest score dies.',
-  'Some of you are Killers. Find them and vote them out.',
-  'If you die or get voted out, keep your phone. You still play.',
-  'The next questions are about you. Answer truthfully.',
+  'DEEP BLUE is on your phone now. You cannot delete it.',
+  'Every morning, everyone plays a quick game. The lowest score is killed.',
+  'Three of you are Killers. Each night they push one score to the bottom.',
+  'The top of the board is locked. Play well and the Killers can’t touch you.',
+  'Find clues, accuse a suspect, and vote. The room’s choice is killed.',
+  'If you are killed, keep your phone. You still play, as a ghost.',
+  'Answer the next questions truthfully. The Killers answer them too, and every clue is about their answers.',
 ];
 
-function Terms({ onAgree }) {
+function Terms({ onAgree, onBack }) {
   const [refused, setRefused] = useState(0);
   return (
     <AppFrame
       title="Terms"
+      onBack={onBack}
+      backLabel="Case"
       light
       enter="push"
       footer={(

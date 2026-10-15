@@ -131,6 +131,8 @@ html.os-locked body {
 .os-now__chev { flex: 0 0 auto; display: flex; color: rgba(255, 255, 255, 0.6); }
 .os-now__label { font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.72); letter-spacing: 0.04em; text-transform: uppercase; }
 .os-now__line { font-size: 15px; font-weight: 500; line-height: 1.25; margin-top: 2px; color: #fff; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4); }
+/* The room's progress (os/suspects.js): suspects for the newest night, Killers caught. */
+.os-now__sub { font-size: 12px; font-weight: 700; letter-spacing: 0.02em; line-height: 1.3; margin-top: 4px; color: var(--color-os-gold); text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.4); }
 
 .os-grid {
   flex: 1 1 auto;
@@ -1039,6 +1041,12 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 .os-board-row--top .os-board-rank { color: var(--color-os-gold); }
 .os-board-row--dead { background: rgba(255, 59, 48, 0.2); }
 .os-board-row--dead .os-board-score { color: var(--color-os-red); }
+/* The shield line (engine/morning.js shieldPlaces): rows above it were locked against the Killers. */
+.os-board-lock {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 5px 12px; border-top: 2px dashed var(--color-os-gold);
+  font-size: 10px; font-weight: 800; letter-spacing: 0.08em; color: var(--color-os-gold);
+}
 
 /* A stamped verdict (banish / finale). */
 .os-verdict {
@@ -1123,6 +1131,9 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0, 0, 0, 0.18);
 }
 .os-chip:active { filter: brightness(0.92); }
+/* a long question (the tops, the feet, the drinks): three across, so the photo above keeps its size */
+.os-chips--3 { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.os-chips--3 .os-chip { padding: 6px 5px; font-size: 14px; }
 .os-chip[aria-pressed='true'] { color: #fff; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3); background: linear-gradient(#4a9bf5, #0b6fe3); border-color: #0a56b0; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25); }
 
 /* ---------------------------------------------------------- 15. Motion off */
@@ -2403,3 +2414,21 @@ button.os-field:active .os-field__label, button.os-field:active .os-field__ok, b
   .os-sb-pen__svg, .os-sb-speed__track i, .os-sb-pol--open, .os-sb-tool { transition: none; }
   .os-sb-pol--deal, .os-sb-stamp, .os-sb-timeup, .os-sb-guess__misses li:first-child, .os-sb-big__card, .os-sb-down__stamp, .os-sb-down__pol, .os-sb-wiggle { animation: none; }
 }
+
+/* Accusations (apps/Accuse.jsx): an accused guest's card, in the Vote app and the Room. */
+.os-accuse { background: #fff; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 10px; padding: 10px 12px; box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08); color: var(--color-os-ink); }
+.os-accuse--trial { border: 2px solid var(--color-os-red); }
+.os-accuse--room { max-width: 86%; }
+.os-accuse__count { flex-shrink: 0; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; padding: 3px 8px; border-radius: 999px; background: rgba(0, 0, 0, 0.07); color: var(--color-os-steel); font-variant-numeric: tabular-nums; }
+.os-accuse__count.is-on { background: var(--color-os-red); color: #fff; }
+.os-accuse__clue { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.os-accuse__thumb { width: 52px; flex-shrink: 0; border-radius: 4px; overflow: hidden; background: #000; }
+.os-accuse__done { font-size: 13px; font-weight: 700; color: var(--color-os-steel); margin-top: 6px; }
+
+/* Torn photos (GalleryApp TornPhoto, split clues): half a clue, waiting for its other half. */
+.os-torn { display: flex; gap: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); border: 1px dashed rgba(255, 255, 255, 0.3); color: #fff; }
+.os-torn__paper { width: 54px; height: 72px; flex-shrink: 0; display: grid; place-items: center; background: #1b2633; font-size: 26px; font-weight: 800; color: var(--color-os-gold); }
+.os-torn--l .os-torn__paper { clip-path: polygon(0 0, 100% 0, 86% 12%, 100% 26%, 84% 40%, 100% 55%, 86% 70%, 100% 85%, 88% 100%, 0 100%); }
+.os-torn--r .os-torn__paper { clip-path: polygon(14% 0, 100% 0, 100% 100%, 12% 100%, 0 85%, 16% 70%, 0 55%, 14% 40%, 0 26%, 14% 12%); }
+.os-torn__code { font-size: 24px; font-weight: 800; letter-spacing: 0.3em; color: var(--color-os-gold); font-variant-numeric: tabular-nums; }
+.os-torn__input { flex: 1; min-width: 0; height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.35); background: rgba(0, 0, 0, 0.35); color: #fff; font-size: 18px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; }

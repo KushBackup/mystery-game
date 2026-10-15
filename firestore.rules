@@ -213,6 +213,9 @@ service cloud.firestore {
       }
 
       // "<ballot>_<pid>" → { target }. The ballot id lives on the game doc.
+      // The Round Table and its re-vote are between the guests on trial
+      // (game.ballotTargets, set by the host from the day's accusations), which
+      // may include 'none' to spare a lone accused guest. The Endgame is open.
       match /votes/{id} {
         allow read: if isHost() || ownsId(id);
         allow create, update: if ownsId(id)
@@ -223,12 +226,58 @@ service cloud.firestore {
           && request.resource.data.ballot == game().ballot
           && request.resource.data.at == request.time
           && request.resource.data.target != me()
-          && isAlive(request.resource.data.target)
           && (
-            (game().phase in ['roundtable', 'revote'] && myStatus() == 'alive')
-            || (game().phase == 'endgame' && myStatus() in ['alive', 'ghost'])
-          )
-          && (game().phase != 'revote' || request.resource.data.target in game().tied);
+            (game().phase in ['roundtable', 'revote'] && myStatus() == 'alive'
+              && request.resource.data.target in game().get('ballotTargets', []))
+            || (game().phase == 'endgame' && myStatus() in ['alive', 'ghost'] && isAlive(request.resource.data.target))
+          );
+      }
+
+      // --- Accusations (2026-10-15) ---------------------------------------------
+      // In daylight a living guest accuses one living guest, once a day, and may
+      // attach one clue photo from their own inbox as the reason. Another living
+      // guest seconds one accusation a day. Both are public: the room reads them
+      // together. The host reads them when daylight ends (engine/banish.js
+      // accusationBoard). Create-only, so an accusation can't be quietly taken back.
+      function attachedClue(d) {
+        let clue = get(/databases/$(database)/documents/games/$(gid)/inbox/$(d.inboxId)).data;
+        return d.inboxId is string && validFact(d.fact)
+          && clue.to == me() && clue.kind == 'fact'
+          && clue.fact.trait == d.fact.trait && clue.fact.group == d.fact.group;
+      }
+
+      match /accusations/{id} {
+        allow read: if signedIn();
+        allow create: if ownsId(id)
+          && game().phase == 'investigation'
+          && id == string(game().cycle) + '_' + me()
+          && myStatus() == 'alive'
+          && request.resource.data.pid == me()
+          && request.resource.data.cycle == game().cycle
+          && request.resource.data.at == request.time
+          && request.resource.data.target != me()
+          && isAlive(request.resource.data.target)
+          && (request.resource.data.keys().hasOnly(['pid', 'cycle', 'target', 'at'])
+            || (request.resource.data.keys().hasOnly(['pid', 'cycle', 'target', 'at', 'fact', 'inboxId'])
+              && attachedClue(request.resource.data)));
+        allow delete: if isHost();
+      }
+
+      match /seconds/{id} {
+        allow read: if signedIn();
+        allow create: if ownsId(id)
+          && game().phase == 'investigation'
+          && id == string(game().cycle) + '_' + me()
+          && myStatus() == 'alive'
+          && request.resource.data.keys().hasOnly(['pid', 'cycle', 'accuser', 'at'])
+          && request.resource.data.pid == me()
+          && request.resource.data.cycle == game().cycle
+          && request.resource.data.at == request.time
+          && request.resource.data.accuser is string
+          && request.resource.data.accuser != me()
+          && exists(/databases/$(database)/documents/games/$(gid)/accusations/$(string(game().cycle) + '_' + request.resource.data.accuser))
+          && get(/databases/$(database)/documents/games/$(gid)/accusations/$(string(game().cycle) + '_' + request.resource.data.accuser)).data.target != me();
+        allow delete: if isHost();
       }
 
       // "<cycle>_<pid>" → { best, runs }: this guest's best run of the day
@@ -309,6 +358,25 @@ service cloud.firestore {
       match /inbox/{id} {
         allow read: if isHost() || (hasBinding() && resource.data.to == me());
         allow write: if isHost();
+      }
+
+      // "<pair>_<pid>" → { pair, code }: a guest joining a torn photo
+      // (engine/clues.js splitHalves) by typing the code on their partner's
+      // phone. The host checks the code against its secret and sends the whole
+      // photo to both (firebase/host.js resolveJoin), then writes `ok`. A
+      // wrong code (ok == false) can be typed again; a pending or right one can't.
+      match /joins/{id} {
+        allow read: if isHost() || ownsId(id);
+        allow create, update: if ownsId(id)
+          && (resource == null || resource.data.get('ok', null) == false)
+          && myStatus() in ['alive', 'ghost']
+          && request.resource.data.keys().hasOnly(['pid', 'pair', 'code', 'at'])
+          && request.resource.data.pid == me()
+          && request.resource.data.pair is string
+          && id == request.resource.data.pair + '_' + me()
+          && request.resource.data.code is string && request.resource.data.code.size() <= 6
+          && request.resource.data.at == request.time;
+        allow update: if isHost();
       }
 
       // --- Talk ----------------------------------------------------------------

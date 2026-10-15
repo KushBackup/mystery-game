@@ -15,6 +15,12 @@
  *   - The Firewall holds (a Doctor protected the target). The rig bounces, and
  *     the deep takes the genuinely lowest living scorer instead, protected
  *     guests excepted. That can be a Killer. Nobody learns their role.
+ *   - The shield holds (2026-10-15): the target's real score is in the top
+ *     `shieldShare` of today's board. DEEP BLUE locks the top of the board, so
+ *     the rig bounces exactly as it does off a Firewall (`cause: 'shield'`;
+ *     the death itself is still `cause: 'deep'`). This is what makes the
+ *     morning game worth playing: a good score saves you from the Killers,
+ *     and a bad one leaves you at the honest bottom.
  *   - Nobody was targeted (a recruit said yes, or no Killers are left):
  *     nobody dies.
  *
@@ -28,6 +34,11 @@ import { census } from './night.js';
 
 export const TOP_REWARD = 3;
 export const MAX_SCORE = 999;
+// The share of the living board DEEP BLUE locks against the rig. Tuned with scripts/sim-balance.mjs.
+export const SHIELD_SHARE = 0.25;
+
+/** How many places at the top of a board of `alive` guests are shielded. */
+export const shieldPlaces = (alive, share = SHIELD_SHARE) => (share > 0 ? Math.max(1, Math.ceil(alive * share)) : 0);
 
 const strip = ({ trait, group }) => ({ trait, group });
 
@@ -44,7 +55,7 @@ export function scoreOf(scores, pid) {
  * @param ctx.pending  the stashed night: { victim, saved, protectedList, rig,
  *                     facts, trueFacts, witness, deliveries, publicDawn, recruited }
  */
-export function resolveMorning({ seed, cycle, players, roles, scores = {}, pending = {} }) {
+export function resolveMorning({ seed, cycle, players, roles, scores = {}, pending = {}, shieldShare = SHIELD_SHARE }) {
   const rng = makeRng(seed, cycle, 'morning');
   const { alive, ghosts } = census(players, roles);
   const aliveSet = new Set(alive);
@@ -56,19 +67,23 @@ export function resolveMorning({ seed, cycle, players, roles, scores = {}, pendi
   let deaths = [];
   let cause = null;
   const victim = pending.victim && aliveSet.has(pending.victim) ? pending.victim : null;
+  // Shielded: the target really played and fewer than `places` living guests beat them.
+  const places = shieldPlaces(alive.length, shieldShare);
+  const shielded = Boolean(victim) && !pending.saved && places > 0 && score(victim) > 0
+    && alive.filter((p) => score(p) > score(victim)).length < places;
 
-  if (victim && !pending.saved) {
+  if (victim && !pending.saved && !shielded) {
     deaths = [{ pid: victim, cause: 'murdered' }];
     cause = 'rig';
-  } else if (victim && pending.saved) {
-    const exempt = new Set(pending.protectedList?.length ? pending.protectedList : [victim]);
+  } else if (victim) {
+    const exempt = new Set([victim, ...(pending.protectedList ?? [])]);
     const pool = alive.filter((p) => !exempt.has(p));
     if (pool.length) {
       const low = Math.min(...pool.map(score));
       const lowest = pool.filter((p) => score(p) === low).sort();
       const taken = lowest.length === 1 ? lowest[0] : pick(lowest, rng);
       deaths = [{ pid: taken, cause: 'deep' }];
-      cause = 'deep';
+      cause = shielded ? 'shield' : 'deep';
       // Every ghost holds one true clue; the deep's catch gets theirs now.
       if (trueFacts.length) deliveries.push({ to: taken, kind: 'fact', via: 'ghost', fact: strip(pick(trueFacts, rng)) });
     }
@@ -107,7 +122,7 @@ export function resolveMorning({ seed, cycle, players, roles, scores = {}, pendi
     deliveries,
     publicDawn: {
       victims: deaths.map((d) => d.pid),
-      attempted: pending.saved ? victim : null,
+      attempted: pending.saved || shielded ? victim : null,
       cause,
       taken,
       rigged,

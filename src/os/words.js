@@ -13,9 +13,9 @@ export function fateLine(p) {
   switch (p.cause) {
     case 'murdered':
     case 'deep':
-      return `Taken by the deep${day}`;
+      return `Killed on the board${day}`;
     case 'banished':
-      return p.revealedRole === 'killer' ? `Voted out · was a KILLER${day}` : `Voted out · was innocent${day}`;
+      return p.revealedRole === 'killer' ? `Killed by the vote · was a KILLER${day}` : `Killed by the vote · was innocent${day}`;
     case 'host':
       return 'Removed by the host';
     default:
@@ -38,6 +38,7 @@ export function photoSource(d, nameOf) {
   if (d.via === 'pass') return nameOf ? `Passed on by ${nameOf(d.from)}, a ghost` : 'Passed on by a ghost';
   if (d.via === 'watch') return 'You saw it yourself';
   if (d.via === 'top') return `#${d.rank ?? 1} on the board`;
+  if (d.via === 'join') return nameOf ? `Joined with ${nameOf(d.from)}’s half` : 'Two halves, joined';
   return 'Dug out of the logs';
 }
 

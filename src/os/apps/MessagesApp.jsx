@@ -13,7 +13,8 @@ import { hhmm } from '../words';
 import { threadsFor, preview, systemText, pollQuestion, lastWordsDue } from '../threads';
 import Evidence from '../art/Evidence';
 import { clueWords } from '../../data/packs/index.js';
-import { LAST_WORDS } from '../../data/killersCopy';
+import { LAST_WORDS, ACCUSE } from '../../data/killersCopy';
+import { AccuseBubble } from './Accuse';
 import KillPoll from './KillPoll';
 import RoleMessage from '../RoleMessage';
 import { useDenMeta } from '../../hooks/useKillers';
@@ -106,12 +107,12 @@ function useRoomEvents(game, nameOf) {
 function eventText(n, nameOf) {
   if (n.kind === 'dawn') {
     const who = nameOf(n.taken ?? n.victims?.[0]);
-    if (n.cause === 'rig') return `DEEP BLUE removed ${who} · score ${n.rigged ?? 0}`;
-    if (n.cause === 'deep') return `The deep took ${who}`;
-    return `Day ${n.cycle}: nobody was taken`;
+    if (n.cause === 'rig') return `${who} was killed · score ${n.rigged ?? 0}`;
+    if (n.cause === 'deep' || n.cause === 'shield') return `${who} was killed`;
+    return `Day ${n.cycle}: nobody was killed`;
   }
-  if (!n.pid) return 'The group couldn’t agree. Nobody was removed.';
-  return `The group removed ${nameOf(n.pid)} · ${n.team === 'killers' ? 'was a KILLER' : 'was innocent'}`;
+  if (!n.pid) return 'Nobody was killed in the vote.';
+  return `The room killed ${nameOf(n.pid)} · ${n.team === 'killers' ? 'was a KILLER' : 'was innocent'}`;
 }
 
 function ThreadView({ ctx, thread, onBack }) {
@@ -125,6 +126,9 @@ function ThreadView({ ctx, thread, onBack }) {
   const people = ['room', 'spirits', 'den'].includes(thread.id);
   const canSend = thread.id === 'room' ? me.status === 'alive' : thread.id === 'spirits' || thread.id === 'den';
   const voting = ['roundtable', 'revote', 'endgame'].includes(game.phase);
+  const daylight = game.phase === 'investigation';
+  // Today's accusations land in the Room as cards, each with its own Second button (Accuse.jsx).
+  const accusations = thread.id === 'room' ? (ctx.accusations ?? []).map((a) => ({ ...a, id: `acc-${a.pid}`, kind: 'accuse', at: a.at?.toMillis?.() ?? Number.MAX_SAFE_INTEGER })) : [];
   const polling = thread.id === 'den' && game.phase === 'night';
   const channel = { room: 'chat', spirits: 'spiritsChat', den: 'denChat' }[thread.id];
   const placeholder = { room: 'Message the room', spirits: 'Only ghosts see this', den: 'Message' }[thread.id];
@@ -138,21 +142,29 @@ function ThreadView({ ctx, thread, onBack }) {
       light
       footer={canSend ? <Compose gid={gid} channel={channel} me={me} placeholder={placeholder} /> : null}
     >
+      {thread.id === 'room' && daylight && (
+        <button type="button" className="os-pinned w-full text-left sticky top-0 z-10" onClick={() => ctx.open('vote')}>
+          <Glyph name="vote" size={18} />
+          <span className="flex-1"><b className="os-label text-[12px] block">DAYLIGHT · ACCUSE</b>{ACCUSE.pin}</span>
+          <Glyph name="forward" size={12} />
+        </button>
+      )}
       {thread.id === 'room' && voting && (
         <button type="button" className="os-pinned w-full text-left sticky top-0 z-10" onClick={() => ctx.open('vote')}>
           <Glyph name="vote" size={18} />
-          <span className="flex-1"><b className="os-label text-[12px] block">POLL · OPEN NOW</b>Who gets logged out? Tap to vote.</span>
+          <span className="flex-1"><b className="os-label text-[12px] block">POLL · OPEN NOW</b>Who does the room kill? Tap to vote.</span>
           <Glyph name="forward" size={12} />
         </button>
       )}
       {polling && <PinnedPoll ctx={ctx} />}
       {people ? (
         <Thread
-          messages={thread.id === 'room' ? [...thread.list, ...events].sort((a, b) => (a.at ?? 0) - (b.at ?? 0)) : thread.list.map((m) => (m.kind === 'added' ? { ...m, event: true } : m))}
+          messages={thread.id === 'room' ? [...thread.list, ...events, ...accusations].sort((a, b) => (a.at ?? 0) - (b.at ?? 0)) : thread.list.map((m) => (m.kind === 'added' ? { ...m, event: true } : m))}
           me={me}
           empty={thread.id === 'spirits' ? 'The dead talk here. Only the dead.' : 'Say hello. Everyone in the room is here.'}
           poll={() => <PollBubble ctx={ctx} />}
           last={(m) => <LastBubble m={m} ctx={ctx} />}
+          accuse={(m) => <AccuseBubble a={m} ctx={ctx} />}
         />
       ) : (
         <SystemThread list={thread.list} ctx={ctx} />
@@ -249,7 +261,7 @@ function PollBubble({ ctx }) {
 }
 
 /** Chat bubbles: yours green on the right, theirs grey on the left, names when the speaker changes. */
-export function Thread({ messages, me, empty = 'Nothing yet.', poll = null, last = null }) {
+export function Thread({ messages, me, empty = 'Nothing yet.', poll = null, last = null, accuse = null }) {
   const end = useRef(null);
   useEffect(() => toBottom(end.current), [messages.length]);
   // The keyboard coming up shortens the list: keep the newest message just above the compose bar.
@@ -258,7 +270,7 @@ export function Thread({ messages, me, empty = 'Nothing yet.', poll = null, last
   if (!messages.length) return <Empty glyph="chat" line={empty} />;
   // "Delivered" sits under your last message, if the last person to speak was you.
   let lastSpoken = -1;
-  messages.forEach((m, i) => { if (!m.event && m.kind !== 'poll') lastSpoken = i; });
+  messages.forEach((m, i) => { if (!m.event && m.kind !== 'poll' && m.kind !== 'accuse') lastSpoken = i; });
   const receiptAt = lastSpoken >= 0 && messages[lastSpoken].pid === me.pid ? lastSpoken : -1;
   return (
     <div className="os-thread">
@@ -266,6 +278,7 @@ export function Thread({ messages, me, empty = 'Nothing yet.', poll = null, last
         if (m.event) return <p key={m.id} className="os-event os-rise">{m.text}</p>;
         if (m.kind === 'poll') return <React.Fragment key={m.id}>{poll?.(m)}</React.Fragment>;
         if (m.kind === 'last') return <React.Fragment key={m.id}>{last?.(m)}</React.Fragment>;
+        if (m.kind === 'accuse') return <React.Fragment key={m.id}>{accuse?.(m)}</React.Fragment>;
         const prev = messages[i - 1];
         const mine = m.pid === me.pid;
         const gap = !prev || (m.at ?? 0) - (prev.at ?? 0) > 5 * 60_000;

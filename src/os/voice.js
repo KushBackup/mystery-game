@@ -66,7 +66,7 @@ function dueLines(game, me, pack, nameOf, now) {
       else if (mine && !mine.played) key = 'none';
       else if (mine) {
         const fromDeep = rows.length - mine.rank - (taken && rows.at(-1)?.pid === taken ? 1 : 0);
-        key = mine.rank <= 3 ? 'top' : fromDeep <= 0 ? 'low' : fromDeep <= 2 ? 'edge' : 'calm';
+        key = mine.rank <= 3 ? 'top' : mine.rank <= (board.shield ?? 0) ? 'locked' : fromDeep <= 0 ? 'low' : fromDeep <= 2 ? 'edge' : 'calm';
       }
       if (key && v.dawn[key]) {
         out.push({ id: `dawn:${board.cycle}`, at, cycle: board.cycle, text: fill(v.dawn[key], { ...vars, rank: mine?.rank, n: rows.length }) });
@@ -78,8 +78,8 @@ function dueLines(game, me, pack, nameOf, now) {
   if (b && game.phase === 'banish' && game.revealAt && b.pid !== me.pid) {
     const at = game.revealAt + (VERDICT_BEAT.votes + 2) * 1000;
     if (now >= at) {
-      const key = !b.pid ? 'none' : b.team === 'killers' ? (game.winner === 'faithful' ? 'lastKiller' : 'killer') : 'innocent';
-      out.push({ id: `banish:${game.ballot}`, at, cycle: game.cycle, text: fill(v.banish[key], { ...vars, target: b.pid ? nameOf(b.pid) : '' }) });
+      const key = !b.pid ? (b.unaccused ? 'unaccused' : 'none') : b.team === 'killers' ? (game.winner === 'faithful' ? 'lastKiller' : 'killer') : 'innocent';
+      out.push({ id: `banish:${game.ballot}`, at, cycle: game.cycle, text: fill(v.banish[key] ?? v.banish.none, { ...vars, target: b.pid ? nameOf(b.pid) : '' }) });
     }
   }
 

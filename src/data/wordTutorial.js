@@ -38,7 +38,7 @@ export const FILM_SLIDES = Object.freeze([
   { id: 'write', n: 3, title: 'Post one word that fits.', line: 'Never the word itself. That scores 0.' },
   { id: 'wall', n: 4, title: 'Every clue lands on one wall, in order.', line: 'Everyone can see who posted, and who waited.' },
   { id: 'pick', n: 5, title: 'Then pick the 3 clues that fit best.', line: 'A fair clue scores 100, plus 50 for every pick.' },
-  { id: 'board', n: 6, title: 'The lowest score on the board dies.', line: 'Skip the game and you score 0.' },
+  { id: 'board', n: 6, title: 'The lowest score on the board is killed.', line: 'Skip the game and you score 0. The top quarter is locked.' },
 ].map((s) => ({ ...s, kind: 'film', clip: clip(s.n), poster: poster(s.n) })));
 
 /**

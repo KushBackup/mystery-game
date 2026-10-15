@@ -1,4 +1,37 @@
-# HOST_LIVE_FACILITATION.md - Run of Show (Case 2609-G · Greenr: Last Seating)
+# HOST_LIVE_FACILITATION.md - Run of Show
+
+> **Host-only.** The current game is **Three Knives Out** (Killers Night, the DEEP BLUE phone), first run with these rules on Fri 16 Oct 2026 at Backroom, Anjuna, with SideQuest Club. Its run of show comes first. The old authored-case script (Greenr: Last Seating) is kept below for reference.
+
+## Three Knives Out: you narrate, the phones instruct (2026-10-15)
+
+After the 3 Oct game the room waited for the host to say what to do next. Now every instruction is on the phones: the Case screen at setup, the hijack at the deal, the Night app, banners, the NowCard. **Your job is to narrate and stir, never to explain a step.** The console shows a cue for every phase under the Read aloud lines.
+
+### The one-breath premise (if anyone asks)
+
+DEEP BLUE is a cursed app on every phone here. Every morning, everyone plays its game and the lowest score is killed. Three of you have its admin password: the Killers. Each night they push one score to the bottom. The top of the board is locked, so play well. Find clues, accuse, vote. Kill all three Killers and DEEP BLUE deletes itself.
+
+### Phase by phase
+
+| Phase | What the phones do | What you do |
+|---|---|---|
+| Arrivals | Opening film, Case screen, Terms, six questions | Greet people. Help stuck phones finish setup. Don't explain the game. |
+| Deal | Every phone glitches together: the hijack (3 beats), then the sealed role | Stay quiet and watch faces. |
+| Night | Night app explains every move | Lights down. Hurry anyone still staring. |
+| Alarm + morning game | Banner, then the day's game | React like the alarm is real. Remind them: top quarter is locked, bottom is killed. |
+| Board | Synced reveal; gold "locked" line; KILLED | Ask the killed guest whether that was really their score. |
+| Daylight | Torn photos, suspect count on the home screen, Accuse / Second in the Room | Point at torn photos still waiting for their other half. If nobody has accused anyone, say it out loud: no trial means no vote. |
+| Vote | Only those on trial are on the ballot | One sentence of defence from each accused, then let the phones vote. |
+| Verdict | Synced reveal | Let it land. Cheer a Killer; ask who pushed hardest for an innocent. |
+| Endgame | Two final votes; ghosts vote too | Ask who they trust least. |
+| Finale | Winner, then "how it happened", night by night | Tell them to open News for the full story. |
+
+### Words to use
+
+Only **killed** for anyone leaving the game, whether by the board or by the vote. Never banish, logged out, voted out or taken.
+
+---
+
+# Archive: Run of Show (Case 2609-G · Greenr: Last Seating)
 
 > **Host-only. Full spoilers.** The fast, round-by-round script for running the
 > room live. The in-app twin is Host Guide -> Rounds

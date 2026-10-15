@@ -43,7 +43,7 @@ export const FILM_SLIDES = Object.freeze([
   { id: 'draw', n: 3, title: `Draw it. You have ${DRAW_S} seconds.`, line: 'No letters, no numbers. Just draw.' },
   { id: 'guess', n: 4, title: 'Then guess other people’s drawings.', line: 'Type what you see. The faster you get it, the more it scores.' },
   { id: 'score', n: 5, title: 'Your drawing scores too.', line: '+30 every time someone guesses it. Draw clearly.' },
-  { id: 'board', n: 6, title: 'The lowest score on the board dies.', line: 'Skip the game and you score 0.' },
+  { id: 'board', n: 6, title: 'The lowest score on the board is killed.', line: 'Skip the game and you score 0. The top quarter is locked.' },
 ].map((s) => ({ ...s, kind: 'film', clip: clip(s.n), poster: poster(s.n) })));
 
 // --- The practice drawing --------------------------------------------------------------

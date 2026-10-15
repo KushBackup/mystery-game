@@ -35,34 +35,58 @@ export default {
   place: 'wherever you are tonight',
   news,
 
+  // The lobby's story banners and the host's opening: the case in four lines (killersCopy CASE says it at length).
   setting: [
-    'Everyone here has an app called DEEP BLUE. Nobody remembers installing it.',
-    'Every morning it rings. Everyone plays. The lowest score is taken.',
-    'Some of you are Killers.',
-    'Find them before the deep takes everyone.',
+    'DEEP BLUE is a cursed app, and tonight it is on every phone here. Every morning, the lowest score is killed.',
+    'Three guests have its admin password. They are the Killers. Each night they push one score to the bottom.',
+    'The top of the board is locked. Play well and the Killers can’t touch you.',
+    'Find the Killers, accuse them, and vote. Kill all three and DEEP BLUE deletes itself.',
   ],
 
   narration: {
     casting: ['DEEP BLUE has sent you a message. Read it alone.', 'Tell no one what it says.'],
-    night: ['Screens dim. The servers hum.', 'Somebody in this room is still awake.'],
-    alarm: ['Wake up.', 'Today’s game starts in a moment. Do not come last.'],
+    night: ['Screens dim. The Killers are online.', 'Each of you has one move tonight.'],
+    alarm: ['Wake up.', 'Play today’s game. The lowest score is killed. The top of the board is locked.'],
     // The first Word or Sketch morning: a longer alarm while every phone shows how the game is played.
     alarmIntro: ['Wake up. Today’s game is new.', 'Open DEEP BLUE. It shows you how to play before it starts.'],
-    game: ['Everyone plays today’s game.', 'The board posts when the timer ends.'],
-    dawnDeath: ['The board is up.', '{name} came last. The deep has taken them.'],
-    dawnRig: ['The board is up.', '{name} came last. Their score reads {score}. They swear it was higher.'],
-    dawnDeep: ['The board is up. Someone was after {saved}. They missed.', '{name} came last. The deep has taken them.'],
+    game: ['Everyone plays today’s game.', 'The board posts when the timer ends. Score high and you’re locked.'],
+    dawnDeath: ['The board is up.', '{name} came last. {name} was killed.'],
+    dawnRig: ['The board is up.', '{name} came last with {score}. {name} was killed. They swear their score was higher.'],
+    dawnDeep: ['The board is up. Someone was after {saved}. They missed.', '{name} came last. {name} was killed.'],
+    // The target scored in the locked top of the board (engine/morning.js), so the rig bounced.
+    dawnShield: ['The board is up. Someone tried to sink {saved}. Their score held.', '{name} came last. {name} was killed.'],
     dawnSaved: ['The board is up.', 'Someone was after {name}. They missed.'],
-    dawnQuiet: ['The board is up.', 'Nobody was taken. That has never happened before.'],
-    dawnRecruited: ['The board is up. Nobody was taken.', 'But someone said yes to something.'],
-    investigation: ['Look at each other.', 'Then the group votes someone out.'],
-    roundtable: ['The group is voting.', 'Whoever gets the most votes is logged out for good.'],
-    banishKiller: ['{name} has been logged out.', '{name} was a KILLER.'],
-    banishFaithful: ['{name} has been logged out.', '{name} was innocent. The group was wrong.'],
-    banishNone: ['The group cannot agree.', 'Nobody is logged out tonight.'],
-    endgame: ['The app is shutting down for good.', 'Last votes. Any Killer left keeps the servers.'],
-    finaleFaithful: ['DEEP BLUE has been deleted.', 'Every Killer is out. The Faithful win.'],
-    finaleKillers: ['DEEP BLUE will ring again tomorrow.', 'A Killer is still logged in. The Killers win.'],
+    dawnQuiet: ['The board is up.', 'Nobody was killed. That has never happened before.'],
+    dawnRecruited: ['The board is up. Nobody was killed.', 'But someone said yes to something.'],
+    investigation: ['Compare clues, then accuse someone.', 'Two Seconds put a guest on trial. No trial, no vote.'],
+    roundtable: ['The room is voting.', 'Whoever gets the most votes is killed.'],
+    banishKiller: ['The room voted. {name} was killed.', '{name} was a KILLER.'],
+    banishFaithful: ['The room voted. {name} was killed.', '{name} was innocent. The room was wrong.'],
+    banishNone: ['The room spared everyone.', 'Nobody was killed today.'],
+    // Nobody had an accusation with two seconds, so there was no vote (firebase/host.js).
+    banishUnaccused: ['Nobody was accused.', 'Nobody was killed today. The Killers get a free night.'],
+    endgame: ['DEEP BLUE is shutting down for good.', 'Last votes. If any Killer survives, the Killers win.'],
+    finaleFaithful: ['DEEP BLUE has deleted itself.', 'All three Killers are dead. The Faithful win.'],
+    finaleKillers: ['DEEP BLUE will ring again tomorrow.', 'A Killer survived. The Killers win.'],
+  },
+
+  // The host as narrator, not manager (2026-10-15). After the 3 Oct game the
+  // room waited for the host's instructions; now the phones carry every step,
+  // and the host console shows one cue per phase: what to watch for, and how
+  // to stir the room without explaining a mechanic. Host-only, never on a phone.
+  hostCues: {
+    lobby: 'Greet people as they arrive. If a phone is stuck, help it finish setup. Don’t explain the game: the Case screen does.',
+    casting: 'Stay quiet. Every phone is glitching and DEEP BLUE is explaining itself. Watch faces as the roles land.',
+    night: 'Lights down if you can. Nothing to say: every phone shows its own move. Hurry anyone still staring at the screen.',
+    alarm: 'React to the alarm like it is real. Point at phones nobody has picked up.',
+    game: 'Cheer the room on. Remind them the top quarter is locked and the bottom is killed.',
+    dawn: 'Let the board land. Ask the killed guest, out loud, whether that was really their score.',
+    investigation: 'Stir it, don’t steer it. Point out torn photos still waiting for their other half. If nobody has accused anyone, say so out loud.',
+    roundtable: 'Ask the accused to defend themselves in one sentence each. Then let the phones vote.',
+    revote: 'A tie. One more line from each, then vote again.',
+    banish: 'Let the verdict sit. If it was a Killer, let the room cheer. If not, ask who pushed hardest.',
+    endgame: 'Last chance. Ghosts vote too. Ask the room who they trust least.',
+    finale: 'Read the winner. Then tell them to open News: it explains every night as it really happened.',
   },
 
   // The morning alarm's headline (the notification's title), by day. The last one repeats.
@@ -87,8 +111,8 @@ export default {
       bare: 'Face lit by the screen. No glasses. The eyes were bare.',
     },
     shoes: {
-      rubber: 'Rubber-sole prints under the router. Sneakers.',
-      leather: 'A hard heel clicking down the corridor at 3 AM.',
+      rubber: 'Rubber-sole prints under the router. Sneakers, canvas or foam.',
+      leather: 'Hard leather soles, clicking down the corridor at 3 AM.',
       open: 'Toes on the camera. Open footwear.',
       flat: 'Flat footprints across the tiles. No heel at all.',
     },
@@ -98,7 +122,7 @@ export default {
       spirit: 'Something distilled on the rim. Not beer, not wine.',
       clear: 'A clear drink, lime and ice, next to the logs.',
       brewed: 'Beer or wine by the terminal. Nothing distilled.',
-      sober: 'A soda can by the terminal. The killer stayed sober.',
+      sober: 'A soda can and a glass of water by the terminal. The killer stayed sober.',
       strong: 'Neat liquor, no mixer, by the admin terminal.',
     },
     season: {
@@ -129,8 +153,8 @@ export default {
     voice: {
       shoes: {
         rubber: '“Soft squeaks on the tiles. Rubber soles, like gym shoes. Then nothing.”',
-        leather: '“Click. Click. Click. Hard heels, all the way down the corridor.”',
-        open: '“Slap, slap. Their toes were out. Sandals, or heels.”',
+        leather: '“Click. Click. Click. Hard leather soles, all the way down the corridor.”',
+        open: '“Slap, slap. Their toes were out. Sandals, slides, or heels.”',
         flat: '“No click at all. Flat soles, padding past the door.”',
       },
     },
@@ -143,7 +167,7 @@ export default {
         spirit: 'SPIRITS: NEAT OR MIXED',
         clear: 'CLEAR SPIRIT / COCKTAIL',
         brewed: 'BEER OR WINE (SMUDGED)',
-        sober: 'SOFT DRINK, CAN',
+        sober: 'SOFT DRINK / WATER',
         strong: 'LIQUOR, NEAT, NO MIXER',
       },
     },
@@ -180,7 +204,8 @@ export default {
         'The courts are slow. The police can be bought. The guilty walk out smiling. We have watched it for years.',
         'So we stopped waiting. From tonight, we judge.',
         'Every morning at 07:00, you will play. Everyone plays. No exceptions. No excuses.',
-        'The weakest is taken. This is not cruelty. This is justice, finally done properly.',
+        'The weakest is killed. This is not cruelty. This is justice, finally done properly.',
+        'We have chosen three of you to help us. They have the admin password. We are never wrong about who deserves it.',
         'Do not try to delete us. Do not try to find us. We are already in your pocket.',
         'You will forget you read this. We will not forget you.',
       ],
@@ -188,10 +213,10 @@ export default {
     // When the morning game opens (alarm, then the game itself), by day; the last repeats.
     play: [
       'We are watching you, {name}. Every second, until you play. Don’t you dare skip it. Don’t you dare skimp on it.',
-      'Day {day}. Play now, {name}. We are watching until you do. Half an effort counts as none.',
+      'Day {day}. Play now, {name}. The top of the board is locked. The bottom is killed.',
       'We see who’s stalling, {name}. We see who’s barely trying. Play it properly.',
       'Still watching, {name}. Skip it and we’ll know. Coast through it and we’ll know.',
-      'Play like it matters, {name}. It does. We are watching until you do.',
+      'Play like it matters, {name}. It does. Locked at the top, or killed at the bottom.',
     ],
     night: [
       'Night {day}. Lights out, {name}. Someone in this room is still awake.',
@@ -201,18 +226,20 @@ export default {
       'Night {day}. Nearly over, {name}. Nearly.',
     ],
     dawn: {
-      top: 'Good morning, {name}. #{rank} of {n}. Have a photo. Careful who you show it to.',
-      calm: 'Good morning, {name}. #{rank} of {n}. The middle of the board is where the forgettable survive.',
+      top: 'Good morning, {name}. #{rank} of {n}. Locked, and a photo for you. Careful who you show it to.',
+      calm: 'Good morning, {name}. #{rank} of {n}. Below the lock. The Killers could reach you there.',
+      locked: 'Good morning, {name}. #{rank} of {n}. Locked. The Killers couldn’t touch you today.',
       edge: 'Good morning, {name}. #{rank} of {n}. That was close. I noticed.',
       low: 'Good morning, {name}. Nobody honest scored lower than you. Try harder tomorrow.',
       none: 'Good morning, {name}. You didn’t play. I noticed that too.',
       ghost: 'Morning, {name}. You can’t sink any lower now. Pass your little photos. See who believes you.',
     },
     banish: {
-      killer: '{target} had the password. Clever group. The others are still logged in.',
+      killer: '{target} had the password. Clever room. The others are still out there.',
       lastKiller: '{target} was the last admin. Connection unstable…',
-      innocent: '{target} was innocent. The group did my job for me.',
-      none: 'Nobody logged out. The admins thank you.',
+      innocent: '{target} was innocent. The room did my job for me.',
+      none: 'Nobody was killed. The admins thank you.',
+      unaccused: 'Nobody accused anyone. Nobody was killed. The admins thank you for the quiet.',
     },
     end: {
       faithful: 'Admin access revoked. Uninstalling… Goodbye, {name}.',
@@ -220,21 +247,21 @@ export default {
     },
   },
 
-  // The Weather app (os/apps/WeatherApp.jsx): the sky over Panjim, one entry per
+  // The Weather app (os/apps/WeatherApp.jsx): the sky over Anjuna, one entry per
   // edition day (news.js editionDay), the last repeating. Pure atmosphere: it
   // worsens on a fixed curve whatever the room does, and only the finale's
   // `after` depends on who won. `sky` is one of clear | cloud | rain | heavy | storm.
   weather: {
-    place: 'Panjim',
+    place: 'Anjuna',
     days: [
-      { hi: 31, lo: 25, sky: 'cloud', line: 'Humid. Cloud building over the Mandovi.', alert: null },
+      { hi: 31, lo: 25, sky: 'cloud', line: 'Humid. Cloud building over the Chapora.', alert: null },
       { hi: 30, lo: 25, sky: 'rain', line: 'Showers through the night. Patchy mobile signal.', alert: 'Network outages possible overnight.' },
       { hi: 29, lo: 24, sky: 'heavy', line: 'Heavy rain. Low light by mid-afternoon.', alert: 'Network outages likely overnight.' },
       { hi: 28, lo: 24, sky: 'storm', line: 'Thunderstorms. Power cuts across North Goa.', alert: 'Severe weather. Keep your phone charged.' },
       { hi: 27, lo: 23, sky: 'storm', line: 'Storm warning. Stay indoors. Stay together.', alert: 'Severe weather. Keep your phone charged.' },
     ],
     after: {
-      faithful: { hi: 30, lo: 25, sky: 'clear', line: 'Clearing. Signal restored across Panjim.', alert: null },
+      faithful: { hi: 30, lo: 25, sky: 'clear', line: 'Clearing. Signal restored across Anjuna.', alert: null },
       killers: { hi: 27, lo: 23, sky: 'storm', line: 'The storm isn’t moving.', alert: 'Outages expected again tomorrow at 07:00.' },
     },
   },

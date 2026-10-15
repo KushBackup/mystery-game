@@ -10,9 +10,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'The Murder Mystery Experience',
-        short_name: 'Murder Mystery',
-        description: 'The Murder Mystery Experience: a live party game by Astral Project, in collaboration with Greenr. Some of you are Killers. Find them.',
+        name: 'Three Knives Out',
+        short_name: 'Three Knives Out',
+        description: 'Three Knives Out: a live party game by Astral Project, in collaboration with SideQuest Club. Three of you are Killers. Find them.',
         // The phone's status bar is black and its world is abyss (DESIGN_LANGUAGE.md
         // Part II), so the splash and installed chrome open on the same colours.
         theme_color: '#000000',

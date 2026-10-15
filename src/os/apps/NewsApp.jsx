@@ -60,6 +60,7 @@ function dawnLines(pack, d, nameOf) {
   const name = nameOf(d.taken ?? d.victims?.[0]);
   if (d.cause === 'rig') return narrate(pack, 'dawnRig', name, { score: d.rigged ?? 0 }, 'dawnDeath');
   if (d.cause === 'deep') return narrate(pack, 'dawnDeep', name, { saved: nameOf(d.attempted) }, 'dawnDeath');
+  if (d.cause === 'shield') return narrate(pack, 'dawnShield', name, { saved: nameOf(d.attempted) }, 'dawnDeep');
   if (d.recruited) return narrate(pack, 'dawnRecruited');
   if (d.attempted) return narrate(pack, 'dawnSaved', nameOf(d.attempted));
   return narrate(pack, 'dawnQuiet');
@@ -97,18 +98,18 @@ function BoardReveal({ ctx }) {
             <p className="os-arcade text-[18px] text-white">…and last place</p>
           ) : takenPid ? (
             <div className="os-glitch">
-              {d.cause === 'deep' && <p className="text-[14px] text-os-chrome mb-2">Someone was after {nameOf(d.attempted)}. They missed.</p>}
+              {(d.cause === 'deep' || d.cause === 'shield') && <p className="text-[14px] text-os-chrome mb-2">Someone was after {nameOf(d.attempted)}. They missed.</p>}
               <div className="flex items-center justify-center gap-3">
                 <Face traits={ctx.traits} pid={takenPid} ghost size={48} round />
                 <div className="text-left">
                   <p className="text-[22px] leading-tight os-rgb">{nameOf(takenPid)}</p>
                   <p className="os-arcade text-os-red text-[21px] mt-1"><Scramble to={lastRow?.score ?? 0} /></p>
                 </div>
-                <span className="os-taken">TAKEN</span>
+                <span className="os-taken">KILLED</span>
               </div>
             </div>
           ) : (
-            <p className="text-[18px]">{d.recruited ? 'Nobody was taken. But someone said yes to something.' : 'Nobody was taken this morning.'}</p>
+            <p className="text-[18px]">{d.recruited ? 'Nobody was killed. But someone said yes to something.' : 'Nobody was killed this morning.'}</p>
           )}
         </div>
       )}
@@ -122,7 +123,7 @@ function BoardReveal({ ctx }) {
 
           {iWasTaken && (
             <div className="mx-3 mt-4 rounded-lg bg-os-red/90 p-4 text-white">
-              <p className="os-label text-[12px]">YOU WERE TAKEN</p>
+              <p className="os-label text-[12px]">YOU WERE KILLED</p>
               {d.cause === 'rig' ? (
                 <p className="text-[22px] mt-2">{myScore ? <>Your real best was <b className="os-arcade text-[17px]">{myScore.best ?? 0}</b>. </> : 'You played. '}The board says <b className="os-arcade text-[17px]">{lastRow?.score ?? 0}</b>.</p>
               ) : (
@@ -131,7 +132,7 @@ function BoardReveal({ ctx }) {
             </div>
           )}
 
-          {!iWasTaken && <MyPlace rows={rows} me={me} takenPid={takenPid} cycle={game.board.cycle} />}
+          {!iWasTaken && <MyPlace rows={rows} me={me} takenPid={takenPid} cycle={game.board.cycle} shield={game.board.shield ?? 0} />}
 
           {photos > 0 && (
             <div className="px-3 mt-4">
@@ -155,7 +156,7 @@ function BanishReveal({ ctx }) {
   if (stage === 'hold' || !game.banish) return <Hold label="COUNTING THE VOTES…" />;
   const b = game.banish;
   if (!b.pid) {
-    return <div className="px-5 pt-10 space-y-2">{narrate(pack, 'banishNone').map((l, i) => <p key={i} className="text-[20px]">{l}</p>)}</div>;
+    return <div className="px-5 pt-10 space-y-2">{narrate(pack, b.unaccused ? 'banishUnaccused' : 'banishNone', '', {}, 'banishNone').map((l, i) => <p key={i} className="text-[20px]">{l}</p>)}</div>;
   }
   const killer = b.team === 'killers';
   const tally = Object.entries(b.tally ?? {}).sort((x, y) => y[1] - x[1]);

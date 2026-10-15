@@ -21,7 +21,7 @@ import { clueWords } from '../../data/packs/index.js';
  * opened; the home-screen badge (PhoneOS) is a separate, coarser mark.
  */
 
-const TABS = [['top', 'Top'], ['room', 'The Room'], ['world', 'Panjim']];
+const TABS = [['top', 'Top'], ['room', 'The Room'], ['world', 'Anjuna']];
 const asList = (v) => (Array.isArray(v) ? v : []);
 
 export default function NewsPaper({ ctx, onBack, backLabel }) {
@@ -44,7 +44,7 @@ export default function NewsPaper({ ctx, onBack, backLabel }) {
         <Article s={story} pack={pack} />
         {siblings.length > 0 && (
           <div className="os-news pb-8">
-            <p className="os-news__head">More {story.section === 'room' ? 'from the room' : 'in Panjim'}</p>
+            <p className="os-news__head">More {story.section === 'room' ? 'from the room' : 'in Anjuna'}</p>
             <StoryList stories={siblings} read={read} onOpen={open} />
           </div>
         )}
@@ -87,7 +87,7 @@ export default function NewsPaper({ ctx, onBack, backLabel }) {
               <>
                 <p className="os-news__head">Also in the paper</p>
                 <StoryList stories={rest.slice(0, 4)} read={read} onOpen={open} />
-                {rest.length > 4 && <div className="px-3 pt-3"><Btn tone="grey" small onClick={() => setTab('world')}>All {news.world.length} stories from Panjim</Btn></div>}
+                {rest.length > 4 && <div className="px-3 pt-3"><Btn tone="grey" small onClick={() => setTab('world')}>All {news.world.length} stories from Anjuna</Btn></div>}
               </>
             )}
           </>

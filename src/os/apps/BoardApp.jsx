@@ -66,7 +66,7 @@ function BoardPage({ ctx, scrollRef }) {
         <p className="text-[13px] text-os-chrome">{rows.length} players</p>
       </div>
 
-      <MyPlace rows={rows} me={me} takenPid={taken} cycle={board.cycle} ghosts={board.ghosts} onTap={rows.some((r) => r.pid === me.pid) ? toMe : null} />
+      <MyPlace rows={rows} me={me} takenPid={taken} cycle={board.cycle} ghosts={board.ghosts} shield={board.shield ?? 0} onTap={rows.some((r) => r.pid === me.pid) ? toMe : null} />
 
       <Podium ctx={ctx} rows={rows} takenPid={taken} />
 
@@ -78,7 +78,7 @@ function BoardPage({ ctx, scrollRef }) {
             <p className="text-[17px] font-bold truncate">{nameOf(taken)}{taken === me.pid ? ' (you)' : ''}</p>
           </div>
           <span className="os-board-score !text-os-red">{takenRow.score}</span>
-          <span className="os-taken !text-[12px]">TAKEN</span>
+          <span className="os-taken !text-[12px]">KILLED</span>
         </div>
       )}
 
@@ -119,7 +119,7 @@ export function Podium({ ctx, rows, takenPid, animate = false }) {
  * A ghost (not on the board) sees their place on the ghost board, if `ghosts`
  * is passed. With `onTap` the card is a button that finds your row.
  */
-export function MyPlace({ rows, me, takenPid, cycle, ghosts, onTap }) {
+export function MyPlace({ rows, me, takenPid, cycle, ghosts, shield = 0, onTap }) {
   const mine = rows.find((r) => r.pid === me.pid);
   const ghostAt = !mine && ghosts ? ghosts.findIndex((r) => r.pid === me.pid) : -1;
   if (!mine && ghostAt < 0) return null;
@@ -140,16 +140,19 @@ export function MyPlace({ rows, me, takenPid, cycle, ghosts, onTap }) {
   let line = `#${mine.rank} of ${n}. Safe, for today.`;
   if (mine.pid === takenPid) {
     tone = 'edge';
-    line = `#${mine.rank} of ${n}. Taken.`;
+    line = `#${mine.rank} of ${n}. Killed.`;
   } else if (mine.rank <= 3) {
     tone = 'top';
-    line = `#${mine.rank} of ${n}. DEEP BLUE sent you a photo.`;
+    line = `#${mine.rank} of ${n}. Locked, and DEEP BLUE sent you a photo.`;
+  } else if (mine.rank <= shield) {
+    tone = 'top';
+    line = `#${mine.rank} of ${n}. Locked. The Killers couldn’t touch you.`;
   } else if (fromDeep <= 0) {
     tone = 'edge';
     line = `#${mine.rank} of ${n}. Nobody honest scored lower.`;
   } else if (fromDeep <= 2) {
     tone = 'edge';
-    line = `#${mine.rank} of ${n}. ${fromDeep === 1 ? 'One place' : 'Two places'} above the deep.`;
+    line = `#${mine.rank} of ${n}. ${fromDeep === 1 ? 'One place' : 'Two places'} above last place.`;
   }
   const body = (
     <>
@@ -173,16 +176,20 @@ export function BoardList({ ctx, meRef }) {
   const rows = game.board?.rows ?? [];
   const ghosts = game.board?.ghosts ?? [];
   const taken = takenOn(game);
+  const shield = game.board?.shield ?? 0;
   return (
     <>
       <Section head={`Day ${game.board?.cycle ?? ''} board · ${rows.length} players`}>
         <div className="os-group os-group--dark !p-0">
           {rows.map((r) => (
-            <div key={r.pid} ref={r.pid === me.pid ? meRef : undefined} className={`os-board-row ${r.pid === me.pid ? 'os-board-row--me' : ''} ${r.rank <= 3 && r.pid !== taken ? 'os-board-row--top' : ''} ${r.pid === taken ? 'os-board-row--dead' : ''}`}>
+            <React.Fragment key={r.pid}>
+            <div ref={r.pid === me.pid ? meRef : undefined} className={`os-board-row ${r.pid === me.pid ? 'os-board-row--me' : ''} ${r.rank <= 3 && r.pid !== taken ? 'os-board-row--top' : ''} ${r.pid === taken ? 'os-board-row--dead' : ''}`}>
               <span className="os-board-rank">{r.rank <= 3 && r.pid !== taken ? <Glyph name={r.rank === 1 ? 'crown' : 'star'} size={14} /> : `#${r.rank}`}</span>
               <span className="truncate text-[16px] flex items-center gap-2 min-w-0"><Face traits={ctx.traits} pid={r.pid} size={24} round ghost={r.pid === taken} /><span className="truncate">{nameOf(r.pid)}{r.pid === me.pid ? ' (you)' : ''}{!r.played && r.pid !== taken ? <span className="text-os-chrome text-[13px]"> · didn’t play</span> : null}</span></span>
-              <span className="flex items-center gap-2">{r.pid === taken && <span className="os-taken !text-[12px]">TAKEN</span>}<span className="os-board-score">{r.score}</span></span>
+              <span className="flex items-center gap-2">{r.pid === taken && <span className="os-taken !text-[12px]">KILLED</span>}<span className="os-board-score">{r.score}</span></span>
             </div>
+            {r.rank === shield && r.rank < rows.length && <p className="os-board-lock"><Glyph name="lock" size={11} /> LOCKED ABOVE THIS LINE · THE KILLERS CAN’T REACH IT</p>}
+            </React.Fragment>
           ))}
         </div>
       </Section>

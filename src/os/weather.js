@@ -10,7 +10,7 @@ export const SKY_WORD = { clear: 'Clear', cloud: 'Cloudy', rain: 'Showers', heav
 /** One forecast entry for a day (the pack's last entry repeats). */
 export const dayOf = (w, d) => w.days[Math.min(Math.max(d, 0), w.days.length - 1)];
 
-/** "Panjim · 24° · Heavy rain": the one line the alarm shows under the clock, or null. */
+/** "Anjuna · 24° · Heavy rain": the one line the alarm shows under the clock, or null. */
 export function weatherLine(pack, game) {
   const w = pack?.weather;
   if (!w) return null;

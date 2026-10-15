@@ -41,7 +41,7 @@ import {
 import { TRAITS } from '../src/data/traits.js';
 import { fits } from '../src/lib/engine/clues.js';
 import {
-  botName, G, arrive, heartbeat, leave, readSelf, act, play, playDay, vote, answerRecruit, driveBots, lastWords,
+  botName, G, arrive, heartbeat, leave, readSelf, act, play, playDay, vote, answerRecruit, driveBots, lastWords, accuseDay, joinHalves,
 } from '../src/firebase/bots.js';
 
 const args = Object.fromEntries(
@@ -315,6 +315,45 @@ async function ballotPayloadChecks(bots, gid, game) {
   return results;
 }
 
+/** Accusations: once, in daylight (2026-10-15). */
+async function accuseChecks(bots, gid, game) {
+  const results = [];
+  const [a, b, c] = bots.filter((x) => x.status === 'alive');
+  if (!c) return results;
+  const cy = game.cycle;
+  const accuse = (bot, target, extra = {}) => setDoc(G(bot, gid, 'accusations', `${cy}_${bot.pid}`), { pid: bot.pid, cycle: cy, target, at: serverTimestamp(), ...extra });
+  const second = (bot, accuser) => setDoc(G(bot, gid, 'seconds', `${cy}_${bot.pid}`), { pid: bot.pid, cycle: cy, accuser, at: serverTimestamp() });
+  await expectDenied('guest accuses themself', () => accuse(a, a.pid), results);
+  await expectDenied('guest attaches a clue that is not theirs', () => accuse(a, b.pid, { inboxId: 'nope', fact: { trait: 'top', group: 'dark' } }), results);
+  await expectAllowed('guest accuses another living guest', () => accuse(a, b.pid), results);
+  await expectDenied('guest changes their accusation', () => accuse(a, c.pid), results);
+  await expectDenied('guest seconds their own accusation', () => second(a, a.pid), results);
+  await expectDenied('accused guest seconds the accusation against them', () => second(b, a.pid), results);
+  await expectDenied('guest seconds an accusation that does not exist', () => second(c, c.pid), results);
+  return results;
+}
+
+/** Torn photos: a join for someone else's pair, or a wrong code, gets no photo. */
+async function joinChecks(bots, gid) {
+  const results = [];
+  const { db } = await import('../src/firebase/app.js');
+  const pairs = (await getDoc(doc(db, 'games', gid, 'secret', 'engine'))).data()?.pairs ?? {};
+  const [id, pair] = Object.entries(pairs).find(([, p]) => !p.joined && bots.some((x) => x.pid === p.a) && bots.some((x) => x.pid === p.b)) ?? [];
+  const outsider = bots.find((x) => pair && x.pid !== pair.a && x.pid !== pair.b && ['alive', 'ghost'].includes(x.status));
+  if (!pair || !outsider) return results;
+  const a = bots.find((x) => x.pid === pair.a);
+  const write = (bot, code) => setDoc(G(bot, gid, 'joins', `${id}_${bot.pid}`), { pid: bot.pid, pair: id, code, at: serverTimestamp() });
+  await expectAllowed('outsider writes a join for a pair they are not in', () => write(outsider, pair.codeA), results);
+  await expectAllowed('pair member types a wrong code', () => write(a, pair.codeA === 'ZZZ' ? 'YYY' : 'ZZZ'), results);
+  await new Promise((r) => setTimeout(r, 2500));
+  const okOf = async (bot) => (await getDoc(doc(db, 'games', gid, 'joins', `${id}_${bot.pid}`))).data()?.ok;
+  const [o, w] = [await okOf(outsider), await okOf(a)];
+  results.push([o === false ? 'ok' : 'FAIL', 'the host refuses a join from outside the pair', `ok=${o}`]);
+  results.push([w === false ? 'ok' : 'FAIL', 'the host refuses a wrong code', `ok=${w}`]);
+  await expectAllowed('pair member retries after a wrong code', () => write(a, pair.codeB), results);
+  return results;
+}
+
 // --- Self-test: a whole game ---------------------------------------------------------
 
 async function selftest(n) {
@@ -326,6 +365,8 @@ async function selftest(n) {
 
   const gid = await host.createGame();
   console.log(`game ${gid}`);
+  // The console checks torn-photo joins; the self-test is the console here.
+  host.watchJoins(gid);
   const bots = await Promise.all(Array.from({ length: n }, (_, i) => makeBot(i)));
   await Promise.all(bots.map((b) => arrive(b, gid)));
   console.log(`${bots.length} bots arrived`);
@@ -356,6 +397,11 @@ async function selftest(n) {
       if (!ranChecks.has('poll-payload')) {
         ranChecks.add('poll-payload');
         security.push(...await pollPayloadChecks(bots, gid, g));
+      }
+      if (!ranChecks.has('accuse-night') && bots.some((b) => b.status === 'alive')) {
+        ranChecks.add('accuse-night');
+        const [x, y] = bots.filter((b) => b.status === 'alive');
+        await expectDenied('guest accuses at night', () => setDoc(G(x, gid, 'accusations', `${g.cycle}_${x.pid}`), { pid: x.pid, cycle: g.cycle, target: y.pid, at: serverTimestamp() }), security);
       }
       await Promise.all(bots.map((b) => act(b, gid, g)));
       // Once there is a ghost: one of them tries to pass a clue it doesn't hold. The host must drop it.
@@ -416,6 +462,20 @@ async function selftest(n) {
         security.push(...await lastWordsChecks(bots, gid, g, players));
       }
       await Promise.all(bots.map((x) => lastWords(x, gid, g).catch(() => {})));
+      if (!ranChecks.has('joins')) {
+        const checks = await joinChecks(bots, gid);
+        if (checks.length) { ranChecks.add('joins'); security.push(...checks); }
+      }
+      const joined = await joinHalves(bots, gid);
+      if (!ranChecks.has('accuse')) {
+        ranChecks.add('accuse');
+        security.push(...await accuseChecks(bots, gid, g));
+      }
+      await Promise.all(bots.map((x) => accuseDay(x, gid, g, 0)));
+      await Promise.all(bots.map((x) => accuseDay(x, gid, g, 1)));
+      log.push(`  daylight ${g.cycle}: ${joined} torn photos joined`);
+      // Give the host's join listener a moment to deliver before the day closes.
+      await new Promise((r) => setTimeout(r, 1500));
     }
     if (g.phase === 'investigation' && g.cycle === 2 && !late) {
       // Live join and leave, mid-game.
@@ -443,14 +503,15 @@ async function selftest(n) {
       const names = (pids) => pids.map((p) => bots.find((b) => b.pid === p)?.name ?? p).join(', ') || 'none';
       const rows = after.board?.rows ?? [];
       const dg = after.dayGame ?? {};
-      log.push(`day ${after.cycle} [${after.board?.kind ?? '?'}${dg.word ? `: ${dg.word} / ${dg.hint}` : dg.words ? `: ${Object.keys(dg.words).length} words dealt` : ''}]: ${d.cause === 'rig' ? `rig took ${names(d.victims)} (board shows ${d.rigged})` : d.cause === 'deep' ? `firewall on ${names([d.attempted])}; the deep took ${names(d.victims)}` : 'nobody taken'}${d.vanished.length ? `; vanished ${names(d.vanished)}` : ''}${d.recruited ? '; a recruit said yes' : ''}`);
+      log.push(`day ${after.cycle} [${after.board?.kind ?? '?'}${dg.word ? `: ${dg.word} / ${dg.hint}` : dg.words ? `: ${Object.keys(dg.words).length} words dealt` : ''}]: ${d.cause === 'rig' ? `rig took ${names(d.victims)} (board shows ${d.rigged})` : d.cause === 'deep' ? `firewall on ${names([d.attempted])}; the deep took ${names(d.victims)}` : d.cause === 'shield' ? `shield held for ${names([d.attempted])}; the bottom score took ${names(d.victims)}` : 'nobody taken'}${d.vanished.length ? `; vanished ${names(d.vanished)}` : ''}${d.recruited ? '; a recruit said yes' : ''}`);
       log.push(`  board: ${rows.slice(0, 3).map((r) => `${names([r.pid])} ${r.score}`).join(', ')} … last ${rows.length ? `${names([rows.at(-1).pid])} ${rows.at(-1).score}` : '-'}; top-3 photos to ${names(after.board?.top ?? [])}`);
     }
+    if (after.phase === 'roundtable') log.push(`  on trial: ${(after.trial ?? []).map((p) => bots.find((b) => b.pid === p)?.name ?? p).join(', ')}${after.ballotTargets?.includes('none') ? ' (or no one)' : ''}`);
     if (after.phase === 'revote') log.push(`  tie between ${after.tied.length}; re-vote`);
     if (after.phase === 'banish') {
       const b = after.banish;
       const name = bots.find((x) => x.pid === b.pid)?.name ?? 'nobody';
-      log.push(`${after.endgameRound ? `endgame ${after.endgameRound}` : `round table ${after.cycle}`}: banished ${name} (${b.role ?? '-'}), ${b.cast} votes`);
+      log.push(`${after.endgameRound ? `endgame ${after.endgameRound}` : `round table ${after.cycle}`}: ${b.unaccused ? 'nobody accused, no vote' : b.spared ? 'the room spared the accused' : `banished ${name} (${b.role ?? '-'}), ${b.cast} votes`}`);
     }
   }
 
@@ -484,6 +545,16 @@ async function selftest(n) {
   const lastPosts = (await getDocs(collection(db, 'games', gid, 'chat'))).docs.map((d) => d.data()).filter((m) => m.kind === 'last');
   const realLast = lastPosts.every((m) => ghostHeld.some((h) => h.to === m.pid && h.fact.trait === m.fact.trait && h.fact.group === m.fact.group));
   security.push([realLast ? 'ok' : 'FAIL', `last words are clues the guest held (${lastPosts.length} posted)`, realLast ? 'all held' : 'one was not held']);
+
+  // Torn photos: every whole photo a join delivered is that pair's true fact, to both of its holders.
+  const secretPairs = (await getDoc(doc(db, 'games', gid, 'secret', 'engine'))).data()?.pairs ?? {};
+  const joinedDocs = inbox.docs.map((d) => d.data()).filter((d) => d.via === 'join');
+  const badJoin = joinedDocs.filter((d) => {
+    const p = secretPairs[d.pair];
+    return !p || ![p.a, p.b].includes(d.to) || p.fact.trait !== d.fact.trait || p.fact.group !== d.fact.group;
+  });
+  const pairCount = Object.keys(secretPairs).length;
+  security.push([badJoin.length ? 'FAIL' : 'ok', `joined photos match their pairs (${joinedDocs.length / 2} of ${pairCount} pairs joined)`, badJoin.length ? `${badJoin.length} wrong` : 'all match']);
 
   // Idempotency: advancing a finished game, or re-running, must change nothing.
   const before = JSON.stringify(await game());

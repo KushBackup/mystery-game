@@ -44,8 +44,8 @@ import { DEFAULT_PACK_ID, packFor, dayKit } from '../data/packs/index.js';
 import {
   PHASE, DEFAULT_DURATIONS, DEFAULT_CYCLES, ENDGAME_ROUNDS, phaseTiming, lockFor,
   ROLE, ROLE_INFO, teamOf, DEFAULT_RATIOS, targetCounts, dealRoles, assignLateJoiner,
-  makeRng, freshSeed, resolveNight, resolveRecruit, resolveMorning, DEFAULT_NIGHT_CONFIG,
-  tallyBanish, breakTie, checkWin, applyLeaves, recruitNeed, fateRecruit,
+  makeRng, freshSeed, resolveNight, resolveRecruit, resolveMorning, SHIELD_SHARE, shieldPlaces, DEFAULT_NIGHT_CONFIG,
+  tallyBanish, breakTie, checkWin, applyLeaves, recruitNeed, fateRecruit, accusationBoard, ballotFor, NO_ONE,
   DEFAULT_GAMES, gameOfDay, introDay, pickWord, dealDrawWords, shownWord, scoreWordDay, scoreDrawDay,
   planEvening, clockAtStart,
 } from '../lib/engine/index.js';
@@ -375,7 +375,7 @@ async function openNight(gid, from, cycle) {
     tx.update(sub(gid, 'secret', 'engine'), { recruitDue: need === 'den' });
     // What the den needs to know tonight, readable by Killers only (rules: den/*).
     tx.set(sub(gid, 'den', 'meta'), { cycle, recruitDue: need === 'den', plantUsed: Boolean(secret.plantUsed) });
-    tx.update(gameRef(gid), { ...timed(g, PHASE.NIGHT, serverNow(), cycle), cycle, ballot: null, tied: [], dawn: null, banish: null });
+    tx.update(gameRef(gid), { ...timed(g, PHASE.NIGHT, serverNow(), cycle), cycle, ballot: null, tied: [], trial: [], ballotTargets: [], dawn: null, banish: null });
     return true;
   });
 }
@@ -547,6 +547,8 @@ function pendingMorning(cycle, res, extra = {}) {
     trueFacts: res.trueFacts ?? [],
     witness: res.witness ?? null,
     deliveries: res.deliveries ?? [],
+    // Split clues (engine/clues.js splitHalves): the two halves of each dig clue, kept by the host until they're joined.
+    pairs: res.pairs ?? {},
     publicDawn: res.publicDawn ?? { victims: [], attempted: null },
     recruited: false,
     ...extra,
@@ -596,7 +598,8 @@ async function resolveMorningPhase(gid) {
   const { scores, reveal } = await dayScores(gid, g, world);
   const stash = world.secret.pendingMorning;
   const pending = stash?.cycle === g.cycle ? stash : {};
-  const res = resolveMorning({ seed: world.secret.seed, cycle: g.cycle, players: world.players, roles: world.roles, scores, pending });
+  const shieldShare = g.config?.shieldShare ?? SHIELD_SHARE;
+  const res = resolveMorning({ seed: world.secret.seed, cycle: g.cycle, players: world.players, roles: world.roles, scores, pending, shieldShare });
 
   const delivered = clean(res.deliveries);
   // Ghost sight: every clue the living got for this night, and who got it,
@@ -610,12 +613,14 @@ async function resolveMorningPhase(gid) {
 
   const done = await commitOnce(gid, `${g.cycle}-morning`, PHASE.GAME_LOCKED, (tx) => {
     writeDeliveries(tx, gid, g.cycle, 'morning', delivered);
-    tx.update(sub(gid, 'secret', 'engine'), { pendingMorning: null });
+    // The halves land with the morning, so their pairs go live in the secret now.
+    const pairs = Object.fromEntries(Object.entries(pending.pairs ?? {}).map(([id, p]) => [`pairs.${id}`, p]));
+    tx.update(sub(gid, 'secret', 'engine'), { pendingMorning: null, ...pairs });
     stageDawn(tx, gid, g, world, {
       deaths: res.deaths,
       publicDawn: res.publicDawn,
       recruited: Boolean(pending.recruited),
-      board: { cycle: g.cycle, kind: reveal.kind, rows: res.board, ghosts: res.ghostBoard, top: res.top },
+      board: { cycle: g.cycle, kind: reveal.kind, rows: res.board, ghosts: res.ghostBoard, top: res.top, shield: shieldPlaces(res.board.length, shieldShare) },
       dayGame: reveal,
     });
   });
@@ -629,6 +634,40 @@ async function resolveMorningPhase(gid) {
   return done;
 }
 
+// --- Split clues ---------------------------------------------------------------------
+
+/**
+ * A guest typed their partner's code to join a torn photo (joins/{pair}_{pid},
+ * engine/clues.js splitHalves). The host checks it against the pair it kept
+ * in the secret and, if it's right, sends the whole photo to both phones.
+ * Runs on any host device; the transaction makes a second one a no-op.
+ */
+async function resolveJoin(gid, joinId) {
+  const ref = sub(gid, 'joins', joinId);
+  const secretRef = sub(gid, 'secret', 'engine');
+  return runTransaction(db, async (tx) => {
+    const join = (await tx.get(ref)).data();
+    if (!join || join.ok != null) return;
+    const pair = (await tx.get(secretRef)).data()?.pairs?.[join.pair];
+    const side = pair ? (join.pid === pair.a ? 'a' : join.pid === pair.b ? 'b' : null) : null;
+    const want = side === 'a' ? pair.codeB : side === 'b' ? pair.codeA : null;
+    const ok = Boolean(want) && String(join.code ?? '').trim().toUpperCase() === want;
+    if (ok && !pair.joined) {
+      tx.update(secretRef, { [`pairs.${join.pair}.joined`]: true });
+      for (const [to, from] of [[pair.a, pair.b], [pair.b, pair.a]]) {
+        tx.set(sub(gid, 'inbox', `join-${join.pair}-${to}`), { to, kind: 'fact', via: 'join', from, pair: join.pair, fact: pair.fact, cycle: pair.cycle, step: 'join', at: Date.now() });
+      }
+    }
+    tx.update(ref, { ok });
+  });
+}
+
+/** The console keeps this open: every join a phone writes is checked once. */
+export const watchJoins = (gid) =>
+  listen(col(gid, 'joins'), (rows) => {
+    for (const j of rows) if (j.ok == null) resolveJoin(gid, j.id).catch((e) => console.warn('[host] join', e.code ?? e.message));
+  }, 'joins');
+
 // --- Ballots -----------------------------------------------------------------------
 
 function ballotShape(g, players) {
@@ -636,7 +675,38 @@ function ballotShape(g, players) {
   const ghosts = Object.keys(players).filter((p) => players[p].status === 'ghost');
   if (g.phase === PHASE.ENDGAME_LOCKED) return { voters: [...alive, ...ghosts], targets: alive };
   if (g.phase === PHASE.REVOTE_LOCKED) return { voters: alive, targets: g.tied ?? [] };
-  return { voters: alive, targets: alive };
+  // The Round Table votes only between the guests on trial (closeDaylight), plus "no one" if there is just one.
+  return { voters: alive, targets: g.ballotTargets ?? alive };
+}
+
+/**
+ * Daylight ends. The room's own accusations decide what happens next
+ * (engine/banish.js accusationBoard): guests with enough support go on trial
+ * and the Round Table opens between them; with nobody on trial there is no
+ * vote, nobody is killed, and the verdict says so.
+ */
+async function closeDaylight(gid, g) {
+  const world = await readWorld(gid);
+  const alive = Object.keys(world.players).filter((p) => world.players[p].status === 'alive');
+  const [accusations, seconds] = await Promise.all([dayDocs(gid, 'accusations', g.cycle), dayDocs(gid, 'seconds', g.cycle)]);
+  const board = accusationBoard(Object.values(accusations), Object.values(seconds), alive);
+  const trial = board.filter((r) => r.onTrial).map((r) => r.pid);
+  const ballot = `c${g.cycle}`;
+  return runTransaction(db, async (tx) => {
+    const cur = (await tx.get(gameRef(gid))).data();
+    if (cur.phase !== PHASE.INVESTIGATION) return false;
+    if (!trial.length) {
+      tx.update(gameRef(gid), {
+        ...timed(cur, PHASE.BANISH),
+        ballot, tied: [], trial: [], ballotTargets: [],
+        news: arrayUnion({ kind: 'banish', cycle: cur.cycle, ballot, pid: null, team: null, endgame: false, unaccused: true, at: serverNow() }),
+        banish: { pid: null, team: null, role: null, tally: {}, cast: 0, votes: {}, fromTie: false, unaccused: true },
+      });
+    } else {
+      tx.update(gameRef(gid), { ...timed(cur, PHASE.ROUNDTABLE), ballot, tied: [], trial, ballotTargets: ballotFor(board) });
+    }
+    return true;
+  });
 }
 
 async function resolveBallotPhase(gid, from) {
@@ -651,10 +721,12 @@ async function resolveBallotPhase(gid, from) {
   return commitOnce(gid, `${g.ballot}-ballot`, expect, (tx) => {
     // An ordinary Round Table that ties goes to one short re-vote between the tied.
     if (tied.length && from === PHASE.ROUNDTABLE) {
-      tx.update(gameRef(gid), { ...timed(g, PHASE.REVOTE), ballot: `${g.ballot}-re`, tied, lastTally: tally });
+      tx.update(gameRef(gid), { ...timed(g, PHASE.REVOTE), ballot: `${g.ballot}-re`, tied, ballotTargets: tied, lastTally: tally });
       return;
     }
-    const banished = winnerPid ?? (tied.length ? breakTie(world.secret.seed, g.ballot, tied) : null);
+    const picked = winnerPid ?? (tied.length ? breakTie(world.secret.seed, g.ballot, tied) : null);
+    // "No one" winning means the room spared the only guest on trial.
+    const banished = picked === NO_ONE ? null : picked;
     const players = structuredClone(world.players);
     let team = null;
     if (banished) {
@@ -676,7 +748,7 @@ async function resolveBallotPhase(gid, from) {
     tx.update(gameRef(gid), {
       ...timed(g, PHASE.BANISH),
       news: arrayUnion({ kind: 'banish', cycle: g.cycle, ballot: g.ballot, pid: banished ?? null, team, endgame: from === PHASE.ENDGAME, at: serverNow() }),
-      banish: { pid: banished, team, role: banished ? ROLE_INFO[world.roles[banished]]?.label : null, tally, cast, votes: shown, fromTie: !winnerPid && Boolean(banished) },
+      banish: { pid: banished, team, role: banished ? ROLE_INFO[world.roles[banished]]?.label : null, tally, cast, votes: shown, fromTie: !winnerPid && Boolean(banished), spared: picked === NO_ONE },
       tied: [],
       winner: winner ?? null,
       ...(winner ? finaleOf(world) : {}),
@@ -724,7 +796,7 @@ export async function advance(gid) {
       if (g.winner) return step(PHASE.DAWN, timed(g, PHASE.FINALE));
       return step(PHASE.DAWN, timed(g, PHASE.INVESTIGATION));
     case PHASE.INVESTIGATION:
-      return step(PHASE.INVESTIGATION, { ...timed(g, PHASE.ROUNDTABLE), ballot: `c${g.cycle}`, tied: [] });
+      return closeDaylight(gid, g);
     case PHASE.ROUNDTABLE:
     case PHASE.REVOTE:
     case PHASE.ENDGAME:

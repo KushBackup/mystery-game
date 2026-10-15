@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow, useAllTraits, useKillerGroup, useMyPlay, useGhostSight } from '../hooks/useKillers';
+import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow, useAllTraits, useKillerGroup, useMyPlay, useGhostSight, useDayWall } from '../hooks/useKillers';
 import { getStreamState, getWriteState, subscribeStreamState, subscribeWriteState } from '../firebase/game';
 import { serverNow } from '../lib/clockSkew';
-import { nowLine, PHASE_LABEL, deliveryLine, GAME, LAST_WORDS } from '../data/killersCopy';
+import { nowLine, PHASE_LABEL, deliveryLine, GAME, LAST_WORDS, progressLine } from '../data/killersCopy';
+import { latestPublicCount, killersCaught } from './suspects';
 import { dayKit, alarmLine } from '../data/packs/index.js';
 import { StatusBar, HomeBar, SyncNote, HomeScreen, LockScreen, Banner, NotificationCenter, NCTile } from './chrome';
 import { RoleText, IncomingCall, GoneScreen, ChapterCard, TakenScreen } from './takeovers';
@@ -67,7 +68,7 @@ const SUGGEST = {
   game: 'deepblue',
   game_locked: 'deepblue',
   dawn: 'news',
-  investigation: 'gallery',
+  investigation: 'vote',
   roundtable: 'vote',
   revote: 'vote',
   endgame: 'vote',
@@ -109,7 +110,8 @@ const PHASE_BANNER = {
   dawn: () => ({ icon: 'news', title: 'News', text: 'The board is up.', app: 'news' }),
   banish: () => ({ icon: 'news', title: 'News', text: 'The verdict is in.', app: 'news' }),
   finale: () => ({ icon: 'news', title: 'News', text: 'It’s over.', app: 'news' }),
-  roundtable: () => ({ icon: 'messages', title: 'The Room', text: 'DEEP BLUE created a poll', app: 'vote' }),
+  investigation: () => ({ icon: 'messages', title: 'The Room', text: 'Daylight. Accuse a suspect, or nobody is killed today.', app: 'vote' }),
+  roundtable: (g) => ({ icon: 'messages', title: 'The Room', text: `The vote is open. ${(g.trial ?? []).length === 1 ? 'One guest is' : `${(g.trial ?? []).length} guests are`} on trial.`, app: 'vote' }),
   revote: () => ({ icon: 'messages', title: 'The Room', text: 'DEEP BLUE created a new poll', app: 'vote' }),
   endgame: () => ({ icon: 'messages', title: 'The Room', text: 'DEEP BLUE created a poll', app: 'vote' }),
 };
@@ -122,6 +124,9 @@ const GRID = [['board', 'Board'], ['clock', 'Clock'], ['contacts', 'Contacts'], 
 const NIGHTTIME = new Set(['night', 'night_locked', 'recruit', 'recruit_locked']);
 const gridFor = (phase) => (NIGHTTIME.has(phase) ? GRID : GRID.filter(([id]) => id !== 'night'));
 const DOCK = [['messages', 'Messages'], ['deepblue', 'DEEP BLUE'], ['news', 'News'], ['gallery', 'Photos']];
+
+/** Torn photos (split clues) not yet joined: a half whose pair has no whole photo in the inbox. */
+const openHalves = (inbox) => inbox.filter((d) => d.kind === 'half' && !inbox.some((x) => x.via === 'join' && x.pair === d.pair));
 
 const APPS = {
   messages: MessagesApp,
@@ -321,6 +326,10 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   // The Killers' group: who is in it, and when DEEP BLUE added them (threads.js).
   const mates = useKillerGroup(gid, isKiller);
   const myVote = useMyVote(gid, game.ballot, me.pid);
+  // Today's accusations and seconds (engine/banish.js accusationBoard): public, from daylight to the verdict.
+  const accusing = ['investigation', 'roundtable', 'roundtable_locked', 'revote', 'revote_locked', 'banish'].includes(phase);
+  const accusations = useDayWall(gid, 'accusations', game.cycle, accusing);
+  const seconds = useDayWall(gid, 'seconds', game.cycle, accusing);
   const myScore = useMyScore(gid, game.cycle, me.pid);
   // Word never writes a score until the board, so "played" there is a posted
   // clue (or, for a ghost, who can only pick, a saved pick).
@@ -447,7 +456,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   // DEEP BLUE's own lines to this guest (voice.js), shown in its Messages thread.
   const voice = useVoice(gid, game, me, pack, nameOf);
 
-  const ctxBase = { gid, uid, game, me, role, players, inbox, pack, nameOf, chat, spirits, den, mates: isKiller ? mates : null, myVote, myScore, news, traits, voice, ghostSight: spiritsOk ? ghostSight ?? [] : [] };
+  const ctxBase = { gid, uid, game, me, role, players, inbox, pack, nameOf, chat, spirits, den, mates: isKiller ? mates : null, myVote, myScore, news, traits, voice, ghostSight: spiritsOk ? ghostSight ?? [] : [], accusations: accusing ? accusations ?? [] : [], seconds: accusing ? seconds ?? [] : [] };
   // A guest taken this morning may still post their last words (threads.js).
   const lastDue = Boolean(lastWordsDue(ctxBase));
   // The Room album fills each morning; a new night badges Photos until it is opened (GalleryApp).
@@ -468,7 +477,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const newsSeenArr = Array.isArray(newsSeen) ? newsSeen : [];
   const badges = {
     messages: threads.reduce((n, t) => n + t.unread, 0) + (lastDue ? 1 : 0) || null,
-    gallery: inbox.filter((d) => d.kind === 'fact' && !gallerySeen.includes(d.id)).length + (sightDay > sightSeen ? 1 : 0) || null,
+    gallery: inbox.filter((d) => d.kind === 'fact' && !gallerySeen.includes(d.id)).length + openHalves(inbox).length + (sightDay > sightSeen ? 1 : 0) || null,
     news: news.ids.filter((id) => !newsSeenArr.includes(id)).length || null,
     board: boardDay && boardSeen !== boardDay ? 1 : null,
     night: needsNight ? '!' : null,
@@ -509,7 +518,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
       icon: 'deepblue',
       title: todayTitle(game, pack),
       text: me.status === 'alive'
-        ? `Play before ${until || 'the board goes up'}, or score zero. The lowest score can be taken.`
+        ? `Play before ${until || 'the board goes up'}, or score zero. The lowest score is killed.`
         : `Play before ${until || 'the board goes up'}.`,
       app: 'deepblue',
     },
@@ -538,8 +547,10 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
       // The day's word arrives with the alarm and is shown in the game itself, never on a banner.
       if ((d.at ?? 0) <= mountAt || ['recruitOffer', 'word', 'draw'].includes(d.kind)) continue;
       const photo = d.kind === 'fact';
-      if (photo && app === 'gallery') continue;
-      fresh.push({ id: d.id, at: d.at, icon: photo ? 'gallery' : 'messages', title: photo ? 'Photos' : 'DEEP BLUE', text: photo ? `New ${FORM_NAME[mediaFor(d)].toLowerCase()} · ${photoSource(d, nameOf)}` : deliveryLine(d, nameOf), app: photo ? 'gallery' : 'messages', kind: photo ? 'photo' : 'system' });
+      // A torn half (split clues) is a photo too: its banner says whose phone has the rest.
+      const half = d.kind === 'half';
+      if ((photo || half) && app === 'gallery') continue;
+      fresh.push({ id: d.id, at: d.at, icon: photo || half ? 'gallery' : 'messages', title: photo || half ? 'Photos' : 'DEEP BLUE', text: photo ? `New ${FORM_NAME[mediaFor(d)].toLowerCase()} · ${photoSource(d, nameOf)}` : deliveryLine(d, nameOf), app: photo || half ? 'gallery' : 'messages', kind: photo || half ? 'photo' : 'system' });
     }
     if (app !== 'messages') {
       for (const t of threads) {
@@ -600,6 +611,8 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const label = (PHASE_LABEL[phase] ?? '').toUpperCase();
   // Role-neutral on purpose: the home screen is what the guest beside you sees.
   const line = nowLine({ phase, status: me.status, hasActed: acted && phase === 'night', cycle: game.cycle, minigame: game.minigame ?? 'run', pack, until, intro: introDay(game.config, game.cycle) });
+  // The room's progress under it, the same on every phone (os/suspects.js): the newest night's suspect count and the Killers caught.
+  const progress = phase === 'lobby' || phase === 'casting' ? '' : progressLine({ count: latestPublicCount(ctxBase), ...killersCaught(game, players) });
   const suggested = SUGGEST[phase] ?? null;
   const lockedApps = { deepblue: !deepBlueOpen(game) };
 
@@ -619,7 +632,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
         notes={[
           { key: 'in', icon: 'deepblue', title: 'DEEP BLUE', text: 'You’re in. The host will deal the roles soon.' },
           { key: 'room', icon: 'contacts', title: 'THE ROOM', text: `${here} ${here === 1 ? 'guest has' : 'guests have'} arrived.` },
-          ...pack.setting.slice(0, 2).map((t, i) => ({ key: `s${i}`, icon: 'news', title: 'THE STORY', text: t })),
+          ...pack.setting.map((t, i) => ({ key: `s${i}`, icon: 'news', title: 'THE CASE', text: t })),
         ]}
         sliderLabel="slide to unlock"
         onUnlock={() => { setUnlocked(true); setHomeIn((n) => n + 1); }}
@@ -645,7 +658,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
           ghost={ghost}
           onOpen={open}
           lockedApps={lockedApps}
-          now={{ label: dayLabel(game, label), line, urgent: needsNight || needsVote || needsGame, onTap: suggested && (suggested !== 'night' || NIGHTTIME.has(phase)) ? () => open(suggested) : null }}
+          now={{ label: dayLabel(game, label), line, sub: progress, urgent: needsNight || needsVote || needsGame, onTap: suggested && (suggested !== 'night' || NIGHTTIME.has(phase)) ? () => open(suggested) : null }}
         />
       </div>
       {App && (

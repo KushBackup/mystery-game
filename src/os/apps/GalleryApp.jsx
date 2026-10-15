@@ -1,4 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useMyJoin } from '../../hooks/useKillers';
+import { joinHalf } from '../../firebase/game';
+import { SPLIT } from '../../data/killersCopy';
+import { Face } from '../art/Portrait';
+import { sfxSent } from '../sfx';
 import { AppFrame, Empty } from '../ui';
 import Evidence from '../art/Evidence';
 import Glyph from '../icons/Glyph';
@@ -8,6 +13,7 @@ import { photoSource } from '../words';
 import { mediaFor, FORM_NAME } from '../evidence';
 import Portrait from '../art/Portrait';
 import { TRAITS } from '../../data/traits';
+import { publicFacts, fitCount } from '../suspects';
 
 /**
  * Photos: every clue this guest holds. A clue arrives as a CCTV still, a few
@@ -34,7 +40,9 @@ export default function GalleryApp({ ctx, onClose }) {
   const [open, setOpen] = useState(null);
   const [dir, setDir] = useState(null);
   const seenIds = useSeen(`${gid}.gallery`, []);
-  const witnesses = [...paperWitnesses(ctx.news), ...lastMessages(ctx)];
+  const witnesses = publicFacts(ctx);
+  // Torn photos (split clues): halves whose whole photo hasn't arrived yet.
+  const halves = album === 'mine' ? inbox.filter((d) => d.kind === 'half' && !inbox.some((x) => x.via === 'join' && x.pair === d.pair)) : [];
   // Opening The Room clears the Photos badge for the newest night it holds (PhoneOS).
   const sightDay = room.reduce((m, d) => Math.max(m, d.cycle ?? 0), 0);
   useEffect(() => {
@@ -95,8 +103,14 @@ export default function GalleryApp({ ctx, onClose }) {
           </div>
         </div>
       )}
-      {album === 'mine' && (mine.length > 0 || witnesses.length > 0) && <HandProfiles photos={mine} witnesses={witnesses} />}
-      {photos.length === 0 ? (
+      {halves.length > 0 && (
+        <div className="px-3 pt-3 space-y-2">
+          <p className="os-label text-[11px] text-os-chrome">{SPLIT.head}</p>
+          {halves.map((d) => <TornPhoto key={d.id} ctx={ctx} d={d} />)}
+        </div>
+      )}
+      {album === 'mine' && (mine.length > 0 || witnesses.length > 0) && <HandProfiles ctx={ctx} photos={mine} witnesses={witnesses} />}
+      {photos.length === 0 && halves.length === 0 ? (
         <Empty glyph="photo" title={album === 'room' ? 'Nothing from last night yet' : 'No photos yet'} />
       ) : (
         <>
@@ -119,25 +133,59 @@ export default function GalleryApp({ ctx, onClose }) {
   );
 }
 
+/**
+ * Half a clue photo (engine/clues.js splitHalves). The other half is on the
+ * named guest's phone: either of you types the other's code, the host checks
+ * it, and the whole photo lands on both phones (it then shows in the grid and
+ * this card goes away).
+ */
+function TornPhoto({ ctx, d }) {
+  const { gid, me, nameOf } = ctx;
+  const attempt = useMyJoin(gid, d.pair, me.pid);
+  const [code, setCode] = useState('');
+  const [state, setState] = useState('');
+  const pending = attempt && attempt.ok == null;
+  const wrong = attempt?.ok === false && !state;
+  const send = async (e) => {
+    e.preventDefault();
+    if (code.trim().length < 3) return;
+    setState('sending');
+    try {
+      await joinHalf(gid, d.pair, me.pid, code);
+      sfxSent();
+      setCode('');
+      setState('');
+    } catch {
+      setState('error');
+    }
+  };
+  return (
+    <div className={`os-torn os-torn--${d.half === 'R' ? 'r' : 'l'}`}>
+      <div className="os-torn__paper" aria-hidden="true"><span>½</span></div>
+      <div className="min-w-0 flex-1">
+        <p className="os-label text-[11px] text-os-chrome">{SPLIT.title.toUpperCase()} · DAY {d.cycle}</p>
+        <div className="flex items-center gap-2 mt-1">
+          <Face traits={ctx.traits} pid={d.partner} size={28} round />
+          <p className="text-[15px] leading-snug">{SPLIT.partner(nameOf(d.partner))}</p>
+        </div>
+        <p className="text-[12px] text-os-chrome mt-2">{SPLIT.yours}</p>
+        <p className="os-torn__code">{d.code}</p>
+        <form className="flex gap-2 mt-2" onSubmit={send}>
+          <input className="os-torn__input" value={code} maxLength={6} autoCapitalize="characters" autoCorrect="off" spellCheck={false} placeholder="ABC" aria-label={SPLIT.theirs} onChange={(e) => { setCode(e.target.value.toUpperCase()); setState(''); }} disabled={pending} />
+          <button type="submit" className="os-btn os-btn--sm" disabled={pending || state === 'sending' || code.trim().length < 3}>{pending || state === 'sending' ? SPLIT.checking : SPLIT.join}</button>
+        </form>
+        <p className="text-[12px] text-os-chrome mt-1">{wrong ? <span className="text-os-red">{SPLIT.wrong}</span> : state === 'error' ? <span className="text-os-red">{SPLIT.error}</span> : `${SPLIT.theirs.replace(':', '.')} ${SPLIT.why}`}</p>
+      </div>
+    </div>
+  );
+}
+
 /** The Room album: ghostSight docs flattened, newest night first. */
 function roomItems(sight) {
   return (sight ?? [])
     .flatMap((doc) => (doc.items ?? []).map((it, i) => ({ ...it, kind: 'fact', cycle: doc.cycle, id: it.id ?? `sight-${doc.cycle}-${i}` })))
     .filter((d) => d.fact)
     .sort((a, b) => (b.cycle - a.cycle) || String(a.id).localeCompare(String(b.id)));
-}
-
-/** The paper's witnesses (news.js), one per day, already past their reveal. */
-function paperWitnesses(news) {
-  return (news?.room ?? []).filter((s) => s.witness).map((s) => ({ cycle: s.day, fact: s.witness, from: 'paper' }));
-}
-
-/** Last words in the Room: the taken guest's true photo describes the night they were taken on. */
-function lastMessages(ctx) {
-  const died = Object.fromEntries((ctx.players ?? []).map((p) => [p.id, p.diedCycle]));
-  return (ctx.chat ?? [])
-    .filter((m) => m.kind === 'last' && m.fact && died[m.pid])
-    .map((m) => ({ cycle: died[m.pid], fact: m.fact, from: 'last' }));
 }
 
 /**
@@ -149,7 +197,7 @@ function lastMessages(ctx) {
  * in what is known. It never names anyone: matching it to the room is the
  * game. Two clues that cannot both be true mean one of them is a frame.
  */
-function HandProfiles({ photos, witnesses }) {
+function HandProfiles({ ctx, photos, witnesses }) {
   const nights = [...new Set([...photos.map((d) => d.cycle), ...witnesses.map((w) => w.cycle)])].sort((a, b) => b - a);
   return (
     <div className="px-3 pt-3 space-y-2">
@@ -160,13 +208,16 @@ function HandProfiles({ photos, witnesses }) {
           facts={[...photos.filter((d) => d.cycle === c).map((d) => d.fact), ...witnesses.filter((w) => w.cycle === c).map((w) => w.fact)]}
           paper={witnesses.some((w) => w.cycle === c && w.from === 'paper')}
           last={witnesses.some((w) => w.cycle === c && w.from === 'last')}
+          fitPublic={fitCount(ctx, witnesses.filter((w) => w.cycle === c).map((w) => w.fact))}
+          fitMine={fitCount(ctx, [...photos.filter((d) => d.cycle === c).map((d) => d.fact), ...witnesses.filter((w) => w.cycle === c).map((w) => w.fact)])}
+          hasPublic={witnesses.some((w) => w.cycle === c)}
         />
       ))}
     </div>
   );
 }
 
-function HandProfile({ cycle, facts, paper, last }) {
+function HandProfile({ cycle, facts, paper, last, fitPublic, fitMine, hasPublic }) {
   const known = [];
   for (const t of TRAITS) {
     const groups = facts.filter((f) => f.trait === t.id).map((f) => t.groups.find((g) => g.id === f.group)).filter(Boolean);
@@ -195,6 +246,10 @@ function HandProfile({ cycle, facts, paper, last }) {
             </li>
           ))}
         </ul>
+        <p className="text-[14px] font-bold leading-snug mt-1.5 text-os-gold">
+          {fitMine} living {fitMine === 1 ? 'guest fits' : 'guests fit'} your clues
+          {hasPublic && fitPublic !== fitMine ? <span className="text-os-chrome font-normal"> · {fitPublic} fit the room’s</span> : null}
+        </p>
         {(paper || last) && (
           <p className="os-label text-[10px] text-os-chrome mt-1">
             INCLUDES {[paper && 'THE PAPER’S WITNESS', last && 'A LAST MESSAGE'].filter(Boolean).join(' AND ')}

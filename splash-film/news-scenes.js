@@ -746,7 +746,7 @@ function cafeMorning(c, rows, o = {}) {
   handset(c, PX, PY, 400, 760, .04, 2220, (g, sx, sy, sw, sh) => boardScreen(g, sx, sy, sw, sh, rows, { seed: 2221, title: o.title }));
   printFinish(c, .1);
 }
-function sceneDawnTaken(c) { cafeMorning(c, [{ score: 44 }, { score: 39 }, { score: 31 }, { score: 26 }, { score: 18 }, { score: 3, taken: true, stamp: 'TAKEN' }]); }
+function sceneDawnTaken(c) { cafeMorning(c, [{ score: 44 }, { score: 39 }, { score: 31 }, { score: 26 }, { score: 18 }, { score: 3, taken: true, stamp: 'KILLED' }]); }
 function sceneDawnClear(c) {
   cafeMorning(c, [{ score: 44 }, { score: 39 }, { score: 31 }, { score: 26 }, { score: 18 }, { score: 12 }]);
   rwash(c, 960, 540, 760, alpha(LAMP_HI, .35), 1, 'screen');

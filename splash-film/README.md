@@ -5,7 +5,7 @@ video, once per device, made of two hand-drawn films:
 
 1. **The title film** ([splash.html](splash.html), 9.17 s, on white). An ink
    drop pops into a ring tunnel and the Astral Project sticker ("presents"),
-   the vortex collapses to a seed that grows the Greenr sticker ("in
+   the vortex collapses to a seed that grows the venue partner's sticker (`PARTNER` in splash.html: SideQuest Club since 2026-10-15, Greenr before) ("in
    collaboration with"), and a drop falls into a black sea under a red moon.
    For "The Deep Blue Case", crime-scene tape snaps across, CASE is stamped on
    in red, the title drips, a shadow with a red eye passes under the water,

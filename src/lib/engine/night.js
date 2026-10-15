@@ -53,7 +53,7 @@
 
 import { makeRng, pick, chance } from './rng.js';
 import { ROLE, teamOf } from './roles.js';
-import { nightClues, distributeFragments, witnessFact } from './clues.js';
+import { nightClues, distributeFragments, witnessFact, splitHalves } from './clues.js';
 
 export const RIG_VALUES = Object.freeze(['zero', 'under']);
 
@@ -79,7 +79,13 @@ export const DEFAULT_NIGHT_CONFIG = Object.freeze({
   // of the narrowed room it may fit; higher means vaguer. Tuned with the sim.
   // At [0.4, 0.8] with the old budget the Faithful won 85% at 35 guests.
   publicWitness: true,
-  publicBand: [0.55, 0.85],
+  // [0.5, 0.8] since 2026-10-15: accusations let a quiet room skip a vote, which
+  // cost the Faithful 4-5 points a skipped day. With the shield, torn photos and
+  // trials in the sim (accuse 0.85, spare 0.35, join 0.85), 2000 games each:
+  // 72/55/50/48/45/50/57% for 16/20/25/30/35/40/45 guests.
+  publicBand: [0.5, 0.8],
+  // Dig clues arrive as two halves on two phones (clues.js splitHalves). Off restores whole photos.
+  splitClues: true,
 });
 
 const sorted = (xs) => [...xs].sort();
@@ -140,7 +146,8 @@ function murderOutcome(ctx, { victim, hand, framePid, protectedSet, scourers, ex
     traitDefs, traitsByPid, pool, handPid: hand, framePid, budget: budgetFor(config, cycle, roomSize, rng), rng,
   });
 
-  const deliveries = distributeFragments(facts, scourers, rng);
+  const fragments = distributeFragments(facts, scourers, rng);
+  const deliveries = [];
   for (const pid of extraFactTo) {
     if (trueFacts.length) deliveries.push({ to: pid, kind: 'fact', via: 'watch', fact: strip(pick(trueFacts, rng)) });
   }
@@ -157,14 +164,20 @@ function murderOutcome(ctx, { victim, hand, framePid, protectedSet, scourers, ex
     ? witnessFact({ traitDefs, traitsByPid, pool, handPid: hand, facts: trueFacts, band: config.publicBand ?? [0.55, 0.85], rng })
     : null;
 
+  // Split last, on its own rng: every draw above is the same with or without it.
+  const split = config.splitClues
+    ? splitHalves(fragments, pool, makeRng(ctx.seed, cycle, 'halves'), cycle)
+    : { deliveries: fragments, pairs: {} };
+
   return {
     deaths,
     saved,
     facts,
     witness,
+    pairs: split.pairs,
     trueFacts: trueFacts.map(strip),
     plantUsed: Boolean(framePid) && !plantFailed,
-    deliveries,
+    deliveries: [...split.deliveries, ...deliveries],
     publicDawn: { victims: deaths.map((d) => d.pid), attempted: saved ? victim : null },
     teamOfVictim: teamOf(roles[victim]),
   };
@@ -312,6 +325,7 @@ export function resolveNight(ctx) {
     deliveries: [...deliveries, ...out.deliveries, ...whisperDeliveries],
     publicDawn: out.publicDawn,
     witness: out.witness,
+    pairs: out.pairs,
     protectedList: sorted(protectedSet),
     rig,
     // Who the frame landed on, for the finale's account of the night (null when none).
@@ -342,7 +356,7 @@ export function resolveRecruit(ctx, { target, hand, accepted, scourers, protecte
     victim: target, hand, framePid: null, protectedSet: new Set(protectedList), scourers, extraFactTo: [],
   });
   return {
-    rolePatch: {}, victim: target, saved: out.saved, deaths: out.deaths, facts: out.facts, trueFacts: out.trueFacts, witness: out.witness,
+    rolePatch: {}, victim: target, saved: out.saved, deaths: out.deaths, facts: out.facts, trueFacts: out.trueFacts, witness: out.witness, pairs: out.pairs,
     deliveries: out.deliveries, publicDawn: out.publicDawn, hand, protectedList,
   };
 }

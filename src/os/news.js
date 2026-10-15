@@ -63,9 +63,10 @@ function liveStory(s, pack, nameOf) {
     let lines = narrate(pack, 'dawnQuiet');
     if (s.cause === 'rig') { key = 'rig'; lines = narrate(pack, 'dawnRig', who, { score: s.rigged ?? 0 }, 'dawnDeath'); }
     else if (s.cause === 'deep') { key = 'deep'; lines = narrate(pack, 'dawnDeep', who, { saved: attempted }, 'dawnDeath'); }
+    else if (s.cause === 'shield') { key = 'shield'; lines = narrate(pack, 'dawnShield', who, { saved: attempted }, 'dawnDeep'); }
     else if (s.recruited) { key = 'recruit'; lines = narrate(pack, 'dawnRecruited'); }
     else if (s.attempted) { key = 'saved'; lines = narrate(pack, 'dawnSaved', attempted); }
-    const t = live.dawn[key] ?? live.dawn.quiet;
+    const t = live.dawn[key] ?? (key === 'shield' ? live.dawn.deep : null) ?? live.dawn.quiet;
     const vars = { name: key === 'saved' ? attempted : who, score: s.rigged ?? 0, day: s.cycle };
     const podium = (s.top ?? []).map(nameOf).filter(Boolean);
     const body = [
@@ -74,7 +75,7 @@ function liveStory(s, pack, nameOf) {
       ...(s.vanished?.length ? [`${listOf(s.vanished.map(nameOf))} went home. Their secret went with them.`] : []),
       ...t.tail,
     ];
-    const art = key === 'rig' || key === 'deep' ? 'dawn-taken' : 'dawn-clear';   // pictures in public/news/
+    const art = key === 'rig' || key === 'deep' || key === 'shield' ? 'dawn-taken' : 'dawn-clear';   // pictures in public/news/
     // The paper's witness (night.js): a true clue about the night's hand, for everyone.
     const w = s.witness && live.witness;
     const witness = w ? { ...s.witness, quote: w[s.witness.trait]?.[s.witness.group] ?? '', head: w.head, by: w.by } : null;
@@ -85,7 +86,7 @@ function liveStory(s, pack, nameOf) {
   const t = live.banish[key];
   const who = s.pid ? nameOf(s.pid) : '';
   const vars = { name: who, day: s.cycle };
-  const lines = narrate(pack, key === 'none' ? 'banishNone' : key === 'killer' ? 'banishKiller' : 'banishFaithful', who);
+  const lines = narrate(pack, key === 'none' ? (s.unaccused ? 'banishUnaccused' : 'banishNone') : key === 'killer' ? 'banishKiller' : 'banishFaithful', who);
   return {
     ...base,
     art: key === 'none' ? 'vote-none' : 'vote-out',

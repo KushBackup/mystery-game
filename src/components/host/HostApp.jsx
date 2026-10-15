@@ -3,7 +3,7 @@ import { HOST_EMAILS, EMULATED } from '../../firebase/app';
 import {
   signInHost, signOutHost, createGame, advance, setAutopilot, extendPhase, endPhaseNow, removePlayer, cancelRemove, relink, subscribeKnocks,
   dealLateJoiners, syncHostClock, subscribeRoles, subscribePresence, subscribeNightActions,
-  subscribeNightDen, subscribeBallot, subscribeSecret, subscribeScores, subscribeDayPlays, setDayGames,
+  subscribeNightDen, subscribeBallot, subscribeSecret, subscribeScores, subscribeDayPlays, setDayGames, watchJoins,
 } from '../../firebase/host';
 import { useAuthUser, useActiveGameId, useGame, usePlayers, useServerNow } from '../../hooks/useKillers';
 import { cancelKnock } from '../../firebase/game';
@@ -200,6 +200,7 @@ function narrationFor(game, pack, nameOf) {
       const v = d.taken ?? d.victims?.[0];
       if (d.cause === 'rig') return narrate(pack, 'dawnRig', nameOf(v), { score: d.rigged ?? 0 }, 'dawnDeath');
       if (d.cause === 'deep') return narrate(pack, 'dawnDeep', nameOf(v), { saved: nameOf(d.attempted) }, 'dawnDeath');
+      if (d.cause === 'shield') return narrate(pack, 'dawnShield', nameOf(v), { saved: nameOf(d.attempted) }, 'dawnDeep');
       return narrate(pack, v ? 'dawnDeath' : d.attempted ? 'dawnSaved' : d.recruited ? 'dawnRecruited' : 'dawnQuiet', nameOf(v ?? d.attempted));
     }
     case PHASE.INVESTIGATION: return narrate(pack, 'investigation');
@@ -208,7 +209,7 @@ function narrationFor(game, pack, nameOf) {
     case PHASE.ENDGAME: return narrate(pack, 'endgame');
     case PHASE.BANISH: {
       const b = game.banish ?? {};
-      if (!b.pid) return narrate(pack, 'banishNone');
+      if (!b.pid) return narrate(pack, b.unaccused ? 'banishUnaccused' : 'banishNone', '', {}, 'banishNone');
       return narrate(pack, b.team === 'killers' ? 'banishKiller' : 'banishFaithful', nameOf(b.pid));
     }
     case PHASE.FINALE: return narrate(pack, game.winner === 'faithful' ? 'finaleFaithful' : 'finaleKillers');
@@ -222,6 +223,8 @@ function Console({ gid, game }) {
   const presence = useHostSub((cb) => subscribePresence(gid, cb), [gid]) ?? EMPTY;
   const knocks = useHostSub((cb) => subscribeKnocks(gid, cb), [gid]) ?? EMPTY;
   const secret = useHostSub((cb) => subscribeSecret(gid, cb), [gid]);
+  // Split clues: check every torn-photo join a phone writes, while this console is open.
+  useEffect(() => watchJoins(gid), [gid]);
   const actions = useHostSub((cb) => subscribeNightActions(gid, game.cycle, cb), [gid, game.cycle]) ?? EMPTY;
   const den = useHostSub((cb) => subscribeNightDen(gid, game.cycle, cb), [gid, game.cycle]) ?? EMPTY;
   const votes = useHostSub((cb) => subscribeBallot(gid, game.ballot, cb), [gid, game.ballot]) ?? EMPTY;
@@ -390,6 +393,13 @@ function Console({ gid, game }) {
           {lines.map((l, i) => (
             <p key={i} className="font-typewriter text-[18px] leading-snug text-ink mt-1">{l}</p>
           ))}
+        </section>
+      )}
+      {/* The narrator's cue: the phones carry every instruction, so the host reacts and stirs (pack.hostCues). */}
+      {pack.hostCues?.[String(game.phase).replace('_locked', '')] && (
+        <section className="er-card mt-3">
+          <p className="er-mono mb-1">Your cue</p>
+          <p className="text-[15px] leading-snug text-bone">{pack.hostCues[String(game.phase).replace('_locked', '')]}</p>
         </section>
       )}
 

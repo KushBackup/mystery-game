@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react';
 import {
   watchAuth, subscribeActive, subscribeGame, subscribeBinding, subscribePlayers, subscribeMyRole, subscribeInbox,
   subscribeChannel, subscribeMyAction, subscribeMyVote, subscribeMyScore, subscribeMyTraits, subscribeAllTraits, subscribeKillers, subscribeDen, subscribeDenMeta, subscribeGhostSight,
-  subscribeDayWall, subscribeMyPlay,
+  subscribeDayWall, subscribeMyPlay, subscribeMyJoin,
 } from '../firebase/game.js';
 import { serverNow } from '../lib/clockSkew.js';
 
@@ -63,6 +63,8 @@ export const useDayWall = (gid, name, cycle, enabled = true) =>
   useSub((cb) => subscribeDayWall(gid, name, cycle, cb), [gid, name, cycle, enabled || null]);
 export const useMyPlay = (gid, name, cycle, pid, enabled = true) =>
   useSub((cb) => subscribeMyPlay(gid, name, cycle, pid, cb), [gid, name, cycle, pid, enabled || null]);
+/** Your attempt at joining one torn photo (split clues). */
+export const useMyJoin = (gid, pair, pid) => useSub((cb) => subscribeMyJoin(gid, pair, pid, cb), [gid, pair, pid]);
 /** Ghost sight: only subscribes for a ghost; the rules refuse anyone living. */
 export const useGhostSight = (gid, isGhost) => useSub((cb) => subscribeGhostSight(gid, cb), [gid, isGhost || null]);
 export const useDenMeta =(gid, isKiller) => useSub((cb) => subscribeDenMeta(gid, cb), [gid, isKiller || null]);

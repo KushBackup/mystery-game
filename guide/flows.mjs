@@ -48,6 +48,10 @@ export async function onboard(phone, { name, pick = [1, 0, 2, 1, 1, 0, 2] }) {
       await once('review', 'The review. This is the last chance to change an answer; after this they are locked and public.', 600);
       await page.getByRole('button', { name: 'My phone is ready' }).click();
       await sleep(1500);
+    } else if (await visible(page.getByRole('button', { name: 'Got it', exact: true }))) {
+      await once('case', 'The case, before anything else: what DEEP BLUE is, who the Killers are, and the goal.');
+      await page.getByRole('button', { name: 'Got it', exact: true }).click();
+      await sleep(800);
     } else if (await visible(page.getByRole('button', { name: 'Agree', exact: true }))) {
       await once('terms', 'The Terms of Service are the rules, told as a contract with the cursed app. There is no Disagree.');
       if (!done.has('disagree')) {

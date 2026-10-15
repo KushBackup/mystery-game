@@ -398,7 +398,7 @@ const DRAW = {
       k.scribble(118, y + 10, 50, 1);
       if (tone === 'red') k.line(76, y + 10, 224, y + 10, { color: RED, w: 2.4 });
     });
-    k.text(272, 138, 'taken', { size: 15, color: RED });
+    k.text(272, 138, 'killed', { size: 15, color: RED });
     k.arrow(262, 126, 236, 128, { bend: 0.1, color: RED });
     k.photo(244, 18, 38, 44, { rot: 6 });
     k.arrow(240, 38, 232, 38, { bend: 0 });

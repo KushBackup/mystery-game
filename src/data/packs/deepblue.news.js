@@ -1,5 +1,5 @@
 /**
- * The News app's world: what the rest of Panjim is reading while the room plays.
+ * The News app's world: what the rest of Anjuna is reading while the room plays.
  *
  * Three kinds of thing live here:
  *   - `articles`   authored world stories. Each belongs to a *day* and appears
@@ -23,8 +23,12 @@
  *      never a victim under 18, never a how-to. Deaths are "found", cause
  *      "undetermined". Nobody here is a real person: no real quotes, no real
  *      officials, no real outlets. Sources are anonymous.
- *   4. Greenr, Panjim is a bystander. It is where the room happens to be, and it
- *      is never the cause, the cover-up or the culprit. Keep it that way.
+ *   4. The real venue is never named (16 Oct 2026: Backroom, Anjuna, with
+ *      SideQuest Club; before that Greenr, Panjim). The paper speaks of
+ *      "Anjuna's bars" in general, and no venue is ever the cause, the
+ *      cover-up or the culprit. Keep it that way.
+ *   6. One word for a death in the room: "killed" (2026-10-15). The wider
+ *      world's dead are "found dead", as before.
  *   5. Read on a phone, standing up, in a loud café: short paragraphs.
  *
  * `art` names a picture: public/news/<art>.webp, drawn in splash-film/news.html
@@ -34,13 +38,13 @@
 
 export const OUTLETS = {
   wire: { name: 'Konkan Wire', tag: 'WIRE' },
-  courier: { name: 'Mandovi Courier', tag: 'PANJIM' },
-  dispatch: { name: 'Fontainhas Dispatch', tag: 'LOCAL' },
+  courier: { name: 'Chapora Courier', tag: 'ANJUNA' },
+  dispatch: { name: 'Vagator Dispatch', tag: 'LOCAL' },
   times: { name: 'The Goa Times', tag: 'THE GOA TIMES' },
 };
 
 /** Section names, as the segmented control and the lists print them. */
-export const SECTIONS = { top: 'Top', room: 'The Room', world: 'Panjim' };
+export const SECTIONS = { top: 'Top', room: 'The Room', world: 'Anjuna' };
 
 export const ARTICLES = [
   // ------------------------------------------------------------------ DAY 0
@@ -59,7 +63,7 @@ export const ARTICLES = [
     body: [
       'Nine people have died across Goa in the past three weeks. Investigators now say the cases share one detail: each had an app called DEEP BLUE on their phone, and each came last on its leaderboard the morning before.',
       'The app is in no app store. People who have it say they never installed it. It arrived, with a whale for an icon, and began ringing at 7:00 every morning.',
-      'Everyone who has it is told to play a short run. A leaderboard posts when the timer ends. Last place is “taken”. By the next day, that person has been found dead.',
+      'Everyone who has it is told to play a short run. A leaderboard posts when the timer ends. Last place is “killed”. By the next day, that person has been found dead.',
       'There was no sign of a struggle in any of the nine cases. The cause of death is undetermined. A cyber-crime officer, who asked not to be named, said the team has “no way yet to trace where it comes from, or who reads the scores”.',
     ],
   },
@@ -67,16 +71,16 @@ export const ARTICLES = [
     id: 'seven-am',
     day: 0,
     outlet: 'courier',
-    kicker: 'PANJIM',
-    head: 'Phones in Panjim are ringing at 7 a.m. Nobody set the alarm.',
-    dek: 'From Fontainhas to Campal, the same blue icon and the same bell.',
-    by: 'Mandovi Courier desk',
+    kicker: 'ANJUNA',
+    head: 'Phones in Anjuna are ringing at 7 a.m. Nobody set the alarm.',
+    dek: 'From the flea market to Starco junction, the same blue icon and the same bell.',
+    by: 'Chapora Courier desk',
     time: '06:40',
     art: 'seven-am',
     cap: 'It rings at exactly 7:00. Residents say the tone is not one they chose.',
     body: [
-      'Ask for a show of hands at any tea stall near the Panjim market and a few will go up. The same whale. The same bell, at exactly 7:00.',
-      '“I turned the phone off,” said a shopkeeper on 18th June Road, who asked not to be named. “It rang anyway. Then the screen said I had ninety seconds.”',
+      'Ask for a show of hands at any shack near the Anjuna flea market and a few will go up. The same whale. The same bell, at exactly 7:00.',
+      '“I turned the phone off,” said a shopkeeper on the Mapusa road, who asked not to be named. “It rang anyway. Then the screen said I had ninety seconds.”',
       'Telecom engineers say no network event matches the pattern. Phones on Wi-Fi, on mobile data and in flight mode have all reported it.',
       'Several residents say they now sleep with the phone in another room. They say it makes no difference.',
     ],
@@ -104,15 +108,15 @@ export const ARTICLES = [
     day: 0,
     outlet: 'courier',
     kicker: 'VENUE',
-    head: 'Greenr stays open tonight. “It’s a café, not a crime scene.”',
-    dek: 'A full house is expected in Panjim despite a day of warnings to stay home.',
-    by: 'Mandovi Courier desk',
+    head: 'Anjuna stays out tonight. “It’s a night out, not a crime scene.”',
+    dek: 'Full houses are expected at Anjuna’s bars despite a day of warnings to stay home.',
+    by: 'Chapora Courier desk',
     time: '17:48',
     art: 'greenr-open',
-    cap: 'Tables at Greenr were being laid at half past five.',
+    cap: 'Tables at an Anjuna bar were being laid at half past five.',
     body: [
-      'Greenr, the café-bar in Panjim, expects a full room tonight, despite a day of messages urging people to stay indoors.',
-      'A manager said staff had checked the Wi-Fi, the till system and every device on the premises. “Nothing of ours is putting that app on anyone’s phone,” she said. “People are scared. We would rather they were scared together, with something to eat.”',
+      'Bars across Anjuna expect full rooms tonight, despite a day of messages urging people to stay indoors.',
+      'A manager at one said staff had checked the Wi-Fi, the till system and every device on the premises. “Nothing of ours is putting that app on anyone’s phone,” she said. “People are scared. We would rather they were scared together, with something to eat.”',
       'Early arrivals say every phone at the tables already carries the whale. Nobody remembers installing it.',
       '“Nine people are dead,” said one guest. “And we’re all here anyway.”',
       'The first morning run is at 7:00.',
@@ -134,7 +138,7 @@ export const ARTICLES = [
     cap: 'Those who have played describe a small whale and a wall with a gap in it.',
     body: [
       'Those who have played describe a small whale on a dark screen, a wall of obstacles with a gap in it, and a clock. Everyone gets about ninety seconds and as many tries as they can stand. The best run counts.',
-      '“It’s the waiting that does it,” said a woman in Altinho who has played eleven mornings and finished last on none. “You watch the board load, and you add up everyone else’s number.”',
+      '“It’s the waiting that does it,” said a woman in Siolim who has played eleven mornings and finished last on none. “You watch the board load, and you add up everyone else’s number.”',
       'Then the leaderboard posts, with names the player recognises. The toll across the coast now stands at fourteen.',
       'Nobody who has spoken says they enjoy it. Nobody who has spoken says they have stopped.',
     ],
@@ -144,16 +148,16 @@ export const ARTICLES = [
     day: 1,
     outlet: 'courier',
     kicker: 'CITY',
-    head: 'At 7 a.m. Panjim stops. Then it looks at the leaderboard.',
+    head: 'At 7 a.m. Anjuna stops. Then it looks at the leaderboard.',
     dek: 'Commuters, vendors and a traffic constable, all heads down for ninety seconds.',
-    by: 'Mandovi Courier desk',
+    by: 'Chapora Courier desk',
     time: '07:50',
     art: 'panjim-stops',
-    cap: 'Near the Kadamba bus stand, a queue stood still.',
+    cap: 'Near the Anjuna bus stop, a queue stood still.',
     body: [
-      'At 7:00 a.m., a queue near the Kadamba bus stand stopped moving. Nobody was boarding. Nobody was talking. Every head was bent over a phone.',
+      'At 7:00 a.m., a queue near the Anjuna bus stop stopped moving. Nobody was boarding. Nobody was talking. Every head was bent over a phone.',
       'A vendor who sells chai from a cart said he has stopped pouring at the hour. “Nobody drinks till the board is up. Then they drink very slowly.”',
-      'The city’s other rhythm is unchanged: the river, the heat, the church bells at the hour. Only the faces are different.',
+      'The village’s other rhythm is unchanged: the sea, the heat, the church bells at the hour. Only the faces are different.',
     ],
   },
   {
@@ -161,14 +165,14 @@ export const ARTICLES = [
     day: 1,
     outlet: 'dispatch',
     kicker: 'THE RIVER',
-    head: 'Mandovi ferry crews ask passengers to put phones away.',
+    head: 'Chapora ferry crews ask passengers to put phones away.',
     dek: '“The bell goes off mid-river and half the deck stops being a deck.”',
-    by: 'Fontainhas Dispatch',
+    by: 'Vagator Dispatch',
     time: '09:10',
     art: 'ferry-crews',
-    cap: 'The Mandovi crossings still run to time.',
+    cap: 'The Siolim crossing still runs to time.',
     body: [
-      'Deckhands on the Mandovi crossings have started asking passengers to put their phones in their bags before the boat leaves the bank.',
+      'Deckhands on the Siolim ferry across the Chapora have started asking passengers to put their phones in their bags before the boat leaves the bank.',
       '“The bell goes off in the middle of the river, and half the deck stops being a deck,” one said. “People are standing at the rail, scared of falling in, and playing a whale game.”',
       'The crossings are running to time. The crews say they would rather nobody is holding a phone when the ramp comes down.',
     ],
@@ -201,14 +205,14 @@ export const ARTICLES = [
     kicker: 'BUSINESS',
     head: 'Bars and cafés split: some shut, some are full.',
     dek: 'Venues that stayed open say people want company more than they want safety.',
-    by: 'Mandovi Courier desk',
+    by: 'Chapora Courier desk',
     time: '13:15',
     art: 'bars-split',
-    cap: 'Lights on at dusk in a Panjim café.',
+    cap: 'Lights on at dusk in an Anjuna bar.',
     body: [
-      'Several Panjim venues have closed their doors for the week. Others are turning people away.',
-      'Greenr, which has stayed open throughout, says its tables are full each evening. “Nobody wants to wait for the morning alone,” a manager said.',
-      'Taxi drivers report a rise in late-night fares from the cafés to the river, and then home before 7:00.',
+      'Several Anjuna venues have closed their doors for the week. Others are turning people away.',
+      'One bar that has stayed open throughout says its tables are full each evening. “Nobody wants to wait for the morning alone,” a manager said.',
+      'Taxi drivers report a rise in late-night fares from the bars to Vagator, and then home before 7:00.',
     ],
   },
   {
@@ -237,13 +241,13 @@ export const ARTICLES = [
     kicker: 'NIGHT',
     head: 'The phones of the dead are still sending photos.',
     dek: 'Families say messages keep arriving after midnight, from numbers that should be silent.',
-    by: 'Fontainhas Dispatch',
+    by: 'Vagator Dispatch',
     time: '21:40',
     art: 'still-sending',
     cap: 'A photo from a sister’s number, delivered at 03:12.',
     body: [
       'Her sister’s phone was switched off and put in a drawer. At 03:12, it sent her a photo.',
-      'At least six families in Panjim describe the same thing. The pictures are blurred and taken in the dark: a glass on a table, a pair of shoes by a door, the back of someone’s jacket.',
+      'At least six families in Anjuna describe the same thing. The pictures are blurred and taken in the dark: a glass on a table, a pair of shoes by a door, the back of someone’s jacket.',
       '“It’s not a message. It’s a photo of somewhere,” said one, who asked not to be named. “Like she’s showing me what she saw.”',
       'Investigators say the photos were taken the same night they arrived. They cannot say by whom. Some families have started showing them to each other.',
     ],
@@ -274,14 +278,14 @@ export const ARTICLES = [
     day: 3,
     outlet: 'dispatch',
     kicker: 'LOCAL',
-    head: 'Vigil on the Mandovi promenade: “Two hundred on Monday. Tonight, forty.”',
-    dek: 'Candles are still lit each evening at the river wall. The crowd gets smaller.',
-    by: 'Fontainhas Dispatch',
+    head: 'Vigil on Anjuna beach: “Two hundred on Monday. Tonight, forty.”',
+    dek: 'Candles are still lit each evening at the sea wall. The crowd gets smaller.',
+    by: 'Vagator Dispatch',
     time: '19:05',
     art: 'vigil',
-    cap: 'Candles along the river wall at dusk.',
+    cap: 'Candles along the sea wall at dusk.',
     body: [
-      'Each evening, residents gather on the promenade by the Mandovi to light a candle for the dead. On Monday there were two hundred. Tonight there were forty.',
+      'Each evening, residents gather at the sea wall above Anjuna beach to light a candle for the dead. On Monday there were two hundred. Tonight there were forty.',
       '“People are afraid to be out when the sun goes down,” said an organiser. “They want to be in a room with the doors shut and somebody beside them.”',
       'The candles burn down by the time the lamps come on.',
     ],
@@ -296,12 +300,12 @@ export const ARTICLES = [
     kicker: 'LATEST',
     head: 'Forty dead. The app cannot be deleted.',
     dek: 'Phone shops report people swapping handsets. The new phone rings too.',
-    by: 'Mandovi Courier desk',
+    by: 'Chapora Courier desk',
     time: '08:10',
     art: 'cannot-delete',
     cap: 'A factory reset. The icon was back by seven.',
     body: [
-      'Phone shops near the Panjim market say customers are arriving with a request: wipe it, replace it, whatever it takes.',
+      'Phone shops in Mapusa market say customers are arriving with a request: wipe it, replace it, whatever it takes.',
       'Technicians have tried factory resets, new SIM cards and new handsets. The whale icon is back by 7:00.',
       '“A man bought a new phone yesterday afternoon,” said a shop owner. “It was in the box. It rang at seven.”',
       'The toll stands at forty.',
@@ -349,15 +353,15 @@ export const ARTICLES = [
     day: 5,
     outlet: 'courier',
     kicker: 'CITY',
-    head: 'Panjim holds its breath for the last board.',
-    dek: 'Cafés are staying open late. Nobody is sure what for.',
-    by: 'Mandovi Courier desk',
+    head: 'Anjuna holds its breath for the last board.',
+    dek: 'Bars are staying open late. Nobody is sure what for.',
+    by: 'Chapora Courier desk',
     time: '12:00',
     art: 'last-call',
-    cap: 'Shutters half-down on a Panjim street.',
+    cap: 'Shutters half-down on an Anjuna street.',
     body: [
       'By noon the streets around the church square were almost empty. Shops that normally stay open until ten pulled their shutters at four.',
-      'Cafés that stayed open say they expect their busiest night yet.',
+      'Bars that stayed open say they expect their busiest night yet.',
       '“People don’t want to be alone for the last one,” said a manager.',
     ],
   },
@@ -378,7 +382,7 @@ export const EPILOGUE = {
     art: 'deleted',
     cap: 'The tile is gone. The phones are just phones.',
     body: [
-      'At 7:00 this morning, no phone in Panjim rang.',
+      'At 7:00 this morning, no phone in Anjuna rang.',
       'Residents report that the whale icon is gone from every handset where it appeared. Nobody pressed anything. Nobody remembers it leaving.',
       'Officers say they will keep the case open. For today, the city is allowed to sleep late.',
     ],
@@ -413,51 +417,51 @@ export const LIVE = {
     rig: {
       kicker: 'THE BOARD',
       head: '{name} finishes last. Score: {score}.',
-      dek: 'The deep takes a name on day {day}.',
+      dek: 'DEEP BLUE kills a name on day {day}.',
       tail: ['Someone in this room may know why that number is so low.'],
     },
     deep: {
       kicker: 'THE BOARD',
-      head: 'The deep takes {name}.',
+      head: '{name} is killed.',
       dek: 'Somebody was after a different name on day {day}.',
       tail: ['Whatever was meant for them missed.'],
     },
     saved: {
       kicker: 'THE BOARD',
-      head: 'Nobody taken.',
+      head: 'Nobody killed.',
       dek: 'Someone was after {name} on day {day}.',
       tail: ['Somebody wanted that score gone. It stayed.'],
     },
     recruit: {
       kicker: 'THE BOARD',
-      head: 'Nobody taken this morning.',
+      head: 'Nobody killed this morning.',
       dek: 'The board is clean on day {day}. The room is not.',
-      tail: ['The deep did not take anyone. Someone said yes to something.'],
+      tail: ['Nobody was killed. Someone said yes to something.'],
     },
     quiet: {
       kicker: 'THE BOARD',
-      head: 'Nobody taken this morning.',
-      dek: 'The board posted and nobody went under on day {day}.',
+      head: 'Nobody killed this morning.',
+      dek: 'The board posted and nobody was killed on day {day}.',
       tail: ['The deep went hungry.'],
     },
   },
   banish: {
     killer: {
       kicker: 'THE VOTE',
-      head: '{name} logged out: a KILLER.',
-      dek: 'The group got it right on day {day}.',
+      head: 'The room kills {name}: a KILLER.',
+      dek: 'The room got it right on day {day}.',
       tail: ['One fewer of them in the room.'],
     },
     innocent: {
       kicker: 'THE VOTE',
-      head: '{name} logged out: innocent.',
-      dek: 'The group got it wrong on day {day}.',
+      head: 'The room kills {name}: innocent.',
+      dek: 'The room got it wrong on day {day}.',
       tail: ['The Killers are still in the room.'],
     },
     none: {
       kicker: 'THE VOTE',
-      head: 'The group could not agree. Nobody logged out.',
-      dek: 'A split room on day {day}.',
+      head: 'Nobody killed in the vote.',
+      dek: 'No verdict on day {day}.',
       tail: [],
     },
   },
@@ -470,8 +474,8 @@ export const LIVE = {
     head: 'A witness came forward overnight',
     by: 'Asked not to be named',
     top: {
-      dark: '“They were in something dark. Black, grey or navy.”',
-      pale: '“A pale top. White, grey or yellow. It caught the light.”',
+      dark: '“They were in something dark. Black, navy, maroon, that kind of colour.”',
+      pale: '“A pale top. White, cream, something light. It caught the light.”',
       vivid: '“Loud colour, or a print. You couldn’t miss it.”',
       plain: '“One solid colour. No print, no pattern.”',
     },
@@ -480,9 +484,9 @@ export const LIVE = {
       bare: '“No glasses. I saw their eyes in the screen light.”',
     },
     shoes: {
-      rubber: '“Sneakers. I heard the rubber squeak.”',
-      leather: '“Hard soles. Formal shoes, boots or heels.”',
-      open: '“Their toes were out. Sandals, or heels.”',
+      rubber: '“Rubber soles. I heard them squeak.”',
+      leather: '“Hard leather soles. Formal shoes, boots, that kind.”',
+      open: '“Their toes were out. Sandals, slides, or heels.”',
       flat: '“Flat shoes. No heel at all.”',
     },
     drink: {
@@ -491,7 +495,7 @@ export const LIVE = {
       spirit: '“Something distilled in the glass. Not beer, not wine.”',
       clear: '“A clear drink, or a cocktail.”',
       brewed: '“Beer or wine. Nothing harder.”',
-      sober: '“Not drinking. A soft drink.”',
+      sober: '“Not drinking. A soft drink, or water.”',
       strong: '“Liquor, neat. No mixer.”',
     },
     season: {
@@ -511,9 +515,9 @@ export const LIVE = {
 
 /** The crawl under the masthead: each line appears from its `day` on. */
 export const TICKER = [
-  { day: 0, text: '07:00 · 31° AND HUMID IN PANJIM' },
+  { day: 0, text: '07:00 · 31° AND HUMID IN ANJUNA' },
   { day: 0, text: 'NINE DEAD IN THREE WEEKS · DEEP BLUE' },
-  { day: 0, text: 'MANDOVI FERRIES RUNNING TO TIME' },
+  { day: 0, text: 'SIOLIM FERRY RUNNING TO TIME' },
   { day: 0, text: 'CYBER CELL ASKS RESIDENTS TO STAY IN COMPANY' },
   { day: 1, text: 'TOLL STANDS AT 14' },
   { day: 1, text: 'FERRY CREWS ASK PASSENGERS TO BAG PHONES' },
@@ -521,11 +525,11 @@ export const TICKER = [
   { day: 2, text: 'BARS SPLIT: SOME SHUT, SOME FULL' },
   { day: 2, text: 'PHONES OF THE DEAD STILL SENDING PHOTOS' },
   { day: 3, text: 'TOLL STANDS AT 31 · FAMILIES DISPUTE SCORES' },
-  { day: 3, text: 'PROMENADE VIGIL DOWN TO FORTY' },
+  { day: 3, text: 'BEACH VIGIL DOWN TO FORTY' },
   { day: 4, text: 'TOLL STANDS AT 40 · THE APP CANNOT BE DELETED' },
   { day: 4, text: 'SERVER RACK FOUND EMPTY OF OWNERS' },
   { day: 5, text: 'FINAL BOARD · TOLL STANDS AT 52' },
-  { day: 5, text: 'SHUTTERS DOWN EARLY ACROSS PANJIM' },
+  { day: 5, text: 'SHUTTERS DOWN EARLY ACROSS ANJUNA' },
 ];
 
 export default { outlets: OUTLETS, sections: SECTIONS, articles: ARTICLES, epilogue: EPILOGUE, live: LIVE, ticker: TICKER };

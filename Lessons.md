@@ -734,3 +734,19 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 **What happened:** `video/drawn/` rendered fine in sheets and strips, then the full 1080×1920 render died at 50 s with ffmpeg "Cannot allocate memory". Node's RSS grew about 40 MB per frame. The claude-animation skill pins `@napi-rs/canvas ^0.1.x`, whose pattern fills and `createPattern` leak native memory that V8 never sees, so GC never runs to free it.
 
 **What to do instead:** Use `@napi-rs/canvas` 1.0.x and render with `node --expose-gc` (the vendored `lib/film.mjs` calls `gc()` every 48 frames and prints RSS). Before any long render, run `node film.mjs probe 0 48` and check RSS stays flat. A sheet that works proves nothing about memory over 2,000 frames.
+
+## 2026-10-12 — Synced the explainer to a voiceover the user hadn't given
+
+**What happened:** Told "the generated audio is in the downloads folder", I took the newest `VoiceOver.mp3` there, synced the hand-drawn explainer to it and copied a "final" back to Downloads. The user said they had not given me the voiceover yet and wanted the narration script first.
+
+**What to do instead:** Before syncing to an audio file, confirm which file it is by name, and say which file I'm about to use in the reply before rendering. Never write deliverables into the user's Downloads unasked.
+
+**Follow-up (same day):** the user checked and the file was correct after all, and the final I had deleted was what they wanted. Deleting it cost a full re-render. When the user doubts an input, ask before deleting outputs made from it. Leave the files in place until they confirm.
+
+## 2026-10-15 — "Players discover the game" was applied to the goal, not just the tactics
+
+**What happened:** At the 3 Oct game, players didn't know what DEEP BLUE was, who the Killers were or why they were playing. They followed the host's instructions instead of playing. Since 2026-10-02 I had kept every screen to "the premise and what just happened", so the only statement of the story was two lobby banners. The setup's first rule named DEEP BLUE without saying what it was, and the same death had five names (taken, the deep, SIGNAL LOST, banished, logged out).
+
+**Why it was wrong:** "Don't explain the mechanism" is about tactics. The goal, the stakes and what each tool is for are what make a player want to act. Without them, the room can only wait to be told. Synonyms made one event read as several mechanics.
+
+**What to do instead:** Every surface that frames the game tells the same one-breath story (who, what happens, your goal). Keep one word per idea: "killed" is the only death word. Give every action a reason a player feels: the score is a shield, a clue needs a partner, the vote needs an accuser. Leave the tactics for the room to discover.

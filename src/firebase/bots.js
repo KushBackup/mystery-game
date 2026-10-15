@@ -186,7 +186,8 @@ export async function vote(bot, gid, game) {
   if (!voting.includes(bot.status)) return;
   const players = await allPlayers(bot, gid);
   let targets = players.filter((p) => p.status === 'alive' && p.pid !== bot.pid).map((p) => p.pid);
-  if (game.phase === 'revote') targets = (game.tied ?? []).filter((p) => p !== bot.pid);
+  // The Round Table and its re-vote are only between those on trial (and maybe 'none').
+  if (game.phase !== 'endgame') targets = (game.ballotTargets ?? targets).filter((p) => p !== bot.pid);
   if (!targets.length) return;
   await setDoc(G(bot, gid, 'votes', `${game.ballot}_${bot.pid}`), {
     target: rnd(targets), pid: bot.pid, ballot: game.ballot, at: serverTimestamp(),
@@ -209,6 +210,60 @@ export async function lastWords(bot, gid, game) {
   await setDoc(G(bot, gid, 'chat', `last_${bot.pid}`), {
     kind: 'last', pid: bot.pid, name: bot.name, inboxId: clue.id, fact: { trait: clue.fact.trait, group: clue.fact.group }, at: Date.now(),
   });
+}
+
+/**
+ * Daylight accusations (engine/banish.js): stage 0, some living bots accuse
+ * someone at random; stage 1, some second an accusation they're allowed to.
+ * A Killer bot never accuses a partner. Refusals (the rules) are swallowed.
+ */
+export async function accuseDay(bot, gid, game, stage) {
+  await readSelf(bot, gid);
+  if (bot.status !== 'alive') return;
+  const c = game.cycle;
+  const quiet = (p) => p.catch((e) => { if (e.code !== 'permission-denied') throw e; });
+  if (stage === 0) {
+    if (Math.random() > 0.35) return;
+    const players = await allPlayers(bot, gid);
+    const mates = bot.role === 'killer' ? (await getDocs(collection(bot.db, 'games', gid, 'killers'))).docs.map((d) => d.id) : [];
+    const pool = players.filter((p) => p.status === 'alive' && p.pid !== bot.pid && !mates.includes(p.pid));
+    if (!pool.length) return;
+    await quiet(setDoc(G(bot, gid, 'accusations', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, target: rnd(pool).pid, at: serverTimestamp() }));
+    return;
+  }
+  if (Math.random() > 0.6) return;
+  const accusations = (await getDocs(query(collection(bot.db, 'games', gid, 'accusations'), where('cycle', '==', c)))).docs.map((d) => d.data());
+  const open = accusations.filter((a) => a.pid !== bot.pid && a.target !== bot.pid);
+  if (!open.length) return;
+  await quiet(setDoc(G(bot, gid, 'seconds', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, accuser: rnd(open).pid, at: serverTimestamp() }));
+}
+
+/**
+ * Torn photos (engine/clues.js splitHalves): bots that hold halves show each
+ * other their codes, the way two guests would at a table, and one of each
+ * pair types the other's. Only pairs where both holders are bots can join;
+ * 15% of pairs never find each other.
+ */
+export async function joinHalves(bots, gid) {
+  const halves = [];
+  for (const bot of bots) {
+    const inbox = await getDocs(query(collection(bot.db, 'games', gid, 'inbox'), where('to', '==', bot.pid)));
+    const rows = inbox.docs.map((d) => d.data());
+    for (const h of rows.filter((d) => d.kind === 'half')) {
+      if (!rows.some((d) => d.via === 'join' && d.pair === h.pair)) halves.push({ bot, ...h });
+    }
+  }
+  const codeOf = new Map(halves.map((h) => [`${h.pair}:${h.bot.pid}`, h.code]));
+  const tried = new Set();
+  for (const h of halves) {
+    if (tried.has(h.pair) || Math.random() > 0.85) continue;
+    const theirs = codeOf.get(`${h.pair}:${h.partner}`);
+    if (!theirs) continue;
+    tried.add(h.pair);
+    await setDoc(G(h.bot, gid, 'joins', `${h.pair}_${h.bot.pid}`), { pid: h.bot.pid, pair: h.pair, code: theirs, at: serverTimestamp() })
+      .catch((e) => { if (e.code !== 'permission-denied') throw e; });
+  }
+  return tried.size;
 }
 
 export async function answerRecruit(bot, gid, game) {
@@ -244,7 +299,13 @@ export function driveBots(db, gid, bots, { log = () => {}, onPhase = () => {} } 
     const all = (fn) => Promise.all(bots.map((b) => fn(b).catch((e) => log(`bot ${b.name}: ${e.code ?? e.message}`))));
     if (g.phase === 'night') await all((b) => act(b, gid, g));
     if (g.phase === 'recruit') await all((b) => answerRecruit(b, gid, g));
-    if (g.phase === 'investigation') await all((b) => lastWords(b, gid, g));
+    if (g.phase === 'investigation') {
+      await all((b) => lastWords(b, gid, g));
+      await joinHalves(bots, gid).catch((e) => log(`joins: ${e.code ?? e.message}`));
+      await all((b) => accuseDay(b, gid, g, 0));
+      await sleep(2000);
+      await all((b) => accuseDay(b, gid, g, 1));
+    }
     if (g.phase === 'game') {
       // Wait out the countdown so bot scores land inside the window, like a phone's would.
       await sleep(Math.max(0, (g.revealAt ?? 0) - Date.now()) + 3000);

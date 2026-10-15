@@ -42,8 +42,18 @@
 ### Next event (supplied 2026-10-11)
 
 - **Friday 16 October 2026 at Backroom, Anjuna (Goa), in collaboration with SideQuest Club.** SideQuest Club hosts it at their venue; Astral Project runs its own original game. **No start time** goes on the ad's end card (the user's call). The Meta button is **Book now**. The user confirmed that "come solo or bring your crew" is true for this event.
-- **The game's public name is now "Three Knives Out"** (the user's call, 2026-10-11, replacing "The Murder Mystery Experience" in ads). The user described it as six games mashed into one, an homage to classic social-deduction games: **Mafia, Among Us, Undercover, Pictionary, Flappy Bird and Cluedo**. In-app `GAME.title` in `src/data/killersCopy.js` still says the old name; changing it was not asked for.
+- **The game's public name is now "Three Knives Out"** (the user's call, 2026-10-11, replacing "The Murder Mystery Experience" in ads). The user described it as six games mashed into one, an homage to classic social-deduction games: **Mafia, Among Us, Undercover, Pictionary, Flappy Bird and Cluedo**. In-app `GAME` in `src/data/killersCopy.js` was switched to Three Knives Out × SideQuest Club on 2026-10-15 as part of the approved clarity plan (with the PWA manifest, `<title>`, News/Weather moved to Anjuna, and the opening film's partner sticker).
 - The 16:9 4K ad for it is `video/src/adtk/` (see video/README.md). The SideQuest Club logo is the user's `Sidequest logo.png` (Downloads), cropped into `video/public/adtk/logo-sidequest.png`. The footage folder is `S:\Kush\Videos`: 10 horizontal 4K clips from the 3 Oct Greenr Panjim night and 12 vertical 1080p clips from older venues, most of them HLG HDR.
+
+### Clarity and agency (decided 2026-10-15, for the 16 Oct event)
+
+- **The feedback (3 Oct Greenr Panjim game):** players didn't understand what the game was, what DEEP BLUE was (nothing on the setup said), or why they were doing anything; they followed the host's and the screen's instructions instead of playing on their own.
+- **The principle changed:** always tell the goal, the stakes and what each tool is for; let players discover the tactics. This relaxes "Players discover the game" below.
+- **"Killed" is the only word** for leaving the game, by board or by vote (the user: "I don't want you to use words like banish, signal lost, taken. Let's just use the word killed."). Code identifiers keep their names.
+- **Chosen when asked:** score is a shield (the same-morning version: a target in the top quarter bounces the rig; the "yesterday's board" version was offered and not chosen), torn photos with the partner **named** (not described), visible progress as a **count only** (no greying out), player-called accusations with the **clock still ending the day**, the hijack intro, the host as narrator. "Registration form" meant the in-app setup.
+- **Offered, not chosen:** a lobby warm-up ("find someone with the same drink answer"), an "admins online" bar, a penalty for accusing an innocent, greying out ruled-out guests. Don't build these unasked.
+- **Claude's own calls, worth confirming:** "No one" on the ballot when a single guest is on trial (from the approved plan); a second accuser counts as a Second; Second hidden once a guest is on trial; wrong join codes can be retried; the host's cues per phase in `pack.hostCues`; the witness sharpened to `publicBand [0.5, 0.8]` to pay for skipped votes (sim: 72/55/50/48/45/50/57% at 16–45 guests, accuse 0.85 assumed); Vote has no home-screen icon, so Accuse is reached from the NowCard, the daylight banner and the Room's pinned bar.
+- **Deploy needs the rules first:** `accusations`, `seconds`, `joins` and the trial-only `votes` rule are new. Under old rules accusations and joins are refused and no Round Table could ever open. Deploy `firestore:rules` before `npm run deploy`, both with the user's approval. The host console must stay open during daylight, because it checks the torn-photo joins.
 
 ### Killers Night: the new format (decided 2026-09-26, build in progress)
 
@@ -209,6 +219,11 @@ Also settled the same day, smaller: the four ignored coffee tickets are **two Sh
   4. **It replaces printing everywhere**, not just in the app: host script, host guide, run sheet and print pack all had their "hand out the cards" steps removed. The only paper left is the 51 login cards.
   The per-player queue order (`riddleQueueFor`) is stable-but-different on purpose — if every phone paid out the same clue, codes would be worth nothing and the room would have no reason to talk. [CLUE_CODES.md](CLUE_CODES.md) is now the **host's stall-breaker**, not a packing list.
 - **Slides must stay inside Round 0 knowledge.** The user's brief was "the introductory information they need to understand the murder" — so the vape is fair game (it is in the public incident report) but the toxin, the cancer, the SEBI inquiry and the staging are the paid-off reveals of rounds 3–5 and must not appear.
+
+- **Arrival options are fine-grained; clue groups are not (2026-10-15).** The user asked for a character creator "as detailed as possible" so guests can describe themselves properly. The creator now has 18 top colours and patterns, and 12 kinds of footwear (Kolhapuris / juttis and Crocs included). Every spirit is its own option (gin, vodka, rum, whisky, brandy, tequila, feni), plus red wine, white/rosé wine and water. The user chose to expand only those three questions, with no new questions.
+  - The group ids in `data/traits.js` did not change, so the clue art, the pack lines and the engine needed nothing new. To add an option, place it in groups and draw it in `os/art/portraitArt.js`.
+  - A group that holds most of a trait reads as "anything but …" in the clue's plain line (`clueWords` in `data/packs/index.js`).
+  - Never change the options while a game has registered guests. Their stored answers (for example the old `clear` and `brown` drink ids) would lose their labels and drawings.
 
 ## Conventions the user has confirmed (continued)
 

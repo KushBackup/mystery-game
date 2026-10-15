@@ -117,16 +117,16 @@ function killerFate(p) {
   if (!p) return '';
   if (p.status === 'alive') return 'Walked free';
   if (p.status === 'vanished') return 'Went home';
-  if (p.cause === 'banished') return `Voted out, day ${p.diedCycle}`;
-  if (p.cause === 'deep') return `Taken by the deep, day ${p.diedCycle}`;
+  if (p.cause === 'banished') return `Killed by the vote, day ${p.diedCycle}`;
+  if (p.cause === 'deep') return `Killed on the board, day ${p.diedCycle}`;
   return 'Caught';
 }
 
 function selfFate(p) {
   if (!p || p.status === 'alive') return 'You made it to the end.';
-  if (p.cause === 'banished') return `The group voted you out on day ${p.diedCycle}.`;
-  if (p.cause === 'murdered') return `Your score was rigged on day ${p.diedCycle}.`;
-  if (p.cause === 'deep') return `The deep took you on day ${p.diedCycle}.`;
+  if (p.cause === 'banished') return `The room voted to kill you on day ${p.diedCycle}.`;
+  if (p.cause === 'murdered') return `The Killers rigged your score. You were killed on day ${p.diedCycle}.`;
+  if (p.cause === 'deep') return `You came last and were killed on day ${p.diedCycle}.`;
   return '';
 }
 
@@ -167,17 +167,18 @@ function HowItHappened({ ctx, story, roles, face }) {
     }
     if (dawn) {
       const taken = dawn.taken ?? dawn.victims?.[0];
-      if (taken && dawn.cause === 'deep') items.push({ k: 'd', icon: taken, tone: 'dead', text: <>The rig bounced, so the deep took the lowest honest score: {who(taken)}{roles[taken] === 'killer' ? ', a Killer' : ''}.</> });
-      else if (taken) items.push({ k: 'd', icon: taken, tone: 'dead', text: <>Morning: {who(taken)} was taken off the bottom of the board.</> });
-      else items.push({ k: 'd', tone: 'quiet', text: <>Morning: nobody was taken.</> });
+      if (taken && dawn.cause === 'deep') items.push({ k: 'd', icon: taken, tone: 'dead', text: <>The rig bounced off a Doctor, so the lowest honest score was killed: {who(taken)}{roles[taken] === 'killer' ? ', a Killer' : ''}.</> });
+      else if (taken && dawn.cause === 'shield') items.push({ k: 'd', icon: taken, tone: 'dead', text: <>The target’s score was locked at the top, so the lowest honest score was killed: {who(taken)}{roles[taken] === 'killer' ? ', a Killer' : ''}.</> });
+      else if (taken) items.push({ k: 'd', icon: taken, tone: 'dead', text: <>Morning: {who(taken)} was killed at the bottom of the board.</> });
+      else items.push({ k: 'd', tone: 'quiet', text: <>Morning: nobody was killed.</> });
       if (dawn.witness) items.push({ k: 'w', tone: 'good', text: <>The paper’s witness, true: {plain(dawn.witness)}.</> });
       const last = taken ? lastWords.find((m) => m.pid === taken) : null;
       if (last) items.push({ k: 'l', icon: taken, tone: 'good', text: <>{who(taken)}’s last message, true: {plain(last.fact)}.</> });
     }
     for (const v of votes) {
       items.push(v.pid
-        ? { k: `b${v.ballot}`, icon: v.pid, tone: v.team === 'killers' ? 'good' : 'dead', text: <>The group logged out {who(v.pid)}. {v.team === 'killers' ? 'A Killer. Right call.' : 'Innocent.'}</> }
-        : { k: `b${v.ballot}`, tone: 'quiet', text: <>The group couldn’t agree. Nobody was logged out.</> });
+        ? { k: `b${v.ballot}`, icon: v.pid, tone: v.team === 'killers' ? 'good' : 'dead', text: <>The room voted to kill {who(v.pid)}. {v.team === 'killers' ? 'A Killer. Right call.' : 'Innocent.'}</> }
+        : { k: `b${v.ballot}`, tone: 'quiet', text: <>Nobody was killed in the vote.</> });
     }
     return { c, items };
   });

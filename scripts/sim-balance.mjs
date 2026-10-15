@@ -8,6 +8,8 @@
  *   node scripts/sim-balance.mjs --frame 2                 # the engine frames someone on night 2
  *   node scripts/sim-balance.mjs --witness off --last 0    # without the paper's witness or last words
  *   node scripts/sim-balance.mjs --lie 0.3 --sight 0.5     # Killers lie about clues; ghosts catch some
+ *   node scripts/sim-balance.mjs --shield 0.25 --join 0.85 --accuse 0.85   # the 2026-10-15 mechanics
+ *   node scripts/sim-balance.mjs --shield 0 --split off --accuse 1         # without them
  *
  * Plays whole games with the real engine (src/lib/engine) and bot players:
  *
@@ -27,6 +29,15 @@
  *             words (--last, default 0.7); the whole room sees it.
  *   The paper  prints one more true fact about the hand each murder night
  *             (night.js `witness`). Everyone reads it; nobody can lie about it.
+ *   Shield    (2026-10-15) the top `--shield` share of the morning board can't
+ *             be rigged (morning.js). Killers avoid yesterday's top quarter.
+ *   Halves    (2026-10-15) a dig gives half a clue (clues.js splitHalves). A
+ *             pair of Faithful holders find each other and join with
+ *             probability `--join`; a pair with a Killer in it never joins.
+ *   Trials    (2026-10-15) the room only votes if someone is on trial. With
+ *             probability `--accuse` a trial forms around the 1-3 most
+ *             suspected guests (with noise); otherwise nobody is voted out.
+ *             With one on trial the room may spare them ("no one").
  *   Lies      with --lie p, a Killer who holds a clue nobody Faithful spoke
  *             for announces a false one instead. With --sight q a Faithful
  *             ghost (who sees every clue the living got) exposes the lie with
@@ -45,6 +56,7 @@ import { TRAITS } from '../src/data/traits.js';
 import {
   makeRng, pick, chance, targetCounts, dealRoles, resolveNight, resolveMorning, tallyBanish, breakTie,
   checkWin, candidatesFor, fits, DEFAULT_RATIOS, DEFAULT_NIGHT_CONFIG, ROLE, ENDGAME_ROUNDS as DEFAULT_ENDGAME,
+  SHIELD_SHARE, shieldPlaces, NO_ONE,
 } from '../src/lib/engine/index.js';
 
 // ---------------------------------------------------------------------------
@@ -66,6 +78,10 @@ const PASS_P = Number(args.pass ?? 0.8); // chance a Faithful ghost passes one o
 const LAST_P = Number(args.last ?? 0.7); // chance a Faithful guest taken at dawn posts their true photo as last words
 const LIE_P = Number(args.lie ?? 0); // chance a Killer holding an unspoken clue announces a false one
 const SIGHT_P = Number(args.sight ?? 0); // chance a Faithful ghost exposes such a lie (ghost sight)
+const SHIELD = Number(args.shield ?? SHIELD_SHARE); // share of the morning board the rig can't reach
+const JOIN_P = Number(args.join ?? 0.85); // chance two Faithful holders of a torn photo find each other
+const ACCUSE_P = Number(args.accuse ?? 0.85); // chance a day ends with someone on trial
+const SPARE_BAR = Number(args.spare ?? 0.35); // how suspicious a lone accused must look before the room kills rather than spares
 const config = {
   ...DEFAULT_NIGHT_CONFIG,
   watchP: Number(args.watchP ?? DEFAULT_NIGHT_CONFIG.watchP),
@@ -74,6 +90,7 @@ const config = {
   autoFrameFrom: args.frame ? Number(args.frame) : DEFAULT_NIGHT_CONFIG.autoFrameFrom, // --frame N: auto-frame on night N
   publicWitness: args.witness ? args.witness !== 'off' : DEFAULT_NIGHT_CONFIG.publicWitness,
   publicBand: args.publicBand ? args.publicBand.split(',').map(Number) : DEFAULT_NIGHT_CONFIG.publicBand,
+  splitClues: args.split ? args.split !== 'off' : DEFAULT_NIGHT_CONFIG.splitClues,
 };
 
 // ---------------------------------------------------------------------------
@@ -81,10 +98,19 @@ const config = {
 // the sim reports how the actual split behaves, which is what matters.
 
 const WEIGHTS = {
-  top: { black: 30, white: 14, grey: 8, blue: 15, red: 8, green: 5, yellow: 4, print: 16 },
+  top: {
+    black: 26, white: 12, grey: 6, navy: 8, blue: 6, red: 5, pink: 4, maroon: 3, purple: 2,
+    green: 3, olive: 3, yellow: 2, orange: 2, brown: 3, beige: 4, stripes: 4, checks: 4, print: 8,
+  },
   glasses: { yes: 35, no: 65 },
-  shoes: { sneakers: 45, shoes: 18, boots: 8, sandals: 19, heels: 10 },
-  drink: { beer: 28, wine: 12, clear: 15, brown: 12, cocktail: 18, zero: 15 },
+  shoes: {
+    sneakers: 34, canvas: 6, loafers: 6, shoes: 8, boots: 6, sandals: 10, slides: 9,
+    kolhapuri: 4, crocs: 4, flats: 4, heels: 6, wedges: 3,
+  },
+  drink: {
+    beer: 26, wine: 5, whitewine: 6, gin: 8, vodka: 7, rum: 6, whisky: 9, brandy: 2,
+    tequila: 3, feni: 3, cocktail: 12, zero: 10, water: 3,
+  },
   season: { q1: 25, q2: 25, q3: 25, q4: 25 },
   siblings: { only: 12, eldest: 35, middle: 15, youngest: 38 },
 };
@@ -150,9 +176,10 @@ function playGame(n, ratios, gameSeed) {
   }
 
   function roomVote(voters, targets) {
-    const scores = Object.fromEntries(targets.map((t) => [t, suspicion(t)]));
-    const faithfulTargets = targets.filter((t) => !isKiller(t));
-    const killerPick = faithfulTargets.sort((a, b) => scores[b] - scores[a])[0];
+    const scores = Object.fromEntries(targets.map((t) => [t, t === NO_ONE ? SPARE_BAR : suspicion(t)]));
+    const faithfulTargets = targets.filter((t) => t !== NO_ONE && !isKiller(t));
+    // Killers back a Faithful on the ballot; with only a partner on trial, they vote to spare.
+    const killerPick = faithfulTargets.sort((a, b) => scores[b] - scores[a])[0] ?? (targets.includes(NO_ONE) ? NO_ONE : pick(targets, rng));
     const votes = {};
     for (const v of voters) {
       if (isKiller(v)) {
@@ -176,7 +203,7 @@ function playGame(n, ratios, gameSeed) {
     const votes = roomVote(voters, targets);
     let { pid, tied } = tallyBanish(votes, voters, targets);
     if (!pid && tied.length) pid = breakTie(gameSeed, cycle, tied);
-    if (!pid) return null;
+    if (!pid || pid === NO_ONE) return null;
     players[pid].status = 'ghost';
     if (isKiller(pid)) {
       // The room now knows who struck on nights this killer fits.
@@ -192,6 +219,16 @@ function playGame(n, ratios, gameSeed) {
     return pid;
   }
 
+  // Who was locked at the top of yesterday's board: the Killers steer clear of them.
+  let lastTop = new Set();
+
+  /** The day's trial: the 1-3 most suspected guests (with noise), or nobody. */
+  function trialFor() {
+    if (!chance(rng, ACCUSE_P)) return [];
+    const noisy = alive().map((p) => [p, suspicion(p) * Math.exp(NOISE * (rng() - 0.5))]).sort((a, b) => b[1] - a[1]);
+    return noisy.slice(0, 1 + Math.floor(rng() * 3)).map(([p]) => p);
+  }
+
   for (let cycle = 1; cycle <= CYCLES; cycle++) {
     const living = alive();
     const killersAlive = living.filter(isKiller);
@@ -199,9 +236,10 @@ function playGame(n, ratios, gameSeed) {
 
     // --- Killer strategy
     const den = {};
+    const reachable = faithfulAlive.filter((p) => !lastTop.has(p));
     const victim = detectiveClaimed && players[detectiveClaimed].status === 'alive' && chance(rng, 0.8)
       ? detectiveClaimed
-      : pick(faithfulAlive, rng);
+      : pick(reachable.length ? reachable : faithfulAlive, rng);
     for (const t of killersAlive) den[t] = { victim };
 
     // --- Faithful strategy
@@ -237,9 +275,22 @@ function playGame(n, ratios, gameSeed) {
     secret.hands = { ...secret.hands, [cycle]: out.hand ?? null };
     const scores = Object.fromEntries(alive().filter(() => chance(rng, 0.95)).map((p) => [p, { best: Math.floor(skill[p] * (0.5 + rng() * 0.5)) }]));
     const morning = resolveMorning({
-      seed: gameSeed, cycle, players, roles, scores,
+      seed: gameSeed, cycle, players, roles, scores, shieldShare: SHIELD,
       pending: { victim: out.victim, saved: out.saved, protectedList: out.protectedList, facts: out.facts, trueFacts: out.trueFacts, witness: out.witness, deliveries: out.deliveries },
     });
+    lastTop = new Set(morning.board.slice(0, shieldPlaces(morning.board.length, SHIELD)).map((r) => r.pid));
+    if (morning.cause === 'shield') {
+      stats.shield = (stats.shield ?? 0) + 1;
+      if (isKiller(morning.deaths[0]?.pid)) stats.shieldKiller = (stats.shieldKiller ?? 0) + 1;
+    }
+    // Torn photos: a pair joins only if both halves are with Faithful guests who find each other.
+    const joinedHolders = [];
+    for (const p of Object.values(out.pairs ?? {})) {
+      stats.pairs = (stats.pairs ?? 0) + 1;
+      if (isKiller(p.a) || isKiller(p.b) || !chance(rng, JOIN_P)) continue;
+      stats.joined = (stats.joined ?? 0) + 1;
+      joinedHolders.push({ to: p.a, kind: 'fact', fact: p.fact }, { to: p.b, kind: 'fact', fact: p.fact });
+    }
     for (const d of morning.deaths) players[d.pid].status = 'ghost';
     for (const d of morning.deliveries) if (d.kind === 'fact' && d.via === 'ghost') (ghostHeld[d.to] ??= []).push({ fact: d.fact, cycle });
     if (morning.cause === 'deep') stats.deep = (stats.deep ?? 0) + 1;
@@ -252,7 +303,7 @@ function playGame(n, ratios, gameSeed) {
     const faithfulGhost = Object.keys(players).some((p) => players[p].status === 'ghost' && !isKiller(p));
     for (const f of out.facts) {
       // Searchers and the day's top three hold the night's clues.
-      const holders = morning.deliveries.filter((d) => d.kind === 'fact' && (!d.via || d.via === 'top') && d.fact.trait === f.trait && d.fact.group === f.group);
+      const holders = [...morning.deliveries, ...joinedHolders].filter((d) => d.kind === 'fact' && (!d.via || d.via === 'top') && d.fact.trait === f.trait && d.fact.group === f.group);
       const faithfulHolders = holders.filter((d) => !isKiller(d.to)).length;
       if (1 - (1 - SHARE_Q) ** faithfulHolders > rng()) {
         heard.push(f);
@@ -335,7 +386,10 @@ function playGame(n, ratios, gameSeed) {
     let w = checkWin(players, roles);
     if (w) return { winner: w, cycle };
 
-    banish(cycle, alive(), alive());
+    // Only those on trial are on the ballot; nobody on trial means no vote at all.
+    const trial = trialFor();
+    if (trial.length) banish(cycle, alive(), trial.length === 1 ? [...trial, NO_ONE] : trial);
+    else stats.noTrial = (stats.noTrial ?? 0) + 1;
     w = checkWin(players, roles);
     if (w) return { winner: w, cycle };
   }
@@ -403,7 +457,9 @@ if (VERBOSE || !args.n) {
   }
   console.log(`  facts outside 0.2–0.8: ${pct(out / shares.length)}; nights where heard clues named the hand outright: ${pct(stats.namedOutright / stats.nights)}`);
   console.log(`
-Mornings where a Firewall held and the deep took the lowest score: ${stats.deep ?? 0} (a Killer ${stats.deepKiller ?? 0} times)`);
+Mornings where a Firewall held and the deep took the lowest score: ${stats.deep ?? 0} (a Killer ${stats.deepKiller ?? 0} times)
+Mornings where the shield held: ${stats.shield ?? 0} (the lowest score was a Killer ${stats.shieldKiller ?? 0} times)
+Torn photos joined: ${stats.joined ?? 0} of ${stats.pairs ?? 0} pairs; days with nobody on trial: ${stats.noTrial ?? 0}`);
   console.log(`Witnesses printed: ${stats.witness ?? 0} of ${stats.nights} murder nights; last words posted: ${stats.lastWords ?? 0}; Killer lies: ${stats.lies ?? 0} (caught by ghosts ${stats.liesCaught ?? 0})`);
   console.log('\nBanishments that caught a Killer, by cycle:');
   for (const [c, k] of Object.entries(stats.banishByCycle)) {

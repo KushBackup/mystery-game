@@ -227,6 +227,20 @@ export const submitAction = (gid, cycle, pid, action) =>
 export const submitDen = (gid, cycle, pid, choice) =>
   trackWrite(setDoc(sub(gid, 'den', `${cycle}_${pid}`), { ...choice, pid, cycle, at: serverTimestamp() }, { merge: true }));
 
+/**
+ * Accuse one guest today, once (rules: accusations). `clue` is an optional
+ * photo from your own inbox, shown to the room as your reason.
+ */
+export const accuse = (gid, cycle, pid, target, clue = null) =>
+  trackWrite(setDoc(sub(gid, 'accusations', `${cycle}_${pid}`), {
+    pid, cycle, target, at: serverTimestamp(),
+    ...(clue ? { inboxId: clue.id, fact: { trait: clue.fact.trait, group: clue.fact.group } } : {}),
+  }));
+
+/** Second someone's accusation today, once (rules: seconds). */
+export const second = (gid, cycle, pid, accuser) =>
+  trackWrite(setDoc(sub(gid, 'seconds', `${cycle}_${pid}`), { pid, cycle, accuser, at: serverTimestamp() }));
+
 export const submitVote = (gid, ballot, pid, target) =>
   trackWrite(setDoc(sub(gid, 'votes', `${ballot}_${pid}`), { target, pid, ballot, at: serverTimestamp() }));
 
@@ -262,6 +276,15 @@ export const subscribeGhostSight = (gid, cb) =>
     onSnapshot(col(gid, 'ghostSight'), (s) => { onReady(); cb(s.docs.map((d) => ({ id: d.id, ...d.data() }))); }, onError));
 
 /** Last words: a guest taken this morning posts one true clue photo to the room, once (rules: lastWords). */
+/**
+ * Join a torn photo (engine/clues.js splitHalves): type the code shown on your
+ * partner's phone. The host checks it and sends both of you the whole photo.
+ */
+export const joinHalf = (gid, pair, pid, code) =>
+  trackWrite(setDoc(sub(gid, 'joins', `${pair}_${pid}`), { pid, pair, code: code.trim().toUpperCase().slice(0, 6), at: serverTimestamp() }));
+/** Your join attempt for one pair: `ok` once the host has checked it. */
+export const subscribeMyJoin = (gid, pair, pid, cb) => watchDoc('join', sub(gid, 'joins', `${pair}_${pid}`), cb);
+
 export const postLastWords = (gid, pid, name, clue) =>
   trackWrite(setDoc(sub(gid, 'chat', `last_${pid}`), {
     kind: 'last', pid, name, inboxId: clue.id, fact: { trait: clue.fact.trait, group: clue.fact.group }, at: Date.now(),

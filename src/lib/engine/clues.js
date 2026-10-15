@@ -149,3 +149,59 @@ export function distributeFragments(facts, recipients, rng) {
     return { to, kind: 'fact', fact: { trait, group } };
   });
 }
+
+/**
+ * Split clues (2026-10-15): a dig no longer hands one guest a whole clue. Each
+ * fragment arrives as half a photo; the other half is on a named guest's
+ * phone, and only when one of them types the other's code does the whole
+ * photo appear on both. After the 3 Oct game, clues were a solo task on each
+ * phone; this makes two people go and find each other.
+ *
+ * Holders of the same fact are paired with each other. An odd one out is
+ * paired with a random guest from `pool` who doesn't hold it (a Killer can be
+ * that partner, and stalling is then evidence). A half carries no fact: the
+ * host keeps `pairs` and delivers the whole photo on a correct join
+ * (firebase/host.js resolveJoin), so a phone can't read its half early.
+ *
+ * Uses its own rng, so splitting changes no other draw of the night.
+ */
+const CODE_LETTERS = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+
+export function splitHalves(deliveries, pool, rng, cycle) {
+  const byFact = new Map();
+  for (const d of deliveries) {
+    const key = `${d.fact.trait}:${d.fact.group}`;
+    if (!byFact.has(key)) byFact.set(key, { fact: d.fact, holders: [] });
+    byFact.get(key).holders.push(d.to);
+  }
+  const used = new Set();
+  const code = () => {
+    let c = '';
+    do {
+      c = Array.from({ length: 3 }, () => CODE_LETTERS[Math.floor(rng() * CODE_LETTERS.length)]).join('');
+    } while (used.has(c));
+    used.add(c);
+    return c;
+  };
+  const out = [];
+  const pairs = {};
+  let n = 0;
+  for (const { fact, holders } of byFact.values()) {
+    for (let i = 0; i < holders.length; i += 2) {
+      const a = holders[i];
+      const others = pool.filter((p) => !holders.includes(p));
+      const b = holders[i + 1] ?? (others.length ? others[Math.floor(rng() * others.length)] : null);
+      if (!b) {
+        out.push({ to: a, kind: 'fact', fact });
+        continue;
+      }
+      const id = `c${cycle}p${n++}`;
+      const codeA = code();
+      const codeB = code();
+      pairs[id] = { a, b, codeA, codeB, fact, cycle, joined: false };
+      out.push({ to: a, kind: 'half', pair: id, half: 'L', code: codeA, partner: b });
+      out.push({ to: b, kind: 'half', pair: id, half: 'R', code: codeB, partner: a });
+    }
+  }
+  return { deliveries: out, pairs };
+}

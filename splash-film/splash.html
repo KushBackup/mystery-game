@@ -12,7 +12,8 @@
 /* ------------------------------------------------------------------------
 Film brief
   Subject: the title film a guest's phone plays the first time it opens the page.
-    Astral Project presents, in collaboration with Greenr, The Deep Blue Case.
+    Astral Project presents, in collaboration with SideQuest Club (16 Oct 2026;
+    Greenr before that), The Deep Blue Case. The partner's sticker is `PARTNER`.
     Fast, feel-good, a little trippy: one ink drop becomes a cosmos, the cosmos
     collapses to a seed, the seed grows Greenr's leaves, a leaf drips into the
     sea, a whale leaps for the title, and an iris closes on white.
@@ -50,7 +51,10 @@ const PAPER = '#ffffff';
 const LOGOS = {
   astral: { ...LOGO_ASTRAL, img: registerPhoto('astral', { src: LOGO_ASTRAL.src }).img, sil: registerPhoto('astralSil', { src: LOGO_ASTRAL.sil }).img },
   greenr: { ...LOGO_GREENR, img: registerPhoto('greenr', { src: LOGO_GREENR.src }).img, sil: registerPhoto('greenrSil', { src: LOGO_GREENR.sil }).img },
+  sidequest: { ...LOGO_SIDEQUEST, img: registerPhoto('sidequest', { src: LOGO_SIDEQUEST.src }).img, sil: registerPhoto('sidequestSil', { src: LOGO_SIDEQUEST.sil }).img },
 };
+// The venue partner whose sticker the collaboration beat shows. Change it per event.
+const PARTNER = { id: 'sidequest', w: 720 };
 
 // ---------------------------------------------------------------- marks
 const blank = c => { resetT(c); c.fillStyle = PAPER; c.fillRect(0, 0, W, H); };
@@ -301,7 +305,7 @@ function sGreenr(c, tau, i) {
   c.restore();
   // the sticker pops on its own beat and leaves with the rest
   c.save(); c.translate(CX, 1130); c.scale(k, k); c.translate(-CX, -1130);
-  sticker(c, 'greenr', CX, 1130, 520, tau, i, { t0: .45, shadow: LIM, seed: 9, tilt: .05 });
+  sticker(c, PARTNER.id, CX, 1130, PARTNER.w, tau, i, { t0: .45, shadow: LIM, seed: 9, tilt: .05 });
   c.restore();
   // a drop gathers under the sticker and falls
   const grow = sm(1.85, 2.05, tau, easeOutBack), fall = sm(2.05, 2.4, tau, easeIn);
