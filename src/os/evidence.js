@@ -29,6 +29,7 @@ export const FORMS = {
   drink: ['still', 'receipt'],
   season: ['still', 'profile'],
   siblings: ['still', 'profile'],
+  pet: ['still', 'clip', 'profile'],
 };
 
 /** What a form is called in a badge, a thread line and a screen reader. */

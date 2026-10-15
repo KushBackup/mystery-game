@@ -1,9 +1,9 @@
 /**
  * The Round Table: counting a banishment vote.
  *
- * One vote per eligible voter, for one eligible target. Invalid votes (a ghost
- * voting at an ordinary Round Table, a vote for someone already dead) are
- * dropped, not errors. Phones can be a snapshot behind, and a stale vote
+ * One vote per eligible voter, for one eligible target. Ghosts are eligible
+ * voters in every ballot (2026-10-15), but never targets. Invalid votes (a
+ * vote for someone already dead or not on trial) are dropped, not errors. Phones can be a snapshot behind, and a stale vote
  * should cost its voter their say, not break the count.
  *
  * A tie returns every tied pid. The host console then runs one short re-vote

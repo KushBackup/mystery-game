@@ -7,7 +7,7 @@ import { useSeen, markSeen, noteKey } from '../seen';
 
 /**
  * Notes: the three things a guest needs to look up privately. Their role
- * (the card from casting, always re-readable), their own six answers (the
+ * (the card from casting, always re-readable), their own seven answers (the
  * truth they'll be asked about), and a notepad that stays on this phone.
  */
 export default function NotesApp({ ctx, onClose }) {

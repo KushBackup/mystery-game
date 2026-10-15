@@ -10,4 +10,5 @@ export const CLUE_SCENES = [
   'drink.hops', 'drink.grape', 'drink.spirit', 'drink.clear', 'drink.brewed', 'drink.sober', 'drink.strong',
   'season.early', 'season.late', 'season.cool', 'season.warm',
   'siblings.firstborn', 'siblings.younger', 'siblings.sibling', 'siblings.edge',
+  'pet.nopet', 'pet.pet', 'pet.furry', 'pet.dog', 'pet.nofur', 'pet.cage',
 ];

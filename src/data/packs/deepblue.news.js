@@ -510,6 +510,14 @@ export const LIVE = {
       sibling: '“They mentioned a brother or sister.”',
       edge: '“The eldest or the youngest. Never the middle, they said.”',
     },
+    pet: {
+      nopet: '“No pets. They said they’ve never had one.”',
+      pet: '“They had to get home to feed their pet.”',
+      furry: '“Their clothes were covered in fur.”',
+      dog: '“They kept showing everyone photos of their dog.”',
+      nofur: '“Nothing furry at home, they said. Not a single hair.”',
+      cage: '“Their pet lives in a cage or a tank. They said so.”',
+    },
   },
 };
 

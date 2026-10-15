@@ -331,15 +331,13 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const accusations = useDayWall(gid, 'accusations', game.cycle, accusing);
   const seconds = useDayWall(gid, 'seconds', game.cycle, accusing);
   const myScore = useMyScore(gid, game.cycle, me.pid);
-  // Word never writes a score until the board, so "played" there is a posted
-  // clue (or, for a ghost, who can only pick, a saved pick).
+  // Word never writes a score until the board, so "played" there is a posted clue.
+  const inGame = ['alive', 'ghost'].includes(me.status);
   const wordDay = (game.minigame ?? 'run') === 'word' && ['alarm', 'game'].includes(phase);
-  const myClue = useMyPlay(gid, 'clues', game.cycle, me.pid, wordDay && me.status === 'alive');
-  const myPicks = useMyPlay(gid, 'picks', game.cycle, me.pid, wordDay && me.status === 'ghost');
-  // Sketch never writes a score before the board: a saved drawing (or a ghost's guesses) is what counts as playing.
+  const myClue = useMyPlay(gid, 'clues', game.cycle, me.pid, wordDay && inGame);
+  // Sketch never writes a score before the board: a saved drawing is what counts as playing.
   const drawDay = (game.minigame ?? 'run') === 'draw' && ['alarm', 'game'].includes(phase);
-  const myDrawing = useMyPlay(gid, 'drawings', game.cycle, me.pid, drawDay && me.status === 'alive');
-  const myGuesses = useMyPlay(gid, 'guesses', game.cycle, me.pid, drawDay && me.status === 'ghost');
+  const myDrawing = useMyPlay(gid, 'drawings', game.cycle, me.pid, drawDay && inGame);
   const action = useMyAction(gid, game.cycle, me.pid);
   const denPicks = useDen(gid, game.cycle, isKiller && phase === 'night');
   // Everyone's arrival answers (Contacts, Notes). Written once at arrival, so this listener is nearly silent.
@@ -469,11 +467,11 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const plan = daySchedule(game, serverNow());
   const dawnAt = plan?.parts.find((p) => p.id === 'dawn')?.at;
   const until = dawnAt != null ? fmtClock(dawnAt) : '';
-  const played = wordDay ? Boolean(me.status === 'ghost' ? myPicks?.picks?.length : myClue)
-    : drawDay ? Boolean(me.status === 'ghost' ? Object.keys(myGuesses?.answers ?? {}).length : (myDrawing?.strokes ?? '').length > 4)
+  const played = wordDay ? Boolean(myClue)
+    : drawDay ? (myDrawing?.strokes ?? '').length > 4
     : Boolean(myScore);
-  const needsGame = ['alarm', 'game'].includes(phase) && ['alive', 'ghost'].includes(me.status) && !played;
-  const needsVote = ['roundtable', 'revote'].includes(phase) ? me.status === 'alive' && !myVote : phase === 'endgame' && ['alive', 'ghost'].includes(me.status) && !myVote;
+  const needsGame = ['alarm', 'game'].includes(phase) && inGame && !played;
+  const needsVote = ['roundtable', 'revote', 'endgame'].includes(phase) && inGame && !myVote;
   const newsSeenArr = Array.isArray(newsSeen) ? newsSeen : [];
   const badges = {
     messages: threads.reduce((n, t) => n + t.unread, 0) + (lastDue ? 1 : 0) || null,

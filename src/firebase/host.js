@@ -474,17 +474,18 @@ async function resolveNightPhase(gid) {
 // --- The day's game ------------------------------------------------------------------
 
 /**
- * Pick the day's game and its words. Words go only to living guests with a
- * role, through their own inbox: the Faithful team gets the word and its hint,
+ * Pick the day's game and its words. Words go to every guest still in the
+ * game with a role, ghosts included (user's call, 2026-10-15: ghosts felt left
+ * out), through their own inbox: the Faithful team gets the word and its hint,
  * the Killers the hint alone. A drawing day gives each guest their own word.
- * Ghosts get nothing to clue or draw; they watch the wall and guess drawings.
+ * A ghost's score lands on the ghost board (morning.js), never the rig's board.
  *
  * @param rolePatch roles changed by tonight's recruit, not yet in `world`
  */
 function planDayGame(g, world, rolePatch = {}) {
   const kind = gameOfDay(g.config, g.cycle);
   const roles = { ...world.roles, ...rolePatch };
-  const living = Object.keys(world.players).filter((p) => world.players[p].status === 'alive' && roles[p]).sort();
+  const living = Object.keys(world.players).filter((p) => ['alive', 'ghost'].includes(world.players[p].status) && roles[p]).sort();
   const kit = dayKit(packFor(g.packId));
   const { seed } = world.secret;
   if (kind === 'word') {
@@ -673,10 +674,11 @@ export const watchJoins = (gid) =>
 function ballotShape(g, players) {
   const alive = Object.keys(players).filter((p) => players[p].status === 'alive');
   const ghosts = Object.keys(players).filter((p) => players[p].status === 'ghost');
+  // Ghosts vote in every ballot (user's call, 2026-10-15); only the living can be voted for.
   if (g.phase === PHASE.ENDGAME_LOCKED) return { voters: [...alive, ...ghosts], targets: alive };
-  if (g.phase === PHASE.REVOTE_LOCKED) return { voters: alive, targets: g.tied ?? [] };
+  if (g.phase === PHASE.REVOTE_LOCKED) return { voters: [...alive, ...ghosts], targets: g.tied ?? [] };
   // The Round Table votes only between the guests on trial (closeDaylight), plus "no one" if there is just one.
-  return { voters: alive, targets: g.ballotTargets ?? alive };
+  return { voters: [...alive, ...ghosts], targets: g.ballotTargets ?? alive };
 }
 
 /**

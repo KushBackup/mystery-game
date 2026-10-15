@@ -22,7 +22,7 @@ import SketchTutorial from './SketchTutorial';
  * SKETCH, the second morning game, on a paper sketchbook (user's call,
  * 2026-10-03): Skribbl for a whole room at once.
  *
- * Everyone alive draws their own secret word for 45 seconds (Killers too:
+ * Everyone still in the game, ghosts too, draws their own secret word for 45 seconds (Killers too:
  * Sketch has no roles in it), then guesses up to six other people's drawings
  * by typing, 15 seconds each. A right guess scores 50 plus up to 50 for speed;
  * a drawer scores 30 each time theirs is named (minigames.js scoreDrawDay).
@@ -64,9 +64,8 @@ export default function DrawGame({ ctx, onClose, dayGame }) {
   const after = !['alarm', 'game'].includes(game.phase);
   const card = inbox.find((d) => d.cycle === c && d.step === 'day' && d.kind === 'draw') ?? null;
   const drawings = useDayWall(gid, 'drawings', c, step === 'guess' || step === 'done' || after);
-  const alive = me.status === 'alive';
-  const ghost = me.status === 'ghost';
-  const canGuess = alive || ghost;
+  // Ghosts draw and guess too (2026-10-15); their scores go on the ghost board.
+  const playing = ['alive', 'ghost'].includes(me.status);
   const [replay, setReplay] = useState(false);
   const tutSeen = useSeen(`${gid}.tut.draw`, false);
 
@@ -80,7 +79,7 @@ export default function DrawGame({ ctx, onClose, dayGame }) {
   const [lastStep, setLastStep] = useState(step);
   if (lastStep !== step) {
     setLastStep(step);
-    if (lastStep === 'draw' && step === 'guess' && alive && card && !prefersLessMotion()) setPensDown(true);
+    if (lastStep === 'draw' && step === 'guess' && playing && card && !prefersLessMotion()) setPensDown(true);
   }
   useEffect(() => {
     if (!pensDown) return undefined;
@@ -113,18 +112,18 @@ export default function DrawGame({ ctx, onClose, dayGame }) {
               <p className="os-sb-hello__title">Sketch</p>
               <HowStrip drawSeconds={DRAW_S} />
             </div>
-            {card && alive ? (
+            {card && playing ? (
               <WordCard up={false} locked label="Draw" word="" chip backText="Your word · dealt in a moment" />
             ) : (
-              <div className="os-wb-watch">{ghost ? 'Ghosts don’t draw. You can still guess.' : 'You’re watching today.'}</div>
+              <div className="os-wb-watch">You’re watching today.</div>
             )}
             <button type="button" className="os-wb-link" onClick={() => setReplay(true)}>Watch how to play</button>
           </>
         )}
-        {step === 'draw' && (card && alive
+        {step === 'draw' && (card && playing
           ? <DrawStep gid={gid} c={c} me={me} word={card.word} />
-          : <div className="os-wb-watch">{ghost ? `Ghosts don’t draw. Guessing starts in ${clock(left)}.` : 'You’re watching today.'}</div>)}
-        {step === 'guess' && (canGuess
+          : <div className="os-wb-watch">You’re watching today.</div>)}
+        {step === 'guess' && (playing
           ? <GuessStep gid={gid} game={game} me={me} drawings={drawings} nameOf={nameOf} mine={mine} />
           : <div className="os-wb-watch">You’re watching today.</div>)}
       </div>

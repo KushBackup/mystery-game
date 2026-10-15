@@ -1,5 +1,5 @@
 /**
- * Traits: the six questions every guest answers at the door.
+ * Traits: the seven questions every guest answers at the door.
  *
  * Deduction in Killers Night runs on these. When a Killer strikes, the clues
  * the room receives describe *the hand*, the Killer who did the killing, in
@@ -12,9 +12,9 @@
  *    form. The app keeps the true answers. Lying about them out loud later is
  *    part of the game.
  *
- * 2. Half are visible and half are not. Top, glasses and footwear can be
- *    checked by looking across the table. Drink, season and siblings have to
- *    be asked. Since 2026-10-02 every answer is public (each guest's Contacts
+ * 2. Some are visible and some are not. Top, glasses and footwear can be
+ *    checked by looking across the table. Drink, season, siblings and pet
+ *    have to be asked. Since 2026-10-02 every answer is public (each guest's Contacts
  *    card shows the file), so the lie is no longer "my drink" but "the file is
  *    wrong about me", and the room checks the file against the person. That
  *    is what makes the room talk instead of just scanning.
@@ -173,6 +173,29 @@ export const TRAITS = [
       { id: 'edge', members: ['eldest', 'youngest'] },
     ],
   },
+  {
+    // Added 2026-10-15. Nobody brings their pet to the bar, so it has to be asked.
+    id: 'pet',
+    prompt: 'Do you have a pet at home?',
+    visible: false,
+    options: [
+      { id: 'none', label: 'No pet' },
+      { id: 'dog', label: 'Dog' },
+      { id: 'cat', label: 'Cat' },
+      { id: 'bird', label: 'Bird' },
+      { id: 'fish', label: 'Fish' },
+      { id: 'small', label: 'Rabbit / hamster' },
+      { id: 'reptile', label: 'Turtle / reptile' },
+    ],
+    groups: [
+      { id: 'nopet', members: ['none'] },
+      { id: 'pet', members: ['dog', 'cat', 'bird', 'fish', 'small', 'reptile'] },
+      { id: 'furry', members: ['dog', 'cat', 'small'] },
+      { id: 'dog', members: ['dog'] },
+      { id: 'nofur', members: ['none', 'bird', 'fish', 'reptile'] },
+      { id: 'cage', members: ['bird', 'fish', 'small', 'reptile'] },
+    ],
+  },
 ];
 
 export const TRAIT_BY_ID = Object.fromEntries(TRAITS.map((t) => [t.id, t]));
@@ -183,8 +206,8 @@ export const TRAIT_BY_ID = Object.fromEntries(TRAITS.map((t) => [t.id, t]));
  * never turns it into a clue and the Gallery's sketch of the hand never shows
  * it: nobody is ever accused, or outed, by a clue about their gender.
  *
- * It is stored on the guest's traits doc next to the six answers, so every
- * phone draws the same photo. Like the six, it is never edited after arrival.
+ * It is stored on the guest's traits doc next to the seven answers, so every
+ * phone draws the same photo. Like the seven, it is never edited after arrival.
  * Other guests' cards don't list it. Trans women and trans men are drawn as
  * women and men; every other answer gets the open figure.
  */

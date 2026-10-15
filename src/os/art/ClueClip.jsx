@@ -24,6 +24,7 @@ const FOCUS = {
   drink: [31, 27],
   season: [32, 22],
   siblings: [32, 25],
+  pet: [32, 28],
 };
 
 const CSS = `

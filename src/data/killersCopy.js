@@ -107,7 +107,7 @@ export const ROLE_CARD = {
  */
 export function nowLine({ phase, status, hasActed, cycle, minigame = 'run', pack, until = '', intro = false }) {
   if (status === 'vanished') return 'You left the game. Thanks for playing.';
-  if (status === 'ghost' && !['night', 'alarm', 'game', 'endgame', 'finale'].includes(phase)) return 'No signal.';
+  if (status === 'ghost' && !['night', 'alarm', 'game', 'roundtable', 'revote', 'endgame', 'finale'].includes(phase)) return 'No signal.';
   const title = pack?.dayGames?.[minigame]?.title ?? 'The run';
   switch (phase) {
     case 'lobby':

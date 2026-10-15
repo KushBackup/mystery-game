@@ -80,6 +80,12 @@ const PLAIN = {
   drink: (list) => `The killer's first drink: ${list}`,
   season: (list) => `The killer's birthday: ${list}`,
   siblings: (list) => `The killer is: ${list}`,
+  // "anything but No pet" would be a riddle: having any pet at all is said plainly
+  pet: (list, members) => {
+    if (members.length === 1 && members[0] === 'none') return 'The killer has no pet';
+    if (members.length >= 6 && !members.includes('none')) return 'The killer has a pet at home';
+    return `The killer's pet: ${list}`;
+  },
 };
 
 if (import.meta.env?.DEV) {

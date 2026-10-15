@@ -10,6 +10,7 @@
  *   node scripts/sim-balance.mjs --lie 0.3 --sight 0.5     # Killers lie about clues; ghosts catch some
  *   node scripts/sim-balance.mjs --shield 0.25 --join 0.85 --accuse 0.85   # the 2026-10-15 mechanics
  *   node scripts/sim-balance.mjs --shield 0 --split off --accuse 1         # without them
+ *   node scripts/sim-balance.mjs --ghostvote off   # ghosts sit out the Round Table (before 2026-10-15)
  *
  * Plays whole games with the real engine (src/lib/engine) and bot players:
  *
@@ -82,6 +83,7 @@ const SHIELD = Number(args.shield ?? SHIELD_SHARE); // share of the morning boar
 const JOIN_P = Number(args.join ?? 0.85); // chance two Faithful holders of a torn photo find each other
 const ACCUSE_P = Number(args.accuse ?? 0.85); // chance a day ends with someone on trial
 const SPARE_BAR = Number(args.spare ?? 0.35); // how suspicious a lone accused must look before the room kills rather than spares
+const GHOST_VOTE = args.ghostvote !== 'off'; // ghosts vote at every Round Table, not only the Endgame
 const config = {
   ...DEFAULT_NIGHT_CONFIG,
   watchP: Number(args.watchP ?? DEFAULT_NIGHT_CONFIG.watchP),
@@ -113,6 +115,7 @@ const WEIGHTS = {
   },
   season: { q1: 25, q2: 25, q3: 25, q4: 25 },
   siblings: { only: 12, eldest: 35, middle: 15, youngest: 38 },
+  pet: { none: 42, dog: 30, cat: 14, bird: 4, fish: 5, small: 3, reptile: 2 },
 };
 
 function weighted(obj, rng) {
@@ -388,7 +391,8 @@ function playGame(n, ratios, gameSeed) {
 
     // Only those on trial are on the ballot; nobody on trial means no vote at all.
     const trial = trialFor();
-    if (trial.length) banish(cycle, alive(), trial.length === 1 ? [...trial, NO_ONE] : trial);
+    const voters = Object.keys(players).filter((p) => players[p].status === 'alive' || (GHOST_VOTE && players[p].status === 'ghost'));
+    if (trial.length) banish(cycle, voters, trial.length === 1 ? [...trial, NO_ONE] : trial);
     else stats.noTrial = (stats.noTrial ?? 0) + 1;
     w = checkWin(players, roles);
     if (w) return { winner: w, cycle };

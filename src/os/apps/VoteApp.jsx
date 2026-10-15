@@ -13,7 +13,8 @@ import { AccusePanel } from './Accuse';
  * In daylight this is where a guest accuses and seconds (Accuse.jsx). The
  * Round Table and its re-vote are only between the guests on trial
  * (game.ballotTargets), plus "no one" when there is a single accused guest.
- * The Endgame is open to every living guest.
+ * The Endgame is open to every living guest. Ghosts vote in all three
+ * (2026-10-15), but only the living can be accused or voted for.
  *
  * One tap votes, another tap on someone else changes it, right up to the lock.
  * Votes stay private until the reveal, which then shows who voted for whom
@@ -23,7 +24,7 @@ export default function VoteApp({ ctx, onClose }) {
   const { gid, game, me, players, nameOf, myVote } = ctx;
   const phase = game.phase;
   const open = ['roundtable', 'revote', 'endgame'].includes(phase);
-  const canVote = phase === 'endgame' ? ['alive', 'ghost'].includes(me.status) : me.status === 'alive';
+  const canVote = ['alive', 'ghost'].includes(me.status);
   const living = players.filter((p) => p.status === 'alive').map((p) => ({ ...p, pid: p.id }));
   const ballot = phase === 'endgame' ? null : game.ballotTargets ?? null;
   const targets = (ballot ? living.filter((g) => ballot.includes(g.pid)) : living).filter((g) => g.pid !== me.pid);
@@ -45,7 +46,7 @@ export default function VoteApp({ ctx, onClose }) {
       {!open ? (
         <Empty glyph="vote" title="No vote open" />
       ) : !canVote ? (
-        <Empty glyph="ghost" title="Ghosts watch this one" />
+        <Empty glyph="vote" title="You’re not in this vote" />
       ) : (
         <>
           <div className="px-4 pt-4">

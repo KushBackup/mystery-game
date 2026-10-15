@@ -17,7 +17,7 @@ import { avatarFile, canShareFile, shareAvatar, saveAvatar } from './avatarImage
  * Arrival, as a new phone's setup assistant. The first time a phone opens the
  * game it boots (the logo, a filling bar); then "hello" in a few languages,
  * slide to set up, the Terms of Service (which are the rules, told in the
- * fiction), your name, how to draw you (gender, for the photo only), six
+ * fiction), your name, how to draw you (gender, for the photo only), seven
  * one-tap questions, "your phone is ready".
  *
  * From the name onward the guest's contact photo sits large at the top: a
@@ -55,7 +55,7 @@ const NAME_PHOTO_KEYBOARD = 66;
 
 const HELLOS = ['hello', 'namaste', 'hola', 'bonjour', 'ciao', 'olá', 'hallo'];
 
-// Gender first, for the photo only (never a clue: see GENDER in data/traits.js), then the six.
+// Gender first, for the photo only (never a clue: see GENDER in data/traits.js), then the seven.
 const QUESTIONS = [GENDER, ...TRAITS];
 
 export default function Setup({ gid, uid, late }) {

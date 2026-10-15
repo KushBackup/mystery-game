@@ -178,7 +178,7 @@ async function securityChecks(bots, gid) {
   return results;
 }
 
-/** Rule checks that need a word day open: one clue each, picks and words private, ghosts silent. */
+/** Rule checks that need a word day open: one clue each, picks and words private, ghosts play too. */
 async function wordChecks(bots, gid, game) {
   const results = [];
   const a = bots.find((b) => b.status === 'alive');
@@ -196,7 +196,7 @@ async function wordChecks(bots, gid, game) {
   await expectDenied('guest reads another guest\'s word', () => getDoc(G(b, gid, 'inbox', `${c}-day-${a.pid}`)), results);
   await expectAllowed('guest reads their own word', () => getDoc(G(b, gid, 'inbox', `${c}-day-${b.pid}`)), results);
   await expectDenied('guest posts a drawing on a word day', () => setDoc(G(b, gid, 'drawings', `${c}_${b.pid}`), { pid: b.pid, cycle: c, strokes: '0', checks: [], at: 1 }), results);
-  if (ghost) await expectDenied('ghost posts a clue', () => clue(ghost, ghost.pid, 'boo'), results);
+  if (ghost) await expectAllowed('ghost posts a clue', () => clue(ghost, ghost.pid, 'boo'), results);
   return results;
 }
 
@@ -214,6 +214,8 @@ async function drawChecks(bots, gid, game) {
   await expectAllowed('guest saves guesses', () => setDoc(G(a, gid, 'guesses', `${c}_${a.pid}`), { pid: a.pid, cycle: c, answers: {}, at: 1 }), results);
   await expectDenied('guest reads another guest\'s guesses', () => getDoc(G(b, gid, 'guesses', `${c}_${a.pid}`)), results);
   await expectDenied('guest posts a clue on a drawing day', () => setDoc(G(b, gid, 'clues', `${c}_${b.pid}`), { pid: b.pid, cycle: c, clue: 'x', at: serverTimestamp() }), results);
+  const ghost = bots.find((x) => x.status === 'ghost');
+  if (ghost) await expectAllowed('ghost saves a drawing', () => draw(ghost, ghost.pid, '0000011112222'), results);
   return results;
 }
 
@@ -312,6 +314,14 @@ async function ballotPayloadChecks(bots, gid, game) {
     G(voter, gid, 'votes', `${game.ballot}_${voter.pid}`),
     { target: voter.pid, pid: voter.pid, ballot: game.ballot, at: serverTimestamp() },
   ), results);
+  // Ghosts vote in every ballot since 2026-10-15, but only for someone on it.
+  const ghost = bots.find((b) => b.status === 'ghost');
+  const onBallot = (game.ballotTargets ?? []).find((t) => t !== ghost?.pid);
+  if (ghost && onBallot) {
+    const ghostVote = (target) => setDoc(G(ghost, gid, 'votes', `${game.ballot}_${ghost.pid}`), { target, pid: ghost.pid, ballot: game.ballot, at: serverTimestamp() });
+    await expectAllowed('ghost votes at the Round Table', () => ghostVote(onBallot), results);
+    await expectDenied('ghost votes for someone not on trial', () => ghostVote('nobody-here'), results);
+  }
   return results;
 }
 
@@ -433,8 +443,10 @@ async function selftest(n) {
       if (kind === 'run') await Promise.all(bots.map((b) => play(b, gid, g)));
       else for (const stage of [0, 1]) await Promise.all(bots.map((b) => playDay(b, gid, g, stage)));
     } else if (['roundtable', 'revote', 'endgame'].includes(g.phase)) {
-      if (!ranChecks.has('ballot-payload')) {
-        ranChecks.add('ballot-payload');
+      // Once without a ghost, and again once there is one to vote.
+      const ballotKey = bots.some((b) => b.status === 'ghost') ? 'ballot-payload+ghost' : 'ballot-payload';
+      if (!ranChecks.has(ballotKey) && g.phase !== 'endgame') {
+        ranChecks.add(ballotKey);
         security.push(...await ballotPayloadChecks(bots, gid, g));
       }
       await Promise.all(bots.map((b) => vote(b, gid, g)));

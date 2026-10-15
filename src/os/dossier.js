@@ -1,7 +1,7 @@
 /**
  * Contacts: what each guest answered at the door.
  *
- * The six arrival answers (traits/{pid}) are public to every phone and frozen
+ * The seven arrival answers (traits/{pid}) are public to every phone and frozen
  * at the deal. They are what a guest *said*, which is not always the truth:
  * an answer may not have been on the form, or someone lied. So the one thing
  * a card lets this phone do is mark whether an answer matches what it sees
@@ -14,7 +14,7 @@ import { TRAIT_BY_ID } from '../data/traits.js';
 export const checksKey = (gid) => `${gid}.contacts.checks`; // { pid: { trait: 'ok' | optionId | 'other' } }
 
 /** The field label on a card, iOS-contact style: short and lower case. */
-export const FIELD = { top: 'top', glasses: 'glasses', shoes: 'feet', drink: 'first drink', season: 'birthday', siblings: 'siblings' };
+export const FIELD = { top: 'top', glasses: 'glasses', shoes: 'feet', drink: 'first drink', season: 'birthday', siblings: 'siblings', pet: 'pet' };
 
 export const answerLabel = (traitId, value) => TRAIT_BY_ID[traitId]?.options.find((o) => o.id === value)?.label ?? null;
 

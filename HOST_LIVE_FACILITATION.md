@@ -17,10 +17,10 @@ DEEP BLUE is a cursed app on every phone here. Every morning, everyone plays its
 | Arrivals | Opening film, Case screen, Terms, six questions | Greet people. Help stuck phones finish setup. Don't explain the game. |
 | Deal | Every phone glitches together: the hijack (3 beats), then the sealed role | Stay quiet and watch faces. |
 | Night | Night app explains every move | Lights down. Hurry anyone still staring. |
-| Alarm + morning game | Banner, then the day's game | React like the alarm is real. Remind them: top quarter is locked, bottom is killed. |
+| Alarm + morning game | Banner, then the day's game (ghosts play too, on their own board) | React like the alarm is real. Remind them: top quarter is locked, bottom is killed. |
 | Board | Synced reveal; gold "locked" line; KILLED | Ask the killed guest whether that was really their score. |
 | Daylight | Torn photos, suspect count on the home screen, Accuse / Second in the Room | Point at torn photos still waiting for their other half. If nobody has accused anyone, say it out loud: no trial means no vote. |
-| Vote | Only those on trial are on the ballot | One sentence of defence from each accused, then let the phones vote. |
+| Vote | Only those on trial are on the ballot; ghosts vote too | One sentence of defence from each accused, then let the phones vote. Remind the dead their vote counts. |
 | Verdict | Synced reveal | Let it land. Cheer a Killer; ask who pushed hardest for an innocent. |
 | Endgame | Two final votes; ghosts vote too | Ask who they trust least. |
 | Finale | Winner, then "how it happened", night by night | Tell them to open News for the full story. |

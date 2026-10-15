@@ -52,12 +52,13 @@ export default function WordGame({ ctx, onClose, dayGame }) {
   const { step, left } = useDayStep(game, 'word');
   const after = !['alarm', 'game'].includes(game.phase);
   const card = inbox.find((d) => d.cycle === c && d.step === 'day' && d.kind === 'word') ?? null;
-  const alive = me.status === 'alive';
-  const ghost = me.status === 'ghost';
+  // Ghosts play the whole game too (2026-10-15); their scores go on the ghost board.
+  const playing = ['alive', 'ghost'].includes(me.status);
   const wallList = useDayWall(gid, 'clues', c);
   const wall = wallList ?? [];
   const mine = wall.find((w) => w.pid === me.pid) ?? null;
-  const picksDoc = useMyPlay(gid, 'picks', c, me.pid, alive || ghost);
+  const ghostIds = new Set(players.filter((p) => p.status === 'ghost').map((p) => p.id));
+  const picksDoc = useMyPlay(gid, 'picks', c, me.pid, playing);
   const [picked, setPicked] = useState(null);
   const picks = picked ?? picksDoc?.picks ?? [];
   const [shake, setShake] = useState(0);
@@ -82,7 +83,7 @@ export default function WordGame({ ctx, onClose, dayGame }) {
   }, [fly]);
 
   const intro = !after && step === 'wait' && !tutSeen && introDay(game.config, c);
-  const canPick = step === 'pick' && (alive || ghost);
+  const canPick = step === 'pick' && playing;
 
   const togglePick = (pid) => {
     if (!canPick || pid === me.pid) return;
@@ -140,9 +141,7 @@ export default function WordGame({ ctx, onClose, dayGame }) {
                 sub={card.word ? `The Killers only see: ${hint}` : 'You don’t have the word.'}
               />
             ) : (
-              <div className="os-wb-watch">
-                {ghost ? 'Ghosts can’t post a clue. You can still pick the best three.' : 'You’re watching today. The wall fills up below.'}
-              </div>
+              <div className="os-wb-watch">You’re watching today. The wall fills up below.</div>
             )}
             {step === 'wait' && (
               <button type="button" className="os-wb-link" onClick={() => setReplay(true)}>Watch how to play</button>
@@ -150,7 +149,7 @@ export default function WordGame({ ctx, onClose, dayGame }) {
           </>
         )}
 
-        {step === 'clue' && alive && card && !mine && (
+        {step === 'clue' && playing && card && !mine && (
           <Composer gid={gid} c={c} me={me} card={card} players={players} onPosted={setFly} />
         )}
         {!after && mine && step !== 'wait' && (
@@ -187,6 +186,7 @@ export default function WordGame({ ctx, onClose, dayGame }) {
                         spoiled={after && Boolean(word) && spoils(w.clue, word)}
                         fresh={!own && Boolean(base) && !base.has(w.id)}
                         fly={own ? fly : null}
+                        tag={ghostIds.has(w.pid) ? 'ghost' : null}
                       />
                     </li>
                   );

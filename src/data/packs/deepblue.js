@@ -137,6 +137,14 @@ export default {
       sibling: 'The killer’s recovery question: “my brother or sister”.',
       edge: 'The killer’s recovery question: “the eldest, or the youngest”.',
     },
+    pet: {
+      nopet: 'A camera over the killer’s door. A sign on it: NO PETS.',
+      pet: 'A sack of pet food in the killer’s hallway. Something lives there.',
+      furry: 'Fur all over the killer’s sofa. Something with a coat lives there.',
+      dog: 'A lead on the hook by the killer’s door. A dog bowl on the floor.',
+      nofur: 'The killer’s sofa, spotless. Not one hair on it.',
+      cage: 'A cage or a tank in the killer’s flat. Their pet lives behind bars or glass.',
+    },
   },
 
   // The other forms a clue can take (os/evidence.js picks one per delivery).
@@ -185,6 +193,15 @@ export default {
         younger: 'the little one',
         sibling: 'my brother or sister',
         edge: 'the eldest, or the youngest',
+      },
+      // the security question "your pet's name?", answered with what the pet is
+      pet: {
+        nopet: 'I don’t have one',
+        pet: 'my pet (name hidden)',
+        furry: 'something furry',
+        dog: 'my dog',
+        nofur: 'nothing with fur',
+        cage: 'it lives in a cage or a tank',
       },
     },
   },

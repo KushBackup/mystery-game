@@ -260,4 +260,4 @@ function HandProfile({ cycle, facts, paper, last, fitPublic, fitMine, hasPublic 
   );
 }
 
-const HAND_LABEL = { top: 'Top', glasses: 'Glasses', shoes: 'Feet', drink: 'First drink', season: 'Birthday', siblings: 'Siblings' };
+const HAND_LABEL = { top: 'Top', glasses: 'Glasses', shoes: 'Feet', drink: 'First drink', season: 'Birthday', siblings: 'Siblings', pet: 'Pet' };

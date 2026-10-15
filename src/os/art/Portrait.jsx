@@ -4,7 +4,7 @@ import { cached, isCached, later, frame, keyOf, fontsReady, dprOf, seedNum } fro
 
 /**
  * A guest's contact photo: a full-length, hand-drawn picture of them at home,
- * built from their six arrival answers (portraitArt.js says what each answer
+ * built from their seven arrival answers (portraitArt.js says what each answer
  * draws). The room, hair, trousers and pose come from the guest's id, so the
  * same guest is the same picture on every phone and two guests never share one.
  *

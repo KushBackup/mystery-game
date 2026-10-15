@@ -341,7 +341,7 @@ function Console({ gid, game }) {
   const killerIds = roles.filter((r) => r.role === 'killer').map((r) => r.id);
   const livingKillers = alive.filter((p) => killerIds.includes(p.id));
   const actedNight = new Set([...actions.map((a) => a.pid), ...den.filter((d) => d.id !== 'meta').map((d) => d.pid)]);
-  const voters = game.phase === PHASE.ENDGAME ? alive.length + ghosts.length : alive.length;
+  const voters = alive.length + ghosts.length;
   const counts = targetCounts(alive.length, game.config?.ratios);
   const presentIds = new Set(presence.filter((p) => serverNow() - (p.beatAt ?? 0) < 150_000).map((p) => p.id));
 

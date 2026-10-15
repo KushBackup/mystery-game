@@ -133,8 +133,8 @@ async function myDayWord(bot, gid, game) {
 /**
  * The day's game for one bot, in two stages, like the steps on a phone:
  * stage 0 posts (a clue, or a drawing), stage 1 reacts (picks, or guesses).
- * Refusals are expected (a ghost can't post, the rule checks already posted
- * this bot's clue) and are swallowed.
+ * Refusals are expected (the rule checks already posted this bot's clue) and
+ * are swallowed. Ghosts play both stages too.
  */
 export async function playDay(bot, gid, game, stage) {
   await readSelf(bot, gid);
@@ -143,7 +143,7 @@ export async function playDay(bot, gid, game, stage) {
   const quiet = (p) => p.catch((e) => { if (e.code !== 'permission-denied') throw e; });
   if (Math.random() < 0.08) return; // some guests never play
   if (game.minigame === 'word') {
-    if (stage === 0 && bot.status === 'alive') {
+    if (stage === 0) {
       const mine = await myDayWord(bot, gid, game);
       const clue = CLUE_WORDS.filter((w) => !spoils(w, mine?.word ?? ''))[Math.floor(Math.random() * 10)] ?? 'hmm';
       await quiet(setDoc(G(bot, gid, 'clues', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, clue, at: serverTimestamp() }));
@@ -156,7 +156,7 @@ export async function playDay(bot, gid, game, stage) {
     return;
   }
   if (game.minigame === 'draw') {
-    if (stage === 0 && bot.status === 'alive') {
+    if (stage === 0) {
       const mine = await myDayWord(bot, gid, game);
       if (!mine?.word) return;
       const pts = Array.from({ length: 8 }, (_, i) => [20 + i * 25, 60 + Math.floor(Math.random() * 120)]);
@@ -182,8 +182,7 @@ export async function playDay(bot, gid, game, stage) {
 
 export async function vote(bot, gid, game) {
   await readSelf(bot, gid);
-  const voting = game.phase === 'endgame' ? ['alive', 'ghost'] : ['alive'];
-  if (!voting.includes(bot.status)) return;
+  if (!['alive', 'ghost'].includes(bot.status)) return;
   const players = await allPlayers(bot, gid);
   let targets = players.filter((p) => p.status === 'alive' && p.pid !== bot.pid).map((p) => p.pid);
   // The Round Table and its re-vote are only between those on trial (and maybe 'none').

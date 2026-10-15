@@ -87,6 +87,14 @@ export default {
       sibling: 'The victim’s last words: “they have a brother or sister…”',
       edge: 'The victim’s last words: “the eldest, or the youngest…”',
     },
+    pet: {
+      nopet: 'The figure’s coat is clean. No pet hair, and no pet at home.',
+      pet: 'A receipt for pet food in the figure’s dropped wallet.',
+      furry: 'Animal fur on the victim’s sleeve. Not the victim’s.',
+      dog: 'A dog lead left coiled by the gate.',
+      nofur: 'Not one animal hair on the figure’s coat.',
+      cage: 'Birdseed or fish flakes in the figure’s pocket.',
+    },
   },
 
   whispers: [

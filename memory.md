@@ -54,6 +54,7 @@
 - **Offered, not chosen:** a lobby warm-up ("find someone with the same drink answer"), an "admins online" bar, a penalty for accusing an innocent, greying out ruled-out guests. Don't build these unasked.
 - **Claude's own calls, worth confirming:** "No one" on the ballot when a single guest is on trial (from the approved plan); a second accuser counts as a Second; Second hidden once a guest is on trial; wrong join codes can be retried; the host's cues per phase in `pack.hostCues`; the witness sharpened to `publicBand [0.5, 0.8]` to pay for skipped votes (sim: 72/55/50/48/45/50/57% at 16–45 guests, accuse 0.85 assumed); Vote has no home-screen icon, so Accuse is reached from the NowCard, the daylight banner and the Room's pinned bar.
 - **Deploy needs the rules first:** `accusations`, `seconds`, `joins` and the trial-only `votes` rule are new. Under old rules accusations and joins are refused and no Round Table could ever open. Deploy `firestore:rules` before `npm run deploy`, both with the user's approval. The host console must stay open during daylight, because it checks the torn-photo joins.
+- **Deployed 2026-10-15** (the user: "deploy whatever needs to be deployed"): rules first, then the app built from a clean worktree at commit 75bde39, so a peer session's uncommitted 7th arrival question (pet) was **not** shipped. Live title checked: "Three Knives Out · Astral Project × SideQuest Club".
 
 ### Killers Night: the new format (decided 2026-09-26, build in progress)
 
@@ -112,7 +113,7 @@
   Claude chose these, unasked, and the user may change them:
   - picks as Word's score (100 for a clue + 50 per pick);
   - Sketch's points (50 + speed for a guess, 30 per guess to the drawer);
-  - ghosts may pick and guess but never post a clue or draw (ghosts are muted in the room, and a free-text clue would be a channel);
+  - ~~ghosts may pick and guess but never post a clue or draw (ghosts are muted in the room, and a free-text clue would be a channel)~~ reversed 2026-10-15, see below;
   - the wall and the drawings staying up after the board until the next night.
 
 - **Players discover the game (decided 2026-10-02).** The user said the game "feels too forced": the Killer's role text explained the admin password, the rig and the hacker; the Night app opened by itself; every screen explained its mechanic. They want players to work the mechanics out from natural cues, without being treated as dumb. Their own example: a Killers group chat appears in Messages and the Killers realise who their partners are. Choices they made when asked:
@@ -224,6 +225,8 @@ Also settled the same day, smaller: the four ignored coffee tickets are **two Sh
   - The group ids in `data/traits.js` did not change, so the clue art, the pack lines and the engine needed nothing new. To add an option, place it in groups and draw it in `os/art/portraitArt.js`.
   - A group that holds most of a trait reads as "anything but …" in the clue's plain line (`clueWords` in `data/packs/index.js`).
   - Never change the options while a game has registered guests. Their stored answers (for example the old `clear` and `brown` drink ids) would lose their labels and drawings.
+- **A seventh trait, the pet (2026-10-15, the user's request).** Options: no pet, dog, cat, bird, fish, rabbit / hamster, turtle / reptile. It is a full clue trait (groups nopet / pet / furry / dog / nofur / cage, CCTV stills, captions, a "Security Q: your pet?" screenshot field, paper witness quotes). The pet sits on the floor at the guest's feet in the photo. Because of it, the room props no longer include a cat, and the only child's family photo no longer has a dog: any other animal in the photo would read as the guest's pet.
+  - A trait that is new to a game needs every guest to answer it. Guests who registered before a deploy have no pet answer: the host's "all answered" check (`hasAllTraits`) would fail for them. Deploy before anyone registers.
 
 ## Conventions the user has confirmed (continued)
 
@@ -234,6 +237,7 @@ Also settled the same day, smaller: the four ignored coffee tickets are **two Sh
   4. There must be a way to **force-sync the start state** "in case someone's game glitches and they need to move on" — that is **Push start to everyone**, which rewrites the start into the past *and* bumps `forceRefreshAt`, because the two failure modes (a phone that took the start late, a phone whose listener died) need different fixes.
   Claude added **Back to waiting** unasked, as the undo for a mis-tapped Start — the alternative was Reset Game, which also wipes the round, votes, clues and chat.
 - **`gameStartedAt` is an absolute instant, never a boolean.** Same reasoning as `roundTimerEndsAt`: a late joiner, a reload or a phone waking from sleep must be *let in*, not shown a starting gun that fired three rounds ago.
+- **Ghosts play and vote (decided 2026-10-15).** After the 3 Oct game the user said ghosts "don't have a lot to do" and felt left out, and asked to let them play the morning games and vote. Ghosts now get a Word card and a Sketch word, post a clue or draw, score on the ghost board, and vote at every Round Table and re-vote. Accusing and seconding stay with the living (not asked for; offer it, don't add it). Known cost: a ghost's Word note and drawing are public, so the muted dead now have a one-word (or drawn) channel to the room each morning; the notes carry a `ghost` tag. If the room abuses it, the fallback is to show ghost notes and drawings to ghosts only. Live needs the rules deployed (`clues`, `drawings`, `votes`).
 - **Progressive player tutorial (decided 2026-09-19):** after the Round 0 briefing, new players learn identity, a guest profile, Comms and voting in sequence; Round 1 then sends them to their accusation on Evidence. Progress is local per player/device and must never become shared Firestore state.
 
 ## Update protocol

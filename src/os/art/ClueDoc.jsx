@@ -63,6 +63,7 @@ const PROFILE_FIELDS = [
   ['Phone'],
   ['Birthday', 'season'],
   ['Recovery answer', 'siblings'],
+  ['Security Q: your pet?', 'pet'],
   ['Last login'],
 ];
 
@@ -77,7 +78,7 @@ export function AdminProfile({ fact, seed = '', pack, thumb = false }) {
     );
   }
   return (
-    <div className="ev-shot" role="img" aria-label={`A leaked screenshot of the admin account. ${fact?.trait === 'season' ? 'Birthday' : 'Recovery answer'}: ${shown}`}>
+    <div className="ev-shot" role="img" aria-label={`A leaked screenshot of the admin account. ${PROFILE_FIELDS.find(([, t]) => t === fact?.trait)?.[0] ?? 'Recovery answer'}: ${shown}`}>
       <p className="ev-shot__bar"><span>ADMIN</span><b>DEEP BLUE</b><span>LEAKED</span></p>
       <div className="ev-shot__face" aria-hidden="true">?</div>
       <ul className="ev-shot__list">
@@ -85,7 +86,7 @@ export function AdminProfile({ fact, seed = '', pack, thumb = false }) {
           <li key={label} className={trait === fact?.trait ? 'is-open' : ''}>
             <span className="ev-shot__k">{label}</span>
             {trait === fact?.trait
-              ? <span className="ev-shot__v">{trait === 'siblings' ? `“${shown}”` : `▓▓ · ${shown}`}</span>
+              ? <span className="ev-shot__v">{trait === 'siblings' || trait === 'pet' ? `“${shown}”` : `▓▓ · ${shown}`}</span>
               : <i className="ev-redact" style={{ width: `${w[i]}%` }} />}
           </li>
         ))}

@@ -35,7 +35,7 @@ export const FILM_SLIDES = Object.freeze([
   { id: 'truth', n: 3, title: 'Every night, a true clue photo.', line: 'Ghost photos never lie. In Photos, The Room shows every clue the living got.' },
   { id: 'pass', n: 4, title: 'Pass a photo to a living guest.', line: 'Open Night, pick a photo, then a guest. Or whisper them one word.' },
   { id: 'spirits', n: 5, title: 'Plot with the dead in Spirits.', line: 'Spirits is in Messages. Only ghosts can read it.' },
-  { id: 'play', n: 6, title: 'Keep playing every morning.', line: 'Your scores go on a ghost board. In the final votes, the dead vote too.' },
+  { id: 'play', n: 6, title: 'Keep playing every morning.', line: 'Your scores go on a ghost board. And you vote in every poll.' },
 ].map((s) => ({ ...s, kind: 'film', clip: clip(s.n), poster: poster(s.n) })));
 
 export const READY = Object.freeze({

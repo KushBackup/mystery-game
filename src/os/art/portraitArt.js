@@ -1,6 +1,6 @@
 /**
  * The contact photo, drawn by hand on a canvas: a full-length picture of the
- * guest at home, built from their six arrival answers (data/traits.js).
+ * guest at home, built from their seven arrival answers (data/traits.js).
  *
  *   top       the shirt they wear, in its colour (or a print)
  *   glasses   on their face, or not
@@ -8,6 +8,8 @@
  *   drink     in their hand
  *   season    the wall calendar behind them, open at their quarter, a day ringed
  *   siblings  the family photo on the wall; they are the one in their own colour
+ *   pet       at their feet, front right: a dog, a cat, a budgie's cage, a
+ *             goldfish bowl, a rabbit or a tortoise (no pet, an empty floor)
  *
  * The rest of the picture (the room, its colours, the plant or lamp, the
  * hair, the trousers, the pose) comes from a seed, the guest's id, so two
@@ -356,8 +358,11 @@ const HAIR_BY = {
   masc: ['crop', 'quiff', 'curls', 'crop', 'quiff', 'crop'],
   open: HAIR,
 };
-const LEFT_PROPS = ['plant', 'stool', 'guitar', 'shelf', 'cat'];
-const RIGHT_PROPS = ['lamp', 'table', 'plant', 'cat', 'shelf'];
+// No cat among the props since the pet question (2026-10-15): an animal in the
+// room would read as the guest's pet. The lists keep their length so every
+// other guest's room is unchanged.
+const LEFT_PROPS = ['plant', 'stool', 'guitar', 'shelf', 'lamp'];
+const RIGHT_PROPS = ['lamp', 'table', 'plant', 'stool', 'shelf'];
 
 /**
  * Everything the seed decides, once per guest. `look` picks the hair and the
@@ -388,7 +393,7 @@ export function sceneFor(seed, look = 'open') {
   const skirtRoll = r(), beardRoll = r();
   scene.skirt = look === 'fem' && skirtRoll < 0.45;
   scene.beard = look === 'masc' && beardRoll < 0.35;
-  // never two cats
+  // never the same prop twice
   if (scene.rightProp === scene.leftProp) scene.rightProp = RIGHT_PROPS[(RIGHT_PROPS.indexOf(scene.rightProp) + 1) % RIGHT_PROPS.length];
   return scene;
 }
@@ -584,14 +589,14 @@ function guitar(g, x, S) {
   g.restore();
 }
 
-function cat(g, x, S) {
+/** A cat sitting side-on, its feet at (x, base). Now only ever the guest's pet (see `pet`). */
+function cat(g, x, base, scale, S) {
   const s = S.seed + 750;
   g.save();
-  g.translate(x, 330);
-  g.scale(1.45, 1.45);
-  g.translate(-x, -330);
+  g.translate(x, base);
+  g.scale(scale, scale);
+  g.translate(-x, -base);
   const col = pick(['#3a3a3e', '#d9a066', '#f4efe6', '#8a8580'], hash(3, s));
-  const base = 330;
   // sitting, seen from the side, tail curled round its feet
   const body = [[x - 12, base], [x - 14, base - 12], [x - 9, base - 26], [x - 2, base - 30], [x + 4, base - 26], [x + 7, base - 14], [x + 9, base]];
   thing(g, body, { fill: PAPER, color: col, seed: s, w: 1.3 });
@@ -636,7 +641,7 @@ function plantSmall(g, x, y, s) {
   }
 }
 
-const PROPS = { plant, lamp, table, stool, guitar, cat, shelf };
+const PROPS = { plant, lamp, table, stool, guitar, shelf };
 
 // ---------------------------------------------------------------- the wall: calendar and family photo
 
@@ -702,7 +707,8 @@ function calendar(g, value, S) {
 
 /** Who stands in the family photo, left to right, and which one is the guest. */
 const FAMILY = {
-  only: { heights: [1], me: 0, pet: true },
+  // (the only child's photo used to have a dog in it; since the pet question it would read as their pet)
+  only: { heights: [1], me: 0 },
   eldest: { heights: [1, 0.78, 0.62], me: 0 },
   middle: { heights: [1, 0.8, 0.62], me: 1 },
   youngest: { heights: [1, 0.82, 0.62], me: 2 },
@@ -722,11 +728,11 @@ function family(g, value, S, topColour) {
   const inner = rectPts(x + 5, y + 5, w - 10, h - 10);
   thing(g, inner, { fill: '#f3ede0', color: '#cfdde6', seed: s + 1, w: 0.8, corner: 0.6, sketch: 0, edge: 0.2 });
   if (!fam) return;
-  const n = fam.heights.length + (fam.pet ? 1 : 0);
+  const n = fam.heights.length;
   const span = w - 18;
   const groundY = y + h - 8;
   fam.heights.forEach((k, i) => {
-    const cx = x + 9 + (n === 1 ? span / 2 : (fam.pet ? span * 0.35 : (i / (n - 1)) * span));
+    const cx = x + 9 + (n === 1 ? span / 2 : (i / (n - 1)) * span);
     const tall = 26 * k * F;
     const headR = (3.3 + k * 0.6) * F;
     const me = i === fam.me;
@@ -743,12 +749,6 @@ function family(g, value, S, topColour) {
       pen(g, [[hx, hy + 2.6], [hx - 3, hy - 0.2], [hx - 1.5, hy - 2.4], [hx, hy - 1], [hx + 1.5, hy - 2.4], [hx + 3, hy - 0.2], [hx, hy + 2.6]], { w: 1, color: '#d0352b', seed: s + 50, rough: 0, pressure: EVEN, close: false, corner: 2 });
     }
   });
-  if (fam.pet) {
-    // an only child, and the dog
-    const dx = x + 9 + span * 0.78, dy = groundY;
-    const dog = ([[dx - 8, dy - 6], [dx + 4, dy - 7], [dx + 6, dy - 11], [dx + 9.5, dy - 10.5], [dx + 9, dy - 6], [dx + 5, dy - 3], [dx + 5, dy], [dx - 6, dy], [dx - 7, dy - 3], [dx - 10, dy - 9]]).map(([px, py]) => [dx + (px - dx) * F, dy + (py - dy) * F]);
-    thing(g, dog, { fill: PAPER, color: '#c7a074', seed: s + 60, w: 0.8, sketch: 0 });
-  }
 }
 
 // ---------------------------------------------------------------- the guest
@@ -1545,6 +1545,116 @@ function drinkArm(g, value, S) {
   for (let k = 0; k < 2; k++) pen(g, [[167.5, 191 + k * 2.6], [175.5, 190.4 + k * 2.6]], { w: 0.5, alpha: 0.7, seed: s + 21 + k, pressure: EVEN, rough: 0 });
 }
 
+// the pet, on the floor at their feet, front right (never in front of the figure)
+
+const PET_X = 238, PET_BASE = 388;
+
+function petShadow(g, x, w, s) {
+  const p = ellPts(x, PET_BASE, w, 3.6, 20);
+  hatch(g, pathOf(p), [x - w, PET_BASE - 4, w * 2, 8], { seed: s, gap: 2.2, len: 5, width: 0.55, alpha: 0.5, tone: (px, py) => 0.9 - Math.hypot((px - x) / w, (py - PET_BASE) / 3.6) * 0.8, dir: () => 0.1 });
+}
+
+const PETS = {
+  dog(g, S) {
+    // sitting side-on, looking up at its person, a red collar
+    const s = S.seed + 2100;
+    const col = pick(['#c98a4b', '#3a3330', '#efe8dc', '#8a5a3a'], hash(5, s));
+    const ear = shade(col, col === '#3a3330' ? 1.4 : 0.7);
+    petShadow(g, PET_X + 2, 20, s);
+    g.save();
+    g.translate(PET_X, PET_BASE);
+    g.scale(1.2, 1.2);
+    const tail = [[12, -5], [19, -9], [22, -17]];
+    line(g, tail, { w: 3, color: col, seed: s + 1, pressure: TAPER, sketch: 0 });
+    line(g, tail, { w: 0.9, seed: s + 2, pressure: TAPER, sketch: 0 });
+    thing(g, [[-11, 0], [-13, -12], [-9, -25], [-1, -30], [7, -25], [12, -13], [14, 0]], { fill: PAPER, color: col, seed: s + 3, w: 1.3 });
+    thing(g, [[-8, -15], [-4, -15], [-3.4, 0], [-9.4, 0]], { fill: PAPER, color: col, seed: s + 4, w: 1, sketch: 0 });
+    thing(g, [[-13, -45], [-5, -46], [1, -41], [0, -32], [-6, -29], [-12, -32], [-21, -33], [-22, -37], [-17, -40]], { fill: PAPER, color: col, seed: s + 5, w: 1.2, corner: 0.8 });
+    thing(g, [[-5, -46], [1, -44], [3, -35], [-1, -33], [-3, -40]], { fill: PAPER, color: ear, seed: s + 6, w: 0.9, sketch: 0 });
+    thing(g, ellPts(-21.4, -36.4, 1.8, 1.5, 8), { fill: INK, seed: s + 7, w: 0.6, sketch: 0 });
+    g.fillStyle = col === '#3a3330' ? '#e8c75a' : INK;
+    g.fillRect(-12.4, -40.4, 1.7, 1.7);
+    pen(g, [[-12, -31], [-6, -29.4], [0, -31.4]], { w: 1.8, color: '#d0352b', seed: s + 8, pressure: EVEN, rough: 0 });
+    g.restore();
+  },
+  cat(g, S) {
+    petShadow(g, PET_X + 4, 18, S.seed + 2120);
+    cat(g, PET_X, PET_BASE, 1.3, S);
+  },
+  bird(g, S) {
+    // a budgie in a domed cage on the floor
+    const s = S.seed + 2140;
+    petShadow(g, PET_X, 17, s);
+    const cx = PET_X, b = PET_BASE;
+    thing(g, rectPts(cx - 16, b - 5, 32, 5), { fill: PAPER, color: '#b48a62', seed: s, w: 1.1, corner: 0.6, sketch: 0 });
+    const dome = [[cx - 14, b - 5], [cx - 14, b - 30], [cx - 9, b - 41], [cx, b - 44], [cx + 9, b - 41], [cx + 14, b - 30], [cx + 14, b - 5]];
+    for (let k = -2; k <= 2; k++) pen(g, [[cx + k * 6, b - 5], [cx + k * 6.4, b - 37 + Math.abs(k) * 3]], { w: 0.6, color: '#7a7a80', alpha: 0.9, seed: s + 2 + k, pressure: EVEN, rough: 0 });
+    pen(g, [[cx - 12, b - 22], [cx + 12, b - 22]], { w: 0.9, color: '#8a6a4a', seed: s + 8, pressure: EVEN, rough: 0 });
+    // the bird on its perch
+    const col = pick(['#5fae5a', '#5a9ad8', '#f0d04a'], hash(7, s));
+    thing(g, [[cx - 6, b - 23], [cx - 7, b - 30], [cx - 3, b - 35], [cx + 2, b - 33], [cx + 3, b - 26], [cx + 8, b - 18], [cx + 3, b - 22]], { fill: PAPER, color: col, seed: s + 9, w: 0.9, sketch: 0 });
+    thing(g, ellPts(cx - 3, b - 35, 3.4, 3.2, 12), { fill: PAPER, color: col === '#f0d04a' ? '#f6e7a0' : '#f3dc6a', seed: s + 10, w: 0.8, sketch: 0 });
+    thing(g, [[cx - 6.4, b - 35.4], [cx - 8.6, b - 34], [cx - 6.4, b - 33]], { fill: '#e7a23a', seed: s + 11, w: 0.6, sketch: 0 });
+    g.fillStyle = INK;
+    g.fillRect(cx - 4.6, b - 36.4, 1.2, 1.2);
+    line(g, dome, { w: 1.2, color: '#5a5a62', seed: s + 12, sketch: 0, corner: 0.8 });
+    thing(g, ellPts(cx, b - 46, 2.4, 2.4, 10), { fill: PAPER, color: '#8a8a92', seed: s + 13, w: 0.8, sketch: 0 });
+  },
+  fish(g, S) {
+    // a round bowl on the floor, a goldfish, pebbles
+    const s = S.seed + 2160;
+    petShadow(g, PET_X, 15, s);
+    const cx = PET_X, cy = PET_BASE - 15;
+    const bowl = ellPts(cx, cy, 15, 15, 28);
+    solid(g, bowl, '#fbfcfa');
+    wash(g, [[cx - 14.6, cy - 6], [cx + 14.6, cy - 6], [cx + 13, cy + 7], [cx + 6, cy + 14], [cx - 6, cy + 14], [cx - 13, cy + 7]], '#bfe0ec', { seed: s, alpha: 0.85, gran: 0.15, edge: 0.4, dx: 0, dy: 0, amp: 0.4 });
+    for (let k = 0; k < 7; k++) thing(g, ellPts(cx - 8 + k * 2.7, cy + 11.6 - (k % 2), 1.6, 1.1, 8), { fill: pick(['#c8b49a', '#9aa0a6', '#d98a5a'], hash(k, s)), seed: s + 2 + k, w: 0.4, sketch: 0 });
+    thing(g, [[cx - 6, cy + 1], [cx - 1, cy - 3], [cx + 4, cy - 1], [cx + 7, cy - 4], [cx + 7, cy + 4], [cx + 4, cy + 1.6], [cx - 1, cy + 4]], { fill: '#f6c27a', color: '#ec7a2a', seed: s + 10, w: 0.8, sketch: 0 });
+    g.fillStyle = INK;
+    g.fillRect(cx - 3.8, cy - 0.6, 1.1, 1.1);
+    pen(g, ellPts(cx - 7, cy - 9, 0.9, 0.9, 6), { w: 0.5, close: true, color: '#7aa8bc', seed: s + 11, rough: 0 });
+    pen(g, ellPts(cx - 5.6, cy - 12, 0.6, 0.6, 6), { w: 0.5, close: true, color: '#7aa8bc', seed: s + 12, rough: 0 });
+    line(g, bowl, { close: true, w: 1.2, seed: s + 13, sketch: 0 });
+    pen(g, ellPts(cx, cy - 12.8, 8, 1.6, 16), { w: 1, close: true, seed: s + 14, rough: 0 });
+    pen(g, [[cx - 10, cy - 6], [cx - 11, cy + 4]], { w: 1, color: '#ffffff', alpha: 0.9, seed: s + 15, pressure: TAPER, rough: 0 });
+  },
+  small(g, S) {
+    // a rabbit, sitting, ears up
+    const s = S.seed + 2180;
+    const col = pick(['#c9b39a', '#efe8dc', '#7d6a5a', '#d9a066'], hash(9, s));
+    petShadow(g, PET_X + 2, 15, s);
+    const x = PET_X, b = PET_BASE;
+    thing(g, [[x - 12, b], [x - 13, b - 9], [x - 6, b - 17], [x + 5, b - 17], [x + 12, b - 9], [x + 12, b]], { fill: PAPER, color: col, seed: s, w: 1.2 });
+    thing(g, ellPts(x + 13, b - 9, 3.4, 3.4, 10), { fill: '#fbfaf6', seed: s + 1, w: 0.8, sketch: 0 });
+    for (const [ex, k] of [[-11, 0], [-6, 1]]) thing(g, [[x + ex - 2, b - 22], [x + ex - 3.6, b - 37], [x + ex, b - 39], [x + ex + 2.4, b - 23]], { fill: PAPER, color: col, seed: s + 2 + k, w: 0.9, sketch: 0, corner: 0.9 });
+    pen(g, [[x - 13.4, b - 25], [x - 13.8, b - 34]], { w: 1, color: '#f2a8b8', alpha: 0.9, seed: s + 4, pressure: TAPER, rough: 0 });
+    thing(g, ellPts(x - 10, b - 20, 6.6, 5.6, 14), { fill: PAPER, color: col, seed: s + 5, w: 1, sketch: 0 });
+    g.fillStyle = INK;
+    g.fillRect(x - 13.4, b - 21.6, 1.5, 1.5);
+    thing(g, ellPts(x - 16.4, b - 19, 0.9, 0.8, 6), { fill: '#e48a9a', seed: s + 6, w: 0.4, sketch: 0 });
+    pen(g, [[x - 4, b - 1], [x + 3, b - 1]], { w: 0.7, alpha: 0.6, seed: s + 7, pressure: EVEN, rough: 0 });
+  },
+  reptile(g, S) {
+    // a tortoise, side-on, plodding toward its person
+    const s = S.seed + 2200;
+    petShadow(g, PET_X, 17, s);
+    const x = PET_X, b = PET_BASE;
+    for (const [lx, k] of [[-10, 0], [8, 1]]) thing(g, [[x + lx - 3, b - 5], [x + lx + 3, b - 5], [x + lx + 3.4, b], [x + lx - 3.4, b]], { fill: PAPER, color: '#9aa86a', seed: s + k, w: 0.9, sketch: 0 });
+    thing(g, [[x - 15, b - 9], [x - 21, b - 11], [x - 24, b - 9], [x - 23.6, b - 5.6], [x - 18, b - 5], [x - 13, b - 5]], { fill: PAPER, color: '#9aa86a', seed: s + 2, w: 1, sketch: 0 });
+    g.fillStyle = INK;
+    g.fillRect(x - 21.6, b - 9.4, 1.3, 1.3);
+    const shell = [[x - 16, b - 4], [x - 14, b - 13], [x - 7, b - 20], [x + 3, b - 21], [x + 12, b - 16], [x + 16, b - 7], [x + 17, b - 4]];
+    thing(g, shell, { fill: PAPER, color: '#7d8a45', seed: s + 3, w: 1.3 });
+    for (const [a, c] of [[[x - 9, b - 5], [x - 7, b - 15]], [[x + 1, b - 5], [x + 1, b - 19]], [[x + 10, b - 5], [x + 9, b - 15]]]) pen(g, [a, c], { w: 0.7, color: '#3e4a22', alpha: 0.7, seed: s + 4 + a[0], pressure: EVEN, rough: 0.3 });
+    pen(g, [[x - 13, b - 11], [x + 14, b - 11]], { w: 0.7, color: '#3e4a22', alpha: 0.6, seed: s + 9, pressure: EVEN, rough: 0.3 });
+    pen(g, [[x - 16.6, b - 4], [x + 17.4, b - 4]], { w: 1.4, color: '#c8b47a', seed: s + 10, pressure: EVEN, rough: 0 });
+  },
+};
+
+function pet(g, value, S) {
+  PETS[value]?.(g, S);
+}
+
 function floorShadow(g, S) {
   const s = S.seed + 2000;
   const p = ellPts(152, 371, 44, 6.5, 28);
@@ -1570,7 +1680,7 @@ function wallShadow(g, S) {
 // ---------------------------------------------------------------- layers and the reveal
 
 /** Each answer owns one layer, so Setup can brush just that answer on as it lands. */
-export const LAYERS = ['season', 'siblings', 'top', 'shoes', 'drink', 'glasses'];
+export const LAYERS = ['season', 'siblings', 'top', 'shoes', 'drink', 'glasses', 'pet'];
 const BOX = {
   season: (S) => (S.calendarLeft ? [10, 70, 90, 120] : [200, 70, 96, 120]),
   siblings: (S) => (S.calendarLeft ? [206, 86, 90, 84] : [8, 86, 90, 84]),
@@ -1578,6 +1688,7 @@ const BOX = {
   shoes: () => [96, 330, 108, 50],
   drink: () => [150, 140, 60, 104],
   glasses: () => [122, 86, 56, 26],
+  pet: () => [PET_X - 30, PET_BASE - 62, 60, 70],
 };
 
 function drawLayer(g, id, traits, S) {
@@ -1587,6 +1698,7 @@ function drawLayer(g, id, traits, S) {
   if (id === 'shoes') { shoes(g, traits.shoes, S); return; }
   if (id === 'drink') { drinkArm(g, traits.drink, S); return; }
   if (id === 'glasses') { g.save(); headSpace(g); glasses(g, traits.glasses, S); g.restore(); }
+  if (id === 'pet') pet(g, traits.pet, S);
 }
 
 /**
@@ -1652,6 +1764,7 @@ export function drawPortrait(g, traits = {}, seed = 0, { face = false, mystery =
     legs(g, S, !t.shoes);
     layer('shoes');
     trousers(g, S);
+    layer('pet');
   }
   freeArm(g, S);
   theHead();

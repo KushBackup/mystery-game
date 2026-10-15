@@ -227,7 +227,7 @@ service cloud.firestore {
           && request.resource.data.at == request.time
           && request.resource.data.target != me()
           && (
-            (game().phase in ['roundtable', 'revote'] && myStatus() == 'alive'
+            (game().phase in ['roundtable', 'revote'] && myStatus() in ['alive', 'ghost']
               && request.resource.data.target in game().get('ballotTargets', []))
             || (game().phase == 'endgame' && myStatus() in ['alive', 'ghost'] && isAlive(request.resource.data.target))
           );
@@ -312,11 +312,12 @@ service cloud.firestore {
       }
 
       // "<cycle>_<pid>" → { clue }: the word game's wall. Public, because the
-      // room reads it together. Posted once by a living guest, never edited,
-      // so the order clues landed in is the order everyone saw.
+      // room reads it together. Posted once by a guest still in the game (ghosts
+      // too, since 2026-10-15), never edited, so the order clues landed in is
+      // the order everyone saw.
       match /clues/{id} {
         allow read: if signedIn();
-        allow create: if todays(id) && dayGame('word') && myStatus() == 'alive'
+        allow create: if todays(id) && dayGame('word') && myStatus() in ['alive', 'ghost']
           && ownDoc(['pid', 'cycle', 'clue', 'at'])
           && request.resource.data.clue is string
           && request.resource.data.clue.size() > 0 && request.resource.data.clue.size() <= 20;
@@ -337,7 +338,7 @@ service cloud.firestore {
       // for the guesser's instant "Correct!"; the host scores the typed text.
       match /drawings/{id} {
         allow read: if signedIn();
-        allow create, update: if todays(id) && dayGame('draw') && myStatus() == 'alive'
+        allow create, update: if todays(id) && dayGame('draw') && myStatus() in ['alive', 'ghost']
           && ownDoc(['pid', 'cycle', 'strokes', 'checks', 'at'])
           && request.resource.data.strokes is string && request.resource.data.strokes.size() <= 30000
           && request.resource.data.checks is list && request.resource.data.checks.size() <= 6;

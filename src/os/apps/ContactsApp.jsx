@@ -14,7 +14,7 @@ import { checksKey, FIELD, answerLabel } from '../dossier';
  * Contacts: everyone in the room, and what they answered at the door.
  *
  * A row is a name, a photo DEEP BLUE drew from their top and glasses, and
- * where they are. Tap it for their card: the same six answers as a plain
+ * where they are. Tap it for their card: the same seven answers as a plain
  * list, each one tappable so this phone can mark whether it matches what
  * you see, or what they actually tell you. The mark never leaves this
  * phone (dossier.js). My Card shows your own answers but never edits them:

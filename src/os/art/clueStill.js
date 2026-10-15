@@ -858,6 +858,99 @@ function sceneSiblings(group) {
   return g;
 }
 
+/* ------------------------------------------------------------------ pet */
+
+// The killer's flat, seen from a camera over the door: one thing that gives
+// the GROUP away, never the animal itself unless the group is one animal.
+
+function sofa(g, x, y, w) {
+  fillRect(g, x, y, w, 12, '#2C2A33');
+  fillRect(g, x, y, w, 2, '#3A3742');
+  fillRect(g, x - 2, y - 6, w + 4, 6, '#34313C');
+  fillRect(g, x - 3, y - 2, 3, 14, '#24222A');
+  fillRect(g, x + w, y - 2, 3, 14, '#24222A');
+}
+
+function bowl(g, cx, y, c) {
+  fillRect(g, cx - 6, y, 12, 1, shade(c, 0.25));
+  fillRect(g, cx - 5, y + 1, 10, 3, c);
+  fillRect(g, cx - 4, y + 4, 8, 1, shade(c, -0.3));
+}
+
+function scenePet(group) {
+  const g = createGrid(W, H);
+  vgrad(g, 0, 0, W, 30, ['#4E4A48', '#45413F', '#3C3836']);
+  vgrad(g, 0, 30, W, 18, ['#6A5440', '#5A4636', '#4A3A2C']);
+  for (let x = 0; x < W; x += 8) line(g, x, 31, x - 6, 47, '#54412F');
+  fillRect(g, 0, 29, W, 1, '#2E2A28');
+  const red = '#FF3B30';
+  if (group === 'nopet') {
+    // the front door, and the landlord's sign on it
+    fillRect(g, 22, 3, 22, 27, '#6B4526');
+    fillRect(g, 23, 4, 20, 26, '#8A5C35');
+    setPx(g, 40, 18, '#E8C75A');
+    fillRect(g, 23, 6, 20, 15, '#EFE8D8');
+    textInto(g, 'NO', 33 - Math.floor(textWidth('NO') / 2), 7, red);
+    textInto(g, 'PETS', 33 - Math.floor(textWidth('PETS') / 2), 14, red);
+    // a clean mat, nothing on it
+    fillRect(g, 20, 33, 26, 6, '#8A7A5E');
+    fillRect(g, 21, 34, 24, 4, '#9C8C6E');
+  } else if (group === 'pet') {
+    // a sack of pet food by the wall, an empty bowl
+    fillRect(g, 12, 14, 16, 22, '#C8A050');
+    fillRect(g, 12, 14, 16, 3, '#A88038');
+    textInto(g, 'PET', 14, 19, '#3A2414');
+    textInto(g, 'FOOD', 13, 26, '#3A2414');
+    bowl(g, 44, 36, '#3E6AA8');
+  } else if (group === 'furry') {
+    // fur all over a dark sofa, and a lint roller beside it
+    sofa(g, 10, 20, 38);
+    const r = mulberry32(31);
+    for (let k = 0; k < 26; k += 1) {
+      const x = 10 + Math.floor(r() * 38), y = 16 + Math.floor(r() * 14);
+      setPx(g, x, y, r() > 0.5 ? '#D8C0A0' : '#EDE4D4');
+      if (r() > 0.6) setPx(g, x + 1, y, '#C8AE8E');
+    }
+    fillRect(g, 52, 24, 3, 12, '#B8472E');
+    fillRect(g, 50, 16, 7, 8, '#EFE8D8');
+    for (let k = 0; k < 5; k += 1) setPx(g, 51 + k, 18 + (k % 3), '#C8AE8E');
+  } else if (group === 'dog') {
+    // a lead on the hook by the door, a bowl with a bone on it
+    fillRect(g, 14, 6, 6, 2, '#9A9AA2');
+    line(g, 17, 8, 15, 22, red);
+    line(g, 18, 8, 20, 22, red);
+    fillRect(g, 14, 22, 7, 2, '#D8D0C0');
+    bowl(g, 40, 34, '#B8472E');
+    stamp(g, ['X...X', 'XXXXX', 'X...X'], { X: '#F4EFE6' }, 38, 35);
+    // a chewed tennis ball
+    fillCircle(g, 52, 37, 2.2, '#C8D84A');
+    setPx(g, 51, 36, '#EFF4C8');
+  } else if (group === 'nofur') {
+    // the same dark sofa, spotless, and a lint roller that came up clean
+    sofa(g, 10, 20, 38);
+    fillRect(g, 52, 24, 3, 12, '#3E6AA8');
+    fillRect(g, 50, 16, 7, 8, '#FAF8F2');
+    textInto(g, 'NO FUR', 13, 38, '#EFE8D8');
+  } else {
+    // a birdcage and a glass tank: an animal that lives behind bars or glass
+    fillRect(g, 10, 36, 18, 2, '#8A5C35');
+    for (let x = 11; x <= 27; x += 3) line(g, x, 35, x, 17 + Math.round(Math.abs(19 - x) / 3), '#B8B8C0'); // integers only: line() never ends on a fraction
+    line(g, 11, 17, 19, 12, '#B8B8C0');
+    line(g, 27, 17, 19, 12, '#B8B8C0');
+    fillRect(g, 18, 10, 2, 2, '#B8B8C0');
+    fillRect(g, 12, 26, 15, 1, '#8A6A4A');
+    fillRect(g, 17, 22, 3, 4, '#5FAE5A');
+    setPx(g, 18, 21, '#F3DC6A');
+    fillRect(g, 34, 22, 24, 16, '#7FB8C8');
+    fillRect(g, 34, 22, 24, 3, '#A8D4E0');
+    for (let x = 34; x < 58; x += 1) { setPx(g, x, 21, '#DCEFF4'); setPx(g, x, 38, '#3A4A50'); }
+    for (let y = 21; y < 39; y += 1) { setPx(g, 33, y, '#DCEFF4'); setPx(g, 58, y, '#DCEFF4'); }
+    fillRect(g, 35, 35, 22, 3, '#C8B49A');
+    stamp(g, ['.XX.X', 'XXXXX', '.XX.X'], { X: '#EC7A2A' }, 42, 28);
+  }
+  return g;
+}
+
 /* ------------------------------------------------------------- lookup */
 
 function sceneFallback() {
@@ -877,6 +970,7 @@ const PAINTERS = {
   drink: sceneDrink,
   season: sceneSeason,
   siblings: sceneSiblings,
+  pet: scenePet,
 };
 
 const sceneCache = new Map();
