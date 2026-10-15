@@ -43,16 +43,21 @@ export const alarmLine = (pack, cycle) => {
 
 /**
  * A clue card's words: the pack's flavour line, plus a plain sentence built
- * from the trait's option labels, e.g. "The killer's first drink: Gin /
- * vodka / rum, Whisky / brandy or A cocktail". The flavour can be evocative
+ * from the trait's option labels, e.g. "The killer's first drink: Beer,
+ * Red wine or White / rosé wine". The flavour can be evocative
  * because the plain line underneath always says exactly what it means.
  */
 export function clueWords(pack, fact, form = 'still') {
   const trait = TRAIT_BY_ID[fact.trait];
   const group = trait?.groups.find((g) => g.id === fact.group);
   if (!trait || !group) return { flavour: '', plain: '' };
-  const labels = group.members.map((m) => trait.options.find((o) => o.id === m)?.label ?? m);
-  const list = labels.length > 1 ? `${labels.slice(0, -1).join(', ')} or ${labels.at(-1)}` : labels[0];
+  // A group that holds most of the options reads shorter, and just as exactly,
+  // by what it leaves out: "anything but Heels or Wedges / platforms", not ten kinds of shoe.
+  const out = trait.options.filter((o) => !group.members.includes(o.id)).map((o) => o.label);
+  const negate = group.members.length > 4 && out.length * 2 <= group.members.length;
+  const labels = negate ? out : group.members.map((m) => trait.options.find((o) => o.id === m)?.label ?? m);
+  const joined = labels.length > 1 ? `${labels.slice(0, -1).join(', ')} or ${labels.at(-1)}` : labels[0];
+  const list = negate ? `anything but ${joined}` : joined;
   const say = PLAIN[trait.id];
   // A voice note's flavour is what the witness said; a receipt or a screenshot
   // has a fixed line (os/evidence.js). A still or a clip, or a pack without

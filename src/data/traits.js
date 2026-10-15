@@ -26,6 +26,12 @@
  *    may overlap. Every option must sit in at least one group, and no group
  *    may contain every option, because it would say nothing.
  *
+ *    That is also why the options can be fine-grained (18 tops, 12 kinds of
+ *    footwear, every spirit on its own): the guest describes themselves
+ *    exactly, and a clue still only names a group. Adding an option means
+ *    placing it in groups and drawing it (os/art/portraitArt.js), never
+ *    new clue art.
+ *
  * Copy is one short line per question, answered with one tap. The flavour
  * text a clue shows lives in the story pack (data/packs/), not here, so the
  * same traits work in any setting.
@@ -40,17 +46,30 @@ export const TRAITS = [
       { id: 'black', label: 'Black' },
       { id: 'white', label: 'White' },
       { id: 'grey', label: 'Grey' },
-      { id: 'blue', label: 'Blue / navy' },
-      { id: 'red', label: 'Red / pink' },
+      { id: 'navy', label: 'Navy' },
+      { id: 'blue', label: 'Sky / light blue' },
+      { id: 'red', label: 'Red' },
+      { id: 'pink', label: 'Pink' },
+      { id: 'maroon', label: 'Maroon / wine' },
+      { id: 'purple', label: 'Purple' },
       { id: 'green', label: 'Green' },
-      { id: 'yellow', label: 'Yellow / orange' },
-      { id: 'print', label: 'Print / pattern' },
+      { id: 'olive', label: 'Olive / khaki' },
+      { id: 'yellow', label: 'Yellow' },
+      { id: 'orange', label: 'Orange' },
+      { id: 'brown', label: 'Brown / tan' },
+      { id: 'beige', label: 'Beige / cream' },
+      { id: 'stripes', label: 'Stripes' },
+      { id: 'checks', label: 'Checks / plaid' },
+      { id: 'print', label: 'Floral / print' },
     ],
     groups: [
-      { id: 'dark', members: ['black', 'grey', 'blue'] },
-      { id: 'pale', members: ['white', 'grey', 'yellow'] },
-      { id: 'vivid', members: ['red', 'green', 'yellow', 'print'] },
-      { id: 'plain', members: ['black', 'white', 'grey', 'blue', 'red', 'green', 'yellow'] },
+      { id: 'dark', members: ['black', 'grey', 'navy', 'maroon', 'purple', 'olive', 'brown'] },
+      { id: 'pale', members: ['white', 'grey', 'blue', 'pink', 'yellow', 'beige'] },
+      { id: 'vivid', members: ['red', 'pink', 'orange', 'yellow', 'green', 'purple', 'blue', 'stripes', 'checks', 'print'] },
+      {
+        id: 'plain',
+        members: ['black', 'white', 'grey', 'navy', 'blue', 'red', 'pink', 'maroon', 'purple', 'green', 'olive', 'yellow', 'orange', 'brown', 'beige'],
+      },
     ],
   },
   {
@@ -72,16 +91,23 @@ export const TRAITS = [
     visible: true,
     options: [
       { id: 'sneakers', label: 'Sneakers' },
+      { id: 'canvas', label: 'Canvas shoes' },
+      { id: 'loafers', label: 'Loafers' },
       { id: 'shoes', label: 'Formal shoes' },
       { id: 'boots', label: 'Boots' },
-      { id: 'sandals', label: 'Sandals / slides' },
+      { id: 'sandals', label: 'Sandals' },
+      { id: 'slides', label: 'Flip-flops / slides' },
+      { id: 'kolhapuri', label: 'Kolhapuris / juttis' },
+      { id: 'crocs', label: 'Crocs / clogs' },
+      { id: 'flats', label: 'Ballet flats' },
       { id: 'heels', label: 'Heels' },
+      { id: 'wedges', label: 'Wedges / platforms' },
     ],
     groups: [
-      { id: 'rubber', members: ['sneakers'] },
-      { id: 'leather', members: ['shoes', 'boots', 'heels'] },
-      { id: 'open', members: ['sandals', 'heels'] },
-      { id: 'flat', members: ['sneakers', 'shoes', 'boots', 'sandals'] },
+      { id: 'rubber', members: ['sneakers', 'canvas', 'crocs', 'slides'] },
+      { id: 'leather', members: ['shoes', 'loafers', 'boots', 'kolhapuri', 'heels'] },
+      { id: 'open', members: ['sandals', 'slides', 'kolhapuri', 'heels', 'wedges'] },
+      { id: 'flat', members: ['sneakers', 'canvas', 'loafers', 'shoes', 'boots', 'sandals', 'slides', 'kolhapuri', 'crocs', 'flats'] },
     ],
   },
   {
@@ -90,20 +116,27 @@ export const TRAITS = [
     visible: false,
     options: [
       { id: 'beer', label: 'Beer' },
-      { id: 'wine', label: 'Wine' },
-      { id: 'clear', label: 'Gin / vodka / rum' },
-      { id: 'brown', label: 'Whisky / brandy' },
+      { id: 'wine', label: 'Red wine' },
+      { id: 'whitewine', label: 'White / rosé wine' },
+      { id: 'gin', label: 'Gin' },
+      { id: 'vodka', label: 'Vodka' },
+      { id: 'rum', label: 'Rum' },
+      { id: 'whisky', label: 'Whisky' },
+      { id: 'brandy', label: 'Brandy' },
+      { id: 'tequila', label: 'Tequila' },
+      { id: 'feni', label: 'Feni' },
       { id: 'cocktail', label: 'A cocktail' },
-      { id: 'zero', label: 'Nothing alcoholic' },
+      { id: 'zero', label: 'Mocktail / soft drink' },
+      { id: 'water', label: 'Water / nothing' },
     ],
     groups: [
       { id: 'hops', members: ['beer'] },
-      { id: 'grape', members: ['wine'] },
-      { id: 'spirit', members: ['clear', 'brown', 'cocktail'] },
-      { id: 'clear', members: ['clear', 'cocktail'] },
-      { id: 'brewed', members: ['beer', 'wine'] },
-      { id: 'sober', members: ['zero'] },
-      { id: 'strong', members: ['clear', 'brown'] },
+      { id: 'grape', members: ['wine', 'whitewine'] },
+      { id: 'spirit', members: ['gin', 'vodka', 'rum', 'whisky', 'brandy', 'tequila', 'feni', 'cocktail'] },
+      { id: 'clear', members: ['gin', 'vodka', 'tequila', 'feni', 'cocktail'] },
+      { id: 'brewed', members: ['beer', 'wine', 'whitewine'] },
+      { id: 'sober', members: ['zero', 'water'] },
+      { id: 'strong', members: ['gin', 'vodka', 'rum', 'whisky', 'brandy', 'tequila', 'feni'] },
     ],
   },
   {

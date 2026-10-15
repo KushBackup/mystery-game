@@ -62,7 +62,7 @@ export default {
     },
     shoes: {
       rubber: 'Rubber-sole prints in the wet garden soil.',
-      leather: 'A hard heel, heard clicking down the stone stair.',
+      leather: 'Hard leather soles, heard clicking down the stone stair.',
       open: 'Toe prints in the spilled tonic. Open footwear.',
       flat: 'Flat prints across the wet tiles. No heel.',
     },

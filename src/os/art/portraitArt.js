@@ -980,13 +980,28 @@ const TOPS = {
   black: '#3d3f47',
   white: '#fbfaf6',
   grey: '#a3a7ae',
-  blue: '#3f62a3',
-  red: '#df5a70',
+  navy: '#2e3d63',
+  blue: '#8db8e2',
+  red: '#d8423c',
+  pink: '#f2a2bb',
+  maroon: '#7a2638',
+  purple: '#7b58a8',
   green: '#4f9c64',
-  yellow: '#f0b043',
+  olive: '#83824a',
+  yellow: '#f3cd48',
+  orange: '#ec853a',
+  brown: '#8b5a37',
+  beige: '#e6d7b8',
+  // the patterns: the ground colour, then their marks drawn over it in shirt()
+  stripes: '#fbfaf6',
+  checks: '#c4443b',
   print: '#b9d3e6',
 };
-export const topColour = (value) => (value && value !== 'print' ? TOPS[value] : value === 'print' ? '#e0784f' : null);
+// the colour a pattern reads as from across the room (the family photo's shirt)
+const PATTERN_COLOUR = { stripes: '#2e3d63', checks: '#c4443b', print: '#e0784f' };
+export const topColour = (value) => PATTERN_COLOUR[value] ?? TOPS[value] ?? null;
+// tops dark enough that their shading needs a deeper ink than INK
+const DEEP_TOPS = new Set(['black', 'navy', 'maroon']);
 
 /** The cut: a softer shoulder and a waist for 'fem', a squarer shoulder for 'masc'. */
 const CUT = {
@@ -1038,8 +1053,28 @@ function shirt(g, value, S) {
     return;
   }
   solid(g, body, PAPER, true, 0.6);
-  // a white shirt is the paper itself; its folds and shadow do the work
-  if (value !== 'white') wash(g, body, col, { seed: s, alpha: 0.92, gran: 0.2, edge: 0.45, corner: 0.6 });
+  // a white shirt (and a striped one's ground) is the paper itself; its folds and shadow do the work
+  if (value !== 'white' && value !== 'stripes') wash(g, body, col, { seed: s, alpha: 0.92, gran: 0.2, edge: 0.45, corner: 0.6 });
+  if (value === 'stripes') {
+    // a breton: navy bands across the body, clipped to the shirt
+    g.save();
+    g.clip(curve(body, true, 0.6));
+    for (let k = 0, y = 146; y < 222; k++, y += 9) {
+      wash(g, rectPts(96, y, 108, 3.6), PATTERN_COLOUR.stripes, { seed: s + 10 + k, alpha: 0.9, gran: 0.1, edge: 0.25, dx: 0, dy: 0, amp: 0.3 });
+    }
+    g.restore();
+  }
+  if (value === 'checks') {
+    // a flannel: dark bands both ways over the red, and a fine light line between them
+    g.save();
+    g.clip(curve(body, true, 0.6));
+    for (let k = 0; k < 9; k++) {
+      wash(g, rectPts(98 + k * 12, 128, 4.6, 96), '#3a1f22', { seed: s + 10 + k, alpha: 0.42, gran: 0.1, edge: 0.2, dx: 0, dy: 0, amp: 0.2 });
+      wash(g, rectPts(96, 134 + k * 11, 108, 4.2), '#3a1f22', { seed: s + 20 + k, alpha: 0.42, gran: 0.1, edge: 0.2, dx: 0, dy: 0, amp: 0.2 });
+      pen(g, [[104.5 + k * 12, 128], [104.5 + k * 12, 224]], { w: 0.5, color: '#f3dccf', alpha: 0.6, seed: s + 30 + k, pressure: EVEN, rough: 0 });
+    }
+    g.restore();
+  }
   if (value === 'print') {
     // a loose floral print, clipped to the shirt
     g.save();
@@ -1054,10 +1089,11 @@ function shirt(g, value, S) {
     g.restore();
   }
   // form: shadow down the right side and under the chest, folds at the waist
-  const dark = value === 'black' ? '#15161a' : INK;
+  const deep = DEEP_TOPS.has(value);
+  const dark = deep ? '#15161a' : INK;
   hatch(g, curve(body, true, 0.6), [100, 130, 100, 92], {
     seed: s + 2, color: dark, gap: 2.8, len: 7, width: 0.55,
-    alpha: value === 'black' ? 0.55 : 0.45,
+    alpha: deep ? 0.55 : 0.45,
     tone: (px, py) => (px > 168 ? 0.65 : 0) + (py > 200 ? 0.25 : 0) + (px > 186 && py < 175 ? 0.3 : 0),
     dir: (px) => 1.2 + (px - 150) * 0.004,
   });
@@ -1185,6 +1221,87 @@ const SHOES = {
       for (let k = 0; k < 4; k++) pen(g, [[21 + k * 1.6, 15.5 + k * 0.35], [21.6 + k * 1.6, 18.6]], { w: 0.5, alpha: 0.6, seed: s + 10 + k, pressure: EVEN, rough: 0 });
     },
   },
+  canvas: {
+    // low and narrow, a rubber toe cap and a tall white sole with a stripe round it
+    upper: [[-6, 4], [5, 4], [7, 9], [16, 11.5], [23, 13.5], [27, 16.5], [26, 18.5], [-9, 18.5], [-9, 10]],
+    sole: [[-9.5, 16.5], [27.8, 16.5], [27.2, 21.5], [-9.5, 21.5]],
+    color: '#c8433b', soleColor: '#ffffff',
+    details(g, s) {
+      for (let k = 0; k < 3; k++) pen(g, [[6 + k * 3, 6.6 + k * 1.4], [9.6 + k * 3, 8.8 + k * 1.4]], { w: 0.8, color: '#ffffff', seed: s + 10 + k, pressure: EVEN, rough: 0 });
+      pen(g, [[20, 16.5], [23, 13.6], [27, 16.5]], { w: 0.8, alpha: 0.75, seed: s + 14, pressure: EVEN, rough: 0 });
+      pen(g, [[-9, 19], [27, 19]], { w: 0.9, color: '#c8433b', alpha: 0.85, seed: s + 15, pressure: EVEN, rough: 0 });
+    },
+  },
+  loafers: {
+    // a low slip-on: the instep shows, a strap across it with its slot, moccasin stitching on the toe
+    upper: [[-6, 6], [3, 7], [9, 11], [18, 13.5], [26, 16], [27.5, 19], [-8, 19], [-8, 11]],
+    sole: [[-8.5, 18.5], [27.8, 18.5], [27.2, 21], [-1, 21], [-1, 22], [-8.5, 22]],
+    color: '#7a4529', soleColor: '#2a1d16',
+    details(g, s) {
+      pen(g, [[5, 9.4], [12, 12.4]], { w: 1.6, color: '#4a2716', alpha: 0.85, seed: s + 10, pressure: EVEN, rough: 0 });
+      pen(g, [[7.6, 10.4], [9.6, 11.2]], { w: 0.6, color: '#f3e2cf', alpha: 0.9, seed: s + 11, pressure: EVEN, rough: 0 });
+      pen(g, [[13, 13], [17, 12.6], [22, 14], [25.6, 16.4]], { w: 0.5, color: '#f3e2cf', alpha: 0.8, seed: s + 12, pressure: EVEN, rough: 0 });
+      pen(g, [[15, 14.4], [22, 16.2]], { w: 1, color: '#ffffff', alpha: 0.6, seed: s + 13, pressure: TAPER, rough: 0 });
+    },
+  },
+  slides: {
+    // one wide band over the instep, toes out, a thin flat sole
+    foot: [[-5, 0], [5, 0], [6, 8], [15, 13], [24, 15], [27, 18], [26, 19.5], [-7, 19.5], [-7, 10]],
+    upper: [[2, 7], [13, 10.5], [15, 19.5], [0, 19.5]],
+    sole: [[-8.5, 19.5], [28, 19.5], [27.5, 22], [-8.5, 22]],
+    color: '#2f5fa8', soleColor: '#2b2f3a',
+    details(g, s) {
+      for (let k = 0; k < 2; k++) pen(g, [[4.4 + k * 3.6, 8.6 + k * 1.1], [3.4 + k * 3.8, 19]], { w: 1, color: '#ffffff', alpha: 0.9, seed: s + 10 + k, pressure: EVEN, rough: 0 });
+      for (let k = 0; k < 4; k++) pen(g, [[21 + k * 1.6, 15.5 + k * 0.35], [21.6 + k * 1.6, 18.6]], { w: 0.5, alpha: 0.6, seed: s + 14 + k, pressure: EVEN, rough: 0 });
+    },
+  },
+  kolhapuri: {
+    // flat tan leather: a broad woven strap, a toe loop round the big toe
+    foot: [[-5, 0], [5, 0], [6, 8], [15, 13], [24, 15], [27, 18], [26, 19.5], [-7, 19.5], [-7, 10]],
+    upper: [[5, 9.6], [15, 12.6], [16.5, 19.5], [4, 19.5]],
+    sole: [[-8.5, 19], [28.5, 19], [28, 22.5], [-8.5, 22.5]],
+    color: '#b8783e', soleColor: '#8a5428',
+    details(g, s) {
+      // the braid: a zigzag down the strap
+      pen(g, [[6, 12], [9, 11.4], [7, 14.4], [10.6, 13.4], [8, 17], [12, 15.6], [9.6, 19]], { w: 0.6, color: '#f3dcb8', alpha: 0.9, seed: s + 10, pressure: EVEN, rough: 0 });
+      pen(g, ellPts(22.5, 15.8, 2.2, 1.6, 10), { w: 0.9, close: true, color: '#8a5428', seed: s + 11, rough: 0 });
+      for (let k = 0; k < 9; k++) pen(g, [[-7 + k * 4, 20.6], [-5.6 + k * 4, 20.6]], { w: 0.5, color: '#f3dcb8', alpha: 0.8, seed: s + 12 + k, pressure: EVEN, rough: 0 });
+    },
+  },
+  crocs: {
+    // chunky and round, the same colour all over, holes on top and the strap round the heel
+    upper: [[-7, 2], [6, 2], [10, 6], [19, 8], [26.5, 11.5], [29, 16.5], [27.5, 20.5], [-9.5, 20.5], [-10, 8]],
+    sole: [[-10, 19.5], [29, 19.5], [28.4, 23], [-10, 23]],
+    color: '#5aa86f', soleColor: '#3d7d4f',
+    details(g, s) {
+      for (let k = 0; k < 6; k++) pen(g, ellPts(11 + (k % 3) * 4.4, 9.4 + Math.floor(k / 3) * 3.4 + (k % 3) * 0.9, 0.9, 0.8, 8), { w: 0.6, close: true, color: '#1f4a2c', alpha: 0.85, seed: s + 10 + k, rough: 0 });
+      pen(g, [[-9.5, 9], [-3, 12.6], [3, 10]], { w: 1.4, color: '#3d7d4f', alpha: 0.9, seed: s + 17, pressure: EVEN, rough: 0 });
+      thing(g, ellPts(3, 10, 1.4, 1.4, 8), { fill: '#3d7d4f', seed: s + 18, w: 0.6, sketch: 0 });
+    },
+  },
+  flats: {
+    // a ballet flat: cut low so the top of the foot shows, a little bow at the toe
+    foot: [[-5, 0], [5, 0], [6, 8], [15, 13], [24, 15], [27, 18], [26, 19.5], [-7, 19.5], [-7, 10]],
+    upper: [[-7, 10.5], [-1, 10.5], [7, 13], [17, 14.6], [25, 15.8], [27.8, 18.6], [26.6, 20], [-7.5, 20]],
+    sole: [[-8, 19.5], [28, 19.5], [27.4, 21.4], [-8, 21.4]],
+    color: '#33333b', soleColor: '#1d1d22',
+    details(g, s) {
+      thing(g, [[15.5, 13.2], [18.4, 14.6], [15.5, 16], [16.6, 14.6]], { fill: '#33333b', seed: s + 10, w: 0.7, sketch: 0 });
+      thing(g, [[21.2, 13.6], [18.4, 14.6], [21.2, 15.8], [20.2, 14.6]], { fill: '#33333b', seed: s + 11, w: 0.7, sketch: 0 });
+      pen(g, [[19, 16.6], [24, 17.6]], { w: 0.9, color: '#ffffff', alpha: 0.6, seed: s + 12, pressure: TAPER, rough: 0 });
+    },
+  },
+  wedges: {
+    // the foot tipped up like a heel, but on one solid cork wedge; a strap over the toes and round the ankle
+    foot: [[-5, -1], [5, -1], [6, 4], [12, 10], [21, 15], [27, 18.5], [24, 20], [12, 16], [2, 12], [-5, 9]],
+    upper: [[13, 10.4], [21.5, 14.4], [23.5, 19.8], [12.5, 16.4]],
+    sole: [[-6.5, 8.4], [2, 11.6], [12, 15.6], [24, 19.6], [27.8, 18.8], [27.4, 22.4], [-6.5, 22.4]],
+    color: '#e7d2a6', soleColor: '#c49a5c',
+    details(g, s) {
+      pen(g, [[-5.4, 3.2], [5.6, 3.2]], { w: 1.8, color: '#a5784a', alpha: 0.95, seed: s + 10, pressure: EVEN, rough: 0 });
+      for (let k = 0; k < 5; k++) pen(g, [[-4 + k * 6, 14 + k * 1.4], [-2 + k * 6, 21.2]], { w: 0.5, color: '#8a6235', alpha: 0.55, seed: s + 11 + k, pressure: EVEN, rough: 0.3 });
+    },
+  },
   heels: {
     foot: [[-5, -1], [5, -1], [6, 4], [12, 10], [21, 15], [27, 18.5], [24, 20], [12, 16], [2, 12], [-5, 9]],
     upper: [[-6, 2], [-2, 3], [3, 7], [10, 12], [20, 15.5], [27, 18.5], [25, 20.2], [13, 17.2], [2, 13.5], [-6, 12]],
@@ -1288,7 +1405,17 @@ const DRINKS = {
     pen(g, ellPts(0, 6.5, 5.5, 1.3, 12), { w: 0.9, close: true, seed: s + 3, rough: 0 });
     pen(g, [[-5, -28], [-5.4, -21]], { w: 0.9, color: '#ffffff', alpha: 0.85, seed: s + 4, pressure: TAPER, rough: 0 });
   },
-  clear(g, s) {
+  whitewine(g, s) {
+    const bowl = [[-7, -30], [7, -30], [7.5, -22], [4.5, -15.5], [0, -14], [-4.5, -15.5], [-7.5, -22]];
+    solid(g, bowl, '#fbf7ec');
+    wash(g, [[-7.2, -23.5], [7.2, -23.5], [4.4, -16], [0, -14.6], [-4.4, -16]], '#efd98a', { seed: s, alpha: 0.95, gran: 0.25, edge: 0.4, dx: 0, dy: 0, amp: 0.3 });
+    pen(g, [[-7.2, -23.5], [7.2, -23.5]], { w: 0.6, color: '#c9a94a', alpha: 0.8, seed: s + 5, pressure: EVEN, rough: 0 });
+    line(g, bowl, { close: true, w: 1.1, seed: s + 1, sketch: 0 });
+    line(g, [[0, -14], [0, 6]], { w: 1, seed: s + 2, pressure: EVEN, sketch: 0 });
+    pen(g, ellPts(0, 6.5, 5.5, 1.3, 12), { w: 0.9, close: true, seed: s + 3, rough: 0 });
+    pen(g, [[-5, -28], [-5.4, -21]], { w: 0.9, color: '#ffffff', alpha: 0.85, seed: s + 4, pressure: TAPER, rough: 0 });
+  },
+  gin(g, s) {
     const glass = [[-5.6, -30], [5.6, -30], [5.4, 3], [-5.4, 3]];
     solid(g, glass, '#fbfcfa');
     wash(g, [[-5.2, -24], [5.2, -24], [5, 2.6], [-5, 2.6]], '#cfe6ea', { seed: s, alpha: 0.9, gran: 0.15, edge: 0.4, dx: 0, dy: 0, amp: 0.3 });
@@ -1298,7 +1425,59 @@ const DRINKS = {
     line(g, glass, { close: true, w: 1.1, seed: s + 1, sketch: 0, corner: 0.6 });
     pen(g, [[-3.6, -27], [-3.4, -4]], { w: 0.9, color: '#ffffff', alpha: 0.9, seed: s + 3, pressure: TAPER, rough: 0 });
   },
-  brown(g, s) {
+  vodka(g, s) {
+    // a rocks glass like the whisky's, but clear, more ice, a lemon wedge on the rim
+    const glass = [[-7.4, -16], [7.4, -16], [6.8, 3], [-6.8, 3]];
+    solid(g, glass, '#fbfcfa');
+    wash(g, [[-7, -9], [7, -9], [6.6, 2.6], [-6.6, 2.6]], '#e3f0f2', { seed: s, alpha: 0.9, gran: 0.15, edge: 0.4, dx: 0, dy: 0, amp: 0.3 });
+    for (let k = 0; k < 3; k++) thing(g, rectPts(-5.6 + k * 3.6, -12 + (k % 2) * 3, 4.4, 4.4), { fill: '#f4f8f8', color: '#d9e9ee', seed: s + 2 + k, w: 0.6, sketch: 0, corner: 0.5, alpha: 0.6 });
+    thing(g, [[1.5, -16], [7, -21.5], [9.2, -16.4]], { fill: '#fbf1a6', color: '#f1d23c', seed: s + 6, w: 0.8, sketch: 0 });
+    line(g, glass, { close: true, w: 1.25, seed: s + 1, sketch: 0, corner: 0.6 });
+    pen(g, [[-7, 1.2], [7, 1.2]], { w: 1.4, alpha: 0.35, seed: s + 4, pressure: EVEN, rough: 0 });
+    pen(g, [[-5.4, -14], [-5, -1]], { w: 0.9, color: '#ffffff', alpha: 0.85, seed: s + 3, pressure: TAPER, rough: 0 });
+  },
+  rum(g, s) {
+    // rum and cola in a tall glass: dark, fizzing, a lime wedge
+    const glass = [[-5.6, -32], [5.6, -32], [5.2, 3], [-5.2, 3]];
+    solid(g, glass, '#fbf7ec');
+    wash(g, [[-5.2, -26], [5.2, -26], [5, 2.6], [-5, 2.6]], '#5b2d1a', { seed: s, alpha: 0.95, gran: 0.25, edge: 0.4, dx: 0, dy: 0, amp: 0.3 });
+    for (let k = 0; k < 6; k++) pen(g, ellPts(-2.6 + (k % 3) * 2.5, -21 + Math.floor(k / 3) * 8 + (k % 2), 0.6, 0.6, 6), { w: 0.5, close: true, color: '#d9b08f', seed: s + 5 + k, rough: 0 });
+    thing(g, [[-1, -32], [-7.5, -38], [-9.5, -32.5]], { fill: '#d7ec9b', color: '#8cc14a', seed: s + 12, w: 0.8, sketch: 0 });
+    line(g, glass, { close: true, w: 1.1, seed: s + 1, sketch: 0, corner: 0.6 });
+    pen(g, [[-3.6, -29], [-3.4, -4]], { w: 0.9, color: '#ffffff', alpha: 0.7, seed: s + 3, pressure: TAPER, rough: 0 });
+  },
+  brandy(g, s) {
+    // a snifter: a wide balloon on a short stem, a little amber in the bottom
+    const bowl = [[-5.6, -28], [5.6, -28], [8.6, -21], [8, -14], [4, -10], [0, -9.4], [-4, -10], [-8, -14], [-8.6, -21]];
+    solid(g, bowl, '#fbf7ec');
+    wash(g, [[-8.2, -16.5], [8.2, -16.5], [4, -10.6], [0, -10], [-4, -10.6]], '#a9551f', { seed: s, alpha: 0.95, gran: 0.3, edge: 0.45, dx: 0, dy: 0, amp: 0.3 });
+    line(g, bowl, { close: true, w: 1.15, seed: s + 1, sketch: 0, corner: 0.8 });
+    line(g, [[0, -9.4], [0, 3]], { w: 1.1, seed: s + 2, pressure: EVEN, sketch: 0 });
+    pen(g, ellPts(0, 3.6, 5, 1.3, 12), { w: 0.9, close: true, seed: s + 3, rough: 0 });
+    pen(g, [[-6.4, -24], [-7, -17]], { w: 0.9, color: '#ffffff', alpha: 0.85, seed: s + 4, pressure: TAPER, rough: 0 });
+  },
+  tequila(g, s) {
+    // a shot glass with a salted rim, a lime wedge balanced on top
+    const glass = [[-5, -18], [5, -18], [3.8, 3], [-3.8, 3]];
+    solid(g, glass, '#fbf7ec');
+    wash(g, [[-4.7, -13], [4.7, -13], [3.7, 2.6], [-3.7, 2.6]], '#e7b54a', { seed: s, alpha: 0.95, gran: 0.25, edge: 0.4, dx: 0, dy: 0, amp: 0.3 });
+    line(g, glass, { close: true, w: 1.2, seed: s + 1, sketch: 0, corner: 0.5 });
+    pen(g, [[-3.6, 1.6], [3.6, 1.6]], { w: 1.6, alpha: 0.3, seed: s + 2, pressure: EVEN, rough: 0 });
+    for (let k = 0; k < 7; k++) pen(g, ellPts(-4.6 + k * 1.5, -18.4 + (k % 2) * 0.6, 0.5, 0.5, 5), { w: 0.6, close: true, color: '#9aa0a6', seed: s + 5 + k, rough: 0 });
+    thing(g, [[-2, -19], [4.6, -25.4], [7.4, -19.4]], { fill: '#d7ec9b', color: '#8cc14a', seed: s + 13, w: 0.8, sketch: 0 });
+  },
+  feni(g, s) {
+    // Goa's own: a small peg glass, cloudy-clear, a lime slice and a green chilli
+    const glass = [[-5.4, -18], [5.4, -18], [4.8, 3], [-4.8, 3]];
+    solid(g, glass, '#fbfcfa');
+    wash(g, [[-5.1, -12], [5.1, -12], [4.6, 2.6], [-4.6, 2.6]], '#e9ecd8', { seed: s, alpha: 0.95, gran: 0.35, edge: 0.4, dx: 0, dy: 0, amp: 0.3 });
+    thing(g, ellPts(-4.4, -18.6, 3.8, 3.8, 12), { fill: '#e4f2b0', color: '#9cc94e', seed: s + 6, w: 0.7, sketch: 0 });
+    pen(g, [[-4.4, -18.6], [-4.4, -21.6]], { w: 0.4, color: '#5f8a2a', alpha: 0.7, seed: s + 7, pressure: EVEN, rough: 0 });
+    pen(g, [[1.4, -17], [4, -21], [8.6, -25.4]], { w: 1.8, color: '#3f8f3a', seed: s + 8, pressure: TAPER, rough: 0 });
+    line(g, glass, { close: true, w: 1.2, seed: s + 1, sketch: 0, corner: 0.6 });
+    pen(g, [[-3.6, -15], [-3.3, -2]], { w: 0.9, color: '#ffffff', alpha: 0.85, seed: s + 3, pressure: TAPER, rough: 0 });
+  },
+  whisky(g, s) {
     const glass = [[-7.4, -14], [7.4, -14], [6.8, 3], [-6.8, 3]];
     solid(g, glass, '#fbf7ec');
     wash(g, [[-7, -7.5], [7, -7.5], [6.6, 2.6], [-6.6, 2.6]], '#b8692a', { seed: s, alpha: 0.95, gran: 0.3, edge: 0.45, dx: 0, dy: 0, amp: 0.3 });
@@ -1331,6 +1510,15 @@ const DRINKS = {
     thing(g, ellPts(-5.6, -30.6, 4.4, 4.4, 12), { fill: '#fde3b0', color: '#f3a13b', seed: s + 15, w: 0.7, sketch: 0 });
     line(g, glass, { close: true, w: 1.1, seed: s + 1, sketch: 0, corner: 0.6 });
     pen(g, [[-3.6, -27], [-3.4, -4]], { w: 0.9, color: '#ffffff', alpha: 0.85, seed: s + 3, pressure: TAPER, rough: 0 });
+  },
+  water(g, s) {
+    // a plain tall glass of water: no ice, no garnish, nothing in it to talk about
+    const glass = [[-5.4, -28], [5.4, -28], [4.8, 3], [-4.8, 3]];
+    solid(g, glass, '#fbfcfa');
+    wash(g, [[-5.1, -20], [5.1, -20], [4.6, 2.6], [-4.6, 2.6]], '#d6ebf4', { seed: s, alpha: 0.8, gran: 0.1, edge: 0.4, dx: 0, dy: 0, amp: 0.3 });
+    pen(g, [[-5.1, -20], [5.1, -20]], { w: 0.7, color: '#8fb8d0', alpha: 0.9, seed: s + 2, pressure: EVEN, rough: 0 });
+    line(g, glass, { close: true, w: 1.1, seed: s + 1, sketch: 0, corner: 0.6 });
+    pen(g, [[-3.4, -25], [-3.1, -3]], { w: 0.9, color: '#ffffff', alpha: 0.9, seed: s + 3, pressure: TAPER, rough: 0 });
   },
 };
 
