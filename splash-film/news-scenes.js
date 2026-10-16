@@ -56,6 +56,23 @@ function marble(c) {
   gwash(c, rectPath(0, 0, W, H), 0, 0, W, H, [[0, alpha('#ffffff', .0)], [1, alpha('#c7d3e6', .7)]]);
   for (let k = 0; k < 9; k++) { const r = rng(400 + k), y = r() * H, pts = []; for (let x = -40; x <= W + 40; x += 120) pts.push([x, y + Math.sin(x / 260 + k) * 60 + (r() - .5) * 40]); ln(c, pts, 1.6 + r() * 2, 410 + k, false, alpha('#8FA3C2', .5), { amp: 6 }); }
 }
+// The morning news on a phone screen (2026-10-16, replacing the board): who the Killers killed, or nobody.
+function newsScreen(g, sx, sy, sw, sh, o = {}) {
+  g.save(); g.fillStyle = '#f2f5fa'; g.fillRect(sx, sy, sw, sh); g.restore();
+  g.save(); g.fillStyle = '#1d3f80'; g.fillRect(sx, sy, sw, sh * .12); g.restore();
+  textOn(g, 'MORNING NEWS', sx + sw / 2, sy + sh * .06, sw * .08, { weight: 800 });
+  textOn(g, 'NIGHT 2', sx + sw / 2, sy + sh * .2, sw * .07, { weight: 700, col: '#1d3f80' });
+  // the card: a face in a circle, a name scribble, then the verdict
+  const cx = sx + sw / 2, cy = sy + sh * .42, r = sw * .16;
+  solid(g, rrPts(sx + sw * .07, sy + sh * .27, sw * .86, sh * .34, 18), o.taken ? '#3a1420' : '#e4ebf6', o.seed ?? 1, { w: 3, lineCol: alpha(INK, .5) });
+  solid(g, ellPts(cx, cy, r, r, 0, 40), o.taken ? '#c9cfda' : '#ffffff', (o.seed ?? 1) + 1, { w: 3, lineCol: alpha(INK, .6) });
+  if (o.taken) {
+    textOn(g, 'KILLED', cx, sy + sh * .555, sw * .12, { weight: 900, face: 'Impact, "Arial Black", sans-serif', col: RED });
+  } else {
+    textOn(g, 'NOBODY KILLED', cx, sy + sh * .555, sw * .085, { weight: 800, col: '#1d3f80' });
+  }
+  squiggleText(g, sx + sw * .1, sy + sh * .7, sw * .8, 4, { color: alpha(INK, .45), seed: (o.seed ?? 1) + 2, amp: sh * .012, width: 3, lineH: sh * .06 });
+}
 // The board on a phone screen: rows of blurred names and gold scores.
 function boardScreen(g, sx, sy, sw, sh, rows, o = {}) {
   g.save(); g.fillStyle = '#f2f5fa'; g.fillRect(sx, sy, sw, sh); g.restore();
@@ -732,7 +749,7 @@ function sceneRingsAgain(c) {
 }
 
 // ---------------------------------------------------------------- the room's own stories
-function cafeMorning(c, rows, o = {}) {
+function cafeMorning(c, o = {}) {
   marble(c);
   rwash(c, 300, 100, 900, alpha(LAMP_HI, .55), 1, 'screen');
   teacup(c, 360, 900, 1.2, 2200, '#ffffff'); steam(c, 360, 770, 2201, 140);
@@ -743,12 +760,12 @@ function cafeMorning(c, rows, o = {}) {
   handset(c, 360, 300, 170, 310, -.6, 2211, null, { back: true });
   const PX = 960, PY = 540;
   c.save(); c.fillStyle = 'rgba(36,50,79,.25)'; c.fill(roundRectPath(PX - 200 + 24, PY - 380 + 30, 400, 760, 64)); c.restore();
-  handset(c, PX, PY, 400, 760, .04, 2220, (g, sx, sy, sw, sh) => boardScreen(g, sx, sy, sw, sh, rows, { seed: 2221, title: o.title }));
+  handset(c, PX, PY, 400, 760, .04, 2220, (g, sx, sy, sw, sh) => newsScreen(g, sx, sy, sw, sh, { seed: 2221, taken: o.taken }));
   printFinish(c, .1);
 }
-function sceneDawnTaken(c) { cafeMorning(c, [{ score: 44 }, { score: 39 }, { score: 31 }, { score: 26 }, { score: 18 }, { score: 3, taken: true, stamp: 'KILLED' }]); }
+function sceneDawnTaken(c) { cafeMorning(c, { taken: true }); }
 function sceneDawnClear(c) {
-  cafeMorning(c, [{ score: 44 }, { score: 39 }, { score: 31 }, { score: 26 }, { score: 18 }, { score: 12 }]);
+  cafeMorning(c, { taken: false });
   rwash(c, 960, 540, 760, alpha(LAMP_HI, .35), 1, 'screen');
 }
 // The vote: the room's raised hands, and one guest walking out through the lit door.

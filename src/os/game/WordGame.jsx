@@ -34,7 +34,7 @@ const DO_NOW = {
   read: 'Peek at your card. Keep it to yourself.',
   clue: 'Post one word that fits. Never the word itself.',
   pick: `Tap the ${WORD_PICKS} clues that fit best.`,
-  done: 'Time’s up. The board posts in a moment.',
+  done: 'Time’s up. The word turns over in a moment.',
 };
 
 /** When the cards are dealt: the end of the alarm plus the game's reveal hold, or the game's own reveal. */
@@ -52,7 +52,7 @@ export default function WordGame({ ctx, onClose, dayGame }) {
   const { step, left } = useDayStep(game, 'word');
   const after = !['alarm', 'game'].includes(game.phase);
   const card = inbox.find((d) => d.cycle === c && d.step === 'day' && d.kind === 'word') ?? null;
-  // Ghosts play the whole game too (2026-10-15); their scores go on the ghost board.
+  // Ghosts play the whole game too (2026-10-15); only the living can make the top three.
   const playing = ['alive', 'ghost'].includes(me.status);
   const wallList = useDayWall(gid, 'clues', c);
   const wall = wallList ?? [];
@@ -220,7 +220,7 @@ function Reveal({ gid, c, word, hint }) {
     return (
       <div className="os-wb-reveal">
         <p className="os-wb-reveal__label">Time’s up</p>
-        <p className="os-wb-reveal__wait">Posting the board…</p>
+        <p className="os-wb-reveal__wait">Turning the card over…</p>
       </div>
     );
   }

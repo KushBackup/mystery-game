@@ -1,6 +1,7 @@
 import React from 'react';
 import PlayerApp from './components/game/PlayerApp';
 import HostApp from './components/host/HostApp';
+import { HOST_ROUTE } from './firebase/app';
 
 /**
  * Killers Night. `/host` (or `?host`) is the console; everything else is a
@@ -8,10 +9,5 @@ import HostApp from './components/host/HostApp';
  * player app: the host plays no role and sees every secret.
  */
 export default function KillersApp() {
-  const path = location.pathname.replace(/\/+$/, '');
-  const params = new URLSearchParams(location.search);
-  // On GitHub Pages a direct hit on /mystery-game/host is a 404, which
-  // public/404.html bounces to /mystery-game/?route=/host.
-  const isHost = path.endsWith('/host') || params.has('host') || params.get('route')?.replace(/\/+$/, '') === '/host';
-  return isHost ? <HostApp /> : <PlayerApp />;
+  return HOST_ROUTE ? <HostApp /> : <PlayerApp />;
 }

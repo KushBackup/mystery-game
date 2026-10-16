@@ -12,7 +12,7 @@ import { clueWords } from '../../data/packs/index.js';
  *
  *   Top      the masthead, a crawl of the day's headlines, the lead story, a
  *            "just in" from the room, and the next few stories.
- *   The Room the room's own events (each morning's board, each vote), printed
+ *   The Room the room's own events (each morning's news, each vote), printed
  *            as articles.
  *   Panjim   the authored world stories, grouped by day.
  *

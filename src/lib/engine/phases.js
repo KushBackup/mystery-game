@@ -1,13 +1,15 @@
 /**
  * The shape of the evening: every phase, how long it lasts, what comes next.
  *
- *   lobby → casting → [ night → (recruit) → alarm → game → dawn →
+ *   lobby → casting → [ night → (recruit) → dawn → alarm → game →
  *   investigation → roundtable → (revote) → banish ] × cycles → endgame → finale
  *
- * The morning (DEEP BLUE): the night's outcome is decided when the night locks,
- * but nobody dies yet. The alarm rings on every phone, the whole room plays
- * the day's run, and only when the game locks does the host read the scores
- * and apply the deaths (engine/morning.js). Dawn is the leaderboard reveal.
+ * The morning (DEEP BLUE): the night's kill lands when the night locks, and
+ * dawn is the morning news on every phone: who the Killers killed, or that
+ * nobody died. Then the alarm rings and the whole room plays the day's game.
+ * The game kills nobody (user's call, 2026-10-15): when it locks, the host
+ * reads the scores and sends the top three a clue photo (engine/morning.js),
+ * and daylight opens.
  *
  * `*_locked` phases are the host's resolution beats. The host writes the
  * locked phase first, which makes the Firestore rules refuse any further
@@ -115,10 +117,10 @@ export function nextPlainPhase(game, { maxCycles = DEFAULT_CYCLES } = {}) {
       return { phase: PHASE.CASTING, cycle: 0 };
     case PHASE.CASTING:
       return { phase: PHASE.NIGHT, cycle: 1 };
+    case PHASE.DAWN:
+      return game.winner ? { phase: PHASE.FINALE, cycle: game.cycle } : { phase: PHASE.ALARM, cycle: game.cycle };
     case PHASE.ALARM:
       return { phase: PHASE.GAME, cycle: game.cycle };
-    case PHASE.DAWN:
-      return game.winner ? { phase: PHASE.FINALE, cycle: game.cycle } : { phase: PHASE.INVESTIGATION, cycle: game.cycle };
     case PHASE.INVESTIGATION:
       return { phase: PHASE.ROUNDTABLE, cycle: game.cycle };
     case PHASE.BANISH:

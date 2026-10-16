@@ -750,3 +750,27 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 **Why it was wrong:** "Don't explain the mechanism" is about tactics. The goal, the stakes and what each tool is for are what make a player want to act. Without them, the room can only wait to be told. Synonyms made one event read as several mechanics.
 
 **What to do instead:** Every surface that frames the game tells the same one-breath story (who, what happens, your goal). Keep one word per idea: "killed" is the only death word. Give every action a reason a player feels: the score is a shield, a clue needs a partner, the vote needs an accuser. Leave the tactics for the room to discover.
+
+## 2026-10-15 — The vote had no home-screen icon, and the playtest couldn't find it
+
+**What happened:** For the 16 Oct clarity pass Claude left Vote off the home screen on purpose (it was reachable from the NowCard, a banner and a bar pinned in the Room chat) and put player-called accusations in front of it. In a playtest the same evening players said the vote was "inside the messaging app and very difficult to find", and the user removed accusations, the lowest-score kill and the Board app.
+
+**Why it was wrong:** The one action every player must take each day was hidden behind indirect doors, and a second mechanic (accuse + second + trial) was stacked on top of it without being asked for in that form. "Players discover the game" applies to tactics, not to finding the button for the core action.
+
+**What to do instead:** Every action the whole room must take gets its own home-screen icon with a badge. Before adding a gate in front of a core action (a trial, a step, a hidden entry), playtest the plain version first, and offer the gate rather than ship it.
+
+## 2026-10-16 — The host console shared one Firebase session with guest tabs in the same browser
+
+**What happened:** With Auto on, the console showed "Autopilot retrying: evaluation error at L125:24 for 'list' @ L125, Null value error", then the Firestore SDK crashed with `INTERNAL ASSERTION FAILED: Unexpected state (ID: b815 / ca9)`. The rules were fine: the same `roles` list works with the host's Google token and fails, with exactly that message, with a bound guest's anonymous token. The console and the guest phone were the same Firebase app (`killers`), so they shared one stored auth session and one Firestore cache in the browser. A guest tab signing in anonymously (or a `?tab` tab moving the session to sessionStorage) swapped the console's identity under it.
+
+**Why it was wrong:** Firebase stores the auth session and the IndexedDB cache per app name, not per page. Two roles with different identities on one app name will clobber each other in the same browser.
+
+**What to do instead:** The console is now its own app (`killers-host`, chosen by `HOST_ROUTE` in src/firebase/app.js). To diagnose a rules error, replay the query against the emulator over REST with an unsigned `alg: none` token for each candidate user; the user whose token reproduces the exact message is the one that sent it.
+
+## 2026-10-16 — Host bots took every emulator connection, and the console sat on "Sending…"
+
+**What happened:** On the emulator, after a few "Add bot" presses, every console write (and the next bot) hung on "Sending…" for good. The emulator itself answered in 70 ms. Each host bot is its own Firestore instance, and an idle Firestore keeps a stream open to the server for about a minute; the bots' 60 s heartbeat renewed it forever. The emulator speaks HTTP/1.1, where Chrome allows six connections per host:port across all tabs. Splitting the console onto its own `killers-host` app (the lesson above) made it worse: the console used to share the guest tabs' connection through the multi-tab IndexedDB cache, and now it needs its own.
+
+**Why it was wrong:** Firestore connections were treated as free. Over HTTP/1.1 they are a hard budget of six per browser, and every separate Firebase app spends from it.
+
+**What to do instead:** A host bot is connected only while it works: `online()` in src/firebase/hostBots.js turns its network on, runs the work, and turns it off (`driveBots` takes it as `around`). Anything new a bot does from the browser must go through `online()`. When a local write hangs but the emulator answers curl quickly, check DevTools → Network for requests to :8080 stuck in "Stalled".

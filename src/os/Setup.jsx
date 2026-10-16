@@ -159,14 +159,14 @@ export default function Setup({ gid, uid, late }) {
             <button
               key={o.id}
               type="button"
-              className="os-chip"
+              className={o.sponsor ? 'os-chip os-chip--sponsor' : 'os-chip'}
               aria-pressed={picked === o.id}
               onClick={() => {
                 sfxTap();
                 setAnswers((a) => ({ ...a, [trait.id]: o.id }));
               }}
             >
-              {o.label}
+              {o.sponsor ? <SponsorChip label={o.label} /> : o.label}
             </button>
           ))}
         </div>
@@ -257,9 +257,35 @@ function photoSize(step) {
   if (step === 'name') return photoWidth(230);
   if (typeof step === 'number') {
     const q = QUESTIONS[step];
-    return photoWidth(150 + Math.ceil(q.options.length / chipCols(q)) * 52);
+    // a sponsor's chip takes a whole row of its own
+    const wide = q.options.filter((o) => o.sponsor).length;
+    return photoWidth(150 + (wide + Math.ceil((q.options.length - wide) / chipCols(q))) * 52);
   }
   return photoWidth(120);
+}
+
+/**
+ * The sponsor's option (MiHo Soju on the drinks): a whole row, the bottle's
+ * green glass and cream label, a small bottle, and "Tonight's sponsor". It is
+ * only a look: tapping it answers the question like any other chip.
+ */
+function SponsorChip({ label }) {
+  return (
+    <span className="os-chip__sponsor">
+      <svg className="os-chip__bottle" viewBox="0 0 14 40" aria-hidden="true">
+        <path d="M5.2 0.6h3.6v4.6H5.2z" fill="#d08a63" />
+        <path d="M5.4 5.2h3.2v6.4c0 1.6 4.4 3.6 4.4 7.2V38c0 .9-.7 1.4-1.6 1.4H2.6c-.9 0-1.6-.5-1.6-1.4V18.8c0-3.6 4.4-5.6 4.4-7.2z" fill="#3c9a48" stroke="#1f5e2a" strokeWidth="0.8" />
+        <rect x="2" y="21" width="10" height="11" rx="0.8" fill="#f7efe0" />
+        <circle cx="6.4" cy="27.2" r="2.4" fill="#f29a6e" />
+        <path d="M6.6 24.8c.6-1.2 1.8-1.6 2.6-1.2-.4.9-1.4 1.4-2.6 1.2z" fill="#6aa84f" />
+        <path d="M2.6 19v16" stroke="#ffffff" strokeOpacity="0.55" strokeWidth="0.9" strokeLinecap="round" />
+      </svg>
+      <span className="flex flex-col items-start min-w-0">
+        <span className="os-chip__kicker">Tonight’s sponsor</span>
+        <span className="os-chip__brand">{label}</span>
+      </span>
+    </span>
+  );
 }
 
 /**
@@ -502,10 +528,9 @@ function Case({ onNext }) {
  */
 const CLAUSES = [
   'DEEP BLUE is on your phone now. You cannot delete it.',
-  'Every morning, everyone plays a quick game. The lowest score is killed.',
-  'Three of you are Killers. Each night they push one score to the bottom.',
-  'The top of the board is locked. Play well and the Killers can’t touch you.',
-  'Find clues, accuse a suspect, and vote. The room’s choice is killed.',
+  'Three of you are Killers. Each night they choose one guest to kill.',
+  'Every morning, everyone plays a quick game. The top 3 win a clue.',
+  'Find clues, then vote. Anyone can be voted for. The most votes is killed.',
   'If you are killed, keep your phone. You still play, as a ghost.',
   'Answer the next questions truthfully. The Killers answer them too, and every clue is about their answers.',
 ];
@@ -539,7 +564,7 @@ function Terms({ onAgree, onBack }) {
               </li>
             ))}
           </ol>
-          <p className="text-[12px] mt-4 text-os-steel">By tapping Agree you accept that the scores are final.</p>
+          <p className="text-[12px] mt-4 text-os-steel">By tapping Agree you accept that DEEP BLUE is always watching.</p>
         </div>
       </div>
     </AppFrame>

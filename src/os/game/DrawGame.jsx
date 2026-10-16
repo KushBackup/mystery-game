@@ -64,7 +64,7 @@ export default function DrawGame({ ctx, onClose, dayGame }) {
   const after = !['alarm', 'game'].includes(game.phase);
   const card = inbox.find((d) => d.cycle === c && d.step === 'day' && d.kind === 'draw') ?? null;
   const drawings = useDayWall(gid, 'drawings', c, step === 'guess' || step === 'done' || after);
-  // Ghosts draw and guess too (2026-10-15); their scores go on the ghost board.
+  // Ghosts draw and guess too (2026-10-15); only the living can make the top three.
   const playing = ['alive', 'ghost'].includes(me.status);
   const [replay, setReplay] = useState(false);
   const tutSeen = useSeen(`${gid}.tut.draw`, false);
@@ -368,7 +368,7 @@ function GuessStep({ gid, game, me, drawings, nameOf, mine }) {
         <p className="os-wb-head">All done</p>
         <p className="os-sb-done__score">{shownTotal}</p>
         <Filmstrip slots={slots} />
-        <p className="os-sb-done__line">{named} of {list.length} named. The board posts when time is up.</p>
+        <p className="os-sb-done__line">{named} of {list.length} named. The words turn over when time is up.</p>
         {mine && <Polaroid strokes={mine.strokes} size={150} sub="yours" tilt={noteLook(me.pid).tilt} mine />}
       </div>
     );
@@ -431,7 +431,7 @@ function Gallery({ drawings, words, me, nameOf, after }) {
       {!after && (
         <div className="os-wb-reveal">
           <p className="os-wb-reveal__label">Time’s up</p>
-          <p className="os-wb-reveal__wait">Posting the board…</p>
+          <p className="os-wb-reveal__wait">Turning the words over…</p>
         </div>
       )}
       <p className="os-wb-head">{after ? `Today’s drawings · ${inked.length}` : `The drawings · ${inked.length}`}</p>

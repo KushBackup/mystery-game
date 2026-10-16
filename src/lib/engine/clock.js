@@ -4,14 +4,15 @@
  * The host picks how long the evening should last (say two hours, from the
  * deal to the finale) and how many days. `planEvening` stretches the open
  * phases (night, investigation, the vote, the Endgame) to fill that time, and
- * picks one clock speed so that a game day runs from the 07:00 alarm to about
- * 22:00. Everything short and shaped (the alarm, the morning game, the board,
- * the verdict) keeps its real length, because its beats are timed in seconds.
+ * picks one clock speed so that a game day runs from the 07:00 morning news to
+ * about 22:00. Everything short and shaped (the morning news, the alarm, the
+ * morning game, the verdict) keeps its real length, because its beats are timed
+ * in seconds.
  *
  * The clock runs at that one speed, always faster than real time, with two
- * deliberate jumps: the night starts at 01:00 and the alarm rings at 07:00
- * (the room sleeps through the gap). It never runs backwards: a night that
- * runs late just rings the alarm late.
+ * deliberate jumps: the night starts at 01:00 and the morning news lands at
+ * 07:00 (the room sleeps through the gap). It never runs backwards: a night
+ * that runs late just brings the morning late.
  *
  * Storage. The host writes `clockAt` (game minutes since 00:00 on day 0) with
  * every phase, next to `phaseStartedAt`. Every phone reads the time as
@@ -33,7 +34,7 @@ export const DAY_MIN = 24 * 60;
 export const ANCHORS = Object.freeze({
   cast: 21 * 60, // day 0: the roles are dealt in the evening
   night: 60, // 01:00
-  alarm: 7 * 60, // 07:00
+  alarm: 7 * 60, // 07:00, the morning news (dawn); the name is kept for stored configs
   dusk: 22 * 60, // where a day's verdict should land
 });
 
@@ -49,9 +50,9 @@ function lengthOf(phase, durations, kind, intro = false) {
   return phaseMs(phase, durations, kind, intro) + revealLead(phase);
 }
 
-/** One day from the alarm to the verdict, in real ms, with the day's game. */
+/** One day from the morning news to the verdict, in real ms, with the day's game. */
 const dayLength = (durations, kind, intro) =>
-  [PHASE.ALARM, PHASE.GAME, PHASE.DAWN, PHASE.INVESTIGATION, PHASE.ROUNDTABLE, PHASE.BANISH]
+  [PHASE.DAWN, PHASE.ALARM, PHASE.GAME, PHASE.INVESTIGATION, PHASE.ROUNDTABLE, PHASE.BANISH]
     .reduce((n, p) => n + lengthOf(p, durations, kind, intro), 0);
 
 /**
@@ -102,7 +103,7 @@ export function clockNow(game, now) {
 
 /**
  * What `clockAt` to write when `game` moves into `phase` at `now`. The night
- * and the alarm jump forward to their anchors on day `cycle`; everything
+ * and the morning news (dawn) jump forward to their anchors on day `cycle`; everything
  * else carries on from where the clock is.
  */
 export function clockAtStart(game, phase, now, cycle = game?.cycle ?? 0) {
@@ -111,7 +112,7 @@ export function clockAtStart(game, phase, now, cycle = game?.cycle ?? 0) {
   const cur = clockNow(game, now) ?? 0;
   if (phase === PHASE.CASTING) return c.castAt;
   if (phase === PHASE.NIGHT) return Math.max(cycle * DAY_MIN + c.nightAt, cur);
-  if (phase === PHASE.ALARM) return Math.max(cycle * DAY_MIN + c.alarmAt, cur);
+  if (phase === PHASE.DAWN) return Math.max(cycle * DAY_MIN + c.alarmAt, cur);
   return cur;
 }
 
@@ -121,7 +122,7 @@ const PART = {
   alarm: 'alarm', game: 'game', game_locked: 'game', dawn: 'dawn', investigation: 'investigation',
   roundtable: 'roundtable', roundtable_locked: 'roundtable', revote: 'roundtable', revote_locked: 'roundtable', banish: 'banish',
 };
-const DAY_ORDER = ['night', 'alarm', 'game', 'dawn', 'investigation', 'roundtable', 'banish'];
+const DAY_ORDER = ['night', 'dawn', 'alarm', 'game', 'investigation', 'roundtable', 'banish'];
 
 /**
  * Today's schedule: `[{ id, at }]` in game minutes, in order, plus `end` (when
@@ -140,7 +141,7 @@ export function daySchedule(game, now) {
 
   const at = {};
   at.night = base + c.nightAt;
-  at.alarm = base + c.alarmAt;
+  at.dawn = base + c.alarmAt;
   for (let i = 2; i < DAY_ORDER.length; i++) at[DAY_ORDER[i]] = at[DAY_ORDER[i - 1]] + lenOf(DAY_ORDER[i - 1]);
   let end = at.banish + lenOf('banish');
 
@@ -150,8 +151,8 @@ export function daySchedule(game, now) {
   if (i >= 0 && typeof game.clockAt === 'number') {
     if (game.phase === part) at[part] = game.clockAt;
     let t = game.phaseEndsAt ? clockNow(game, game.phaseEndsAt) : clockNow(game, now);
-    // The night's end is the alarm's anchor, not a time of its own.
-    if (part === 'night') t = Math.max(t, at.alarm);
+    // The night's end is the morning's anchor, not a time of its own.
+    if (part === 'night') t = Math.max(t, at.dawn);
     for (let j = i + 1; j < DAY_ORDER.length; j++) {
       at[DAY_ORDER[j]] = t;
       t += lenOf(DAY_ORDER[j]);

@@ -14,7 +14,7 @@
  *   1. Role-neutral. Every phone shows exactly these slides. Sketch has no
  *      role in it at all: every living guest, Killers too, draws their own word.
  *   2. True to the engine: scoreDrawDay, DRAW_SHOW_MS, DRAW_ASSIGN and the
- *      step lengths (minigames.js), and the board's premise (morning.js; the
+ *      step lengths (minigames.js), and the top-three reward (morning.js; the
  *      Word tutorial's last slide says the same).
  *   3. Plain words, one idea a line, about 12 words a line.
  *   4. The tutorial's words (Teapot, Penguin, Cupcake, Windmill) are in no
@@ -43,7 +43,7 @@ export const FILM_SLIDES = Object.freeze([
   { id: 'draw', n: 3, title: `Draw it. You have ${DRAW_S} seconds.`, line: 'No letters, no numbers. Just draw.' },
   { id: 'guess', n: 4, title: 'Then guess other people’s drawings.', line: 'Type what you see. The faster you get it, the more it scores.' },
   { id: 'score', n: 5, title: 'Your drawing scores too.', line: '+30 every time someone guesses it. Draw clearly.' },
-  { id: 'board', n: 6, title: 'The lowest score on the board is killed.', line: 'Skip the game and you score 0. The top quarter is locked.' },
+  { id: 'top', n: 6, title: 'The top 3 each win a clue photo.', line: 'Nobody is killed in the morning game. Play well to win a clue.' },
 ].map((s) => ({ ...s, kind: 'film', clip: clip(s.n), poster: poster(s.n) })));
 
 // --- The practice drawing --------------------------------------------------------------

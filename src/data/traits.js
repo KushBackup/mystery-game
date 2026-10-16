@@ -115,6 +115,11 @@ export const TRAITS = [
     prompt: "What's your first drink tonight?",
     visible: false,
     options: [
+      // MiHo, the event's sponsor (2026-10-15): first, and drawn as a sponsor
+      // chip in Setup. `sponsor` is looks only; it clues like any other spirit.
+      // Flavoured soju is a clear distilled spirit at about 12%, so it sits in
+      // spirit and clear but not strong (strong is neat, hard liquor).
+      { id: 'soju', label: 'MiHo Soju', sponsor: true },
       { id: 'beer', label: 'Beer' },
       { id: 'wine', label: 'Red wine' },
       { id: 'whitewine', label: 'White / rosé wine' },
@@ -132,8 +137,8 @@ export const TRAITS = [
     groups: [
       { id: 'hops', members: ['beer'] },
       { id: 'grape', members: ['wine', 'whitewine'] },
-      { id: 'spirit', members: ['gin', 'vodka', 'rum', 'whisky', 'brandy', 'tequila', 'feni', 'cocktail'] },
-      { id: 'clear', members: ['gin', 'vodka', 'tequila', 'feni', 'cocktail'] },
+      { id: 'spirit', members: ['soju', 'gin', 'vodka', 'rum', 'whisky', 'brandy', 'tequila', 'feni', 'cocktail'] },
+      { id: 'clear', members: ['soju', 'gin', 'vodka', 'tequila', 'feni', 'cocktail'] },
       { id: 'brewed', members: ['beer', 'wine', 'whitewine'] },
       { id: 'sober', members: ['zero', 'water'] },
       { id: 'strong', members: ['gin', 'vodka', 'rum', 'whisky', 'brandy', 'tequila', 'feni'] },

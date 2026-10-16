@@ -103,15 +103,15 @@ export function systemText(d, ctx) {
 }
 
 /**
- * Last words: the true clue photos a guest the board took this morning may
- * post to the room, once, during that day's investigation or round table
- * (firestore.rules lastWords). Null when there is nothing to offer: not taken
- * today, the wrong phase, already posted, or no photo of their own yet.
+ * Last words: the true clue photos a guest the Killers killed last night may
+ * post to the room, once, any time that day before the verdict
+ * (firestore.rules lastWords). Null when there is nothing to offer: not killed
+ * last night, the wrong phase, already posted, or no photo of their own yet.
  */
 export function lastWordsDue(ctx) {
   const { me, game, chat, inbox } = ctx;
-  if (me?.status !== 'ghost' || !['murdered', 'deep'].includes(me.cause) || me.diedCycle !== game.cycle) return null;
-  if (!['investigation', 'roundtable'].includes(game.phase)) return null;
+  if (me?.status !== 'ghost' || me.cause !== 'murdered' || me.diedCycle !== game.cycle) return null;
+  if (!['dawn', 'alarm', 'game', 'game_locked', 'investigation', 'roundtable'].includes(game.phase)) return null;
   if ((chat ?? []).some((m) => m.kind === 'last' && m.pid === me.pid)) return null;
   const photos = (inbox ?? []).filter((d) => d.kind === 'fact' && d.via === 'ghost' && d.fact && d.cycle === game.cycle);
   return photos.length ? photos : null;

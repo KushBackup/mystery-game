@@ -11,8 +11,8 @@
  *   run    The DEEP BLUE run (os/game/physics.js), unchanged.
  *
  * Whatever the game, it ends in one score per guest, `{ pid: { best } }`,
- * which is exactly what resolveMorning (morning.js) reads. So the rig, the
- * firewall and the top-three photos work the same on every board.
+ * which is exactly what topOfDay (morning.js) reads. So the top-three photos
+ * work the same whatever the game. The game kills nobody.
  *
  * Pure and seeded like the rest of the engine. Two things are public on
  * purpose: which game it is (game.minigame) and the step clock, which every

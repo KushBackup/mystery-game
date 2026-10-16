@@ -254,27 +254,31 @@ function pointHand(c, g, tip, anchor, press, seed, sc = 1.4) {
 }
 function stampK(k) { const f = Math.floor(k * 24 + 1e-6); if (f < 0) return 0; return [1.55, .82, 1.1, .97][f] ?? 1; }
 
-// ---------------------------------------------------------------- the board (the last clip of every tutorial)
-// `rows`: { who, score, f } top to bottom; the last row is the one LOWEST lands on.
+// ---------------------------------------------------------------- the top three (the last clip of both morning tutorials)
+// `rows`: { who, score, f } top to bottom. The first three each get a clue photo
+// that flies in and lands beside them; the rest fade back. Redrawn 2026-10-16:
+// the old clip stamped LOWEST on the last row, a rule the game no longer has
+// (the morning game kills nobody; its top three win a clue photo).
 const BOARD = { x: 720, y: 545, w: 1010, h: 964, r: -.012 };
 const ROW_Y = k => -212 + k * 150;
-let STAMP = null;
-function stampLayer() {
-  if (STAMP) return STAMP;
-  STAMP = layer(520, 170); const g = STAMP.getContext('2d'); g.setTransform(S, 0, 0, S, 0, 0);
-  g.strokeStyle = RED; g.lineWidth = 11; g.lineJoin = 'round';
-  g.beginPath(); g.roundRect(14, 14, 492, 142, 16); g.stroke();
-  g.fillStyle = RED; g.font = STAMP_FONT.replace('1px', '112px'); g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('LOWEST', 260, 92);
-  // rubber: worn specks and a lighter streak
-  g.globalCompositeOperation = 'destination-out'; const r = rng(77);
-  for (let q = 0; q < 260; q++) { g.globalAlpha = .5 + r() * .5; g.beginPath(); g.arc(r() * 520, r() * 170, .8 + r() * 3.2, 0, TAU); g.fill(); }
-  g.globalAlpha = .18; g.fillRect(0, 108, 520, 10);
-  return STAMP;
+// A small clue photo: white frame, a pale picture with a question mark, inked.
+function cluePhoto(c, x, y, rot, s, seed) {
+  if (s <= 0) return;
+  c.save(); c.translate(x, y); c.rotate(rot); c.scale(s, s);
+  const pts = warp(rectPts(-60, -66, 120, 132), seed, 1.2, true, 24);
+  c.save(); c.shadowColor = 'rgba(36,50,79,.3)'; c.shadowBlur = 10 * S; c.shadowOffsetY = 6 * S; c.fillStyle = '#ffffff'; c.fill(curvePath(pts, true, .4)); c.restore();
+  c.fillStyle = '#e9eef8'; c.fillRect(-50, -56, 100, 90);
+  txt(c, '?', 0, -6, 76, { col: SEA });
+  txt(c, 'clue', 0, 52, 30, { col: '#4c566c' });
+  ln(c, pts, 2.4, seed + 1, true, alpha(INK, .4), { amp: .4 });
+  c.restore();
 }
 const boardClipFor = rows => function boardClip(c, tau, i) {
   page(c);
-  const tI = 1.9 + 6 / 24, kI = tau - tI, fI = Math.floor(kI * 24 + 1e-6), shake = fI >= 0 && fI < 4 ? [7, -4, 2, 0][fI] : 0;
   const t2 = twos(tau);
+  // the photos land one after another from 1.9 s, each with a little bump of the card
+  const LAND = [1.9, 2.25, 2.6], landF = LAND.map((t) => Math.floor((tau - t) * 24 + 1e-6));
+  const bumpF = landF.find((f) => f >= 0 && f < 4), shake = bumpF != null ? [6, -3, 2, 0][bumpF] : 0;
   c.save(); c.translate(BOARD.x, BOARD.y + shake); c.rotate(BOARD.r);
   // the card
   const hw = BOARD.w / 2, hh = BOARD.h / 2, pts = warp(rectPts(-hw, -hh, BOARD.w, BOARD.h), 91, 2.5, true, 40), path = curvePath(pts, true, .5);
@@ -282,38 +286,36 @@ const boardClipFor = rows => function boardClip(c, tau, i) {
   c.save(); c.clip(path); c.strokeStyle = 'rgba(61,139,242,.22)'; c.lineWidth = 2.5; for (let k = 0; k < 5; k++) { const y = ROW_Y(k) - 75; c.beginPath(); c.moveTo(-hw, y); c.lineTo(hw, y); c.stroke(); } c.restore();
   ln(c, pts, 4.5, 92, true, INK, { amp: 1, corner: .5, p: .4 });
   // title
-  writeOn(c, 'THE BOARD', 0, -hh + 82, 114, win(tau, .05, .45));
-  brush(c, [[-230, -hh + 146], [0, -hh + 138], [236, -hh + 144]], { w: 12, color: SEA, p: win(tau, .4, .6), seed: 93 });
+  writeOn(c, 'TOP 3', 0, -hh + 82, 114, win(tau, .05, .45));
+  brush(c, [[-150, -hh + 146], [0, -hh + 138], [156, -hh + 144]], { w: 12, color: SEA, p: win(tau, .4, .6), seed: 93 });
   // rows
   rows.forEach((R, k) => {
     const y = ROW_Y(k), at = .35 + k * .17, pk = easeOutBack(win(tau, at, at + .2)), lk = win(tau, at + .05, at + .35), tk = easeOutBack(win(tau, at + .12, at + .3));
     if (tau < at) return;
-    const after = t2 > tI + .12, f = { ...R.f };
-    if (after && k < 4) { f.gaze = [0, 1]; if (k !== 3) f.brows = 'up'; if (k === 0) { f.eyes = 'dot'; f.mouth = 'o'; } }
-    if (k === 3 && after) f.sweat = ((t2 - tI) * .6) % 1;
+    const top = k < 3, landed = top && tau >= LAND[k], f = { ...R.f };
+    if (landed && k !== 2) { f.eyes = 'happy'; f.mouth = 'grin'; }
+    // the rest fade back once the photos start landing
+    const fade = top ? 1 : lerp(1, .4, win(tau, 1.8, 2.2));
+    c.save(); c.globalAlpha *= fade;
     head(c, CAST[R.who], -hw + 116, y + 10, .78 * pk, f, 700 + k * 40 + bz(i), { tilt: k === 4 ? .32 : 0 });
-    // the leader dots
-    c.save(); c.fillStyle = alpha(INK, .5); const x0 = -hw + 228, x1 = 150; for (let x = x0; x < lerp(x0, x1, lk); x += 26) { c.beginPath(); c.arc(x, y + 14, 4, 0, TAU); c.fill(); } c.restore();
+    // the leader dots, shorter on a top row to leave room for its photo
+    c.save(); c.fillStyle = alpha(INK, .5); const x0 = -hw + 228, x1 = top ? -20 : 150; for (let x = x0; x < lerp(x0, x1, lk); x += 26) { c.beginPath(); c.arc(x, y + 14, 4, 0, TAU); c.fill(); } c.restore();
     if (tau >= at + .12) tag(c, String(R.score), hw - 140, y + 10, k % 2 ? .04 : -.04, 760 + k, { w: 210, h: 96, pop: tk });
     if (k === 4) {
-      // Zed: asleep, phone face down beside him, z's drifting up
+      // Zed: asleep, phone face down beside him, z's drifting up. He slept through it, so no photo.
       const ph = [-hw + 226, y + 46];
       c.save(); c.translate(...ph); c.rotate(-.06); c.fillStyle = INK; c.fill(roundRectPath(-48, -14, 96, 28, 9)); dot(c, 30, -1, 5, 5, '#5a6888'); c.restore();
       for (let q = 0; q < 3; q++) { const u = ((t2 * .55 + q / 3) % 1); txt(c, 'z', -hw + 178 + u * 64 + q * 6, y - 44 - u * 84, 38 + u * 28, { al: Math.min(1, u * 4, (1 - u) * 3), rot: -.2 }); }
     }
+    c.restore();
+    // the photo: flies in from the top right, lands with an overshoot, a gold star beside it
+    if (top && tau >= LAND[k] - .3) {
+      const u = clamp((tau - (LAND[k] - .3)) / .3, 0, 1), e = easeOutBack(u);
+      const from = [hw + 80, -hh - 140], to = [90, y + 4];
+      cluePhoto(c, lerp(from[0], to[0], e), lerp(from[1], to[1], e), lerp(.5, k % 2 ? .08 : -.08, e), lerp(.6, .9, e), 800 + k * 7);
+      if (landed) star(c, 170, y - 34, 26, 820 + k, easeOutBack(win(tau, LAND[k], LAND[k] + .2)), .2);
+    }
   });
-  // LOWEST: hovers, lifts, thumps (on ones)
-  const sp = [16, ROW_Y(4) + 2];
-  if (tau >= 1.9) {
-    let s, al = 1;
-    // raised and held for a beat (anticipation), then slammed down in three frames
-    if (fI < 0) { const f = Math.floor((tau - 1.9) * 24 + 1e-6); s = [1.7, 1.78, 1.82, 1.82, 1.6, 1.3][f] ?? 1.3; al = [.3, .4, .45, .45, .6, .8][f] ?? .8; }
-    else s = [.94, 1.04, .99][fI] ?? 1;
-    c.save(); c.translate(...sp); c.rotate(-.1); c.scale(s * (fI === 0 ? 1.06 : 1), s);
-    c.globalAlpha *= al; c.globalCompositeOperation = 'multiply';
-    c.drawImage(stampLayer(), -275, -90, 550, 180); c.restore();
-    if (fI >= 0 && fI < 5) { const r = rng(88); for (let q = 0; q < 9; q++) { const a = r() * TAU, d = 280 + r() * 60 + fI * 10; dot(c, sp[0] + Math.cos(a) * d * .95, sp[1] + Math.sin(a) * d * .32, 3 + r() * 5, 3 + r() * 5, RED); } }
-  }
   c.restore();
 };
 

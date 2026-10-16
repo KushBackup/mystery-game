@@ -4,10 +4,11 @@
  * Two feeds meet here and become one shape (a "story"):
  *   world  the authored articles in the pack (data/packs/deepblue.news.js).
  *          They unlock by *day*, not by outcome: edition N lands with day N's
- *          alarm, day 0 is there from the lobby, and the morning-after piece
+ *          morning news, day 0 is there from the lobby, and the morning-after piece
  *          appears at the finale. So every phone in the room holds the same
  *          paper, and it is true whatever happened.
- *   room   the room's own events (game.news: each morning's board, each vote),
+ *   room   the room's own events (game.news: each morning's news, each
+ *          morning game's result, each vote),
  *          written up from the pack's `live` templates.
  *
  * A live story is not shown before the reveal that announces it. The host
@@ -25,8 +26,8 @@ import { revealGate } from './beats';
 const NIGHT = new Set(['night', 'night_locked', 'recruit', 'recruit_locked']);
 
 /**
- * The newest edition this phone may hold. A day's paper lands with its alarm,
- * so the night *before* day N is still day N-1's paper.
+ * The newest edition this phone may hold. A day's paper lands with its
+ * morning news, so the night *before* day N is still day N-1's paper.
  */
 export function editionDay(game) {
   const c = game?.cycle ?? 0;
@@ -61,32 +62,47 @@ function liveStory(s, pack, nameOf) {
     const attempted = s.attempted ? nameOf(s.attempted) : '';
     let key = 'quiet';
     let lines = narrate(pack, 'dawnQuiet');
-    if (s.cause === 'rig') { key = 'rig'; lines = narrate(pack, 'dawnRig', who, { score: s.rigged ?? 0 }, 'dawnDeath'); }
-    else if (s.cause === 'deep') { key = 'deep'; lines = narrate(pack, 'dawnDeep', who, { saved: attempted }, 'dawnDeath'); }
-    else if (s.cause === 'shield') { key = 'shield'; lines = narrate(pack, 'dawnShield', who, { saved: attempted }, 'dawnDeep'); }
+    if (taken) { key = 'killed'; lines = narrate(pack, 'dawnDeath', who); }
     else if (s.recruited) { key = 'recruit'; lines = narrate(pack, 'dawnRecruited'); }
     else if (s.attempted) { key = 'saved'; lines = narrate(pack, 'dawnSaved', attempted); }
-    const t = live.dawn[key] ?? (key === 'shield' ? live.dawn.deep : null) ?? live.dawn.quiet;
-    const vars = { name: key === 'saved' ? attempted : who, score: s.rigged ?? 0, day: s.cycle };
-    const podium = (s.top ?? []).map(nameOf).filter(Boolean);
+    const t = live.dawn[key] ?? live.dawn.quiet;
+    const vars = { name: key === 'saved' ? attempted : who, day: s.cycle };
     const body = [
       ...lines,
-      ...(podium.length ? [`Top of the board: ${listOf(podium)}. A photo each.`] : []),
       ...(s.vanished?.length ? [`${listOf(s.vanished.map(nameOf))} went home. Their secret went with them.`] : []),
       ...t.tail,
     ];
-    const art = key === 'rig' || key === 'deep' || key === 'shield' ? 'dawn-taken' : 'dawn-clear';   // pictures in public/news/
+    const art = key === 'killed' ? 'dawn-taken' : 'dawn-clear';   // pictures in public/news/
     // The paper's witness (night.js): a true clue about the night's hand, for everyone.
     const w = s.witness && live.witness;
     const witness = w ? { ...s.witness, quote: w[s.witness.trait]?.[s.witness.group] ?? '', head: w.head, by: w.by } : null;
     return { ...base, art, id: `l:dawn:${s.cycle}`, kicker: witness ? 'WITNESS' : t.kicker, head: fill(t.head, vars), dek: fill(t.dek, vars), time: '07:30', body, witness };
   }
 
+  // The morning game's result: what the room may now know (the word, who drew
+  // what). The top three are never named: their photos are private.
+  if (s.kind === 'day') {
+    const t = live.day?.[s.game] ?? live.day?.run;
+    if (!t) return null;
+    const vars = { word: s.word ?? '', hint: s.hint ?? '', day: s.cycle };
+    const drawn = s.game === 'draw' ? Object.entries(s.words ?? {}).map(([pid, w]) => `${nameOf(pid)} drew ${w}.`) : [];
+    return {
+      ...base,
+      art: 'dawn-clear',
+      id: `l:day:${s.cycle}`,
+      kicker: t.kicker,
+      head: fill(t.head, vars),
+      dek: fill(t.dek, vars),
+      time: '08:00',
+      body: [...drawn, ...t.tail],
+    };
+  }
+
   const key = !s.pid ? 'none' : s.team === 'killers' ? 'killer' : 'innocent';
   const t = live.banish[key];
   const who = s.pid ? nameOf(s.pid) : '';
   const vars = { name: who, day: s.cycle };
-  const lines = narrate(pack, key === 'none' ? (s.unaccused ? 'banishUnaccused' : 'banishNone') : key === 'killer' ? 'banishKiller' : 'banishFaithful', who);
+  const lines = narrate(pack, key === 'none' ? 'banishNone' : key === 'killer' ? 'banishKiller' : 'banishFaithful', who);
   return {
     ...base,
     art: key === 'none' ? 'vote-none' : 'vote-out',

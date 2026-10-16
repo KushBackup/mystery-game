@@ -3,7 +3,7 @@ import { useServerNow } from '../../hooks/useKillers';
 
 /**
  * The synced beats of a reveal. Every phone reads the same `revealAt` (server
- * time), so the board, the verdict and the finale land on the same second
+ * time), so the morning news, the verdict and the finale land on the same second
  * across the room. `beats` maps a stage name to its offset in seconds.
  */
 export function useStage(revealAt, beats) {

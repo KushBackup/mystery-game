@@ -13,7 +13,7 @@
  *   1. Role-neutral. Every phone shows exactly these slides, so a glance at a
  *      neighbour's phone says nothing about them.
  *   2. True to the engine: scoreWordDay and spoils (minigames.js), and the
- *      board's premise (morning.js; Help's "The board" page).
+ *      top-three reward (morning.js; Help's "Morning game" page).
  *   3. Plain words, one idea a line, about 12 words a line.
  *   4. The example is never a live pair, word or hint. If POPCORN were in a
  *      pack's `wordPairs`, the tutorial would hand Killers the word on that
@@ -38,7 +38,7 @@ export const FILM_SLIDES = Object.freeze([
   { id: 'write', n: 3, title: 'Post one word that fits.', line: 'Never the word itself. That scores 0.' },
   { id: 'wall', n: 4, title: 'Every clue lands on one wall, in order.', line: 'Everyone can see who posted, and who waited.' },
   { id: 'pick', n: 5, title: 'Then pick the 3 clues that fit best.', line: 'A fair clue scores 100, plus 50 for every pick.' },
-  { id: 'board', n: 6, title: 'The lowest score on the board is killed.', line: 'Skip the game and you score 0. The top quarter is locked.' },
+  { id: 'top', n: 6, title: 'The top 3 each win a clue photo.', line: 'Nobody is killed in the morning game. Play well to win a clue.' },
 ].map((s) => ({ ...s, kind: 'film', clip: clip(s.n), poster: poster(s.n) })));
 
 /**

@@ -11,15 +11,15 @@
 
 import { useServerNow } from '../hooks/useKillers';
 
-/** The board: podium, "…and last place", TAKEN, then the whole board. */
-export const BOARD_BEAT = { podium: 0, last: 2.8, taken: 5.2, full: 7.2 };
+/** The morning news: "NIGHT n", then who was killed (or nobody), then the rest of the page. */
+export const DAWN_BEAT = { head: 0, taken: 2.4, full: 4.4 };
 /** The verdict: the name, then KILLER or innocent, then the votes. */
 export const VERDICT_BEAT = { name: 0, verdict: 1.8, votes: 2.6 };
 
 /** The instant (server ms) a death this phase may be shown, or 0 if nothing is hidden. */
 export function revealGate(game) {
   if (!game?.revealAt) return 0;
-  if (game.phase === 'dawn') return game.revealAt + BOARD_BEAT.taken * 1000;
+  if (game.phase === 'dawn') return game.revealAt + DAWN_BEAT.taken * 1000;
   if (game.phase === 'banish') return game.revealAt + VERDICT_BEAT.verdict * 1000;
   return 0;
 }
@@ -27,7 +27,7 @@ export function revealGate(game) {
 /** Did this player die in the reveal that is still playing? */
 const dyingNow = (p, game) =>
   p.status === 'ghost' && p.diedCycle === game.cycle && (
-    (game.phase === 'dawn' && (p.cause === 'murdered' || p.cause === 'deep'))
+    (game.phase === 'dawn' && p.cause === 'murdered')
     || (game.phase === 'banish' && p.cause === 'banished')
   );
 

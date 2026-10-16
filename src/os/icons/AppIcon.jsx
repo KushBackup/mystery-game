@@ -114,20 +114,20 @@ const ART = {
     ),
   },
 
-  // A podium under a gold star: the Board app, the morning's scores.
-  board: {
-    stops: ['#b98cf5', '#7442d6', '#3a1a80'],
+  // A ballot going into a box, ticked: the Vote app (the Round Table, on the home screen since 2026-10-15).
+  vote: {
+    stops: ['#7cb8fb', '#4a9bf5', '#0b6fe3'],
     draw: () => (
       <>
-        <path d="M30 12L32 17.250 37.610 17.530 33.230 21.050 34.700 26.470 30 23.400 25.300 26.470 26.770 21.050 22.390 17.530 28 17.250Z" fill="#ffd84a" stroke="#f5a623" strokeWidth="0.800" strokeLinejoin="round" />
-        <rect x="21.500" y="30" width="17" height="21" rx="1.200" fill="#f6f2ff" />
-        <rect x="8" y="36" width="13" height="15" rx="1.200" fill="#ddd3f3" />
-        <rect x="39" y="40" width="13" height="11" rx="1.200" fill="#ddd3f3" />
-        <rect x="28.900" y="34" width="2.200" height="10" rx="0.800" fill="#7442d6" />
-        <path d="M5 51h50" stroke="#2a1160" strokeWidth="1.400" strokeLinecap="round" />
+        <rect x="19" y="8" width="22" height="24" rx="1.600" fill="#fff" transform="rotate(-6 30 20)" />
+        <path d="M24 20.500l4.200 4.200 8.300-9" fill="none" stroke="#0b6fe3" strokeWidth="3.200" strokeLinecap="round" strokeLinejoin="round" transform="rotate(-6 30 20)" />
+        <path d="M10 30h40a2 2 0 0 1 2 2v17a3 3 0 0 1-3 3H11a3 3 0 0 1-3-3V32a2 2 0 0 1 2-2Z" fill="#eef4fd" />
+        <rect x="18" y="29" width="24" height="4" rx="2" fill="#0a3f8c" />
+        <rect x="8" y="38" width="44" height="2" fill="#c5d6ee" />
       </>
     ),
   },
+
 
   gallery: {
     stops: ['#ffffff', '#e9ecf0', '#bcc3cd'],

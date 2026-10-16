@@ -227,20 +227,6 @@ export const submitAction = (gid, cycle, pid, action) =>
 export const submitDen = (gid, cycle, pid, choice) =>
   trackWrite(setDoc(sub(gid, 'den', `${cycle}_${pid}`), { ...choice, pid, cycle, at: serverTimestamp() }, { merge: true }));
 
-/**
- * Accuse one guest today, once (rules: accusations). `clue` is an optional
- * photo from your own inbox, shown to the room as your reason.
- */
-export const accuse = (gid, cycle, pid, target, clue = null) =>
-  trackWrite(setDoc(sub(gid, 'accusations', `${cycle}_${pid}`), {
-    pid, cycle, target, at: serverTimestamp(),
-    ...(clue ? { inboxId: clue.id, fact: { trait: clue.fact.trait, group: clue.fact.group } } : {}),
-  }));
-
-/** Second someone's accusation today, once (rules: seconds). */
-export const second = (gid, cycle, pid, accuser) =>
-  trackWrite(setDoc(sub(gid, 'seconds', `${cycle}_${pid}`), { pid, cycle, accuser, at: serverTimestamp() }));
-
 export const submitVote = (gid, ballot, pid, target) =>
   trackWrite(setDoc(sub(gid, 'votes', `${ballot}_${pid}`), { target, pid, ballot, at: serverTimestamp() }));
 

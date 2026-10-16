@@ -6,7 +6,7 @@
  *               declaring itself justice. Static, never stored
  *   night:c     when night c falls
  *   play:c      when morning c's game opens: we are watching until you play
- *   dawn:c      once the board's last beat has played: where you finished
+ *   dawn:c      once the morning news has played: what the night did
  *   banish:b    once the verdict's votes are shown: what the group did
  *   end         at the finale
  *
@@ -14,12 +14,12 @@
  * shown, never ahead of a reveal (beats.js), and nothing in it depends on the
  * guest's role, so a phone left face-up gives nothing away. Lines are kept in
  * localStorage (seen.js) the first time they are due, so yesterday's line is
- * still in the thread after today's board replaces yesterday's.
+ * still in the thread after today's news replaces yesterday's.
  */
 
 import { useEffect } from 'react';
 import { useServerNow } from '../hooks/useKillers';
-import { BOARD_BEAT, VERDICT_BEAT } from './beats';
+import { DAWN_BEAT, VERDICT_BEAT } from './beats';
 import { useSeen, markSeen } from './seen';
 
 const NIGHT = new Set(['night', 'night_locked', 'recruit', 'recruit_locked']);
@@ -52,24 +52,19 @@ function dueLines(game, me, pack, nameOf, now) {
     out.push({ id: `play:${game.cycle}`, at, cycle: game.cycle, text: fill(v.play[Math.min(game.cycle - 1, v.play.length - 1)], vars) });
   }
 
-  const board = game.board;
-  if (board && game.dawn?.cycle === board.cycle && game.revealAt) {
-    const at = game.revealAt + (BOARD_BEAT.full + 3) * 1000;
-    const shown = game.phase !== 'dawn' || now >= at;
-    if (shown && board.cycle === game.cycle) {
-      const rows = board.rows ?? [];
-      const taken = game.dawn.taken ?? game.dawn.victims?.[0];
-      const mine = rows.find((r) => r.pid === me.pid);
+  const d = game.dawn;
+  if (d && d.cycle === game.cycle && game.revealAt && !NIGHT.has(game.phase)) {
+    const at = game.revealAt + (DAWN_BEAT.full + 3) * 1000;
+    if (game.phase !== 'dawn' || now >= at) {
+      const taken = d.taken ?? d.victims?.[0];
       let key = null;
-      if (taken === me.pid) key = null; // the Taken screen says it
-      else if (me.status === 'ghost' && (board.ghosts ?? []).some((r) => r.pid === me.pid)) key = 'ghost';
-      else if (mine && !mine.played) key = 'none';
-      else if (mine) {
-        const fromDeep = rows.length - mine.rank - (taken && rows.at(-1)?.pid === taken ? 1 : 0);
-        key = mine.rank <= 3 ? 'top' : mine.rank <= (board.shield ?? 0) ? 'locked' : fromDeep <= 0 ? 'low' : fromDeep <= 2 ? 'edge' : 'calm';
-      }
-      if (key && v.dawn[key]) {
-        out.push({ id: `dawn:${board.cycle}`, at, cycle: board.cycle, text: fill(v.dawn[key], { ...vars, rank: mine?.rank, n: rows.length }) });
+      if (taken === me.pid) key = null; // the killed screen says it
+      else if (me.status === 'ghost') key = 'ghost';
+      else if (taken) key = 'killed';
+      else if (d.attempted) key = 'saved';
+      else key = 'quiet';
+      if (key && v.dawn?.[key]) {
+        out.push({ id: `dawn:${d.cycle}`, at, cycle: d.cycle, text: fill(v.dawn[key], { ...vars, target: taken ? nameOf(taken) : '' }) });
       }
     }
   }
@@ -78,7 +73,7 @@ function dueLines(game, me, pack, nameOf, now) {
   if (b && game.phase === 'banish' && game.revealAt && b.pid !== me.pid) {
     const at = game.revealAt + (VERDICT_BEAT.votes + 2) * 1000;
     if (now >= at) {
-      const key = !b.pid ? (b.unaccused ? 'unaccused' : 'none') : b.team === 'killers' ? (game.winner === 'faithful' ? 'lastKiller' : 'killer') : 'innocent';
+      const key = !b.pid ? 'none' : b.team === 'killers' ? (game.winner === 'faithful' ? 'lastKiller' : 'killer') : 'innocent';
       out.push({ id: `banish:${game.ballot}`, at, cycle: game.cycle, text: fill(v.banish[key] ?? v.banish.none, { ...vars, target: b.pid ? nameOf(b.pid) : '' }) });
     }
   }
@@ -95,7 +90,7 @@ export function useVoice(gid, game, me, pack, nameOf) {
   const key = `${gid}.voice`;
   const log = useSeen(key, []);
   const gates = [
-    game?.revealAt ? game.revealAt + (BOARD_BEAT.full + 3) * 1000 : 0,
+    game?.revealAt ? game.revealAt + (DAWN_BEAT.full + 3) * 1000 : 0,
     game?.revealAt ? game.revealAt + (VERDICT_BEAT.votes + 2) * 1000 : 0,
     game?.revealAt ? game.revealAt + 8000 : 0,
   ];

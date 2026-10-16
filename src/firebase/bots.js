@@ -83,7 +83,7 @@ export async function act(bot, gid, game) {
     const faithful = alive.filter((p) => !mates.includes(p.pid));
     const meta = await getDoc(G(bot, gid, 'den', 'meta'));
     const choiceKey = meta.data()?.recruitDue ? 'recruit' : 'victim';
-    // Only what the phone's poll sends: the engine picks the hand and the rig.
+    // Only what the phone's poll sends: the engine picks the hand.
     return setDoc(G(bot, gid, 'den', `${c}_${bot.pid}`), {
       [choiceKey]: rnd(faithful)?.pid ?? null,
       pid: bot.pid,
@@ -102,7 +102,7 @@ export async function act(bot, gid, game) {
 /**
  * The morning run. Each bot has a skill it keeps all game, plays a couple of
  * runs, and writes only a new best, as the real app does. One in ten skips
- * the run, to exercise "didn't play counts as 0".
+ * the run, to exercise "didn't play can't place".
  */
 export async function play(bot, gid, game) {
   await readSelf(bot, gid);
@@ -185,8 +185,8 @@ export async function vote(bot, gid, game) {
   if (!['alive', 'ghost'].includes(bot.status)) return;
   const players = await allPlayers(bot, gid);
   let targets = players.filter((p) => p.status === 'alive' && p.pid !== bot.pid).map((p) => p.pid);
-  // The Round Table and its re-vote are only between those on trial (and maybe 'none').
-  if (game.phase !== 'endgame') targets = (game.ballotTargets ?? targets).filter((p) => p !== bot.pid);
+  // The vote is open; only the re-vote is between the tied.
+  if (game.phase === 'revote') targets = (game.tied ?? []).filter((p) => p !== bot.pid);
   if (!targets.length) return;
   await setDoc(G(bot, gid, 'votes', `${game.ballot}_${bot.pid}`), {
     target: rnd(targets), pid: bot.pid, ballot: game.ballot, at: serverTimestamp(),
@@ -194,13 +194,13 @@ export async function vote(bot, gid, game) {
 }
 
 /**
- * Last words: a bot the board took this morning posts one of today's true
+ * Last words: a bot the Killers killed last night posts one of today's true
  * clue photos to the room, most of the time (firestore.rules lastWords).
- * Only a Faithful bot: a Killer the deep took has no reason to help.
+ * Only a Faithful bot: a Killer has no reason to help.
  */
 export async function lastWords(bot, gid, game) {
   const me = (await getDoc(G(bot, gid, 'players', bot.pid))).data();
-  if (me?.status !== 'ghost' || !['murdered', 'deep'].includes(me.cause) || me.diedCycle !== game.cycle) return;
+  if (me?.status !== 'ghost' || me.cause !== 'murdered' || me.diedCycle !== game.cycle) return;
   if (bot.role === 'killer' || Math.random() > 0.7) return;
   const mine = await getDocs(query(collection(bot.db, 'games', gid, 'inbox'), where('to', '==', bot.pid)));
   const today = mine.docs.map((d) => ({ id: d.id, ...d.data() })).filter((d) => d.kind === 'fact' && d.via === 'ghost' && d.fact && d.cycle === game.cycle);
@@ -209,32 +209,6 @@ export async function lastWords(bot, gid, game) {
   await setDoc(G(bot, gid, 'chat', `last_${bot.pid}`), {
     kind: 'last', pid: bot.pid, name: bot.name, inboxId: clue.id, fact: { trait: clue.fact.trait, group: clue.fact.group }, at: Date.now(),
   });
-}
-
-/**
- * Daylight accusations (engine/banish.js): stage 0, some living bots accuse
- * someone at random; stage 1, some second an accusation they're allowed to.
- * A Killer bot never accuses a partner. Refusals (the rules) are swallowed.
- */
-export async function accuseDay(bot, gid, game, stage) {
-  await readSelf(bot, gid);
-  if (bot.status !== 'alive') return;
-  const c = game.cycle;
-  const quiet = (p) => p.catch((e) => { if (e.code !== 'permission-denied') throw e; });
-  if (stage === 0) {
-    if (Math.random() > 0.35) return;
-    const players = await allPlayers(bot, gid);
-    const mates = bot.role === 'killer' ? (await getDocs(collection(bot.db, 'games', gid, 'killers'))).docs.map((d) => d.id) : [];
-    const pool = players.filter((p) => p.status === 'alive' && p.pid !== bot.pid && !mates.includes(p.pid));
-    if (!pool.length) return;
-    await quiet(setDoc(G(bot, gid, 'accusations', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, target: rnd(pool).pid, at: serverTimestamp() }));
-    return;
-  }
-  if (Math.random() > 0.6) return;
-  const accusations = (await getDocs(query(collection(bot.db, 'games', gid, 'accusations'), where('cycle', '==', c)))).docs.map((d) => d.data());
-  const open = accusations.filter((a) => a.pid !== bot.pid && a.target !== bot.pid);
-  if (!open.length) return;
-  await quiet(setDoc(G(bot, gid, 'seconds', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, accuser: rnd(open).pid, at: serverTimestamp() }));
 }
 
 /**
@@ -281,9 +255,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 /**
  * Listen to the game doc on `db` and have every bot in `bots` act on each new
  * phase. `bots` is read at each phase, so bots pushed onto it later join in.
- * Returns the unsubscribe.
+ * `around(bot, fn)` wraps every stretch of work a bot does (hostBots.js uses
+ * it to connect the bot only while it works). Returns the unsubscribe.
  */
-export function driveBots(db, gid, bots, { log = () => {}, onPhase = () => {} } = {}) {
+export function driveBots(db, gid, bots, { log = () => {}, onPhase = () => {}, around = (bot, fn) => fn() } = {}) {
   let last = '';
   return onSnapshot(doc(db, 'games', gid), async (s) => {
     const g = s.data();
@@ -295,15 +270,14 @@ export function driveBots(db, gid, bots, { log = () => {}, onPhase = () => {} } 
     log(`phase ${g.phase} (cycle ${g.cycle})`);
     // A short, human-ish delay so the host console shows actions trickling in.
     await sleep(1500);
-    const all = (fn) => Promise.all(bots.map((b) => fn(b).catch((e) => log(`bot ${b.name}: ${e.code ?? e.message}`))));
+    const all = (fn) => Promise.all(bots.map((b) => around(b, () => fn(b)).catch((e) => log(`bot ${b.name}: ${e.code ?? e.message}`))));
     if (g.phase === 'night') await all((b) => act(b, gid, g));
     if (g.phase === 'recruit') await all((b) => answerRecruit(b, gid, g));
     if (g.phase === 'investigation') {
       await all((b) => lastWords(b, gid, g));
-      await joinHalves(bots, gid).catch((e) => log(`joins: ${e.code ?? e.message}`));
-      await all((b) => accuseDay(b, gid, g, 0));
-      await sleep(2000);
-      await all((b) => accuseDay(b, gid, g, 1));
+      // Every bot at the table at once: the join reads and writes across all of them.
+      const joinAll = bots.reduce((next, b) => () => around(b, next), () => joinHalves(bots, gid));
+      await joinAll().catch((e) => log(`joins: ${e.code ?? e.message}`));
     }
     if (g.phase === 'game') {
       // Wait out the countdown so bot scores land inside the window, like a phone's would.

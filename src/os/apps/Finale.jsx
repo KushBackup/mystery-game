@@ -12,8 +12,8 @@ import { useStage, useStageSounds } from './stage';
  *
  * Three beats on every phone at once. The headline (who won), then the
  * Killers' faces, then the rest: your own night, how each night really went
- * (who the Killers chose, who struck, how they rigged it, any frame, every
- * firewall), and every guest's secret role. The night-by-night account is
+ * (who the Killers chose, who struck, any frame, every firewall), and every
+ * guest's secret role. The night-by-night account is
  * `game.finaleStory`, which the host only writes when there is a winner
  * (host.js `finaleOf`), so none of it can reach a phone mid-game.
  */
@@ -84,7 +84,7 @@ export default function Finale({ ctx, onPaper }) {
             </div>
           )}
 
-          <HowItHappened ctx={ctx} story={story} roles={roles} face={face} />
+          <HowItHappened ctx={ctx} story={story} face={face} />
 
           <Section head="Everyone, unmasked" foot="Faces are drawn from what each guest answered at the door.">
             <div className="os-group os-group--dark !p-2">
@@ -118,23 +118,21 @@ function killerFate(p) {
   if (p.status === 'alive') return 'Walked free';
   if (p.status === 'vanished') return 'Went home';
   if (p.cause === 'banished') return `Killed by the vote, day ${p.diedCycle}`;
-  if (p.cause === 'deep') return `Killed on the board, day ${p.diedCycle}`;
   return 'Caught';
 }
 
 function selfFate(p) {
   if (!p || p.status === 'alive') return 'You made it to the end.';
   if (p.cause === 'banished') return `The room voted to kill you on day ${p.diedCycle}.`;
-  if (p.cause === 'murdered') return `The Killers rigged your score. You were killed on day ${p.diedCycle}.`;
-  if (p.cause === 'deep') return `You came last and were killed on day ${p.diedCycle}.`;
+  if (p.cause === 'murdered') return `The Killers killed you on night ${p.diedCycle}.`;
   return '';
 }
 
 /**
  * Night by night: what the Killers did in the dark (finaleStory.nights), then
- * what the room saw (each morning's board and each vote, from game.news).
+ * what the room saw (each morning's news and each vote, from game.news).
  */
-function HowItHappened({ ctx, story, roles, face }) {
+function HowItHappened({ ctx, story, face }) {
   const { game, nameOf, traits, pack } = ctx;
   const nights = story.nights ?? {};
   const lastWords = (ctx.chat ?? []).filter((m) => m.kind === 'last');
@@ -153,7 +151,7 @@ function HowItHappened({ ctx, story, roles, face }) {
       if (n.recruit) {
         items.push({ k: 'r', icon: n.recruit, tone: 'killer', text: <>A Killer had gone home. The Killers called {who(n.recruit)} with an offer. {dawn?.recruited ? 'They said yes.' : 'They said no.'}</> });
       } else if (n.victim) {
-        items.push({ k: 'v', icon: n.victim, tone: 'killer', text: <>The Killers chose {who(n.victim)}.{n.rig === 'under' ? ' Rig: just below last place, to look like a bad run.' : ' Rig: straight to zero.'}</> });
+        items.push({ k: 'v', icon: n.victim, tone: 'killer', text: <>The Killers voted to kill {who(n.victim)}.</> });
       }
       if (n.hand) {
         const look = lookLine(traits?.[n.hand]);
@@ -167,9 +165,8 @@ function HowItHappened({ ctx, story, roles, face }) {
     }
     if (dawn) {
       const taken = dawn.taken ?? dawn.victims?.[0];
-      if (taken && dawn.cause === 'deep') items.push({ k: 'd', icon: taken, tone: 'dead', text: <>The rig bounced off a Doctor, so the lowest honest score was killed: {who(taken)}{roles[taken] === 'killer' ? ', a Killer' : ''}.</> });
-      else if (taken && dawn.cause === 'shield') items.push({ k: 'd', icon: taken, tone: 'dead', text: <>The target’s score was locked at the top, so the lowest honest score was killed: {who(taken)}{roles[taken] === 'killer' ? ', a Killer' : ''}.</> });
-      else if (taken) items.push({ k: 'd', icon: taken, tone: 'dead', text: <>Morning: {who(taken)} was killed at the bottom of the board.</> });
+      if (taken) items.push({ k: 'd', icon: taken, tone: 'dead', text: <>Morning: {who(taken)} was found killed.</> });
+      else if (dawn.attempted) items.push({ k: 'd', tone: 'good', text: <>Morning: nobody was killed. The firewall held.</> });
       else items.push({ k: 'd', tone: 'quiet', text: <>Morning: nobody was killed.</> });
       if (dawn.witness) items.push({ k: 'w', tone: 'good', text: <>The paper’s witness, true: {plain(dawn.witness)}.</> });
       const last = taken ? lastWords.find((m) => m.pid === taken) : null;

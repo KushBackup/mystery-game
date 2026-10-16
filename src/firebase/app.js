@@ -55,9 +55,19 @@ export const LIVE_CONFIG = {
 
 export const EMULATOR_CONFIG = { apiKey: 'demo-key', authDomain: 'demo-killers.firebaseapp.com', projectId: 'demo-killers' };
 
+// `/host` (or `?host`) is the console. On GitHub Pages a direct hit on
+// /mystery-game/host is a 404, which public/404.html bounces to ?route=/host.
+const path = globalThis.location?.pathname?.replace(/\/+$/, '') ?? '';
+export const HOST_ROUTE = path.endsWith('/host') || params.has('host') || params.get('route')?.replace(/\/+$/, '') === '/host';
+
 // A named app, so this never collides with the legacy game's default app in
-// src/firebase/config.js while both still exist in the repo.
-export const app = initializeApp(EMULATED ? EMULATOR_CONFIG : LIVE_CONFIG, 'killers');
+// src/firebase/config.js while both still exist in the repo. The console gets
+// a name of its own: auth sessions and the Firestore cache are stored per app
+// name, so a guest tab open in the same browser can never swap the console's
+// Google session for its anonymous one (2026-10-16: an anonymous phone's token
+// on the console made autopilot's read of `roles` fail, and the refused listen
+// then crashed the Firestore SDK with INTERNAL ASSERTION FAILED).
+export const app = initializeApp(EMULATED ? EMULATOR_CONFIG : LIVE_CONFIG, HOST_ROUTE ? 'killers-host' : 'killers');
 
 export const auth = getAuth(app);
 

@@ -1,19 +1,20 @@
 /**
  * Story pack: DEEP BLUE.
  *
- * Everyone in the room has the app. Nobody remembers installing it. Every
- * morning it rings, forces a run, and posts a leaderboard, and whoever finishes
- * last is "taken by the deep". The Killers have the admin password: each night
- * they choose whose score to sink.
+ * Everyone in the room has the app. Nobody remembers installing it. The
+ * Killers have its admin password: each night they vote on one guest, and the
+ * morning news says who was killed. Every morning it rings and makes everyone
+ * play its game; the top three each get a clue photo. Since the 15 Oct
+ * playtest the game kills nobody (there is no board), and the room's vote is
+ * open: anyone can be voted for.
  *
  * DEEP BLUE is fictional on purpose. It stands in for a real online "challenge"
  * whose name we do not use, in the game, the copy or the ads (memory.md).
  *
  * Shape is the same as every pack (see greenr.js for the contract), plus:
  *   - `alarm`: the headline each morning's alarm shows, by day (the last repeats);
- *   - dawn beats per cause: `dawnRig` (the rig landed), `dawnDeep` (a Firewall
- *     held and the deep took the lowest honest score; `{name}` is who was taken,
- *     `{saved}` who was protected), `dawnQuiet`, `dawnRecruited`;
+ *   - dawn beats: `dawnDeath` (`{name}` is who the Killers killed), `dawnSaved`
+ *     (`{name}` is who a Doctor saved), `dawnQuiet`, `dawnRecruited`;
  *   - `news`: the News app's world (articles by day, tickers, live-story
  *     templates). It lives in deepblue.news.js; read the rules in its header;
  *   - `dayGames`: what each morning game is called and its one-line rule
@@ -37,34 +38,28 @@ export default {
 
   // The lobby's story banners and the host's opening: the case in four lines (killersCopy CASE says it at length).
   setting: [
-    'DEEP BLUE is a cursed app, and tonight it is on every phone here. Every morning, the lowest score is killed.',
-    'Three guests have its admin password. They are the Killers. Each night they push one score to the bottom.',
-    'The top of the board is locked. Play well and the Killers can’t touch you.',
-    'Find the Killers, accuse them, and vote. Kill all three and DEEP BLUE deletes itself.',
+    'DEEP BLUE is a cursed app, and tonight it is on every phone here.',
+    'Three guests have its admin password. They are the Killers. Each night they choose one guest to kill.',
+    'Every morning everyone plays its game. The top 3 win a clue.',
+    'Find the Killers and vote to kill them. Kill all three and DEEP BLUE deletes itself.',
   ],
 
   narration: {
     casting: ['DEEP BLUE has sent you a message. Read it alone.', 'Tell no one what it says.'],
     night: ['Screens dim. The Killers are online.', 'Each of you has one move tonight.'],
-    alarm: ['Wake up.', 'Play today’s game. The lowest score is killed. The top of the board is locked.'],
+    alarm: ['Wake up.', 'Play today’s game. The top 3 win a clue.'],
     // The first Word or Sketch morning: a longer alarm while every phone shows how the game is played.
     alarmIntro: ['Wake up. Today’s game is new.', 'Open DEEP BLUE. It shows you how to play before it starts.'],
-    game: ['Everyone plays today’s game.', 'The board posts when the timer ends. Score high and you’re locked.'],
-    dawnDeath: ['The board is up.', '{name} came last. {name} was killed.'],
-    dawnRig: ['The board is up.', '{name} came last with {score}. {name} was killed. They swear their score was higher.'],
-    dawnDeep: ['The board is up. Someone was after {saved}. They missed.', '{name} came last. {name} was killed.'],
-    // The target scored in the locked top of the board (engine/morning.js), so the rig bounced.
-    dawnShield: ['The board is up. Someone tried to sink {saved}. Their score held.', '{name} came last. {name} was killed.'],
-    dawnSaved: ['The board is up.', 'Someone was after {name}. They missed.'],
-    dawnQuiet: ['The board is up.', 'Nobody was killed. That has never happened before.'],
-    dawnRecruited: ['The board is up. Nobody was killed.', 'But someone said yes to something.'],
-    investigation: ['Compare clues, then accuse someone.', 'Two Seconds put a guest on trial. No trial, no vote.'],
+    game: ['Everyone plays today’s game.', 'The top 3 win a clue photo when the timer ends.'],
+    dawnDeath: ['The night is over.', 'The Killers killed {name}.'],
+    dawnSaved: ['The night is over.', 'Someone was after {name}. They missed.'],
+    dawnQuiet: ['The night is over.', 'Nobody was killed. That has never happened before.'],
+    dawnRecruited: ['The night is over. Nobody was killed.', 'But someone said yes to something.'],
+    investigation: ['Compare clues. Find the Killers.', 'The vote opens later. Anyone can be voted for.'],
     roundtable: ['The room is voting.', 'Whoever gets the most votes is killed.'],
     banishKiller: ['The room voted. {name} was killed.', '{name} was a KILLER.'],
     banishFaithful: ['The room voted. {name} was killed.', '{name} was innocent. The room was wrong.'],
-    banishNone: ['The room spared everyone.', 'Nobody was killed today.'],
-    // Nobody had an accusation with two seconds, so there was no vote (firebase/host.js).
-    banishUnaccused: ['Nobody was accused.', 'Nobody was killed today. The Killers get a free night.'],
+    banishNone: ['Nobody voted.', 'Nobody was killed today.'],
     endgame: ['DEEP BLUE is shutting down for good.', 'Last votes. If any Killer survives, the Killers win.'],
     finaleFaithful: ['DEEP BLUE has deleted itself.', 'All three Killers are dead. The Faithful win.'],
     finaleKillers: ['DEEP BLUE will ring again tomorrow.', 'A Killer survived. The Killers win.'],
@@ -78,11 +73,11 @@ export default {
     lobby: 'Greet people as they arrive. If a phone is stuck, help it finish setup. Don’t explain the game: the Case screen does.',
     casting: 'Stay quiet. Every phone is glitching and DEEP BLUE is explaining itself. Watch faces as the roles land.',
     night: 'Lights down if you can. Nothing to say: every phone shows its own move. Hurry anyone still staring at the screen.',
+    dawn: 'Let the news land. Ask the killed guest, out loud, who they think did it.',
     alarm: 'React to the alarm like it is real. Point at phones nobody has picked up.',
-    game: 'Cheer the room on. Remind them the top quarter is locked and the bottom is killed.',
-    dawn: 'Let the board land. Ask the killed guest, out loud, whether that was really their score.',
-    investigation: 'Stir it, don’t steer it. Point out torn photos still waiting for their other half. If nobody has accused anyone, say so out loud.',
-    roundtable: 'Ask the accused to defend themselves in one sentence each. Then let the phones vote.',
+    game: 'Cheer the room on. Remind them the top 3 win a clue photo.',
+    investigation: 'Stir it, don’t steer it. Point out torn photos still waiting for their other half. Ask who suspects whom.',
+    roundtable: 'Tell them to open Vote on the home screen. Ask the most suspected to defend themselves in one sentence.',
     revote: 'A tie. One more line from each, then vote again.',
     banish: 'Let the verdict sit. If it was a Killer, let the room cheer. If not, ask who pushed hardest.',
     endgame: 'Last chance. Ghosts vote too. Ask the room who they trust least.',
@@ -92,10 +87,10 @@ export default {
   // The morning alarm's headline (the notification's title), by day. The last one repeats.
   alarm: [
     'DAY 1. Everyone plays. Nobody is safe.',
-    'DAY 2. The board remembers yesterday.',
-    'DAY 3. Somebody here is lying about their score.',
+    'DAY 2. Somebody here voted last night.',
+    'DAY 3. Somebody here is lying about their clue.',
     'DAY 4. Fewer players. Same rules.',
-    'DAY 5. Last chance to get off the bottom.',
+    'DAY 5. Last chance to find them.',
   ],
 
   // One caption per trait group, printed under the clue photo (see data/traits.js).
@@ -208,12 +203,12 @@ export default {
 
   // DEEP BLUE talking to one guest in its own thread (os/voice.js). Never
   // role-specific: a phone face-up on the table must give nothing away.
-  // {name} this guest, {day}, {rank} of {n} on the board, {target} who was voted out.
+  // {name} this guest, {day}, {target} who was killed (in the night, or by the vote).
   voice: {
     // Already in the thread when the phone first opens, dated years before
     // tonight, already read: the message nobody remembers getting. DEEP BLUE
     // declaring itself the last word in justice. The premise only, never a
-    // mechanism: nothing here may say who reads the scores.
+    // mechanism: nothing here may say who the admins are.
     manifesto: {
       at: '2023-11-03T03:33:00+05:30',
       lines: [
@@ -221,7 +216,7 @@ export default {
         'The courts are slow. The police can be bought. The guilty walk out smiling. We have watched it for years.',
         'So we stopped waiting. From tonight, we judge.',
         'Every morning at 07:00, you will play. Everyone plays. No exceptions. No excuses.',
-        'The weakest is killed. This is not cruelty. This is justice, finally done properly.',
+        'Every night, one of you is judged. This is not cruelty. This is justice, finally done properly.',
         'We have chosen three of you to help us. They have the admin password. We are never wrong about who deserves it.',
         'Do not try to delete us. Do not try to find us. We are already in your pocket.',
         'You will forget you read this. We will not forget you.',
@@ -230,37 +225,33 @@ export default {
     // When the morning game opens (alarm, then the game itself), by day; the last repeats.
     play: [
       'We are watching you, {name}. Every second, until you play. Don’t you dare skip it. Don’t you dare skimp on it.',
-      'Day {day}. Play now, {name}. The top of the board is locked. The bottom is killed.',
+      'Day {day}. Play now, {name}. The top 3 get something from me.',
       'We see who’s stalling, {name}. We see who’s barely trying. Play it properly.',
       'Still watching, {name}. Skip it and we’ll know. Coast through it and we’ll know.',
-      'Play like it matters, {name}. It does. Locked at the top, or killed at the bottom.',
+      'Play like it matters, {name}. The best players get to see what I see.',
     ],
     night: [
       'Night {day}. Lights out, {name}. Someone in this room is still awake.',
       'Night {day}. The servers are warm. Sleep well, {name}.',
       'Night {day}. The admins are logged in. Are you sure you know who they are?',
-      'Night {day}. I’ve seen everyone’s scores. You’d be surprised.',
+      'Night {day}. I’ve seen everyone’s messages. You’d be surprised.',
       'Night {day}. Nearly over, {name}. Nearly.',
     ],
     dawn: {
-      top: 'Good morning, {name}. #{rank} of {n}. Locked, and a photo for you. Careful who you show it to.',
-      calm: 'Good morning, {name}. #{rank} of {n}. Below the lock. The Killers could reach you there.',
-      locked: 'Good morning, {name}. #{rank} of {n}. Locked. The Killers couldn’t touch you today.',
-      edge: 'Good morning, {name}. #{rank} of {n}. That was close. I noticed.',
-      low: 'Good morning, {name}. Nobody honest scored lower than you. Try harder tomorrow.',
-      none: 'Good morning, {name}. You didn’t play. I noticed that too.',
-      ghost: 'Morning, {name}. You can’t sink any lower now. Pass your little photos. See who believes you.',
+      killed: 'Good morning, {name}. {target} didn’t wake up. You did. This time.',
+      saved: 'Good morning, {name}. Somebody was protected last night. Somebody was very lucky.',
+      quiet: 'Good morning, {name}. A quiet night. I don’t like quiet nights.',
+      ghost: 'Morning, {name}. You can’t die twice. Pass your little photos. See who believes you.',
     },
     banish: {
       killer: '{target} had the password. Clever room. The others are still out there.',
       lastKiller: '{target} was the last admin. Connection unstable…',
       innocent: '{target} was innocent. The room did my job for me.',
       none: 'Nobody was killed. The admins thank you.',
-      unaccused: 'Nobody accused anyone. Nobody was killed. The admins thank you for the quiet.',
     },
     end: {
       faithful: 'Admin access revoked. Uninstalling… Goodbye, {name}.',
-      killers: 'See you tomorrow, {name}. 07:00. Don’t come last.',
+      killers: 'See you tomorrow, {name}. 07:00. Sleep with one eye open.',
     },
   },
 
@@ -354,7 +345,7 @@ export default {
 
   whispers: [
     'Liar', 'Trust', 'Watch', 'Wrong', 'Framed', 'Fake', 'Close', 'Near', 'Far',
-    'Left', 'Right', 'Table', 'Bar', 'Door', 'Admin', 'Rigged', 'Again', 'Twice',
+    'Left', 'Right', 'Table', 'Bar', 'Door', 'Admin', 'Hiding', 'Again', 'Twice',
     'Yes', 'No', 'Friend', 'Beware', 'Quiet', 'Hurry',
   ],
 };

@@ -123,7 +123,7 @@ function Setup({ onCancel }) {
             Each day: night {mins(plan.durations.night)}, investigation {mins(plan.durations.investigation)}, vote {mins(plan.durations.roundtable)}. Final votes {mins(plan.durations.endgame)} each.
           </p>
           <p className="font-body text-[15px] text-bone mt-1">
-            Game clock runs {Math.round(plan.clock.speed)}× real time: night {at('night')}, alarm {at('alarm')}, board {at('dawn')}, vote {at('roundtable')}, verdict {at('banish')}.
+            Game clock runs {Math.round(plan.clock.speed)}× real time: night {at('night')}, morning news {at('dawn')}, alarm {at('alarm')}, vote {at('roundtable')}, verdict {at('banish')}.
           </p>
           {!plan.fits && <p className="er-mono er-mono--hot mt-2 normal-case tracking-normal">That length doesn't suit {cycles} days. This plan is as close as it gets.</p>}
           <p className="font-body text-[13px] text-dim mt-2">Arrivals aren't counted: the clock starts when you deal. The console runs every phase on its own after that; keep it open.</p>
@@ -170,9 +170,9 @@ function nextLabel(game, alive, today) {
     case PHASE.CASTING: return 'Start night 1';
     case PHASE.NIGHT: return 'End the night';
     case PHASE.RECRUIT: return 'End the recruitment';
+    case PHASE.DAWN: return game.winner ? 'Reveal the winner' : 'Ring the alarm';
     case PHASE.ALARM: return `Start ${today}`;
-    case PHASE.GAME: return `Stop ${today} and post the board`;
-    case PHASE.DAWN: return game.winner ? 'Reveal the winner' : 'Start the investigation';
+    case PHASE.GAME: return `Stop ${today} and start the investigation`;
     case PHASE.INVESTIGATION: return 'Call the Round Table';
     case PHASE.ROUNDTABLE:
     case PHASE.REVOTE:
@@ -198,9 +198,6 @@ function narrationFor(game, pack, nameOf) {
     case PHASE.DAWN: {
       const d = game.dawn ?? {};
       const v = d.taken ?? d.victims?.[0];
-      if (d.cause === 'rig') return narrate(pack, 'dawnRig', nameOf(v), { score: d.rigged ?? 0 }, 'dawnDeath');
-      if (d.cause === 'deep') return narrate(pack, 'dawnDeep', nameOf(v), { saved: nameOf(d.attempted) }, 'dawnDeath');
-      if (d.cause === 'shield') return narrate(pack, 'dawnShield', nameOf(v), { saved: nameOf(d.attempted) }, 'dawnDeep');
       return narrate(pack, v ? 'dawnDeath' : d.attempted ? 'dawnSaved' : d.recruited ? 'dawnRecruited' : 'dawnQuiet', nameOf(v ?? d.attempted));
     }
     case PHASE.INVESTIGATION: return narrate(pack, 'investigation');
@@ -209,7 +206,7 @@ function narrationFor(game, pack, nameOf) {
     case PHASE.ENDGAME: return narrate(pack, 'endgame');
     case PHASE.BANISH: {
       const b = game.banish ?? {};
-      if (!b.pid) return narrate(pack, b.unaccused ? 'banishUnaccused' : 'banishNone', '', {}, 'banishNone');
+      if (!b.pid) return narrate(pack, 'banishNone');
       return narrate(pack, b.team === 'killers' ? 'banishKiller' : 'banishFaithful', nameOf(b.pid));
     }
     case PHASE.FINALE: return narrate(pack, game.winner === 'faithful' ? 'finaleFaithful' : 'finaleKillers');
@@ -418,7 +415,7 @@ function Console({ gid, game }) {
           <ul className="mt-2 space-y-1">
             {den.filter((d) => d.id !== 'meta').map((d) => (
               <li key={d.id} className="font-body text-[14px] text-bone">
-                {nameOf(d.pid)}: sink {nameOf(d.victim)}{d.rig ? ` to ${d.rig === 'under' ? 'just below last' : 'zero'}` : ''}{d.hand ? `, ${nameOf(d.hand)} hacks` : ''}{d.frame ? `, frame ${nameOf(d.frame)}` : ''}{d.recruit ? `, recruit ${nameOf(d.recruit)}` : ''}
+                {nameOf(d.pid)}: kill {nameOf(d.victim)}{d.hand ? `, ${nameOf(d.hand)} hacks` : ''}{d.frame ? `, frame ${nameOf(d.frame)}` : ''}{d.recruit ? `, recruit ${nameOf(d.recruit)}` : ''}
               </li>
             ))}
           </ul>
@@ -443,10 +440,10 @@ function Console({ gid, game }) {
         </section>
       )}
 
-      {/* The run, live: who is where on today's board, before anyone else sees it */}
+      {/* The run, live: who is heading for the top 3, before anyone else knows */}
       {scoring && kind === 'run' && showRoles && (
         <section className="er-card mt-6">
-          <p className="er-mono">Today's run, live{secret?.pendingMorning?.victim ? ` · rig on ${nameOf(secret.pendingMorning.victim)}${secret.pendingMorning.saved ? ' (firewalled: the lowest honest score dies instead)' : ''}` : ''}</p>
+          <p className="er-mono">Today's run, live · the top 3 living win a clue photo</p>
           <ol className="mt-2 space-y-1">
             {[...scores].sort((a, b) => b.best - a.best).map((s, i) => (
               <li key={s.id} className="font-body text-[14px] text-bone flex justify-between gap-3">
@@ -455,7 +452,7 @@ function Console({ gid, game }) {
               </li>
             ))}
           </ol>
-          <p className="font-body text-[13px] text-dim mt-2">Guests who haven't played count as 0.</p>
+          <p className="font-body text-[13px] text-dim mt-2">Nobody is killed by the run. Ghosts play but can't place.</p>
         </section>
       )}
 

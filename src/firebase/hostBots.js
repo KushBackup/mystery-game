@@ -13,9 +13,27 @@
 import { useCallback, useEffect, useState } from 'react';
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, connectAuthEmulator, signInAnonymously } from 'firebase/auth';
-import { initializeFirestore, connectFirestoreEmulator, memoryLocalCache } from 'firebase/firestore';
+import { initializeFirestore, connectFirestoreEmulator, memoryLocalCache, enableNetwork, disableNetwork } from 'firebase/firestore';
 import { db, EMULATED, EMULATOR_CONFIG, LIVE_CONFIG } from './app';
 import { NAMES, arrive, heartbeat, driveBots } from './bots';
+
+/**
+ * Run `fn` with the bot connected, then disconnect it once nothing else of
+ * its is running. Every bot is its own Firestore, and an idle one still holds
+ * a stream open to the server for a minute, which the 60 s heartbeat keeps
+ * renewing. The emulator speaks HTTP/1.1, where Chrome allows six connections
+ * per host across every tab, so a few idle bots used to take them all and
+ * the console's own writes sat on "Sending…" for good (2026-10-16).
+ */
+function online(bot, fn) {
+  bot.users = (bot.users ?? 0) + 1;
+  // Toggles queue on one chain, so a disconnect never lands after a later connect.
+  if (bot.users === 1) bot.toggle = (bot.toggle ?? Promise.resolve()).then(() => enableNetwork(bot.db)).catch(() => {});
+  return bot.toggle.then(fn).finally(() => {
+    bot.users -= 1;
+    if (bot.users === 0) bot.toggle = bot.toggle.then(() => disableNetwork(bot.db)).catch(() => {});
+  });
+}
 
 const KEY = 'astral.hostbots'; // { [gid]: [{ app, name }] }
 
@@ -79,8 +97,8 @@ export function useHostBots(gid, players) {
       live.push(...restored.filter(Boolean));
       setBots([...live]);
     });
-    const stop = driveBots(db, gid, live, { log: (m) => m.startsWith('bot ') && console.warn(m) });
-    const beat = () => live.forEach((b) => heartbeat(b, gid).catch(() => {}));
+    const stop = driveBots(db, gid, live, { log: (m) => m.startsWith('bot ') && console.warn(m), around: online });
+    const beat = () => live.forEach((b) => online(b, () => heartbeat(b, gid)).catch(() => {}));
     const timer = setInterval(beat, 60_000);
     hostBots.current = { gid, live, setBots };
     return () => {
@@ -99,8 +117,10 @@ export function useHostBots(gid, players) {
     const name = `${first ?? `Bot ${taken.size + 1}`} (bot)`;
     const appName = `hostbot-${gid}-${Date.now()}`;
     const bot = await openBot(appName, name);
-    await arrive(bot, gid);
-    await heartbeat(bot, gid);
+    await online(bot, async () => {
+      await arrive(bot, gid);
+      await heartbeat(bot, gid);
+    });
     const all = load();
     save({ [gid]: [...(all[gid] ?? []), { app: appName, name }] });
     run.live.push(bot);

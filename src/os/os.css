@@ -165,8 +165,8 @@ html.os-locked body {
 }
 .os-icon:active .os-icon__art { scale: 0.95; filter: brightness(0.6) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5)); }
 /* Dim the children, not the button: the home's entry animation (os-icon-in, fill both) holds the button's own opacity at 1. */
-.os-icon[disabled] { cursor: default; pointer-events: none; }
-.os-icon[disabled] > * { opacity: 0.3; }
+.os-icon[aria-disabled='true'] { cursor: default; }
+.os-icon[aria-disabled='true'] > * { opacity: 0.3; }
 .os-icon__label {
   font-size: 11px;
   font-weight: 500;
@@ -819,6 +819,52 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   100% { translate: 0 -110%; }
 }
 
+/* --- Toasts (os/toast.js): the phone answering a tap it can't do. Never news,
+   never a link: it sits above the dock, low and out of the banner's way, in the
+   banner's own gloss, a little see-through like the old volume HUD. -------- */
+.os-toast-wrap {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 108px; /* clear of the dock */
+  z-index: 58;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.os-toast {
+  max-width: 320px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  text-align: left;
+  pointer-events: auto;
+  animation: os-toast-in 280ms cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+.os-toast--out { pointer-events: none; animation: os-toast-out 200ms ease-out both; }
+.os-toast__body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px 9px 9px;
+  border-radius: 15px; /* the 28px icon's 6px corner + 9px of padding */
+  background: linear-gradient(rgba(70, 74, 82, 0.94), rgba(8, 9, 12, 0.94) 52%, rgba(0, 0, 0, 0.95));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 0 1px rgba(0, 0, 0, 0.75),
+    0 2px 4px rgba(0, 0, 0, 0.3),
+    0 10px 24px rgba(0, 0, 0, 0.4);
+  transition: scale 160ms cubic-bezier(0.2, 0, 0, 1);
+}
+.os-toast:active .os-toast__body { scale: 0.96; }
+.os-toast__body--nudge { animation: os-toast-nudge 280ms cubic-bezier(0.2, 0.9, 0.25, 1); }
+.os-toast__title { font-size: 13px; font-weight: 700; line-height: 1.25; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.6); }
+.os-toast__text { font-size: 14px; line-height: 1.25; color: #dfe7f3; text-wrap: pretty; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.6); }
+@keyframes os-toast-in { from { opacity: 0; translate: 0 10px; scale: 0.96; } }
+@keyframes os-toast-out { to { opacity: 0; translate: 0 6px; } }
+@keyframes os-toast-nudge { 40% { scale: 1.03; } }
+
 /* ---------------------------------------------- 9b. Notification Center */
 
 /* Pulled down from the status bar. Grouped by app, like old iOS: a header per
@@ -1001,7 +1047,7 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 .os-rise { animation: os-rise 320ms cubic-bezier(0.2, 0.9, 0.25, 1) both; }
 @keyframes os-rise { from { opacity: 0; translate: 0 12px; } to { opacity: 1; translate: 0 0; } }
 
-/* The board's bottom row corrupts before it says TAKEN. */
+/* The morning news: the killed guest's card corrupts before it says KILLED. */
 .os-glitch { position: relative; animation: os-glitch 0.9s steps(9) both; }
 @keyframes os-glitch {
   0% { clip-path: inset(0 0 0 0); translate: 0 0; filter: none; }
@@ -1023,29 +1069,6 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   padding: 3px 8px;
   border-radius: 4px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-/* Leaderboard rows */
-.os-board-row {
-  display: grid;
-  grid-template-columns: 34px 1fr auto;
-  align-items: center;
-  gap: 8px;
-  min-height: 42px;
-  padding: 6px 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-.os-board-rank { font-size: 14px; font-weight: 700; color: var(--color-os-chrome); font-variant-numeric: tabular-nums; }
-.os-board-score { font-size: 17px; font-weight: 800; color: var(--color-os-gold); font-variant-numeric: tabular-nums; }
-.os-board-row--me { background: rgba(61, 139, 242, 0.22); }
-.os-board-row--top .os-board-rank { color: var(--color-os-gold); }
-.os-board-row--dead { background: rgba(255, 59, 48, 0.2); }
-.os-board-row--dead .os-board-score { color: var(--color-os-red); }
-/* The shield line (engine/morning.js shieldPlaces): rows above it were locked against the Killers. */
-.os-board-lock {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  padding: 5px 12px; border-top: 2px dashed var(--color-os-gold);
-  font-size: 10px; font-weight: 800; letter-spacing: 0.08em; color: var(--color-os-gold);
 }
 
 /* A stamped verdict (banish / finale). */
@@ -1136,6 +1159,44 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 .os-chips--3 .os-chip { padding: 6px 5px; font-size: 14px; }
 .os-chip[aria-pressed='true'] { color: #fff; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.3); background: linear-gradient(#4a9bf5, #0b6fe3); border-color: #0a56b0; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 1px 2px rgba(0, 0, 0, 0.25); }
 
+/* The sponsor's chip (MiHo Soju): a whole row in the bottle's cream label and
+   green glass, a gloss that passes now and then. Picked, it turns to the glass. */
+/* (after .os-chips--3, so the three-across padding doesn't squeeze it) */
+.os-chips .os-chip--sponsor { grid-column: 1 / -1; padding: 6px 14px; }
+.os-chip--sponsor {
+  position: relative;
+  overflow: hidden;
+  min-height: 52px;
+  color: #1f5e2a;
+  text-align: left;
+  background: linear-gradient(#fbf6ea, #efe3cc);
+  border: 1.5px solid #3c9a48;
+  border-radius: 12px;
+  box-shadow: inset 0 1px 0 #fff, inset 4px 0 0 #3c9a48, 0 2px 5px rgba(31, 94, 42, 0.3);
+}
+.os-chip--sponsor::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(255, 255, 255, 0.7) 50%, transparent 65%);
+  translate: -110% 0;
+  animation: os-chip-gloss 4.5s ease-in-out 0.6s infinite;
+}
+@keyframes os-chip-gloss { 0% { translate: -110% 0; } 30%, 100% { translate: 110% 0; } }
+.os-chip--sponsor[aria-pressed='true'] {
+  color: #fff;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.35);
+  background: linear-gradient(#55b462, #2d8239 55%, #23702f);
+  border-color: #1a5524;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 2px 5px rgba(31, 94, 42, 0.4);
+}
+.os-chip__sponsor { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; }
+.os-chip__bottle { width: 14px; height: 40px; flex: none; filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.2)); }
+.os-chip__kicker { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.8; }
+.os-chip__brand { font-size: 18px; font-weight: 800; letter-spacing: 0.01em; line-height: 1.1; }
+.os-chip--sponsor[aria-pressed='true'] .os-chip__kicker { opacity: 0.9; }
+
 /* ---------------------------------------------------------- 15. Motion off */
 
 @media (prefers-reduced-motion: reduce) {
@@ -1147,6 +1208,7 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   .os-spinner { animation-duration: 2s; }
   .os-nc { transition: none; }
   .os-nc__scrim { animation: none; }
+  .os-chip--sponsor::after { animation: none; }
 }
 
 
@@ -1502,7 +1564,8 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 
 @media (prefers-reduced-motion: reduce) {
   .os-nav-push > .os-scroll, .os-nav-pop > .os-scroll, .os-nav-push > .os-nav > *, .os-nav-pop > .os-nav > *, .os-app-exit, .os-home--enter .os-icon, .os-home--enter .os-now, .os-chapter__rule,
-  .os-static, .os-haunt, .os-shake { animation: none !important; }
+  .os-static, .os-haunt, .os-shake, .os-toast, .os-toast__body--nudge { animation: none !important; }
+  .os-toast--out { opacity: 0; }
   .os-chapter { animation: os-chapter 2.4s steps(1) both; }
   .os-splash { transition: none; }
   .os-chapter__rule { width: 120px; }
@@ -1670,29 +1733,6 @@ button.os-field:active .os-field__label, button.os-field:active .os-field__ok, b
 .os-face { flex: 0 0 auto; border: 1px solid rgba(0, 0, 0, 0.35); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35); }
 .os-face--gold { border: 2px solid var(--color-os-gold); box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.45), 0 2px 10px rgba(255, 204, 51, 0.35); }
 .os-face--killer { border: 2px solid var(--color-os-red); box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.5), 0 0 16px rgba(255, 59, 48, 0.45); }
-
-/* Your place on the morning board. */
-.os-myplace {
-  display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 12px;
-  background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0) 55%), var(--color-os-deep);
-  border: 1px solid rgba(143, 163, 194, 0.35); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
-}
-.os-myplace__score { min-width: 48px; text-align: center; font-size: 30px; font-weight: 800; color: var(--color-os-gold); font-variant-numeric: tabular-nums; }
-.os-myplace--top { border-color: rgba(255, 204, 51, 0.6); }
-.os-myplace--edge { background: linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 55%), #3a1420; border-color: rgba(255, 59, 48, 0.55); }
-/* In the Board app the card finds your row. */
-.os-myplace--tap { width: calc(100% - 24px); color: inherit; transition: filter 120ms ease; }
-.os-myplace--tap:active { filter: brightness(1.25); }
-.os-myplace__find { flex: 0 0 auto; display: flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: var(--color-os-sea); }
-
-/* The Board app: the day's heading and the last-place strip. */
-.os-boardhead { padding: 18px 16px 2px; text-align: center; }
-.os-boardhead__day { font-size: 30px; font-weight: 800; line-height: 1.1; color: #fff; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.5); }
-.os-boardtaken {
-  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px;
-  background: linear-gradient(rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0) 55%), #3a1420;
-  border: 1px solid rgba(255, 59, 48, 0.55);
-}
 
 /* The finale: your night, and the night-by-night account. */
 .os-finale-me--won { color: #fff; background: linear-gradient(rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0) 52%), linear-gradient(#3fbf5a, #1d7d33); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 2px 6px rgba(0, 0, 0, 0.4); }
@@ -2414,16 +2454,6 @@ button.os-field:active .os-field__label, button.os-field:active .os-field__ok, b
   .os-sb-pen__svg, .os-sb-speed__track i, .os-sb-pol--open, .os-sb-tool { transition: none; }
   .os-sb-pol--deal, .os-sb-stamp, .os-sb-timeup, .os-sb-guess__misses li:first-child, .os-sb-big__card, .os-sb-down__stamp, .os-sb-down__pol, .os-sb-wiggle { animation: none; }
 }
-
-/* Accusations (apps/Accuse.jsx): an accused guest's card, in the Vote app and the Room. */
-.os-accuse { background: #fff; border: 1px solid rgba(0, 0, 0, 0.12); border-radius: 10px; padding: 10px 12px; box-shadow: 0 1px 0 rgba(0, 0, 0, 0.08); color: var(--color-os-ink); }
-.os-accuse--trial { border: 2px solid var(--color-os-red); }
-.os-accuse--room { max-width: 86%; }
-.os-accuse__count { flex-shrink: 0; font-size: 12px; font-weight: 800; letter-spacing: 0.04em; padding: 3px 8px; border-radius: 999px; background: rgba(0, 0, 0, 0.07); color: var(--color-os-steel); font-variant-numeric: tabular-nums; }
-.os-accuse__count.is-on { background: var(--color-os-red); color: #fff; }
-.os-accuse__clue { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
-.os-accuse__thumb { width: 52px; flex-shrink: 0; border-radius: 4px; overflow: hidden; background: #000; }
-.os-accuse__done { font-size: 13px; font-weight: 700; color: var(--color-os-steel); margin-top: 6px; }
 
 /* Torn photos (GalleryApp TornPhoto, split clues): half a clue, waiting for its other half. */
 .os-torn { display: flex; gap: 12px; padding: 10px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.06); border: 1px dashed rgba(255, 255, 255, 0.3); color: #fff; }

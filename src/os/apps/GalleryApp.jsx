@@ -8,7 +8,7 @@ import { AppFrame, Empty } from '../ui';
 import Evidence from '../art/Evidence';
 import Glyph from '../icons/Glyph';
 import { clueWords } from '../../data/packs/index.js';
-import { markSeen, useSeen } from '../seen';
+import { markSeen, useSeen, useDraft } from '../seen';
 import { photoSource } from '../words';
 import { mediaFor, FORM_NAME } from '../evidence';
 import Portrait from '../art/Portrait';
@@ -142,10 +142,15 @@ export default function GalleryApp({ ctx, onClose }) {
 function TornPhoto({ ctx, d }) {
   const { gid, me, nameOf } = ctx;
   const attempt = useMyJoin(gid, d.pair, me.pid);
-  const [code, setCode] = useState('');
+  // Kept on this phone until the host accepts it, so leaving Photos (or a
+  // reload) doesn't lose a half-typed code, and a wrong one stays visible to fix.
+  const [code, setCode, clearCode] = useDraft(`${gid}.draft.join.${d.pair}`);
   const [state, setState] = useState('');
   const pending = attempt && attempt.ok == null;
   const wrong = attempt?.ok === false && !state;
+  useEffect(() => {
+    if (attempt?.ok === true) clearCode();
+  }, [attempt?.ok]); // eslint-disable-line react-hooks/exhaustive-deps
   const send = async (e) => {
     e.preventDefault();
     if (code.trim().length < 3) return;
@@ -153,7 +158,6 @@ function TornPhoto({ ctx, d }) {
     try {
       await joinHalf(gid, d.pair, me.pid, code);
       sfxSent();
-      setCode('');
       setState('');
     } catch {
       setState('error');

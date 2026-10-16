@@ -16,15 +16,15 @@ import { daySchedule, fmtClock, clockNow, ANCHORS } from '../../lib/engine/clock
 // Games made before the game clock: the day as a fixed table, times only.
 const FIXED_DAY = [
   ['night', 'Night', '01:00'],
-  ['alarm', 'Alarm', '07:00'],
-  ['game', 'Morning game', '07:01'],
-  ['dawn', 'The board', '07:05'],
+  ['dawn', 'Morning news', '07:00'],
+  ['alarm', 'Alarm', '07:01'],
+  ['game', 'Morning game', '07:02'],
   ['investigation', 'Daylight', '09:00'],
   ['roundtable', 'Vote', '18:00'],
   ['banish', 'Verdict', '19:30'],
 ];
 const PART_OF = { night_locked: 'night', recruit: 'night', recruit_locked: 'night', game_locked: 'game', roundtable_locked: 'roundtable', revote: 'roundtable', revote_locked: 'roundtable' };
-const TITLE = { night: 'Night', alarm: 'Alarm', dawn: 'The board', investigation: 'Daylight', roundtable: 'Vote', banish: 'Verdict' };
+const TITLE = { night: 'Night', alarm: 'Alarm', dawn: 'Morning news', investigation: 'Daylight', roundtable: 'Vote', banish: 'Verdict' };
 
 export default function ClockApp({ ctx, onClose }) {
   const { game, pack } = ctx;
@@ -43,7 +43,7 @@ export default function ClockApp({ ctx, onClose }) {
   else if (game.phase === 'casting' && speed) next = `Night 1 falls at ${fmtClock(ANCHORS.night)}.`;
   else if (plan && t != null) {
     if (current === 'game' || current === 'alarm') {
-      next = `Play ${today} before ${fmtClock(plan.parts.find((p) => p.id === 'dawn').at)}.`;
+      next = `Play ${today} before ${fmtClock(plan.parts.find((p) => p.id === 'investigation').at)}.`;
     } else {
       const up = plan.parts.find((p) => p.at > t + 0.5);
       next = up ? `${title(up.id)} at ${fmtClock(up.at)}.` : `Night falls at ${fmtClock(ANCHORS.night)}.`;

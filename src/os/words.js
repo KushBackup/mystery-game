@@ -4,7 +4,39 @@
  * data/killersCopy.js. This file is only the glue between them.
  */
 
-import { clockNow, fmtClock } from '../lib/engine/clock.js';
+import { clockNow, fmtClock, daySchedule } from '../lib/engine/clock.js';
+import { gameOfDay } from '../lib/engine/minigames.js';
+import { DEFAULT_CYCLES } from '../lib/engine/phases.js';
+import { dayKit } from '../data/packs/index.js';
+import { lockedGameLine } from '../data/killersCopy.js';
+
+const MORNING = ['night', 'night_locked', 'recruit', 'recruit_locked', 'dawn', 'alarm'];
+
+/**
+ * When DEEP BLUE opens next, for the locked icon's toast and the locked app
+ * (data/killersCopy.js lockedGameLine): the next game's name and, on a game
+ * with a clock, the time it opens. A Word or Sketch day opens with the alarm,
+ * a run day only once the run starts (engine/minigames.js deepBlueOpen).
+ */
+export function deepBlueWhen(game, pack, now) {
+  const { phase } = game;
+  const before = ['lobby', 'casting'].includes(phase);
+  const morning = MORNING.includes(phase);
+  const cycles = game.config?.cycles ?? DEFAULT_CYCLES;
+  let over = null;
+  if (phase === 'finale') over = 'finale';
+  else if (game.endgameRound || ['endgame', 'endgame_locked'].includes(phase)) over = 'endgame';
+  else if (!before && !morning && game.cycle >= cycles) over = 'last';
+  const day = before ? 1 : morning ? game.cycle : game.cycle + 1;
+  // The host stamps the day's game at dawn; before that, the plan says which.
+  const kind = (['dawn', 'alarm'].includes(phase) && game.minigame) || gameOfDay(game.config, day);
+  let at = '';
+  if (morning) {
+    const opens = daySchedule(game, now)?.parts.find((p) => p.id === (kind === 'run' ? 'game' : 'alarm'))?.at;
+    if (opens != null) at = fmtClock(opens);
+  }
+  return lockedGameLine({ phase, title: dayKit(pack).dayGames[kind]?.title ?? 'The game', at, over });
+}
 
 /** What happened to someone who is no longer playing, in one short line. */
 export function fateLine(p) {
@@ -12,8 +44,7 @@ export function fateLine(p) {
   if (p.status === 'vanished') return 'Went home';
   switch (p.cause) {
     case 'murdered':
-    case 'deep':
-      return `Killed on the board${day}`;
+      return `Killed in the night${day}`;
     case 'banished':
       return p.revealedRole === 'killer' ? `Killed by the vote · was a KILLER${day}` : `Killed by the vote · was innocent${day}`;
     case 'host':
@@ -37,7 +68,7 @@ export function photoSource(d, nameOf) {
   if (d.via === 'ghost') return 'From the other side';
   if (d.via === 'pass') return nameOf ? `Passed on by ${nameOf(d.from)}, a ghost` : 'Passed on by a ghost';
   if (d.via === 'watch') return 'You saw it yourself';
-  if (d.via === 'top') return `#${d.rank ?? 1} on the board`;
+  if (d.via === 'top') return 'Top 3 in today’s game';
   if (d.via === 'join') return nameOf ? `Joined with ${nameOf(d.from)}’s half` : 'Two halves, joined';
   return 'Dug out of the logs';
 }

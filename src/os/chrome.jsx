@@ -6,6 +6,7 @@ import { useServerNow } from '../hooks/useKillers';
 import { useWorldClock, useOnline } from './hooks';
 import { sfxUnlock, sfxTap, vibrate } from './sfx';
 import { HOLD_MS } from './resync';
+import { useToast, dismissToast } from './toast';
 
 /**
  * The parts of the phone that aren't an app: the status bar, the home screen
@@ -238,6 +239,35 @@ export function Banner({ icon = 'messages', title, text, onOpen, onDismiss, long
   );
 }
 
+/**
+ * The toast showing now (os/toast.js), above the dock. The live region is
+ * always mounted, so a screen reader hears each new toast. A tap puts it
+ * away; a repeat of the same toast nudges it once instead of playing it in again.
+ */
+export function Toaster() {
+  const t = useToast();
+  return (
+    <div className="os-toast-wrap" role="status" aria-live="polite">
+      {t && (
+        <button
+          key={t.id}
+          type="button"
+          className={`os-toast ${t.leaving ? 'os-toast--out' : ''}`}
+          onClick={() => dismissToast(t.id)}
+        >
+          <span key={t.n} className={`os-toast__body ${t.n ? 'os-toast__body--nudge' : ''}`}>
+            {t.icon && <AppIcon name={t.icon} size={28} className="shrink-0" />}
+            <span className="min-w-0">
+              {t.title && <span className="os-toast__title block">{t.title}</span>}
+              <span className="os-toast__text block">{t.text}</span>
+            </span>
+          </span>
+        </button>
+      )}
+    </div>
+  );
+}
+
 /** One row of a Notification Center group: an icon, a bold title, one line of text. */
 function NCRow({ icon, tile, title, text, onTap }) {
   return (
@@ -308,11 +338,18 @@ export function NotificationCenter({ sections, open, pull, onOpen, onClose }) {
 /**
  * One icon on the home screen or dock. `onOpen` gets the icon's centre, for
  * the zoom. `locked` (DEEP BLUE, before it's really time to play) renders it
- * transparent and inert: no tap opens it, so the app stays a mystery until
- * then (user's call, 2026-10-02).
+ * transparent and never opens it, so the app stays a mystery until then
+ * (user's call, 2026-10-02). A tap on a locked icon shakes it, the way a wrong
+ * passcode did, and `onLocked` says when it opens (a toast).
  */
-function HomeIcon({ app, label, badge, onOpen, locked }) {
+function HomeIcon({ app, label, badge, onOpen, onLocked, locked }) {
+  const [shakes, setShakes] = useState(0);
   const open = (e) => {
+    if (locked) {
+      setShakes((n) => n + 1);
+      onLocked?.(app);
+      return;
+    }
     const r = e.currentTarget.getBoundingClientRect();
     onOpen(app, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
   };
@@ -321,10 +358,10 @@ function HomeIcon({ app, label, badge, onOpen, locked }) {
       type="button"
       className="os-icon"
       onClick={open}
-      disabled={locked}
-      aria-label={badge ? `${label}, ${badge} new` : label}
+      aria-disabled={locked || undefined}
+      aria-label={locked ? `${label}, locked` : badge ? `${label}, ${badge} new` : label}
     >
-      <span className="os-icon__art">
+      <span key={shakes} className={`os-icon__art ${shakes ? 'os-shake' : ''}`}>
         <AppIcon name={app} size={60} />
         {badge ? <span className="os-badge">{badge}</span> : null}
       </span>
@@ -337,7 +374,7 @@ function HomeIcon({ app, label, badge, onOpen, locked }) {
  * The home screen: the NowCard as a pinned notice, the grid, the glass dock.
  * The four apps a guest opens all night live in the dock; the rest in the grid.
  */
-export function HomeScreen({ grid, dock, badges, now, onOpen, ghost, entering, lockedApps = {} }) {
+export function HomeScreen({ grid, dock, badges, now, onOpen, onLocked, ghost, entering, lockedApps = {} }) {
   return (
     <div
       className={`os-home ${entering ? 'os-home--enter' : ''} ${ghost ? 'os-haunt' : ''}`}
@@ -365,10 +402,10 @@ export function HomeScreen({ grid, dock, badges, now, onOpen, ghost, entering, l
           : <div className="os-now relative">{body}</div>;
       })()}
       <div className="os-grid relative">
-        {grid.map(([app, label]) => <HomeIcon key={app} app={app} label={label} badge={badges[app]} onOpen={onOpen} locked={lockedApps[app]} />)}
+        {grid.map(([app, label]) => <HomeIcon key={app} app={app} label={label} badge={badges[app]} onOpen={onOpen} onLocked={onLocked} locked={lockedApps[app]} />)}
       </div>
       <div className="os-dock">
-        {dock.map(([app, label]) => <HomeIcon key={app} app={app} label={label} badge={badges[app]} onOpen={onOpen} locked={lockedApps[app]} />)}
+        {dock.map(([app, label]) => <HomeIcon key={app} app={app} label={label} badge={badges[app]} onOpen={onOpen} onLocked={onLocked} locked={lockedApps[app]} />)}
       </div>
     </div>
   );

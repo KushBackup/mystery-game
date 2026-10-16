@@ -10,8 +10,7 @@ import { sfxSent } from '../sfx';
  * in leads to the same list.
  *
  * Everything else about a kill is the engine's (night.js): who strikes
- * rotates, the rig is always zero. The phone never says so; the board, the
- * photos and the room teach it.
+ * rotates. The majority's pick is killed at dawn unless a Doctor protected them.
  *
  * Each partner's pick shows beside the name they chose, and a tap can be
  * changed until the host locks the night. The majority decides.

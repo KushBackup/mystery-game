@@ -39,7 +39,7 @@ export default {
     dawnQuiet: ['The lights come back.', 'Everyone is still here. That is somehow worse.'],
     dawnRecruited: ['The lights come back.', 'Nobody died. But somebody said yes to something.'],
     investigation: ['Compare what you found. Look at each other.', 'Ten minutes. Then the table.'],
-    roundtable: ['To the long table.', 'Accuse, defend, then vote. Whoever the room chooses leaves.'],
+    roundtable: ['To the long table.', 'Argue it out, then vote. Anyone can be voted for.'],
     banishKiller: ['{name} is banished.', '{name} was a KILLER.'],
     banishFaithful: ['{name} is banished.', '{name} was FAITHFUL. The room was wrong.'],
     banishNone: ['The table cannot agree.', 'Nobody leaves tonight.'],

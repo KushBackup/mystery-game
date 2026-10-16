@@ -13,8 +13,8 @@
  *      it explains every role's move, so watching it gives nothing away about
  *      whose phone it is. Never "your role", never a slide only one role sees.
  *   2. True to the engine: engine/night.js (the poll, watchP, the clue, the
- *      Doctor's save and their rule, the trace, ghosts) and engine/morning.js
- *      (the rigged score sinks to the bottom of the board). `NIGHT` in
+ *      Doctor's save and their rule, the trace, ghosts): the Killers' pick is
+ *      killed at dawn unless a Doctor saved them. `NIGHT` in
  *      killersCopy.js and the Help app say the same things at more length.
  *   3. Plain words, one idea a line, about 12 words a line.
  *   4. The clips' cast is the morning tutorials' (Ada, Ben, Cleo, Dev, Zed).
@@ -29,7 +29,7 @@ const poster = (n) => `${BASE}tutorial/night-${n}.jpg`;
 /** The film slides, in order. `title` is the big line, `line` the small one. */
 export const FILM_SLIDES = Object.freeze([
   { id: 'fall', n: 1, title: 'Night falls. Everyone makes one secret move.', line: 'Open Night every night. Nobody else sees your screen.' },
-  { id: 'killers', n: 2, title: 'The Killers vote on who to take.', line: 'At dawn, their pick’s score sinks to the bottom of the morning board.' },
+  { id: 'killers', n: 2, title: 'The Killers vote on who to kill.', line: 'At dawn, their pick is killed. A Doctor can save them.' },
   { id: 'watch', n: 3, title: 'Watch a guest.', line: 'If they sneak out to strike, you may see them. About 6 times in 10.' },
   { id: 'dig', n: 4, title: 'Or dig through the logs.', line: 'A sure clue photo at dawn: one answer the Killer gave when they arrived.' },
   { id: 'doctor', n: 5, title: 'The Doctor keeps one guest safe.', line: 'If the Killers chose them, they live. Never the same guest twice in a row.' },

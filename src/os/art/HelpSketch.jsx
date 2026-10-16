@@ -387,22 +387,31 @@ const DRAW = {
     k.text(284, 136, 'Run', { size: 14 });
   },
 
-  board: (k) => {
-    const rows = [['1', 'gold'], ['2', 'gold'], ['3', 'gold'], ['…', null], ['0', 'red']];
-    rows.forEach(([n, tone], i) => {
-      const y = 22 + i * 25;
-      k.box(70, y, 160, 20, 4, { w: 1.6 });
-      if (tone === 'gold') k.wash(84, y + 10, 9, 8, GOLD, 0.6);
-      k.text(84, y + 15, n, { size: 14, color: tone === 'red' ? RED : INK, rot: 0.01 });
-      k.circle(106, y + 10, 5, { w: 1.2, single: true });
-      k.scribble(118, y + 10, 50, 1);
-      if (tone === 'red') k.line(76, y + 10, 224, y + 10, { color: RED, w: 2.4 });
-    });
-    k.text(272, 138, 'killed', { size: 15, color: RED });
-    k.arrow(262, 126, 236, 128, { bend: 0.1, color: RED });
-    k.photo(244, 18, 38, 44, { rot: 6 });
-    k.arrow(240, 38, 232, 38, { bend: 0 });
-    k.ghost(30, 108, { s: 0.8 });
+  news: (k) => {
+    // the morning paper: one name, killed in the night; or nobody, if a Doctor saved them
+    k.moon(34, 40, 14).sparkle(58, 24, 3.5);
+    k.arrow(54, 62, 84, 70, { bend: -0.2 });
+    k.box(96, 18, 128, 120, 4);
+    k.box(96, 18, 128, 18, 4, { w: 1.6 });
+    k.scribble(110, 27, 100, 1);
+    k.wash(130, 72, 18, 18, RED, 0.18);
+    k.circle(130, 70, 16, { w: 1.6 });
+    k.cross(130, 70, RED, 7);
+    k.text(186, 66, 'killed', { size: 15, color: RED });
+    k.text(186, 84, 'in the night', { size: 12 });
+    k.scribble(110, 104, 100, 3);
+    k.sun(282, 40, 13);
+    k.ghost(266, 84, { s: 0.8 });
+  },
+
+  top3: (k) => {
+    // the morning game's top three each get a clue photo
+    k.box(122, 74, 40, 50, 2).box(82, 90, 40, 34, 2).box(162, 100, 40, 24, 2);
+    k.text(142, 102, '1', { size: 16 }).text(102, 112, '2', { size: 16 }).text(182, 116, '3', { size: 16 });
+    k.person(142, 40, { arms: 'up', face: 'smile', s: 0.7 });
+    k.photo(232, 34, 48, 56, { rot: 8, label: 'clue' });
+    k.arrow(222, 66, 168, 52, { bend: 0.2 });
+    k.text(160, 148, 'top 3 win a clue', { size: 15 });
   },
 
   investigate: (k) => {
@@ -425,7 +434,7 @@ const DRAW = {
     k.person(256, 62, { arms: 'pointL' });
     k.person(216, 76, { arms: 'pointL', s: 0.85 });
     k.text(160, 30, '!', { size: 22, color: RED });
-    k.text(160, 150, 'most votes leaves', { size: 15 });
+    k.text(160, 150, 'most votes is killed', { size: 15 });
   },
 
   ending: (k) => {

@@ -6,8 +6,9 @@
  *                  with that morning's alarm (day 0 is there from the lobby), so
  *                  the paper escalates as the game does and is never empty.
  *   - `epilogue`   the morning-after piece once the game is over, by winner.
- *   - `live`       the templates the room's own events (the board, the vote) are
- *                  printed with. `{name}`, `{score}`, `{day}` are filled in code.
+ *   - `live`       the templates the room's own events (the morning news, the
+ *                  morning game, the vote) are printed with. `{name}`, `{word}`,
+ *                  `{day}` are filled in code.
  *   - `ticker`     the one-line crawl under the masthead, by day.
  *
  * RULES FOR EVERYTHING IN THIS FILE
@@ -16,7 +17,8 @@
  *      one exception is `live.witness`: the engine's true clue about the
  *      night's hand, said as a group, like a clue photo (2026-10-03). The
  *      public only knows what the setting already tells everyone: an app that
- *      rings every morning, a leaderboard, and last place found dead.
+ *      rings every morning, and one name found dead after each night. (Since
+ *      the 15 Oct playtest there is no leaderboard and nobody dies of a score.)
  *   2. Every story must be true whatever happens in the room. Stories unlock by
  *      day, never by outcome. The toll rises on a fixed curve: 9, 14, 23, 31, 40, 52.
  *   3. DEEP BLUE is fictional. Never the real challenge's name, never a method,
@@ -54,17 +56,17 @@ export const ARTICLES = [
     lead: true,
     outlet: 'wire',
     kicker: 'ALERT',
-    head: 'Nine dead in three weeks. Every one finished last on DEEP BLUE.',
+    head: 'Nine dead in three weeks. Every one had DEEP BLUE on their phone.',
     dek: 'Investigators link deaths across Goa and the coast to an app nobody remembers installing.',
     by: 'Konkan Wire, Panaji',
     time: '06:12',
     art: 'nine-dead',
     cap: 'The icon residents describe: a small white whale on a dark blue tile.',
     body: [
-      'Nine people have died across Goa in the past three weeks. Investigators now say the cases share one detail: each had an app called DEEP BLUE on their phone, and each came last on its leaderboard the morning before.',
+      'Nine people have died across Goa in the past three weeks. Investigators now say the cases share one detail: each had an app called DEEP BLUE on their phone, and each was found the morning after the app went quiet for the night.',
       'The app is in no app store. People who have it say they never installed it. It arrived, with a whale for an icon, and began ringing at 7:00 every morning.',
-      'Everyone who has it is told to play a short run. A leaderboard posts when the timer ends. Last place is “killed”. By the next day, that person has been found dead.',
-      'There was no sign of a struggle in any of the nine cases. The cause of death is undetermined. A cyber-crime officer, who asked not to be named, said the team has “no way yet to trace where it comes from, or who reads the scores”.',
+      'Each morning it posts one name: someone who did not wake up. Then it tells everyone left to play a short game, as if nothing happened.',
+      'There was no sign of a struggle in any of the nine cases. The cause of death is undetermined. A cyber-crime officer, who asked not to be named, said the team has “no way yet to trace where it comes from, or who chooses the names”.',
     ],
   },
   {
@@ -99,7 +101,7 @@ export const ARTICLES = [
     body: [
       'Investigators have asked anyone who finds the DEEP BLUE icon on their phone to tell someone nearby, and to stay in company while the morning timer runs.',
       'Of the nine people who have died, seven were last seen alone. Two were at home with family.',
-      'Officers also ask residents not to share their phone’s unlock code with anyone, and to photograph the leaderboard each morning. “If it changes after you look at it, we want to know,” the officer said.',
+      'Officers also ask residents not to share their phone’s unlock code with anyone, and to screenshot every message the app sends. “Somebody is choosing those names,” the officer said. “We want to know who.”',
       'Experts caution that ignoring the app does not appear to stop it.',
     ],
   },
@@ -138,8 +140,8 @@ export const ARTICLES = [
     cap: 'Those who have played describe a small whale and a wall with a gap in it.',
     body: [
       'Those who have played describe a small whale on a dark screen, a wall of obstacles with a gap in it, and a clock. Everyone gets about ninety seconds and as many tries as they can stand. The best run counts.',
-      '“It’s the waiting that does it,” said a woman in Siolim who has played eleven mornings and finished last on none. “You watch the board load, and you add up everyone else’s number.”',
-      'Then the leaderboard posts, with names the player recognises. The toll across the coast now stands at fourteen.',
+      '“It’s the looking around that does it,” said a woman in Siolim who has played eleven mornings. “You read the name it posted, then you play, and you watch who is playing too calmly.”',
+      'The best players, she says, get something afterwards. She won’t say what. The toll across the coast now stands at fourteen.',
       'Nobody who has spoken says they enjoy it. Nobody who has spoken says they have stopped.',
     ],
   },
@@ -148,7 +150,7 @@ export const ARTICLES = [
     day: 1,
     outlet: 'courier',
     kicker: 'CITY',
-    head: 'At 7 a.m. Anjuna stops. Then it looks at the leaderboard.',
+    head: 'At 7 a.m. Anjuna stops. Then it reads the name.',
     dek: 'Commuters, vendors and a traffic constable, all heads down for ninety seconds.',
     by: 'Chapora Courier desk',
     time: '07:50',
@@ -156,7 +158,7 @@ export const ARTICLES = [
     cap: 'Near the Anjuna bus stop, a queue stood still.',
     body: [
       'At 7:00 a.m., a queue near the Anjuna bus stop stopped moving. Nobody was boarding. Nobody was talking. Every head was bent over a phone.',
-      'A vendor who sells chai from a cart said he has stopped pouring at the hour. “Nobody drinks till the board is up. Then they drink very slowly.”',
+      'A vendor who sells chai from a cart said he has stopped pouring at the hour. “Nobody drinks till the name is up. Then they drink very slowly.”',
       'The village’s other rhythm is unchanged: the sea, the heat, the church bells at the hour. Only the faces are different.',
     ],
   },
@@ -190,10 +192,10 @@ export const ARTICLES = [
     by: 'Konkan Wire, Panaji',
     time: '06:55',
     art: 'twenty-three',
-    cap: 'Every morning, the same layout. One name at the bottom.',
+    cap: 'Every morning, the same message. One name.',
     body: [
       'The toll has risen to twenty-three. New cases have been reported in Karwar, Ratnagiri and Mangaluru.',
-      'The pattern holds: the morning run, the board, one name at the bottom. Hospitals report no common illness. Post-mortems have found no cause.',
+      'The pattern holds: a quiet night, one name in the morning, then the run. Hospitals report no common illness. Post-mortems have found no cause.',
       '“We are used to bodies that tell us something,” said a pathologist who asked not to be named. “These say nothing at all.”',
       'Officers say the app’s data cannot be copied, backed up or opened on any machine they have tried.',
     ],
@@ -221,16 +223,16 @@ export const ARTICLES = [
     outlet: 'times',
     kicker: 'OPINION',
     head: 'Nobody wins DEEP BLUE. That is the point.',
-    dek: 'The leaderboard is not a game. It is a way of making you watch each other.',
+    dek: 'The morning game is not the point. It is a way of making you watch each other.',
     by: 'The Goa Times editorial board',
     time: '16:30',
     art: 'nobody-wins',
     cap: 'Look at the person next to you.',
     body: [
-      'A leaderboard has one purpose: it makes you look sideways. Who is above you? Who is below you? Who has gone very quiet?',
-      'DEEP BLUE asks nothing else of us. It does not need a clever trick. It needs forty people in a room, and a number beside each name.',
-      'The sensible response is not to scroll faster. It is to ask why the person at the table beside you is so calm.',
-      'We do not know who is reading these scores. We know who is reading each other.',
+      'An app that posts a name every morning has one purpose: it makes you look sideways. Who went to bed early? Who is very calm today? Who has gone very quiet?',
+      'DEEP BLUE asks nothing else of us. It does not need a clever trick. It needs forty people in a room, and someone among them choosing.',
+      'The sensible response is not to play faster. It is to ask why the person at the table beside you is so calm.',
+      'We do not know who is choosing these names. We know who is watching each other.',
     ],
   },
 
@@ -255,27 +257,9 @@ export const ARTICLES = [
 
   // ------------------------------------------------------------------ DAY 3
   {
-    id: 'scores-dispute',
-    day: 3,
-    lead: true,
-    outlet: 'wire',
-    kicker: 'DISPUTED',
-    head: '“He was better than that.” Families dispute the final scores.',
-    dek: 'In four cases, relatives say the posted number was far lower than the run they watched.',
-    by: 'Konkan Wire, Panaji',
-    time: '07:40',
-    art: 'scores-dispute',
-    cap: 'The last line on the board, in the app’s own colours.',
-    body: [
-      'Relatives of at least four of the dead say the score posted beside their name was far lower than the run they watched the evening before.',
-      '“I stood behind her. She had never played that well,” said one. “The board said she was last.”',
-      'Investigators say they cannot yet check any score. The app’s records cannot be copied, and its leaderboard cannot be opened after it closes.',
-      'The toll stands at thirty-one.',
-    ],
-  },
-  {
     id: 'vigil',
     day: 3,
+    lead: true,
     outlet: 'dispatch',
     kicker: 'LOCAL',
     head: 'Vigil on Anjuna beach: “Two hundred on Monday. Tonight, forty.”',
@@ -287,7 +271,7 @@ export const ARTICLES = [
     body: [
       'Each evening, residents gather at the sea wall above Anjuna beach to light a candle for the dead. On Monday there were two hundred. Tonight there were forty.',
       '“People are afraid to be out when the sun goes down,” said an organiser. “They want to be in a room with the doors shut and somebody beside them.”',
-      'The candles burn down by the time the lamps come on.',
+      'The candles burn down by the time the lamps come on. The toll stands at thirty-one.',
     ],
   },
 
@@ -331,29 +315,12 @@ export const ARTICLES = [
 
   // ------------------------------------------------------------------ DAY 5
   {
-    id: 'final-board',
-    day: 5,
-    lead: true,
-    outlet: 'wire',
-    kicker: 'FINAL BOARD',
-    head: 'DEEP BLUE says it is closing. Nobody believes it.',
-    dek: 'At 7:00 a message on every phone: the last board is today.',
-    by: 'Konkan Wire, Panaji',
-    time: '07:02',
-    art: 'final-board',
-    cap: 'The screen at 7:00: FINAL BOARD.',
-    body: [
-      'At 7:00 this morning, the app put up a new message on every phone that carries it: FINAL BOARD.',
-      'Nobody knows whether this means the end of the app, the end of the people who play it, or a different kind of beginning.',
-      'Residents are asked to stay in company. The toll stands at fifty-two.',
-    ],
-  },
-  {
     id: 'last-call',
     day: 5,
+    lead: true,
     outlet: 'courier',
     kicker: 'CITY',
-    head: 'Anjuna holds its breath for the last board.',
+    head: 'Anjuna holds its breath for the last night.',
     dek: 'Bars are staying open late. Nobody is sure what for.',
     by: 'Chapora Courier desk',
     time: '12:00',
@@ -363,6 +330,7 @@ export const ARTICLES = [
       'By noon the streets around the church square were almost empty. Shops that normally stay open until ten pulled their shutters at four.',
       'Bars that stayed open say they expect their busiest night yet.',
       '“People don’t want to be alone for the last one,” said a manager.',
+      'Residents are asked to stay in company. The toll stands at fifty-two.',
     ],
   },
 ];
@@ -408,41 +376,57 @@ export const EPILOGUE = {
 };
 
 /**
- * How the room's own events are printed. `{name}` `{score}` `{day}` are filled
+ * How the room's own events are printed. `{name}` `{word}` `{hint}` `{day}` are filled
  * in code (src/os/news.js). A pack without `live` falls back to plain wording.
  */
 export const LIVE = {
   by: 'The Goa Times, from the room',
   dawn: {
-    rig: {
-      kicker: 'THE BOARD',
-      head: '{name} finishes last. Score: {score}.',
-      dek: 'DEEP BLUE kills a name on day {day}.',
-      tail: ['Someone in this room may know why that number is so low.'],
-    },
-    deep: {
-      kicker: 'THE BOARD',
-      head: '{name} is killed.',
-      dek: 'Somebody was after a different name on day {day}.',
-      tail: ['Whatever was meant for them missed.'],
+    killed: {
+      kicker: 'THE NIGHT',
+      head: '{name} is killed in the night.',
+      dek: 'The Killers chose a name on night {day}.',
+      tail: ['Someone in this room knows who chose it.'],
     },
     saved: {
-      kicker: 'THE BOARD',
+      kicker: 'THE NIGHT',
       head: 'Nobody killed.',
-      dek: 'Someone was after {name} on day {day}.',
-      tail: ['Somebody wanted that score gone. It stayed.'],
+      dek: 'Someone was after {name} on night {day}.',
+      tail: ['Somebody was protected. It held.'],
     },
     recruit: {
-      kicker: 'THE BOARD',
-      head: 'Nobody killed this morning.',
-      dek: 'The board is clean on day {day}. The room is not.',
+      kicker: 'THE NIGHT',
+      head: 'Nobody killed last night.',
+      dek: 'Night {day} was quiet. The room is not.',
       tail: ['Nobody was killed. Someone said yes to something.'],
     },
     quiet: {
-      kicker: 'THE BOARD',
-      head: 'Nobody killed this morning.',
-      dek: 'The board posted and nobody was killed on day {day}.',
+      kicker: 'THE NIGHT',
+      head: 'Nobody killed last night.',
+      dek: 'The morning came and nobody was missing on day {day}.',
       tail: ['The deep went hungry.'],
+    },
+  },
+  // The morning game's result (news.js, kind 'day'). The top three are never
+  // named here: their clue photos are private.
+  day: {
+    word: {
+      kicker: 'MORNING GAME',
+      head: 'The word was “{word}”.',
+      dek: 'The Killers only saw: {hint}.',
+      tail: ['Whose clue was a guess? The top 3 each got a photo. Nobody says who.'],
+    },
+    draw: {
+      kicker: 'MORNING GAME',
+      head: 'The drawings are in.',
+      dek: 'Everyone drew a secret word on day {day}.',
+      tail: ['The top 3 each got a photo. Nobody says who.'],
+    },
+    run: {
+      kicker: 'MORNING GAME',
+      head: 'The run is over.',
+      dek: 'Everyone swam on day {day}.',
+      tail: ['The top 3 each got a photo. Nobody says who.'],
     },
   },
   banish: {
@@ -532,11 +516,11 @@ export const TICKER = [
   { day: 2, text: 'TOLL STANDS AT 23 · KARWAR TO MANGALURU' },
   { day: 2, text: 'BARS SPLIT: SOME SHUT, SOME FULL' },
   { day: 2, text: 'PHONES OF THE DEAD STILL SENDING PHOTOS' },
-  { day: 3, text: 'TOLL STANDS AT 31 · FAMILIES DISPUTE SCORES' },
+  { day: 3, text: 'TOLL STANDS AT 31 · WHO IS CHOOSING THE NAMES?' },
   { day: 3, text: 'BEACH VIGIL DOWN TO FORTY' },
   { day: 4, text: 'TOLL STANDS AT 40 · THE APP CANNOT BE DELETED' },
   { day: 4, text: 'SERVER RACK FOUND EMPTY OF OWNERS' },
-  { day: 5, text: 'FINAL BOARD · TOLL STANDS AT 52' },
+  { day: 5, text: 'THE LAST NIGHT · TOLL STANDS AT 52' },
   { day: 5, text: 'SHUTTERS DOWN EARLY ACROSS ANJUNA' },
 ];
 

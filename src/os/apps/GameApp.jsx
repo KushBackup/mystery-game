@@ -8,6 +8,7 @@ import { submitScore } from '../../firebase/game';
 import { serverNow } from '../../lib/clockSkew';
 import { GAME_GRACE_MS } from '../../lib/engine/phases.js';
 import { deepBlueOpen } from '../../lib/engine/minigames.js';
+import { deepBlueWhen } from '../words';
 
 /**
  * DEEP BLUE, the app: whichever game the morning plays (engine/minigames.js).
@@ -23,7 +24,7 @@ import { deepBlueOpen } from '../../lib/engine/minigames.js';
 export default function GameApp({ ctx, onClose }) {
   const { game } = ctx;
   const kind = game.minigame ?? 'run';
-  if (!deepBlueOpen(game)) return <LockedGame onClose={onClose} />;
+  if (!deepBlueOpen(game)) return <LockedGame line={deepBlueWhen(game, ctx.pack, serverNow())} onClose={onClose} />;
   const shown = game.dayGame?.cycle === game.cycle && game.dayGame.kind === kind ? game.dayGame : null;
   if (kind === 'word') return <WordGame ctx={ctx} onClose={onClose} dayGame={shown} />;
   if (kind === 'draw') return <DrawGame ctx={ctx} onClose={onClose} dayGame={shown} />;
@@ -31,14 +32,14 @@ export default function GameApp({ ctx, onClose }) {
 }
 
 /** Shown whenever it isn't actually time to play: locked, not practice. */
-function LockedGame({ onClose }) {
+function LockedGame({ line, onClose }) {
   return (
     <section className="os-app os-app--dark">
       <NavBar title="DEEP BLUE" onBack={onClose} backLabel="Home" tone="dark" />
       <div className="flex-1 min-h-0 flex flex-col items-center justify-center gap-3 px-8 text-center opacity-50">
         <Glyph name="lock" size={28} />
         <p className="os-label text-[11px] text-os-chrome">LOCKED</p>
-        <p className="text-[14px] text-os-chrome">DEEP BLUE opens when it’s time to play.</p>
+        <p className="text-[14px] text-os-chrome" style={{ textWrap: 'pretty' }}>{line}</p>
       </div>
     </section>
   );
@@ -66,7 +67,7 @@ function RunGame({ ctx, onClose }) {
     if (bestRef.current.cycle !== game.cycle) bestRef.current = { cycle: game.cycle, best: 0, runs: 0 };
     const b = bestRef.current;
     b.runs += 1;
-    // The first run is always written, even a 0, so the board knows you played.
+    // The first run is always written, even a 0, so the host knows you played.
     if (score > Math.max(b.best, serverBest) || (b.runs === 1 && !myScore)) {
       b.best = score;
       submitScore(gid, game.cycle, me.pid, Math.floor(score), b.runs).catch((e) => console.warn('[score] not saved:', e.code ?? e.message));
@@ -92,7 +93,7 @@ function RunGame({ ctx, onClose }) {
         {posting && (
           <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black to-transparent text-center">
             <div className="os-spinner" />
-            <p className="os-label text-[11px] mt-3">TIME. POSTING THE BOARD…</p>
+            <p className="os-label text-[11px] mt-3">TIME. THE TOP 3 GET A PHOTO…</p>
           </div>
         )}
       </div>

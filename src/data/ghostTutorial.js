@@ -14,9 +14,9 @@
  *      their role was: never "your team", never a Killer-only line.
  *   2. True to the engine: engine/night.js (each ghost's nightly true clue,
  *      the whisper, the pass, which only carries a photo the ghost holds),
- *      last words (one photo posted to the Room on the day a guest is taken)
+ *      last words (one photo posted to the Room on the day the Killers kill a guest)
  *      and ghost sight (Photos → The Room, every clue the living got),
- *      morning.js (the ghost board), the Endgame votes, firestore.rules (the
+ *      the morning games (ghosts play but can't place), every vote, firestore.rules (the
  *      dead read the Room but can't post; Spirits is theirs). Help's Ghost
  *      topic and NIGHT.moves.pass/whisper in killersCopy.js say the same.
  *   3. Plain words, one idea a line, about 12 words a line.
@@ -35,7 +35,7 @@ export const FILM_SLIDES = Object.freeze([
   { id: 'truth', n: 3, title: 'Every night, a true clue photo.', line: 'Ghost photos never lie. In Photos, The Room shows every clue the living got.' },
   { id: 'pass', n: 4, title: 'Pass a photo to a living guest.', line: 'Open Night, pick a photo, then a guest. Or whisper them one word.' },
   { id: 'spirits', n: 5, title: 'Plot with the dead in Spirits.', line: 'Spirits is in Messages. Only ghosts can read it.' },
-  { id: 'play', n: 6, title: 'Keep playing every morning.', line: 'Your scores go on a ghost board. And you vote in every poll.' },
+  { id: 'play', n: 6, title: 'Keep playing every morning.', line: 'And vote in every vote. Open Vote on your home screen.' },
 ].map((s) => ({ ...s, kind: 'film', clip: clip(s.n), poster: poster(s.n) })));
 
 export const READY = Object.freeze({

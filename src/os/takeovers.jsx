@@ -108,7 +108,7 @@ export function Hijack({ onDone }) {
 
 /**
  * Recruit night, for the guest the Killers chose: an incoming call. Accept and
- * you play for them. Decline, or let it ring out, and you are their next score.
+ * you play for them. Decline, or let it ring out, and they kill you tonight.
  */
 export function IncomingCall({ gid, game, me }) {
   const action = useMyAction(gid, game.cycle, me.pid);
@@ -126,7 +126,7 @@ export function IncomingCall({ gid, game, me }) {
         <div className="os-notif max-w-[320px]">
           <div>
             <p className="os-notif__title">“WE WANT YOU.”</p>
-            <p className="os-notif__text">Join the Killers and play for them from now on. Say no, or say nothing, and your score sinks tonight.</p>
+            <p className="os-notif__text">Join the Killers and play for them from now on. Say no, or say nothing, and they kill you tonight.</p>
           </div>
         </div>
       </div>
@@ -189,7 +189,7 @@ export function ChapterCard({ game, pack }) {
  * Taken. The moment your own phone finds out you're dead: the signal dies in
  * static, the card says so, and then the ghost tutorial (GhostTutorial.jsx,
  * the user's ask on 2026-10-03) shows what a ghost does from now on. Shown
- * once per death, only after the room has seen it on the board (beats.js),
+ * once per death, only after the room has seen it in the news (beats.js),
  * never before; Continue on the last slide (or Skip) marks it seen.
  */
 export function TakenScreen({ me, onDone }) {
@@ -221,7 +221,7 @@ export function TakenScreen({ me, onDone }) {
             <div className="inline-grid place-items-center w-20 h-20 rounded-2xl bg-os-steel/40 text-os-foam"><Glyph name="ghost" size={44} /></div>
             <p className="os-arcade text-[23px] leading-snug mt-6 text-white">YOU WERE KILLED</p>
             <p className="text-[18px] leading-snug mt-4 text-os-foam os-balance">
-              {banished ? 'The room voted to kill you. ' : 'You came last on the board. '}You still play, as a ghost.
+              {banished ? 'The room voted to kill you. ' : 'The Killers killed you in the night. '}You still play, as a ghost.
             </p>
             <div className="mt-7"><Btn tone="dark" onClick={() => setTour(true)}>Enter the spirit world</Btn></div>
           </div>

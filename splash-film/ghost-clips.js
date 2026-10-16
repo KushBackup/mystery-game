@@ -238,10 +238,11 @@ function spiritsClip(c, tau, i) {
 }
 
 // ---------------------------------------------------------------- clip 6: still playing
-// Day. Zed taps away at the morning game; a GHOST BOARD card pops up with him on top. Then he drops
-// a ballot into the box for the final vote.
+// Day. Zed taps away at the morning game, and EVERY DAY's first line (play) ticks. Then he drops a
+// ballot into the VOTE box and the second line (vote) ticks. Redrawn 2026-10-16: there is no ghost
+// board any more, and ghosts vote at every Round Table, not only the final votes.
 const BOARD6 = { x: 1020, y: 330 }, BALLOT = [2.45, 3.35], BOX = [1020, 850];
-const GROWS = [{ n: 'Zed', s: 128 }, { n: 'Cleo', s: 94 }, { n: 'Dev', s: 61 }];
+const GROWS = [{ n: 'play', at: 1.2 }, { n: 'vote', at: 3.45 }];
 function playClip(c, tau, i) {
   page(c);
   const t2 = twos(tau), G = [380, 470 + Math.sin(t2 * 3.2) * 12];
@@ -253,18 +254,20 @@ function playClip(c, tau, i) {
     c.save(); c.translate(G[0] + 10, G[1] + 120); c.rotate(-.1); c.fillStyle = INK; c.fill(roundRectPath(-46, -70, 92, 140, 14)); litScreen(c, 76, 118, 1);
     dot(c, -14, (t2 * 140) % 90 - 40, 9, 9, SEA); c.fillStyle = alpha(INK, .35); c.fillRect(10, -50, 12, 40); c.fillRect(10, 20, 12, 36); c.restore();
   }
-  // the ghost board
-  const bk = easeOutBack(win(tau, .5, .8)), out = 0;
-  if (bk > 0 && out < 1) {
-    c.save(); c.translate(BOARD6.x, BOARD6.y); c.rotate(.03); c.scale(bk * (1 - out * .2), bk * (1 - out * .2)); c.globalAlpha = 1 - out;
+  // every day: play, then vote, each ticked as Zed does it
+  const bk = easeOutBack(win(tau, .5, .8));
+  if (bk > 0) {
+    c.save(); c.translate(BOARD6.x, BOARD6.y); c.rotate(.03); c.scale(bk, bk);
     sticky(c, 520, 420, NOTE.sky, 17300);
-    txt(c, 'GHOST BOARD', 0, -150, 64, { fit: 440 });
+    txt(c, 'EVERY DAY', 0, -130, 70, { fit: 440 });
     GROWS.forEach((r, q) => {
-      const ry = -60 + q * 90, rk = win(tau, .9 + q * .2, 1.1 + q * .2);
+      const ry = -20 + q * 110, rk = win(tau, .9 + q * .2, 1.1 + q * .2);
       if (rk <= 0) return;
       c.save(); c.globalAlpha *= rk;
-      if (q === 0) { c.save(); c.globalCompositeOperation = 'multiply'; c.fillStyle = alpha(SEA, .25); c.fillRect(-230, ry - 36, 460, 72); c.restore(); }
-      txt(c, `${q + 1}`, -200, ry, 54); txt(c, r.n, -60, ry, 54); txt(c, String(r.s), 160, ry, 54);
+      ln(c, warp(rectPts(-170, ry - 32, 64, 64), 17350 + q, 1.2, true, 20), 4, 17360 + q, true, INK, { amp: .4, corner: .4 });
+      txt(c, r.n, 60, ry, 64);
+      const tk = win(tau, r.at, r.at + .2);
+      if (tk > 0) brush(c, [[-160, ry - 2], [-140, ry + 20], [-100, ry - 30]], { w: 10, color: SEA, p: tk, seed: 17370 + q, smooth: false });
       c.restore();
     });
     c.restore();
@@ -275,7 +278,7 @@ function playClip(c, tau, i) {
     c.save(); c.translate(BOX[0], BOX[1]); c.scale(xk, xk);
     shape(c, warp(rectPts(-170, -110, 340, 220), 17400, 2, true, 30), SEA, 17401, { w: 6, base: CARD, al: .35, corner: .4 });
     shape(c, warp(rectPts(-110, -130, 220, 26), 17410, 1.5, true, 30), null, 17411, { w: 5, base: INK, corner: .4 });
-    txt(c, 'FINAL VOTE', 0, 20, 58, { fit: 300 });
+    txt(c, 'VOTE', 0, 20, 70, { fit: 300 });
     c.restore();
     const u = win(tau, BALLOT[0], BALLOT[1]);
     if (tau < BALLOT[0] - .15) { /* the slip appears with the box */ } else if (u < 1) {

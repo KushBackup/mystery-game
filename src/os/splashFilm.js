@@ -8,7 +8,8 @@ export const FILM = `${import.meta.env.BASE_URL}splash/deal.mp4`;
 // Bump the version to show a changed video to devices that saw the old one.
 const KEY = 'astral.intro';
 // '2' (2026-10-15): the collaboration beat shows SideQuest Club instead of Greenr.
-const VERSION = '2';
+// '3' (2026-10-16): the cold open shows the Killers' vote, not the lowest score.
+const VERSION = '3';
 
 export function introSeen() {
   try { return localStorage.getItem(KEY) === VERSION; } catch { return false; }

@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow, useAllTraits, useKillerGroup, useMyPlay, useGhostSight, useDayWall } from '../hooks/useKillers';
+import { useChannel, useMyVote, useMyScore, useMyAction, useDen, useServerNow, useAllTraits, useKillerGroup, useMyPlay, useGhostSight } from '../hooks/useKillers';
 import { getStreamState, getWriteState, subscribeStreamState, subscribeWriteState } from '../firebase/game';
 import { serverNow } from '../lib/clockSkew';
 import { nowLine, PHASE_LABEL, deliveryLine, GAME, LAST_WORDS, progressLine } from '../data/killersCopy';
 import { latestPublicCount, killersCaught } from './suspects';
 import { dayKit, alarmLine } from '../data/packs/index.js';
-import { StatusBar, HomeBar, SyncNote, HomeScreen, LockScreen, Banner, NotificationCenter, NCTile } from './chrome';
+import { StatusBar, HomeBar, SyncNote, HomeScreen, LockScreen, Banner, NotificationCenter, NCTile, Toaster } from './chrome';
+import { toast, clearToast } from './toast';
 import { RoleText, IncomingCall, GoneScreen, ChapterCard, TakenScreen } from './takeovers';
 import { threadsFor, preview as threadPreview, lastWordsDue } from './threads';
 import { useSeen, markSeen, peekSeen } from './seen';
@@ -14,11 +15,11 @@ import { Hold } from './ui';
 import { KeyboardContext, KEYBOARD_MIN, isTyping, revealField } from './keyboard';
 import { useNews } from './news';
 import { useVoice } from './voice';
-import { useMaskedPlayers, BOARD_BEAT, VERDICT_BEAT } from './beats';
+import { useMaskedPlayers, DAWN_BEAT, VERDICT_BEAT } from './beats';
 import { prefersLessMotion } from './nav';
-import { dayLabel, photoSource, timeOfDay } from './words';
+import { dayLabel, photoSource, timeOfDay, deepBlueWhen } from './words';
 import { mediaFor, FORM_NAME } from './evidence';
-import { primeSfx, sfxPing, sfxLock, startAlarm, stopAlarm } from './sfx';
+import { primeSfx, sfxPing, sfxLock, sfxDeny, startAlarm, stopAlarm } from './sfx';
 import { daySchedule, fmtClock } from '../lib/engine/clock.js';
 import { deepBlueOpen, introDay, gameOfDay } from '../lib/engine/minigames.js';
 import { prefetchTutorial } from '../data/wordTutorial';
@@ -28,7 +29,6 @@ import { prefetchGhostTutorial } from '../data/ghostTutorial';
 import MessagesApp from './apps/MessagesApp';
 import GameApp from './apps/GameApp';
 import NewsApp from './apps/NewsApp';
-import BoardApp from './apps/BoardApp';
 import GalleryApp from './apps/GalleryApp';
 import ClockApp from './apps/ClockApp';
 import ContactsApp from './apps/ContactsApp';
@@ -45,14 +45,14 @@ import HelpApp from './apps/HelpApp';
  * The phone never opens an app by itself, and never explains a rule
  * (decided 2026-10-02: players discover the game). A phase change nudges
  * instead: a chapter card marks the turn of the day, a banner says something
- * happened ("The board is up."), a badge sits on the app that wants you, and
+ * happened ("Night 2 is over."), a badge sits on the app that wants you, and
  * the NowCard at the top of the home screen opens it if tapped. A few
  * moments still take the whole screen, because a real phone does that too:
  * the role text at casting, the recruit call, and your own death.
  *
  * The morning alarm is a notification, not a takeover (user's call,
  * 2026-10-02): it rings briefly and says by when to play. Nobody is made to
- * play; a guest who doesn't scores zero, and the banner says so.
+ * play; a guest who doesn't just can't make the top three, who win a clue photo.
  *
  * What the room hasn't been told yet, this phone doesn't show: a death lands
  * in the data a few seconds before the reveal plays, so the roster (and your
@@ -68,7 +68,7 @@ const SUGGEST = {
   game: 'deepblue',
   game_locked: 'deepblue',
   dawn: 'news',
-  investigation: 'vote',
+  investigation: 'gallery',
   roundtable: 'vote',
   revote: 'vote',
   endgame: 'vote',
@@ -78,14 +78,14 @@ const SUGGEST = {
 
 /**
  * The banner a phase start drops on every phone. No names, ever: a banner
- * lands with the phase, which for the board and the verdict is seconds
- * before the reveal says who (beats.js).
+ * lands with the phase, which for the morning news and the verdict is
+ * seconds before the reveal says who (beats.js).
  *
  * The morning's two say by when to play, on the game clock (`until`), and
- * what skipping costs a living guest. The user asked for exactly that line.
+ * what playing well earns a living guest.
  */
 const todayTitle = (g, pack) => dayKit(pack).dayGames[g.minigame ?? 'run']?.title ?? 'The run';
-const skipLine = (alive) => (alive ? ' Skip it and you score zero.' : '');
+const skipLine = (alive) => (alive ? ' The top 3 win a clue photo.' : '');
 const PHASE_BANNER = {
   alarm: (g, pack, { until, alive }) => {
     const day = dayKit(pack).dayGames[g.minigame ?? 'run'];
@@ -93,7 +93,7 @@ const PHASE_BANNER = {
     const today = (introDay(g.config, g.cycle) && day?.alarmIntro) || day?.alarm || `Today: ${todayTitle(g, pack)}.`;
     return {
       icon: 'clock',
-      // The pack's line for the day ("DAY 2. The board remembers yesterday."), as the alarm's label.
+      // The pack's line for the day ("DAY 2. Somebody here voted last night."), as the alarm's label.
       title: alarmLine(pack, g.cycle),
       text: `${today}${until ? ` Play before ${until}.` : ''}${skipLine(alive)}`,
       app: 'deepblue',
@@ -107,19 +107,19 @@ const PHASE_BANNER = {
     app: 'deepblue',
     long: true,
   }),
-  dawn: () => ({ icon: 'news', title: 'News', text: 'The board is up.', app: 'news' }),
+  dawn: (g) => ({ icon: 'news', title: 'News', text: `Night ${g.cycle} is over. The morning news is in.`, app: 'news' }),
   banish: () => ({ icon: 'news', title: 'News', text: 'The verdict is in.', app: 'news' }),
   finale: () => ({ icon: 'news', title: 'News', text: 'It’s over.', app: 'news' }),
-  investigation: () => ({ icon: 'messages', title: 'The Room', text: 'Daylight. Accuse a suspect, or nobody is killed today.', app: 'vote' }),
-  roundtable: (g) => ({ icon: 'messages', title: 'The Room', text: `The vote is open. ${(g.trial ?? []).length === 1 ? 'One guest is' : `${(g.trial ?? []).length} guests are`} on trial.`, app: 'vote' }),
-  revote: () => ({ icon: 'messages', title: 'The Room', text: 'DEEP BLUE created a new poll', app: 'vote' }),
-  endgame: () => ({ icon: 'messages', title: 'The Room', text: 'DEEP BLUE created a poll', app: 'vote' }),
+  investigation: () => ({ icon: 'gallery', title: 'Photos', text: 'Daylight. Compare clues. The vote opens later today.', app: 'gallery' }),
+  roundtable: () => ({ icon: 'vote', title: 'Vote', text: 'The vote is open. Anyone can be voted for.', app: 'vote' }),
+  revote: () => ({ icon: 'vote', title: 'Vote', text: 'A tie. The re-vote is open.', app: 'vote' }),
+  endgame: () => ({ icon: 'vote', title: 'Vote', text: 'The final vote is open.', app: 'vote' }),
 };
 
 /** Phases that open with a chapter card (takeovers.jsx). */
 const CHAPTERS = new Set(['night', 'investigation', 'roundtable', 'endgame']);
 
-const GRID = [['board', 'Board'], ['clock', 'Clock'], ['contacts', 'Contacts'], ['night', 'Night'], ['weather', 'Weather'], ['settings', 'Settings'], ['help', 'Help']];
+const GRID = [['vote', 'Vote'], ['clock', 'Clock'], ['contacts', 'Contacts'], ['night', 'Night'], ['settings', 'Settings'], ['help', 'Help']];
 /** The Night app is on the phone only while it is night; by day it is gone, and an open one closes. */
 const NIGHTTIME = new Set(['night', 'night_locked', 'recruit', 'recruit_locked']);
 const gridFor = (phase) => (NIGHTTIME.has(phase) ? GRID : GRID.filter(([id]) => id !== 'night'));
@@ -132,7 +132,6 @@ const APPS = {
   messages: MessagesApp,
   deepblue: GameApp,
   news: NewsApp,
-  board: BoardApp,
   gallery: GalleryApp,
   clock: ClockApp,
   contacts: ContactsApp,
@@ -262,7 +261,10 @@ export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = 
   const [wasLocked, setWasLocked] = useState(locked);
   if (locked !== wasLocked) {
     setWasLocked(locked);
-    if (locked) setNcOpen(false);
+    if (locked) {
+      setNcOpen(false);
+      clearToast();
+    }
   }
   const ncClose = () => setNcOpen(false);
   const ncDown = (e) => {
@@ -300,6 +302,7 @@ export function PhoneFrame({ game, ghost, clear, onHome = () => {}, onOpenApp = 
       <StatusBar game={game} ghost={ghost} clear={clear} drag={{ onPointerDown: ncDown, onPointerMove: ncMove, onPointerUp: ncUp, onPointerCancel: ncUp }} />
       <div ref={stageRef} className="os-stage">
         <KeyboardContext.Provider value={kbd}>{children}</KeyboardContext.Provider>
+        {!locked && <Toaster />}
         <NotificationCenter sections={sections} open={ncOpen} pull={ncPull} onOpen={onOpenApp} onClose={ncClose} />
       </div>
       {/* With the panel down, Home puts it away first, the way iOS did. */}
@@ -326,16 +329,12 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   // The Killers' group: who is in it, and when DEEP BLUE added them (threads.js).
   const mates = useKillerGroup(gid, isKiller);
   const myVote = useMyVote(gid, game.ballot, me.pid);
-  // Today's accusations and seconds (engine/banish.js accusationBoard): public, from daylight to the verdict.
-  const accusing = ['investigation', 'roundtable', 'roundtable_locked', 'revote', 'revote_locked', 'banish'].includes(phase);
-  const accusations = useDayWall(gid, 'accusations', game.cycle, accusing);
-  const seconds = useDayWall(gid, 'seconds', game.cycle, accusing);
   const myScore = useMyScore(gid, game.cycle, me.pid);
-  // Word never writes a score until the board, so "played" there is a posted clue.
+  // Word never writes a score until the game ends, so "played" there is a posted clue.
   const inGame = ['alive', 'ghost'].includes(me.status);
   const wordDay = (game.minigame ?? 'run') === 'word' && ['alarm', 'game'].includes(phase);
   const myClue = useMyPlay(gid, 'clues', game.cycle, me.pid, wordDay && inGame);
-  // Sketch never writes a score before the board: a saved drawing is what counts as playing.
+  // Sketch never writes a score before the game ends: a saved drawing is what counts as playing.
   const drawDay = (game.minigame ?? 'run') === 'draw' && ['alarm', 'game'].includes(phase);
   const myDrawing = useMyPlay(gid, 'drawings', game.cycle, me.pid, drawDay && inGame);
   const action = useMyAction(gid, game.cycle, me.pid);
@@ -418,9 +417,9 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   // Your own death: once, and only after the room has watched it happen.
 
   const takenSeen = useSeen(`${gid}.taken`, 0);
-  const died = realMe.status === 'ghost' && ['murdered', 'deep', 'banished'].includes(realMe.cause) && takenSeen !== realMe.diedCycle;
+  const died = realMe.status === 'ghost' && ['murdered', 'banished'].includes(realMe.cause) && takenSeen !== realMe.diedCycle;
   const takenAt = died && realMe.diedCycle === game.cycle
-    ? (phase === 'dawn' ? game.revealAt + (BOARD_BEAT.full + 2) * 1000 : phase === 'banish' ? game.revealAt + (VERDICT_BEAT.votes + 1.5) * 1000 : 0)
+    ? (phase === 'dawn' ? game.revealAt + (DAWN_BEAT.full + 2) * 1000 : phase === 'banish' ? game.revealAt + (VERDICT_BEAT.votes + 1.5) * 1000 : 0)
     : 0;
   const nowTaken = useServerNow(takenAt, 250);
   const showTaken = died && (!takenAt || nowTaken >= takenAt);
@@ -443,19 +442,11 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
     if (app === 'news') markSeen(`${gid}.news`, newsKey ? newsKey.split('|') : []);
   }, [app, gid, newsKey]);
 
-  // A new board badges Board until it is seen there, or in News's dawn reveal.
-  // Never before the reveal shows the death (news.held), so the badge can't spoil it.
-  const boardSeen = useSeen(`${gid}.board`, 0);
-  const boardDay = game.board?.rows?.length && !(news.held && phase === 'dawn') ? game.board.cycle : 0;
-  useEffect(() => {
-    if (boardDay && (app === 'board' || (app === 'news' && phase === 'dawn'))) markSeen(`${gid}.board`, boardDay);
-  }, [app, phase, gid, boardDay]);
-
   // DEEP BLUE's own lines to this guest (voice.js), shown in its Messages thread.
   const voice = useVoice(gid, game, me, pack, nameOf);
 
-  const ctxBase = { gid, uid, game, me, role, players, inbox, pack, nameOf, chat, spirits, den, mates: isKiller ? mates : null, myVote, myScore, news, traits, voice, ghostSight: spiritsOk ? ghostSight ?? [] : [], accusations: accusing ? accusations ?? [] : [], seconds: accusing ? seconds ?? [] : [] };
-  // A guest taken this morning may still post their last words (threads.js).
+  const ctxBase = { gid, uid, game, me, role, players, inbox, pack, nameOf, chat, spirits, den, mates: isKiller ? mates : null, myVote, myScore, news, traits, voice, ghostSight: spiritsOk ? ghostSight ?? [] : [] };
+  // A guest killed last night may still post their last words (threads.js).
   const lastDue = Boolean(lastWordsDue(ctxBase));
   // The Room album fills each morning; a new night badges Photos until it is opened (GalleryApp).
   const sightSeen = useSeen(`${gid}.sight`, 0);
@@ -464,9 +455,10 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const acted = isKiller ? (denPicks ?? []).some((d) => d.pid === me.pid && (d.victim || d.recruit)) : Boolean(action);
   const needsNight = phase === 'night' && ['alive', 'ghost'].includes(me.status) && !acted;
   // The morning game is never forced: a badge, a banner and this row say by when.
+  // It closes when daylight starts.
   const plan = daySchedule(game, serverNow());
-  const dawnAt = plan?.parts.find((p) => p.id === 'dawn')?.at;
-  const until = dawnAt != null ? fmtClock(dawnAt) : '';
+  const closesAt = plan?.parts.find((p) => p.id === 'investigation')?.at;
+  const until = closesAt != null ? fmtClock(closesAt) : '';
   const played = wordDay ? Boolean(myClue)
     : drawDay ? (myDrawing?.strokes ?? '').length > 4
     : Boolean(myScore);
@@ -477,7 +469,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
     messages: threads.reduce((n, t) => n + t.unread, 0) + (lastDue ? 1 : 0) || null,
     gallery: inbox.filter((d) => d.kind === 'fact' && !gallerySeen.includes(d.id)).length + openHalves(inbox).length + (sightDay > sightSeen ? 1 : 0) || null,
     news: news.ids.filter((id) => !newsSeenArr.includes(id)).length || null,
-    board: boardDay && boardSeen !== boardDay ? 1 : null,
+    vote: needsVote ? '!' : null,
     night: needsNight ? '!' : null,
     deepblue: needsGame ? '!' : null,
   };
@@ -516,8 +508,8 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
       icon: 'deepblue',
       title: todayTitle(game, pack),
       text: me.status === 'alive'
-        ? `Play before ${until || 'the board goes up'}, or score zero. The lowest score is killed.`
-        : `Play before ${until || 'the board goes up'}.`,
+        ? `Play before ${until || 'time runs out'}. The top 3 win a clue photo.`
+        : `Play before ${until || 'time runs out'}.`,
       app: 'deepblue',
     },
     needsVote && { id: 'need-vote', tile: <NCTile glyph="vote" bg="linear-gradient(#4a9bf5, #0b6fe3)" />, title: 'Vote', text: 'Cast your ballot before it closes.', app: 'vote' },
@@ -531,7 +523,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
 
   // --- Banner: the newest arrival since this phone opened, unless you're
   // looking at it. A burst (the morning's photos) reads as one line. A phase
-  // start is an arrival too (PHASE_BANNER): it is how the board, the vote and
+  // start is an arrival too (PHASE_BANNER): it is how the morning news, the vote and
   // the morning game find a guest, now that nothing opens by itself.
   const [mountAt] = useState(() => serverNow());
   const myPid = me.pid;
@@ -613,6 +605,12 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
   const progress = phase === 'lobby' || phase === 'casting' ? '' : progressLine({ count: latestPublicCount(ctxBase), ...killersCaught(game, players) });
   const suggested = SUGGEST[phase] ?? null;
   const lockedApps = { deepblue: !deepBlueOpen(game) };
+  // A tap on the locked DEEP BLUE says when it opens, never how it plays (words.js deepBlueWhen).
+  const onLocked = (name) => {
+    if (name !== 'deepblue') return;
+    sfxDeny();
+    toast({ id: 'locked:deepblue', icon: 'deepblue', title: 'DEEP BLUE is locked', text: deepBlueWhen(game, pack, serverNow()) });
+  };
 
   // --- What takes the whole screen right now.
   let takeover = null;
@@ -655,6 +653,7 @@ export default function PhoneOS({ gid, uid, game, me: realMe, role, players: rea
           badges={badges}
           ghost={ghost}
           onOpen={open}
+          onLocked={onLocked}
           lockedApps={lockedApps}
           now={{ label: dayLabel(game, label), line, sub: progress, urgent: needsNight || needsVote || needsGame, onTap: suggested && (suggested !== 'night' || NIGHTTIME.has(phase)) ? () => open(suggested) : null }}
         />

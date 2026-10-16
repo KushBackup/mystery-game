@@ -4,8 +4,8 @@
  * Two rules. From the feedback that started the rebuild: nobody should have
  * to read to play, so each line is 25 words or fewer. And from 2026-10-02:
  * players discover the game. Copy states the premise and what just happened;
- * it never explains how a mechanic works (the rig, who strikes, the firewall).
- * The board, the photos and the room teach that. If a screen seems to need
+ * it never explains how a mechanic works (who strikes, the firewall). The
+ * morning news, the photos and the room teach that. If a screen seems to need
  * an explanation, give it a cue instead: a badge, a banner, a result.
  *
  * One exception, the user's call after playtesting (2026-10-02): the Night
@@ -38,7 +38,11 @@ export const GAME = {
  * hero, the host's opening) tells this same chain, in this order.
  *
  * One word for leaving the game: "killed" (the user's call, 2026-10-15). It
- * covers the morning board and the room's vote alike. Never banish, logged
+ * covers the Killers' night kill and the room's vote alike.
+ *
+ * Since the 15 Oct playtest the only night death is the Killers' vote, the
+ * morning game kills nobody (its top 3 win a clue photo), and the room's vote
+ * is open: anyone can be voted for. Never banish, logged
  * out, voted out, taken, SIGNAL LOST or dies.
  */
 export const CASE = [
@@ -46,22 +50,21 @@ export const CASE = [
     kicker: 'What is DEEP BLUE?',
     lines: [
       'DEEP BLUE is a cursed app. Tonight it is on every phone in this room.',
-      'Every morning it makes everyone play a quick game. The lowest score is killed.',
+      'Every morning it makes everyone play a quick game. The top 3 win a clue.',
     ],
   },
   {
     kicker: 'Who are the Killers?',
     lines: [
       'DEEP BLUE gave three guests the admin password. They are the Killers.',
-      'Each night they push one guest’s score to the bottom. That guest is killed.',
-      'But the top of the board is locked. A good score keeps you safe.',
+      'Each night they vote on one guest to kill. A Doctor can save them.',
     ],
   },
   {
     kicker: 'Your goal',
     lines: [
       'Everyone else is Faithful. Find the three Killers.',
-      'Collect clues. Accuse someone. The room votes, and that guest is killed.',
+      'Collect clues. Then everyone votes. The most votes is killed.',
       'Kill all three Killers and DEEP BLUE deletes itself.',
     ],
   },
@@ -86,15 +89,15 @@ export const SPLASH = [
  * together, without the host having to explain it.
  */
 export const HIJACK = [
-  { big: 'DEEP BLUE IS ON EVERY PHONE IN THIS ROOM.', small: 'Every morning, everyone plays its game. The lowest score is killed.' },
-  { big: 'THREE OF YOU WORK FOR IT.', small: 'They have the admin password. Each night they push one guest’s score to the bottom.' },
-  { big: 'FIND THEM BEFORE IT KILLS EVERYONE.', small: 'Collect clues. Accuse. Vote. Kill all three Killers and DEEP BLUE deletes itself.' },
+  { big: 'DEEP BLUE IS ON EVERY PHONE IN THIS ROOM.', small: 'Every morning, everyone plays its game. The top 3 win a clue.' },
+  { big: 'THREE OF YOU WORK FOR IT.', small: 'They have the admin password. Each night they choose one guest to kill.' },
+  { big: 'FIND THEM BEFORE IT KILLS EVERYONE.', small: 'Collect clues. Vote. Kill all three Killers and DEEP BLUE deletes itself.' },
 ];
 
 /** The role text at casting: who you are, in one line. How the role works is for the player to find. */
 export const ROLE_CARD = {
   killer: { title: 'Killer', line: 'DEEP BLUE gave you the admin password. Each night, pick who is killed. Don’t get caught.' },
-  faithful: { title: 'Faithful', line: 'Three guests here are Killers. Find them, accuse them, and win the vote.' },
+  faithful: { title: 'Faithful', line: 'Three guests here are Killers. Find them, and vote to kill them.' },
   doctor: { title: 'Doctor', line: 'You’re Faithful. Each night, you can keep one person safe from the Killers.' },
   detective: { title: 'Detective', line: 'You’re Faithful. Each night, you can check two people’s phones.' },
 };
@@ -126,9 +129,9 @@ export function nowLine({ phase, status, hasActed, cycle, minigame = 'run', pack
     case 'game_locked':
       return 'Time.';
     case 'dawn':
-      return 'The board is up.';
+      return 'Night is over. Read the news.';
     case 'investigation':
-      return 'Daylight. Accuse someone, or nobody is killed today.';
+      return 'Daylight. Compare clues. The vote is later.';
     case 'roundtable':
       return 'The room is voting.';
     case 'revote':
@@ -141,6 +144,33 @@ export function nowLine({ phase, status, hasActed, cycle, minigame = 'run', pack
       return 'It’s over.';
     default:
       return 'Hold on…';
+  }
+}
+
+/**
+ * What a tap on the locked DEEP BLUE icon says, as a toast (os/toast.js): when
+ * the next game opens, never how it plays. `title` is that game's name, `at`
+ * its opening time on the game clock ('' for a game without one), and `over`
+ * says the games are done: 'last' (today's was the last), 'endgame', 'finale'.
+ */
+export function lockedGameLine({ phase, title, at = '', over = null }) {
+  if (over === 'finale') return 'The games are over.';
+  if (over === 'endgame') return 'No more games. The final vote decides it.';
+  if (over === 'last') return 'That was the last game. No more mornings.';
+  switch (phase) {
+    case 'lobby':
+    case 'casting':
+      return `${title} opens on the first morning, after Night 1.`;
+    case 'night':
+    case 'night_locked':
+    case 'recruit':
+    case 'recruit_locked':
+    case 'dawn':
+      return `${title} opens ${at ? `at ${at}` : 'in the morning'}, after the morning news.`;
+    case 'alarm':
+      return `${title} opens ${at ? `at ${at}` : 'in a moment'}.`;
+    default:
+      return `Today’s game is over. ${title} opens tomorrow morning, after the news.`;
   }
 }
 
@@ -166,7 +196,7 @@ export const PHASE_LABEL = {
   alarm: 'Alarm',
   game: 'Morning game',
   game_locked: 'Morning game',
-  dawn: 'Board',
+  dawn: 'Morning news',
   investigation: 'Investigate',
   roundtable: 'Round table',
   roundtable_locked: 'Round table',
@@ -192,7 +222,7 @@ export function deliveryLine(d, nameOf) {
     case 'fact':
       if (d.via === 'join') return `You and ${nameOf(d.from)} joined your halves. The whole photo is in Photos.`;
       if (d.via === 'pass') return `${nameOf(d.from)} passed you a photo from beyond. Ghost photos are always true.`;
-      return d.via === 'top' ? `You finished #${d.rank ?? 1}. DEEP BLUE sent you a photo.` : 'A photo arrived.';
+      return d.via === 'top' ? 'You made the top 3 in today’s game. DEEP BLUE sent you a photo.' : 'A photo arrived.';
     case 'trace': {
       const [a, b] = (d.targets ?? []).map(nameOf);
       return d.hit ? `TRACE: ${a} or ${b} did tonight’s hacking.` : `Trace: neither ${a} nor ${b} did tonight’s hacking.`;
@@ -241,48 +271,9 @@ export const DELIVERY_TAG = {
  */
 /**
  * Last words (MessagesApp LastWords, threads.js lastWordsDue): a guest the
- * board took this morning may post one true clue photo to The Room, once.
+ * Killers killed last night may post one true clue photo to The Room, once.
  * Role-neutral, like everything a ghost's phone shows face-up.
  */
-/**
- * Accusations (os/apps/Accuse.jsx, engine/banish.js). A tool, so its rules are
- * told in full: what an accusation does, what a second does, and what silence
- * costs. Role-neutral: the same on every phone.
- */
-export const ACCUSE = {
-  kicker: 'DAYLIGHT · ACCUSE A SUSPECT',
-  title: 'Who do you think is a Killer?',
-  rules: [
-    'Accuse one guest today. You can show one of your clue photos as your reason.',
-    'Anyone can back an accusation with a Second. You get one Second a day.',
-    'A guest with 2 Seconds goes on trial. The vote is only between those on trial.',
-    'If nobody is on trial when daylight ends, there is no vote and nobody is killed.',
-  ],
-  today: (n) => (n ? `TODAY · ${n} ON TRIAL` : 'TODAY · NOBODY ON TRIAL YET'),
-  none: 'No accusations yet. Be the first.',
-  pick: 'Your accusation',
-  pickFirst: 'Pick a guest to accuse',
-  attach: 'Show a photo as your reason? (optional)',
-  attachFoot: 'The whole room sees the photo you pick.',
-  send: (name) => `Accuse ${name}`,
-  yours: (name) => `You accused ${name} today.`,
-  by: (names) => `Accused by ${names.join(', ')}`,
-  backed: (names) => `Seconded by ${names.join(', ')}`,
-  reason: (name) => `${name}’s photo:`,
-  second: (name) => `Second: put ${name} on trial`,
-  seconded: 'You seconded this.',
-  onTrial: 'ON TRIAL',
-  onTrialLine: (name) => `${name} is on trial.`,
-  support: (n) => `${n} of 2 Seconds. 2 puts them on trial.`,
-  roomKicker: 'ACCUSATION',
-  accuses: 'accuses',
-  closed: 'Too late. Daylight is over.',
-  error: 'Not sent. Try again.',
-  // The Room's pinned bar in daylight.
-  pin: 'Accuse someone, or nobody is killed today.',
-  noOne: 'No one: spare them',
-};
-
 /**
  * Split clues (GalleryApp TornPhoto, engine/clues.js splitHalves). A dig
  * gives half a photo; the named guest has the other half. Either one types
@@ -404,8 +395,7 @@ export const NIGHT = {
       verb: (name) => `Protect ${name}`,
       how: [
         ['Tonight', 'Pick one guest to protect. It can be you.'],
-        ['At dawn', 'If the Killers chose them, they live. DEEP BLUE tells you if you saved someone.'],
-        ['But', 'The lowest real score on the morning board is still killed instead. Your guest is safe from that too.'],
+        ['At dawn', 'If the Killers chose them, they live, and nobody is killed tonight. DEEP BLUE tells you if you saved someone.'],
         ['Rule', 'You can’t protect the same guest two nights in a row.'],
       ],
       pick: 'Who do you protect?',
@@ -464,8 +454,8 @@ export const NIGHT = {
     tied: 'Tied · DEEP BLUE breaks it',
     closed: 'The poll is closed.',
     how: [
-      ['At dawn', 'DEEP BLUE drops their score to the bottom of the morning board, and they are killed.'],
-      ['Unless', 'A Doctor protected them, or they scored in the locked top of the board. Then the lowest real score is killed instead, and that could be one of you.'],
+      ['At dawn', 'Your pick is killed, and the whole room reads it in the morning news.'],
+      ['Unless', 'A Doctor protected them. Then nobody is killed tonight.'],
       ['Turns', 'One of you strikes each night, in turn. Tonight’s clues describe that one, and guests watching them may see them.'],
       ['No vote', 'DEEP BLUE picks someone for you.'],
     ],

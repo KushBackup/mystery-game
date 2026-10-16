@@ -1387,6 +1387,38 @@ function hipHand(g, S) {
 
 /** The drinks, drawn at the hand: (0,0) is where the fingers close around the glass. */
 const DRINKS = {
+  soju(g, s) {
+    // MiHo, the sponsor: a green glass soju bottle held round the body, the
+    // ribbed shoulder above, the cream label showing over and under the
+    // fingers with its peach and the brush-letter logo, a peach-copper cap
+    const bottle = [[-2.1, -31], [2.1, -31], [2.1, -24.5], [4.6, -20.5], [6, -16], [6, 11.6], [4.8, 13], [-4.8, 13], [-6, 11.6], [-6, -16], [-4.6, -20.5], [-2.1, -24.5]];
+    solid(g, bottle, '#fbfcfa');
+    wash(g, bottle, '#4fa85a', { seed: s, alpha: 0.95, gran: 0.2, edge: 0.45, dx: 0, dy: 0, amp: 0.3, corner: 0.9 });
+    wash(g, [[2.6, -17], [5.8, -15.6], [5.8, 11.4], [2.6, 12.6]], '#2c7a37', { seed: s + 1, alpha: 0.55, gran: 0.25, edge: 0.3, dx: 0, dy: 0, amp: 0.3 });
+    // the ribbed shoulder
+    for (let k = 0; k < 5; k++) {
+      const x = -3.6 + k * 1.8;
+      pen(g, [[x * 0.55, -24], [x, -17]], { w: 0.5, color: '#2a6e33', alpha: 0.7, seed: s + 2 + k, pressure: EVEN, rough: 0 });
+    }
+    // the label, from the shoulder down past the hand
+    thing(g, rectPts(-5.4, -15, 10.8, 23), { fill: '#f7efe0', color: '#d9ccb2', seed: s + 8, w: 0.5, sketch: 0, corner: 0.5 });
+    // the logo in black brush strokes, top left of the label
+    for (const [a, b, k] of [[[-4.4, -13.6], [-4.2, -10.2], 0], [[-3.2, -13.4], [-3.4, -10.4], 1], [[-2.3, -13.8], [-2.1, -10], 2], [[-4.6, -8.8], [-2, -9.2], 3], [[-4.2, -7.6], [-2.6, -6.4], 4]]) {
+      pen(g, [a, b], { w: 0.9, color: INK, seed: s + 10 + k, pressure: TAPER, rough: 0.2 });
+    }
+    // the peach, a leaf on it
+    thing(g, ellPts(2, -10, 2.7, 2.5, 12), { fill: '#f6a27c', color: '#e07a55', seed: s + 16, w: 0.6, sketch: 0 });
+    thing(g, [[2.2, -12.4], [4, -14.2], [4.6, -12.8]], { fill: '#7cb85a', color: '#4f8f3a', seed: s + 17, w: 0.5, sketch: 0 });
+    // the green flavour tag, then the label's foot under the hand
+    pen(g, [[-4.6, -5.4], [4.6, -5.4]], { w: 1.4, color: '#3c9a48', seed: s + 18, pressure: EVEN, rough: 0 });
+    pen(g, [[-4.6, 6.6], [4.6, 6.6]], { w: 0.6, color: '#3c9a48', alpha: 0.8, seed: s + 19, pressure: EVEN, rough: 0 });
+    // the cap
+    thing(g, rectPts(-2.6, -36, 5.2, 5.2), { fill: '#d08a63', color: '#9c5a3a', seed: s + 20, w: 0.8, sketch: 0, corner: 0.5 });
+    for (let k = 0; k < 3; k++) pen(g, [[-1.4 + k * 1.4, -35.2], [-1.4 + k * 1.4, -31.6]], { w: 0.4, color: '#9c5a3a', alpha: 0.7, seed: s + 21 + k, pressure: EVEN, rough: 0 });
+    line(g, bottle, { close: true, w: 1.1, seed: s + 25, sketch: 0, corner: 0.9 });
+    pen(g, [[-4.6, -15], [-4.4, 10]], { w: 0.9, color: '#ffffff', alpha: 0.6, seed: s + 26, pressure: TAPER, rough: 0 });
+    pen(g, [[-1.3, -30], [-1.3, -25]], { w: 0.7, color: '#ffffff', alpha: 0.7, seed: s + 27, pressure: TAPER, rough: 0 });
+  },
   beer(g, s) {
     const glass = [[-6.4, -26], [6.4, -26], [5, 2], [-5, 2]];
     solid(g, glass, '#fbf7ec');

@@ -41,7 +41,7 @@ import {
 import { TRAITS } from '../src/data/traits.js';
 import { fits } from '../src/lib/engine/clues.js';
 import {
-  botName, G, arrive, heartbeat, leave, readSelf, act, play, playDay, vote, answerRecruit, driveBots, lastWords, accuseDay, joinHalves,
+  botName, G, arrive, heartbeat, leave, readSelf, act, play, playDay, vote, answerRecruit, driveBots, lastWords, joinHalves,
 } from '../src/firebase/bots.js';
 
 const args = Object.fromEntries(
@@ -235,15 +235,15 @@ async function spiritsChecks(bots, gid) {
 }
 
 /**
- * Ghost sight and last words, once a guest has been taken this morning:
- * ghosts read every clue the living got, the living can't; only today's
- * taken guest may post last words, only in investigation, only a clue they
- * hold, only once; and no living guest can dress a chat line up as one.
+ * Ghost sight and last words, once the Killers have killed a guest: ghosts
+ * read every clue the living got, the living can't; only the guest killed
+ * last night may post last words, only that day, only a clue they hold, only
+ * once; and no living guest can dress a chat line up as one.
  */
 async function lastWordsChecks(bots, gid, game, players) {
   const results = [];
   const c = game.cycle;
-  const takenToday = bots.find((b) => ['murdered', 'deep'].includes(players[b.pid]?.cause) && players[b.pid]?.diedCycle === c);
+  const takenToday = bots.find((b) => players[b.pid]?.cause === 'murdered' && players[b.pid]?.diedCycle === c);
   const older = bots.find((b) => players[b.pid]?.status === 'ghost' && players[b.pid]?.diedCycle < c);
   const living = bots.find((b) => players[b.pid]?.status === 'alive');
   const sight = (bot) => getDocs(collection(bot.db, 'games', gid, 'ghostSight'));
@@ -288,8 +288,8 @@ async function runChecks(bots, gid, game) {
   await expectDenied('guest lowers their best', () => score(a, a.pid, 3), results);
   await expectDenied('guest posts a score for someone else', () => score(a, b.pid, 999), results);
   await expectDenied('guest posts an impossible score', () => score(b, b.pid, 5000), results);
-  await expectDenied('guest adds a field to their score', () => setDoc(G(b, gid, 'scores', `${c}_${b.pid}`), { pid: b.pid, cycle: c, best: 4, runs: 1, at: 1, rigged: true }), results);
-  // Put a's score back to something ordinary, via the host, so the check doesn't skew the board.
+  await expectDenied('guest adds a field to their score', () => setDoc(G(b, gid, 'scores', `${c}_${b.pid}`), { pid: b.pid, cycle: c, best: 4, runs: 1, at: 1, extra: true }), results);
+  // Put a's score back to something ordinary, via the host, so the check doesn't skew the top three.
   return { results, fix: a.pid };
 }
 
@@ -299,7 +299,7 @@ async function pollPayloadChecks(bots, gid, game) {
   const killer = bots.find((b) => b.status === 'alive' && b.role === 'killer');
   const faithful = bots.find((b) => b.status === 'alive' && b.role !== 'killer');
   if (!killer || !faithful) return results;
-  await expectDenied('killer cannot inject hand or rig fields into the den', () => setDoc(
+  await expectDenied('killer cannot inject hand or other fields into the den', () => setDoc(
     G(killer, gid, 'den', `${game.cycle}_${killer.pid}`),
     { victim: faithful.pid, hand: killer.pid, rig: 'zero', pid: killer.pid, cycle: game.cycle, at: serverTimestamp() },
   ), results);
@@ -314,32 +314,35 @@ async function ballotPayloadChecks(bots, gid, game) {
     G(voter, gid, 'votes', `${game.ballot}_${voter.pid}`),
     { target: voter.pid, pid: voter.pid, ballot: game.ballot, at: serverTimestamp() },
   ), results);
-  // Ghosts vote in every ballot since 2026-10-15, but only for someone on it.
-  const ghost = bots.find((b) => b.status === 'ghost');
-  const onBallot = (game.ballotTargets ?? []).find((t) => t !== ghost?.pid);
-  if (ghost && onBallot) {
-    const ghostVote = (target) => setDoc(G(ghost, gid, 'votes', `${game.ballot}_${ghost.pid}`), { target, pid: ghost.pid, ballot: game.ballot, at: serverTimestamp() });
-    await expectAllowed('ghost votes at the Round Table', () => ghostVote(onBallot), results);
-    await expectDenied('ghost votes for someone not on trial', () => ghostVote('nobody-here'), results);
+  // The vote is open (since the 15 Oct playtest): any living guest, never a ghost or a stranger.
+  const living = bots.filter((b) => b.status === 'alive' && b !== voter);
+  const dead = bots.find((b) => b.status === 'ghost');
+  const asVoter = (bot, target) => setDoc(G(bot, gid, 'votes', `${game.ballot}_${bot.pid}`), { target, pid: bot.pid, ballot: game.ballot, at: serverTimestamp() });
+  if (game.phase === 'roundtable' && living.length) {
+    await expectAllowed('guest votes for any living guest', () => asVoter(voter, living.at(-1).pid), results);
+    if (dead) await expectDenied('guest votes for a ghost', () => asVoter(voter, dead.pid), results);
+    await expectDenied('guest votes for someone not in the game', () => asVoter(voter, 'nobody-here'), results);
+  }
+  // Ghosts vote in every ballot since 2026-10-15, for any living guest.
+  if (dead && game.phase === 'roundtable' && living.length) {
+    await expectAllowed('ghost votes at the Round Table', () => asVoter(dead, living[0].pid), results);
+  }
+  // A re-vote is only between the tied.
+  if (game.phase === 'revote') {
+    const outside = bots.find((b) => b.status === 'alive' && b !== voter && !(game.tied ?? []).includes(b.pid));
+    if (outside) await expectDenied('re-vote for a guest who is not tied', () => asVoter(voter, outside.pid), results);
   }
   return results;
 }
 
-/** Accusations: once, in daylight (2026-10-15). */
-async function accuseChecks(bots, gid, game) {
+/** Accusations were removed after the 15 Oct playtest: their collections refuse every write. */
+async function accusationsGoneChecks(bots, gid, game) {
   const results = [];
-  const [a, b, c] = bots.filter((x) => x.status === 'alive');
-  if (!c) return results;
+  const [a, b] = bots.filter((x) => x.status === 'alive');
+  if (!b) return results;
   const cy = game.cycle;
-  const accuse = (bot, target, extra = {}) => setDoc(G(bot, gid, 'accusations', `${cy}_${bot.pid}`), { pid: bot.pid, cycle: cy, target, at: serverTimestamp(), ...extra });
-  const second = (bot, accuser) => setDoc(G(bot, gid, 'seconds', `${cy}_${bot.pid}`), { pid: bot.pid, cycle: cy, accuser, at: serverTimestamp() });
-  await expectDenied('guest accuses themself', () => accuse(a, a.pid), results);
-  await expectDenied('guest attaches a clue that is not theirs', () => accuse(a, b.pid, { inboxId: 'nope', fact: { trait: 'top', group: 'dark' } }), results);
-  await expectAllowed('guest accuses another living guest', () => accuse(a, b.pid), results);
-  await expectDenied('guest changes their accusation', () => accuse(a, c.pid), results);
-  await expectDenied('guest seconds their own accusation', () => second(a, a.pid), results);
-  await expectDenied('accused guest seconds the accusation against them', () => second(b, a.pid), results);
-  await expectDenied('guest seconds an accusation that does not exist', () => second(c, c.pid), results);
+  await expectDenied('accusations are gone', () => setDoc(G(a, gid, 'accusations', `${cy}_${a.pid}`), { pid: a.pid, cycle: cy, target: b.pid, at: serverTimestamp() }), results);
+  await expectDenied('seconds are gone', () => setDoc(G(b, gid, 'seconds', `${cy}_${b.pid}`), { pid: b.pid, cycle: cy, accuser: a.pid, at: serverTimestamp() }), results);
   return results;
 }
 
@@ -408,11 +411,6 @@ async function selftest(n) {
         ranChecks.add('poll-payload');
         security.push(...await pollPayloadChecks(bots, gid, g));
       }
-      if (!ranChecks.has('accuse-night') && bots.some((b) => b.status === 'alive')) {
-        ranChecks.add('accuse-night');
-        const [x, y] = bots.filter((b) => b.status === 'alive');
-        await expectDenied('guest accuses at night', () => setDoc(G(x, gid, 'accusations', `${g.cycle}_${x.pid}`), { pid: x.pid, cycle: g.cycle, target: y.pid, at: serverTimestamp() }), security);
-      }
       await Promise.all(bots.map((b) => act(b, gid, g)));
       // Once there is a ghost: one of them tries to pass a clue it doesn't hold. The host must drop it.
       const forger = bots.find((b) => b.status === 'ghost');
@@ -445,28 +443,19 @@ async function selftest(n) {
     } else if (['roundtable', 'revote', 'endgame'].includes(g.phase)) {
       // Once without a ghost, and again once there is one to vote.
       const ballotKey = bots.some((b) => b.status === 'ghost') ? 'ballot-payload+ghost' : 'ballot-payload';
-      if (!ranChecks.has(ballotKey) && g.phase !== 'endgame') {
+      if (g.phase === 'revote' && !ranChecks.has('revote')) {
+        ranChecks.add('revote');
+        security.push(...await ballotPayloadChecks(bots, gid, g));
+      } else if (!ranChecks.has(ballotKey) && g.phase === 'roundtable') {
         ranChecks.add(ballotKey);
         security.push(...await ballotPayloadChecks(bots, gid, g));
       }
       await Promise.all(bots.map((b) => vote(b, gid, g)));
-    } else if (g.phase === 'dawn' && !ranChecks.has('last-early')) {
-      // Last words are refused before the investigation opens, even for today's taken guest.
-      const players = Object.fromEntries((await getDocs(collection(db, 'games', gid, 'players'))).docs.map((d) => [d.id, d.data()]));
-      const taken = bots.find((x) => ['murdered', 'deep'].includes(players[x.pid]?.cause) && players[x.pid]?.diedCycle === g.cycle);
-      const clue = taken && (await getDocs(query(collection(taken.db, 'games', gid, 'inbox'), where('to', '==', taken.pid)))).docs
-        .map((d) => ({ id: d.id, ...d.data() })).find((d) => d.kind === 'fact' && d.via === 'ghost' && d.cycle === g.cycle);
-      if (clue) {
-        ranChecks.add('last-early');
-        await expectDenied('taken guest posts last words during the board', () => setDoc(G(taken, gid, 'chat', `last_${taken.pid}`), {
-          kind: 'last', pid: taken.pid, name: taken.name, inboxId: clue.id, fact: clue.fact, at: Date.now(),
-        }), security);
-      }
     }
     if (g.phase === 'investigation') {
       await Promise.all(bots.map((x) => readSelf(x, gid)));
       const players = Object.fromEntries((await getDocs(collection(db, 'games', gid, 'players'))).docs.map((d) => [d.id, d.data()]));
-      const fresh = bots.some((x) => ['murdered', 'deep'].includes(players[x.pid]?.cause) && players[x.pid]?.diedCycle === g.cycle);
+      const fresh = bots.some((x) => players[x.pid]?.cause === 'murdered' && players[x.pid]?.diedCycle === g.cycle);
       const needOlder = !ranChecks.has('last-older') && bots.some((x) => players[x.pid]?.status === 'ghost' && players[x.pid]?.diedCycle < g.cycle);
       if (fresh && (!ranChecks.has('last') || needOlder)) {
         if (needOlder) ranChecks.add('last-older');
@@ -481,10 +470,8 @@ async function selftest(n) {
       const joined = await joinHalves(bots, gid);
       if (!ranChecks.has('accuse')) {
         ranChecks.add('accuse');
-        security.push(...await accuseChecks(bots, gid, g));
+        security.push(...await accusationsGoneChecks(bots, gid, g));
       }
-      await Promise.all(bots.map((x) => accuseDay(x, gid, g, 0)));
-      await Promise.all(bots.map((x) => accuseDay(x, gid, g, 1)));
       log.push(`  daylight ${g.cycle}: ${joined} torn photos joined`);
       // Give the host's join listener a moment to deliver before the day closes.
       await new Promise((r) => setTimeout(r, 1500));
@@ -508,22 +495,25 @@ async function selftest(n) {
     if ((after.finaleStory || after.finaleRoles) && !after.winner) log.push(`  FAIL: finale story published mid-game (${after.phase})`);
     // Nor may the day's word (or who drew what) reach a phone before the game locks.
     if (['alarm', 'game'].includes(after.phase) && after.dayGame?.cycle === after.cycle) log.push(`  FAIL: day ${after.cycle}'s game revealed during ${after.phase}`);
-    // Nor the paper's witness: it is written with the board, never before.
-    if (['alarm', 'game'].includes(after.phase) && after.dawn?.cycle === after.cycle) log.push(`  FAIL: day ${after.cycle}'s witness written during ${after.phase}`);
+    // Nor the paper's witness: it is written with the morning news, never during the night.
+    if (['night', 'night_locked', 'recruit', 'recruit_locked'].includes(after.phase) && after.dawn?.cycle === after.cycle) log.push(`  FAIL: day ${after.cycle}'s witness written during ${after.phase}`);
+    // There is no board any more (15 Oct playtest).
+    if (after.board) log.push(`  FAIL: a board was written during ${after.phase}`);
     if (after.phase === 'dawn') {
       const d = after.dawn;
       const names = (pids) => pids.map((p) => bots.find((b) => b.pid === p)?.name ?? p).join(', ') || 'none';
-      const rows = after.board?.rows ?? [];
-      const dg = after.dayGame ?? {};
-      log.push(`day ${after.cycle} [${after.board?.kind ?? '?'}${dg.word ? `: ${dg.word} / ${dg.hint}` : dg.words ? `: ${Object.keys(dg.words).length} words dealt` : ''}]: ${d.cause === 'rig' ? `rig took ${names(d.victims)} (board shows ${d.rigged})` : d.cause === 'deep' ? `firewall on ${names([d.attempted])}; the deep took ${names(d.victims)}` : d.cause === 'shield' ? `shield held for ${names([d.attempted])}; the bottom score took ${names(d.victims)}` : 'nobody taken'}${d.vanished.length ? `; vanished ${names(d.vanished)}` : ''}${d.recruited ? '; a recruit said yes' : ''}`);
-      log.push(`  board: ${rows.slice(0, 3).map((r) => `${names([r.pid])} ${r.score}`).join(', ')} … last ${rows.length ? `${names([rows.at(-1).pid])} ${rows.at(-1).score}` : '-'}; top-3 photos to ${names(after.board?.top ?? [])}`);
+      log.push(`night ${after.cycle}: ${d.victims?.length ? `the Killers killed ${names(d.victims)}` : d.attempted ? `a Doctor saved ${names([d.attempted])}` : 'nobody killed'}${d.vanished.length ? `; vanished ${names(d.vanished)}` : ''}${d.recruited ? '; a recruit said yes' : ''}${d.witness ? '; witness printed' : ''}`);
     }
-    if (after.phase === 'roundtable') log.push(`  on trial: ${(after.trial ?? []).map((p) => bots.find((b) => b.pid === p)?.name ?? p).join(', ')}${after.ballotTargets?.includes('none') ? ' (or no one)' : ''}`);
+    if (after.phase === 'investigation' && g.phase !== 'investigation') {
+      const dg = after.dayGame ?? {};
+      const tops = (await getDocs(query(collection(db, 'games', gid, 'inbox'), where('cycle', '==', after.cycle)))).docs.map((d) => d.data()).filter((d) => d.via === 'top');
+      log.push(`  day ${after.cycle} [${dg.kind ?? '?'}${dg.word ? `: ${dg.word} / ${dg.hint}` : dg.words ? `: ${Object.keys(dg.words).length} words dealt` : ''}]: top-3 photos to ${tops.map((t) => bots.find((b) => b.pid === t.to)?.name ?? t.to).join(', ') || 'nobody'}`);
+    }
     if (after.phase === 'revote') log.push(`  tie between ${after.tied.length}; re-vote`);
     if (after.phase === 'banish') {
       const b = after.banish;
       const name = bots.find((x) => x.pid === b.pid)?.name ?? 'nobody';
-      log.push(`${after.endgameRound ? `endgame ${after.endgameRound}` : `round table ${after.cycle}`}: ${b.unaccused ? 'nobody accused, no vote' : b.spared ? 'the room spared the accused' : `banished ${name} (${b.role ?? '-'}), ${b.cast} votes`}`);
+      log.push(`${after.endgameRound ? `endgame ${after.endgameRound}` : `round table ${after.cycle}`}: ${b.pid ? `killed ${name} (${b.role ?? '-'}), ${b.cast} votes` : 'nobody voted'}`);
     }
   }
 

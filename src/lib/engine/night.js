@@ -35,13 +35,11 @@
  * A recruit night (see roster.js) swaps step 1 for an offer, and the murder,
  * if the offer is refused, happens in `resolveRecruit`.
  *
- * DEEP BLUE: this decides the night, but it does not kill anyone. Its
- * `deaths` are what *would* happen if the rig lands; the host stashes the
- * result and hands it to resolveMorning (morning.js) once the day's scores
- * are in, which is where a Firewall save turns into "the deep takes the
- * lowest honest score". `rig` is how the victim's score is dressed: 'zero'
- * (blatant, the default now that the phone doesn't ask) or 'under' (one below
- * last place).
+ * DEEP BLUE: the Killers' vote is the only way anyone dies at night (user's
+ * call, 2026-10-15; the old "rig the morning board" kill is gone). The host
+ * applies `deaths` as soon as the night locks, and dawn is the morning news on
+ * every phone. A Doctor's save means nobody dies. The night's `facts` are kept
+ * for the morning game, whose top three each get one (morning.js).
  *
  * The frame can be automatic too: on night `autoFrameFrom` (one night, once
  * per game), that night's clues are bent towards a random living Faithful
@@ -54,8 +52,6 @@
 import { makeRng, pick, chance } from './rng.js';
 import { ROLE, teamOf } from './roles.js';
 import { nightClues, distributeFragments, witnessFact, splitHalves } from './clues.js';
-
-export const RIG_VALUES = Object.freeze(['zero', 'under']);
 
 export const DEFAULT_NIGHT_CONFIG = Object.freeze({
   // Private clues per night at `sizePivot` players, by cycle; the last entry
@@ -79,10 +75,11 @@ export const DEFAULT_NIGHT_CONFIG = Object.freeze({
   // of the narrowed room it may fit; higher means vaguer. Tuned with the sim.
   // At [0.4, 0.8] with the old budget the Faithful won 85% at 35 guests.
   publicWitness: true,
-  // [0.5, 0.8] since 2026-10-15: accusations let a quiet room skip a vote, which
-  // cost the Faithful 4-5 points a skipped day. With the shield, torn photos and
-  // trials in the sim (accuse 0.85, spare 0.35, join 0.85), 2000 games each:
-  // 72/55/50/48/45/50/57% for 16/20/25/30/35/40/45 guests.
+  // [0.5, 0.8] since 2026-10-15. After the playtest (open vote every day, the
+  // Killers' vote the only night death, no board), 2000 games each:
+  // [0.55, 0.85] gave 61/49/44/46/42/50/57% for 16/20/25/30/35/40/45 guests;
+  // [0.5, 0.8] gives 76/56/55/54/51/59/68%. Small and very big rooms lean
+  // Faithful; 20-40 sits in the target band.
   publicBand: [0.5, 0.8],
   // Dig clues arrive as two halves on two phones (clues.js splitHalves). Off restores whole photos.
   splitClues: true,
@@ -178,12 +175,14 @@ function murderOutcome(ctx, { victim, hand, framePid, protectedSet, scourers, ex
     trueFacts: trueFacts.map(strip),
     plantUsed: Boolean(framePid) && !plantFailed,
     deliveries: [...split.deliveries, ...deliveries],
-    publicDawn: { victims: deaths.map((d) => d.pid), attempted: saved ? victim : null },
+    // The morning news: who died, who the Killers missed, and the paper's witness.
+    publicDawn: clean({ victims: deaths.map((d) => d.pid), attempted: saved ? victim : null, taken: saved ? null : victim, witness: witness ? strip(witness) : null }),
     teamOfVictim: teamOf(roles[victim]),
   };
 }
 
 const strip = ({ trait, group }) => ({ trait, group });
+const clean = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v === undefined ? null : v]));
 
 /**
  * Resolve one night.
@@ -225,7 +224,6 @@ export function resolveNight(ctx) {
 
   // --- Who strikes ---------------------------------------------------------
   const handVote = majority(denVotes('hand'), killerSet, rng);
-  const rig = majority(denVotes('rig'), new Set(RIG_VALUES), rng) ?? 'zero';
   const recruitTarget = secret.recruitDue ? majority(denVotes('recruit'), faithfulSet, rng) ?? pick(faithful, rng) : null;
   let victim = null;
   let hand = null;
@@ -280,7 +278,7 @@ export function resolveNight(ctx) {
   // --- A recruit night: no murder yet ---------------------------------------
   if (recruitTarget) {
     return {
-      recruit: { target: recruitTarget, hand: handVote ?? rotateHand(killers, secret.hands, rng), rig },
+      recruit: { target: recruitTarget, hand: handVote ?? rotateHand(killers, secret.hands, rng) },
       deaths: [],
       facts: [],
       deliveries: [
@@ -298,7 +296,7 @@ export function resolveNight(ctx) {
   }
 
   if (!victim) {
-    return { deaths: [], facts: [], trueFacts: [], deliveries: [...deliveries, ...whisperDeliveries], publicDawn: { victims: [], attempted: null }, secretPatch, rig };
+    return { deaths: [], facts: [], trueFacts: [], deliveries: [...deliveries, ...whisperDeliveries], publicDawn: { victims: [], attempted: null }, secretPatch };
   }
 
   // --- The murder ------------------------------------------------------------
@@ -327,7 +325,6 @@ export function resolveNight(ctx) {
     witness: out.witness,
     pairs: out.pairs,
     protectedList: sorted(protectedSet),
-    rig,
     // Who the frame landed on, for the finale's account of the night (null when none).
     frame: out.plantUsed ? framePid : null,
     secretPatch,
