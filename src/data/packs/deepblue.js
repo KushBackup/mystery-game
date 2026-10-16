@@ -274,7 +274,9 @@ export default {
     },
   },
 
-  // The three morning games, in the order the host rotates them (engine/minigames.js).
+  // The three morning games, in the order they rotate (engine/minigames.js):
+  // Word, Fake Artist, Pack the Bag (2026-10-16). `draw` and `run` are retired
+  // and kept only so an old game's record still has titles.
   dayGames: {
     word: {
       title: 'WORD',
@@ -282,6 +284,16 @@ export default {
       alarm: 'Today: WORD.',
       // The first Word morning (minigames.js introDay), when its tutorial plays.
       alarmIntro: 'Today: WORD. It’s new, so DEEP BLUE shows you how first.',
+    },
+    fake: {
+      title: 'FAKE ARTIST',
+      rule: 'Draw the word. Killers only get the hint.',
+      alarm: 'Today: FAKE ARTIST.',
+    },
+    pack: {
+      title: 'PACK THE BAG',
+      rule: 'Pack three things for the trip. Killers only get the hint.',
+      alarm: 'Today: PACK THE BAG.',
     },
     draw: {
       title: 'SKETCH',
@@ -341,11 +353,5 @@ export default {
     'Egg', 'Burger', 'Fork', 'Spoon', 'Sock', 'T-shirt/tshirt/shirt', 'Sunglasses/shades', 'Turtle/tortoise', 'Whale', 'Dolphin',
     'Moustache/mustache', 'Bell', 'Lock/padlock', 'Tooth', 'Eye', 'Hand', 'Snail', 'Frog', 'Pineapple', 'Watermelon',
     'Cactus', 'Ghost', 'Pirate', 'Bucket', 'Sandcastle', 'Wave', 'Mermaid', 'Parrot', 'Elephant', 'Giraffe',
-  ],
-
-  whispers: [
-    'Liar', 'Trust', 'Watch', 'Wrong', 'Framed', 'Fake', 'Close', 'Near', 'Far',
-    'Left', 'Right', 'Table', 'Bar', 'Door', 'Admin', 'Hiding', 'Again', 'Twice',
-    'Yes', 'No', 'Friend', 'Beware', 'Quiet', 'Hurry',
   ],
 };

@@ -162,12 +162,12 @@ async function uiNightMove(p) {
   const isKiller = p.role === 'Killer';
   const moves = page.locator('button.os-nt-move');
   if (p.ghost) {
-    // A ghost passes a true photo or whispers a word; a bot sends it so the night can resolve.
+    // A ghost passes a true photo; a bot sends it so the night can resolve.
     if (await moves.first().isVisible().catch(() => false)) {
-      await p.snap('A ghost\'s moves: pass one of their own true clue photos to a living guest, or whisper a word.', { app: 'Night' });
+      await p.snap('A ghost\'s move: pass one of their own true clue photos to a living guest.', { app: 'Night' });
       await moves.last().click();
       await sleep(700);
-      await p.snap('The whisper opened: a word from a short list, then a living guest.', { app: 'Night' });
+      await p.snap('The photos opened: tap the one the guest gets.', { app: 'Night' });
     }
     return;
   }
@@ -514,7 +514,7 @@ async function verdict(n) {
 // --- A day from the next night on --------------------------------------------------------------------------
 
 async function nightPhase(n) {
-  beat(`night${n}`, `Night ${n}`, 'The Killers vote on who goes tonight. Everyone else picks a move. A ghost can pass a clue or whisper.');
+  beat(`night${n}`, `Night ${n}`, 'The Killers vote on who goes tonight. Everyone else picks a move. A ghost can pass a clue photo.');
   await sleep(900);
   await all(phones, (p) => p.snap('A chapter card marks the turn of the day.', { app: 'Chapter card', wait: 0 }));
   await sleep(4200);

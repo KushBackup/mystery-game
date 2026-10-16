@@ -1,0 +1,139 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Pack the Bag · the item sheet</title>
+<style>body{margin:0;background:#c9c3b6;display:grid;place-items:center;min-height:100vh}canvas{max-width:100vw;max-height:100vh;object-fit:contain}</style>
+<canvas id="c"></canvas>
+<script src="core.js"></script>
+<script src="studio.js"></script>
+<script src="cels.js"></script>
+<script src="word-font.js"></script>
+<script src="board-kit.js"></script>
+<script src="news-kit.js"></script>
+<script>
+'use strict';
+/* ------------------------------------------------------------------------
+Brief
+  Subject: the 50 things a guest can pack in PACK THE BAG, the third morning
+    game (src/os/game/PackGame.jsx). One sheet, 10 x 5 cells, one item per
+    cell, on a transparent ground; shipped as public/pack/items.webp and cut
+    into tiles with CSS (background-position). The order of ITEMS below is
+    the sprite index, and it must match ITEMS in src/data/packItems.js.
+  Look: the Word board's paper world: navy ballpoint contour, flat gouache
+    fills with a watercolour rim, bright sticker colours. Each item reads at
+    64 px on a phone, so one silhouette, few marks, no fine text.
+  Format: 2:1, 2160 x 1080 units (216-unit cells), exported 2560 px wide.
+  Rules: everyday objects only; nothing that hints at a method or a body.
+  Sources: none; everything is drawn here. Patrick Hand: SIL OFL.
+------------------------------------------------------------------------- */
+const ITEMS = [
+  'sunglasses', 'sunscreen', 'flipflops', 'beachball', 'towel',
+  'tent', 'torch', 'marshmallow', 'sleepingbag', 'compass',
+  'ring', 'bouquet', 'bowtie', 'invitation', 'heels',
+  'balloon', 'partyhat', 'cake', 'gift', 'partyhorn',
+  'dumbbell', 'bottle', 'sneakers', 'stopwatch', 'shaker',
+  'laptop', 'mug', 'stapler', 'badge', 'stickies',
+  'passport', 'suitcase', 'boardingpass', 'neckpillow', 'headphones',
+  'carkeys', 'map', 'chips', 'camera', 'guitar',
+  'pan', 'whisk', 'chefhat', 'rollingpin', 'mitt',
+  'pillow', 'alarmclock', 'teddy', 'slippers', 'lamp',
+];
+const COLS = 10, CELL = 216;
+const C = {
+  coral: '#FF7A59', red: '#F2545B', sea: '#3D8BF2', sky: '#A9D0FF', butter: '#FFD66B', gold: '#E9B44C',
+  mint: '#7ED9A6', green: '#3FAE6A', lilac: '#C3A6F2', pink: '#FF9EC4', brown: '#B7835A', tan: '#E8C79A',
+  grey: '#B9C2D0', steel: '#7F8CA3', dark: '#3B4766', white: '#FFFFFF', cream: '#FFF4D6', orange: '#FFA94D', navy: '#2F4A8A',
+};
+let g, sd;   // the canvas, and the item's seed
+const W_LINE = 6;
+const P = (pts, col, o = {}) => solid(g, pts, col, sd += 7, { w: W_LINE, ...o });
+const E = (x, y, rx, ry, col, rot = 0, o = {}) => P(ellPts(x, y, rx, ry, rot, 40), col, o);
+const R = (x, y, w, h, r, col, o = {}) => P(rrPts(x, y, w, h, Math.min(r, w / 2, h / 2)), col, o);
+const L = (pts, w = W_LINE, col = INK) => ln(g, pts, w, sd += 7, false, col, { amp: 1, p: .5 });
+const ring = (x, y, r, w, col, a0 = 0, a1 = TAU) => {   // a thick stroked arc, inked on both edges
+  g.save(); g.strokeStyle = col; g.lineWidth = w; g.lineCap = 'round'; g.beginPath(); g.arc(x, y, r, a0, a1); g.stroke(); g.restore();
+  const arcPts = (rr) => Array.from({ length: 28 }, (_, k) => { const a = a0 + (a1 - a0) * k / 27; return [x + Math.cos(a) * rr, y + Math.sin(a) * rr]; });
+  L(arcPts(r + w / 2)); L(arcPts(r - w / 2));
+};
+const wedge = (r, a0, a1, col) => P([[0, 0], ...Array.from({ length: 10 }, (_, k) => { const a = a0 + (a1 - a0) * k / 9; return [Math.cos(a) * r, Math.sin(a) * r]; })], col, { line: false });
+
+const DRAW = {
+  // ---- the beach
+  sunglasses() { L([[-70, -12], [-84, -30]]); L([[70, -12], [84, -30]]); E(-38, 6, 32, 26, C.dark); E(38, 6, 32, 26, C.dark); L([[-8, -4], [0, -10], [8, -4]]); L([[-48, -4], [-36, -10]], 4, alpha(C.white, .8)); L([[28, -4], [40, -10]], 4, alpha(C.white, .8)); },
+  sunscreen() { R(-30, -55, 60, 125, 20, C.orange); R(-20, -82, 40, 30, 6, C.white); E(0, 8, 17, 17, C.butter); for (let k = 0; k < 8; k++) { const a = k * TAU / 8; L([[Math.cos(a) * 24, 8 + Math.sin(a) * 24], [Math.cos(a) * 32, 8 + Math.sin(a) * 32]], 4); } },
+  flipflops() { E(-30, 8, 26, 66, C.pink, -.12); E(30, 8, 26, 66, C.sea, .12); L([[-48, -10], [-36, -38], [-18, -10]]); L([[14, -10], [26, -38], [44, -10]]); },
+  beachball() { E(0, 0, 70, 70, C.white, 0, { line: false }); [C.red, C.butter, C.sea].forEach((col, k) => wedge(70, k * TAU / 3, k * TAU / 3 + TAU / 6, col)); E(0, 0, 70, 70, null); E(0, 0, 12, 12, C.white); },
+  towel() { R(-75, -42, 130, 84, 16, C.sky); for (const y of [-20, 0, 20]) L([[-68, y], [48, y]], 5, alpha(C.sea, .9)); E(55, 0, 22, 42, C.sky); E(55, 0, 10, 20, C.white); },
+  // ---- camping
+  tent() { P([[-82, 62], [0, -72], [82, 62]], C.mint); P([[-24, 62], [0, 4], [24, 62]], C.green); L([[-95, 64], [95, 64]]); L([[0, -72], [0, -84]]); },
+  torch() { R(-78, -20, 100, 40, 12, C.steel); P([[18, -24], [56, -40], [56, 40], [18, 24]], C.dark); R(-50, -8, 22, 16, 4, C.red); for (const [a, b] of [[-30, -46], [0, 0], [30, 46]]) L([[64, a * .5], [86, b]], 5, C.gold); },
+  marshmallow() { L([[-72, 76], [40, -36]], 9, C.brown); L([[-72, 76], [40, -36]]); R(-6, -24, 40, 36, 12, C.cream); R(26, -62, 40, 36, 12, C.cream); L([[34, -40], [56, -44]], 4, alpha(C.orange, .8)); },
+  sleepingbag() { R(-46, -78, 92, 156, 44, C.lilac); E(0, -46, 30, 20, C.white); L([[28, -30], [28, 70]], 4); L([[-34, 30], [34, 30]], 4, alpha(INK, .5)); },
+  compass() { E(0, 0, 70, 70, C.gold); E(0, 0, 54, 54, C.white); P([[0, -46], [12, 0], [-12, 0]], C.red); P([[0, 46], [12, 0], [-12, 0]], C.grey); E(0, 0, 6, 6, INK, 0, { line: false }); txt(g, 'N', 0, -60, 26, { col: INK }); },
+  // ---- the wedding
+  ring() { ring(0, 22, 46, 16, C.gold); P([[-26, -40], [26, -40], [34, -26], [0, 6], [-34, -26]], C.sky); L([[-26, -40], [-10, -26], [0, -40], [10, -26], [26, -40]], 3); L([[-34, -26], [34, -26]], 3); },
+  bouquet() { P([[-44, -2], [44, -2], [0, 86]], C.cream); E(-32, -28, 24, 22, C.pink); E(30, -24, 24, 22, C.lilac); E(0, -50, 26, 24, C.coral); E(-4, -12, 22, 20, C.white); for (const [x, y] of [[-32, -28], [30, -24], [0, -50]]) E(x, y, 7, 7, C.butter); P([[-14, 40], [14, 40], [10, 52], [-10, 52]], C.lilac); },
+  bowtie() { P([[-78, -42], [-6, -6], [-6, 6], [-78, 42]], C.coral); P([[78, -42], [6, -6], [6, 6], [78, 42]], C.coral); R(-14, -18, 28, 36, 8, C.red); },
+  invitation() { R(-78, -52, 156, 104, 8, C.cream); L([[-74, -46], [0, 8], [74, -46]]); E(0, 8, 15, 15, C.red); txt(g, '♥', 0, 9, 18, { col: C.white }); },
+  heels() { P([[-72, -30], [-56, -36], [-10, 6], [52, 18], [76, 30], [76, 46], [-16, 46], [-44, 14], [-50, 66], [-64, 66], [-66, 4]], C.red); L([[-58, -20], [-24, 14]], 4, alpha(C.white, .7)); },
+  // ---- the birthday
+  balloon() { L([[0, 44], [-10, 64], [10, 76], [-2, 92]], 4); P([[-10, 50], [10, 50], [0, 38]], C.red); E(0, -22, 52, 62, C.red); E(-20, -48, 10, 16, alpha(C.white, .7), -.4, { line: false }); },
+  partyhat() { P([[-52, 72], [0, -66], [52, 72]], C.sea); for (const [x, y, col] of [[-14, 30, C.butter], [16, 50, C.pink], [6, 0, C.mint], [-24, 58, C.mint]]) E(x, y, 8, 8, col); E(0, -70, 16, 16, C.butter); R(-58, 64, 116, 16, 8, C.pink); },
+  cake() { R(-70, 4, 140, 62, 10, C.pink); R(-52, -36, 104, 46, 10, C.cream); for (const x of [-30, 0, 30]) { R(x - 5, -70, 10, 36, 3, C.sky); E(x, -80, 7, 11, C.butter); } L([[-70, 20], [-50, 30], [-30, 18], [-10, 30], [10, 18], [30, 30], [50, 18], [70, 28]], 4, C.white); },
+  gift() { R(-62, -18, 124, 88, 6, C.lilac); R(-72, -42, 144, 30, 6, C.lilac); R(-11, -42, 22, 112, 2, C.butter); E(-22, -54, 22, 14, C.butter, -.4); E(22, -54, 22, 14, C.butter, .4); E(0, -46, 9, 9, C.gold); },
+  partyhorn() { P([[-76, -10], [-76, 10], [26, 26], [26, -26]], C.butter); for (const x of [-46, -14]) L([[x, -10 - (x + 76) * .14], [x, 10 + (x + 76) * .14]], 6, C.pink); R(-92, -7, 18, 14, 4, C.white); L([[30, 0], [52, -22], [70, 0], [56, 20], [44, 0], [60, -10], [80, 2]], 6, C.coral); },
+  // ---- the gym
+  dumbbell() { R(-52, -9, 104, 18, 4, C.steel); R(-74, -44, 22, 88, 8, C.dark); R(52, -44, 22, 88, 8, C.dark); R(-52, -30, 14, 60, 6, C.dark); R(38, -30, 14, 60, 6, C.dark); },
+  bottle() { R(-30, -50, 60, 134, 22, C.sky); R(-20, -78, 40, 30, 8, C.sea); R(-31, 6, 62, 22, 0, alpha(C.sea, .35), { line: false }); L([[-14, -36], [-14, 60]], 4, alpha(C.white, .8)); },
+  sneakers() { P([[-76, 28], [-70, -16], [-30, -28], [0, -2], [58, 8], [78, 28]], C.white); R(-80, 26, 160, 18, 9, C.coral); for (const x of [-30, -14, 2]) L([[x, -16 + (x + 30) * .3], [x + 12, -6 + (x + 30) * .3]], 4, C.sea); L([[-70, -2], [-40, 4]], 4, alpha(C.sea, .7)); },
+  stopwatch() { R(-10, -76, 20, 18, 4, C.steel); R(-22, -64, 44, 12, 4, C.steel); E(0, 10, 62, 62, C.white); E(0, 10, 50, 50, C.cream, 0, { line: false }); for (let k = 0; k < 12; k++) { const a = k * TAU / 12; L([[Math.cos(a) * 44, 10 + Math.sin(a) * 44], [Math.cos(a) * 50, 10 + Math.sin(a) * 50]], 3); } L([[0, 10], [26, -16]], 5, C.red); E(0, 10, 5, 5, INK, 0, { line: false }); },
+  shaker() { P([[-40, -46], [40, -46], [32, 82], [-32, 82]], C.mint); R(-46, -70, 92, 28, 8, C.dark); R(-10, -86, 20, 18, 4, C.dark); for (const y of [0, 24, 48]) L([[28, y], [36, y]], 3); R(-34, 30, 60, 50, 0, alpha(C.cream, .55), { line: false }); },
+  // ---- the office
+  laptop() { R(-60, -62, 120, 84, 8, C.dark); R(-50, -54, 100, 66, 4, C.sky); P([[-82, 26], [82, 26], [72, 48], [-72, 48]], C.grey); L([[-16, 36], [16, 36]], 4); L([[-36, -40], [10, -40]], 4, C.white); L([[-36, -24], [24, -24]], 4, C.white); },
+  mug() { ring(42, 12, 22, 12, C.white, -1.4, 1.4); R(-54, -40, 86, 96, 14, C.white); E(-11, -38, 40, 9, C.brown); L([[-34, -58], [-28, -70], [-34, -82]], 4, C.steel); L([[-10, -58], [-4, -70], [-10, -82]], 4, C.steel); txt(g, '♥', -11, 12, 34, { col: C.red }); },
+  stapler() { R(-78, 28, 156, 20, 8, C.dark); P([[-78, 24], [-60, -10], [64, -24], [80, -12], [78, 10], [-70, 26]], C.red); E(-60, 26, 10, 10, C.steel); },
+  badge() { L([[-34, -82], [-10, -24]], 10, C.sea); L([[34, -82], [10, -24]], 10, C.sea); R(-46, -26, 92, 114, 10, C.white); R(-34, -6, 32, 38, 4, C.sky); E(-18, 6, 8, 8, C.cream); for (const y of [0, 14, 28]) L([[6, y], [34, y]], 4, C.steel); L([[-34, 52], [34, 52]], 6, C.sea); },
+  stickies() { for (const [x, y, r, col] of [[-16, -12, -.15, NOTE.mint], [12, 4, .1, NOTE.sky], [-4, 18, -.04, '#FFE680']]) { g.save(); g.translate(x, y); g.rotate(r); sticky(g, 112, 112, col, sd += 7); g.restore(); } L([[-34, 8], [24, 8]], 4); L([[-34, 30], [8, 30]], 4); },
+  // ---- the airport
+  passport() { R(-50, -72, 100, 144, 8, C.navy); E(0, -10, 26, 26, null, 0, { lineCol: C.gold }); L([[-26, -10], [26, -10]], 3, C.gold); L([[0, -36], [0, 16]], 3, C.gold); L([[-30, 40], [30, 40]], 5, C.gold); L([[-20, 54], [20, 54]], 4, C.gold); },
+  suitcase() { ring(0, -46, 22, 9, C.dark, Math.PI, TAU); R(-78, -46, 156, 106, 14, C.coral); for (const x of [-40, 40]) R(x - 7, -46, 14, 106, 2, C.brown); E(-60, 68, 9, 9, C.dark); E(60, 68, 9, 9, C.dark); },
+  boardingpass() { R(-84, -42, 168, 84, 8, C.white); g.save(); g.setLineDash([6, 8]); L([[38, -36], [38, 36]], 3, C.steel); g.restore(); txt(g, '✈', -48, -14, 34, { col: C.sea }); for (const y of [12, 26]) L([[-70, y], [20, y]], 4, C.steel); for (let k = 0; k < 7; k++) L([[50 + k * 4.5, -26], [50 + k * 4.5, 26]], k % 3 ? 2 : 4); },
+  neckpillow() { ring(0, 8, 48, 34, C.butter, -Math.PI / 2 + .62, Math.PI * 1.5 - .62); for (const a of [.3, 1.2, 2.1, 3]) L([[Math.cos(a) * 34, 8 + Math.sin(a) * 34], [Math.cos(a) * 62, 8 + Math.sin(a) * 62]], 3, alpha(INK, .35)); },
+  headphones() { ring(0, 14, 62, 12, C.dark, Math.PI, TAU); R(-82, 0, 32, 62, 14, C.coral); R(50, 0, 32, 62, 14, C.coral); R(-60, 10, 10, 40, 4, C.dark); R(50, 10, 10, 40, 4, C.dark); },
+  // ---- the road trip
+  carkeys() { ring(-56, -40, 20, 7, C.steel); E(-14, -6, 28, 26, C.dark); E(-14, -6, 8, 8, C.steel); P([[10, -10], [80, -10], [80, 8], [64, 8], [64, 20], [52, 20], [52, 8], [10, 8]], C.grey); },
+  map() { P([[-80, -50], [-28, -62], [-28, 58], [-80, 70]], C.cream); P([[-28, -62], [28, -50], [28, 70], [-28, 58]], '#F3E3BF'); P([[28, -50], [80, -62], [80, 58], [28, 70]], C.cream); g.save(); g.setLineDash([8, 9]); L([[-62, 40], [-30, 10], [0, 24], [30, -10], [56, -24]], 4, C.red); g.restore(); P([[56, -24], [46, -44], [56, -56], [66, -44]], C.red); },
+  chips() { P([[-50, -70], [50, -70], [56, 74], [-56, 74]], C.butter); L([[-50, -70], [-38, -78], [-26, -70], [-14, -78], [-2, -70], [10, -78], [22, -70], [34, -78], [50, -70]], 4); L([[-56, 74], [-44, 82], [-32, 74], [-20, 82], [-8, 74], [4, 82], [16, 74], [28, 82], [40, 74], [56, 74]], 4); E(0, 10, 28, 22, C.orange, -.2); R(-34, -48, 68, 24, 6, C.red); },
+  camera() { R(-34, -58, 36, 18, 4, C.dark); R(-78, -44, 156, 100, 14, C.dark); E(4, 8, 40, 40, C.steel); E(4, 8, 26, 26, C.sea); E(-4, 0, 7, 7, alpha(C.white, .8), 0, { line: false }); R(46, -34, 22, 14, 3, C.butter); },
+  guitar() { R(-8, -88, 16, 84, 3, C.brown); R(-14, -96, 28, 22, 6, C.dark); E(0, 30, 50, 46, C.orange); E(0, -12, 36, 32, C.orange); E(0, 18, 14, 14, C.dark); R(-22, 50, 44, 8, 3, C.dark); },
+  // ---- the kitchen
+  pan() { R(30, -9, 62, 18, 8, C.brown); E(-20, 4, 60, 60, C.dark); E(-20, 4, 46, 46, C.steel, 0, { line: false }); E(-36, -12, 14, 8, alpha(C.white, .5), -.6, { line: false }); },
+  whisk() { R(-9, 30, 18, 58, 7, C.coral); for (const rx of [30, 18, 6]) L(ellPts(0, -22, rx, 58, 0, 30).filter(([, y]) => y < 30), 4, C.steel); },
+  chefhat() { R(-44, 6, 88, 48, 8, C.white); E(-36, -20, 30, 28, C.white); E(36, -20, 30, 28, C.white); E(0, -40, 36, 32, C.white); g.save(); g.fillStyle = C.white; g.fillRect(-40, -20, 80, 32); g.restore(); L([[-44, 22], [44, 22]], 4, alpha(INK, .4)); },
+  rollingpin() { R(-88, -10, 34, 20, 9, C.brown); R(54, -10, 34, 20, 9, C.brown); R(-56, -26, 112, 52, 22, C.tan); L([[-36, -12], [30, -12]], 4, alpha(C.white, .7)); },
+  mitt() { P([[-40, 52], [-46, -22], [-34, -58], [0, -72], [34, -58], [40, -16], [58, -34], [74, -14], [44, 26], [40, 52]], C.coral); R(-46, 46, 92, 30, 8, C.white); for (const [x, y] of [[-14, -24], [12, 0], [-10, 20]]) E(x, y, 7, 7, C.butter, 0, { line: false }); },
+  // ---- the bedroom
+  pillow() { P([[-80, -46], [0, -36], [80, -46], [70, 0], [80, 46], [0, 36], [-80, 46], [-70, 0]], C.sky); L(rrPts(-56, -26, 112, 52, 16), 3, alpha(C.sea, .7)); },
+  alarmclock() { E(-40, -48, 20, 15, C.coral, -.5); E(40, -48, 20, 15, C.coral, .5); L([[-36, 62], [-48, 80]]); L([[36, 62], [48, 80]]); E(0, 10, 60, 60, C.coral); E(0, 10, 46, 46, C.white); L([[0, 10], [0, -22]], 5); L([[0, 10], [20, 22]], 5); E(0, 10, 5, 5, INK, 0, { line: false }); },
+  teddy() { E(-36, -64, 16, 16, '#C99A6B'); E(36, -64, 16, 16, '#C99A6B'); E(0, 46, 48, 42, '#C99A6B'); E(-42, 34, 16, 24, '#C99A6B', .5); E(42, 34, 16, 24, '#C99A6B', -.5); E(0, -30, 44, 40, '#C99A6B'); E(0, -16, 18, 13, C.tan); E(0, -22, 6, 4, INK, 0, { line: false }); E(-16, -38, 4, 5, INK, 0, { line: false }); E(16, -38, 4, 5, INK, 0, { line: false }); E(0, 50, 22, 18, C.tan, 0, { line: false }); },
+  slippers() { E(-36, 6, 30, 70, C.pink, -.12); E(36, 6, 30, 70, C.pink, .12); P([[-64, -26], [-10, -36], [-6, 0], [-62, 8]], C.white); P([[64, -26], [10, -36], [6, 0], [62, 8]], C.white); E(-36, -54, 8, 8, C.butter); E(36, -54, 8, 8, C.butter); },
+  lamp() { E(0, 66, 42, 12, C.steel); R(-6, -10, 12, 72, 3, C.steel); P([[-52, -8], [52, -8], [32, -72], [-32, -72]], C.butter); },
+};
+
+function sceneSheet(c) {
+  g = c;
+  ITEMS.forEach((name, k) => {
+    const draw = DRAW[name];
+    if (!draw) throw new Error(`no drawing for ${name}`);
+    sd = 9000 + k * 101;
+    c.save(); c.translate((k % COLS + .5) * CELL, (Math.floor(k / COLS) + .5) * CELL); c.scale(1.08, 1.08);
+    draw();
+    c.restore();
+  });
+}
+
+FONT_READY.then(() => { defineFilm({
+  palette: makePalette({ paper: NEWSPRINT, ink: INK, finish: 'flat', washBlend: 'multiply' }, 'doodlePastel'),
+  format: { ar: '2:1', width: 2560 },
+  timeline: [{ name: 'items', dur: 1 / 24, fn: sceneSheet }],
+}); }).catch(e => { window.__error = String(e); });
+</script>

@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef } from 'react';
-import { brushMask, ART_W, ART_H, LAYERS } from './portraitArt';
-import { cached, isCached, later, frame, keyOf, fontsReady, dprOf, seedNum } from './portraitCache';
+import { brushMask, LAYERS } from './portraitArt';
+import { cached, isCached, later, frame, keyOf, fontsReady, dprOf, seedNum, heightOf } from './portraitCache';
 
 /**
  * A guest's contact photo: a full-length, hand-drawn picture of them at home,
@@ -13,6 +13,8 @@ import { cached, isCached, later, frame, keyOf, fontsReady, dprOf, seedNum } fro
  *   - default: a square crop of head and shoulders, `size` across, for every
  *     list and board where a face sits beside a name. The top colour and
  *     glasses still read at 24 px.
+ *   - `figure`: the person alone, head to shoes, `size` wide, on a
+ *     transparent canvas: the guests standing in the Night app's lounge.
  *
  * Skin is always the paper and the hair is pencil, because neither is an
  * answer: the picture never claims a skin or hair colour, only what they
@@ -47,13 +49,13 @@ function scratchPair(w, h) {
   return scratch;
 }
 
-export default function Portrait({ traits, seed, size = 84, full = false, mystery = false, ghost = false, rounded = 8, animate = false, className = '' }) {
+export default function Portrait({ traits, seed, size = 84, full = false, figure = false, mystery = false, ghost = false, rounded = 8, animate = false, className = '' }) {
   const ref = useRef(null);
   const shown = useRef(traits); // the answers the canvas last finished drawing
   const run = useRef(0);
   const n = seedNum(seed);
   const w = size;
-  const h = full ? Math.round((size * ART_H) / ART_W) : size;
+  const h = heightOf(size, full, figure);
   const key = keyOf(traits);
 
   useLayoutEffect(() => {
@@ -61,7 +63,7 @@ export default function Portrait({ traits, seed, size = 84, full = false, myster
     if (!canvas) return undefined;
     const dpr = dprOf();
     const pw = Math.round(w * dpr), ph = Math.round(h * dpr);
-    const opts = { traits, seed: n, full, mystery };
+    const opts = { traits, seed: n, full, figure, mystery };
     const id = ++run.current;
     const g = canvas.getContext('2d');
     const blit = (src = cached(pw, ph, opts)) => { g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, pw, ph); g.drawImage(src, 0, 0); };
@@ -142,7 +144,7 @@ export default function Portrait({ traits, seed, size = 84, full = false, myster
     return () => { cancelAnimationFrame(raf); };
     // `key` stands for `traits`: a new object with the same answers is the same picture
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, n, w, h, full, mystery, animate]);
+  }, [key, n, w, h, full, figure, mystery, animate]);
 
   useEffect(() => () => { run.current += 1; }, []);
 
@@ -174,4 +176,12 @@ export function Face({ traits, pid, size = 40, ghost = false, round = false, cla
       className={`os-face ${className}`}
     />
   );
+}
+
+/**
+ * A guest standing, by id: the figure alone, `size` wide, for the Night app's
+ * lounge. A ghost is the same figure, faded to grey.
+ */
+export function Figure({ traits, pid, size = 30, ghost = false, className = '' }) {
+  return <Portrait traits={traits?.[pid]} seed={pid} size={size} figure ghost={ghost} rounded={0} className={className} />;
 }

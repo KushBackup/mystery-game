@@ -3,13 +3,13 @@ import { HOST_EMAILS, EMULATED } from '../../firebase/app';
 import {
   signInHost, signOutHost, createGame, advance, setAutopilot, extendPhase, endPhaseNow, removePlayer, cancelRemove, relink, subscribeKnocks,
   dealLateJoiners, syncHostClock, subscribeRoles, subscribePresence, subscribeNightActions,
-  subscribeNightDen, subscribeBallot, subscribeSecret, subscribeScores, subscribeDayPlays, setDayGames, watchJoins,
+  subscribeNightDen, subscribeBallot, subscribeSecret, subscribeScores, subscribeDayPlays, watchJoins,
 } from '../../firebase/host';
 import { useAuthUser, useActiveGameId, useGame, usePlayers, useServerNow } from '../../hooks/useKillers';
 import { cancelKnock } from '../../firebase/game';
 import { useHostBots } from '../../firebase/hostBots';
 import { PACKS, packFor, narrate, dayKit } from '../../data/packs/index.js';
-import { DEFAULT_GAMES, gameOfDay, introDay } from '../../lib/engine/minigames.js';
+import { DEFAULT_GAMES, introDay } from '../../lib/engine/minigames.js';
 import { PHASE, DEFAULT_DURATIONS, DEFAULT_CYCLES, ENDGAME_ROUNDS, LOCKED } from '../../lib/engine/phases.js';
 import { ROLE_INFO, targetCounts } from '../../lib/engine/roles.js';
 import { planEvening, daySchedule, clockNow, fmtClock } from '../../lib/engine/clock.js';
@@ -68,11 +68,10 @@ function Setup({ onCancel }) {
   const [packId, setPackId] = useState(Object.keys(PACKS)[0]);
   const [cycles, setCycles] = useState(DEFAULT_CYCLES);
   const [length, setLength] = useState(120);
-  const [rotate, setRotate] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const quick = length === 'quick';
-  const games = rotate ? DEFAULT_GAMES : ['run'];
+  const games = DEFAULT_GAMES;
   const base = quick ? { ...DEFAULT_DURATIONS, ...QUICK } : DEFAULT_DURATIONS;
   const minutes = quick ? null : length;
   const plan = planEvening({ minutes, cycles, games, base });
@@ -106,10 +105,6 @@ function Setup({ onCancel }) {
           {[3, 4, 5].map((n) => (
             <Choice key={n} on={cycles === n} onClick={() => setCycles(n)}>{n} days</Choice>
           ))}
-        </Field>
-        <Field label="Morning games">
-          <Choice on={rotate} onClick={() => setRotate(true)}>Rotate Word · Sketch · Run</Choice>
-          <Choice on={!rotate} onClick={() => setRotate(false)}>Run every day</Choice>
         </Field>
         <Field label="Length, from the deal to the finale">
           {LENGTHS.map((m) => (
@@ -226,10 +221,10 @@ function Console({ gid, game }) {
   const den = useHostSub((cb) => subscribeNightDen(gid, game.cycle, cb), [gid, game.cycle]) ?? EMPTY;
   const votes = useHostSub((cb) => subscribeBallot(gid, game.ballot, cb), [gid, game.ballot]) ?? EMPTY;
   const scoring = [PHASE.GAME, PHASE.GAME_LOCKED].includes(game.phase);
-  const kind = game.minigame ?? 'run';
+  const kind = game.minigame ?? 'word';
   const scores = useHostSub((cb) => subscribeScores(gid, game.cycle, cb), [gid, scoring && kind === 'run' ? game.cycle : null]) ?? EMPTY;
   // A word or drawing day's plays: what was posted (clues, drawings) and the reactions (picks, guesses).
-  const [postsName, reactsName] = kind === 'word' ? ['clues', 'picks'] : ['drawings', 'guesses'];
+  const [postsName, reactsName] = kind === 'word' ? ['clues', 'picks'] : kind === 'fake' ? ['drawings', 'drawings'] : kind === 'pack' ? ['bags', 'bags'] : ['drawings', 'guesses'];
   const dayOn = scoring && kind !== 'run' ? game.cycle : null;
   const posts = useHostSub((cb) => subscribeDayPlays(gid, postsName, game.cycle, cb), [gid, postsName, dayOn]) ?? EMPTY;
   const reacts = useHostSub((cb) => subscribeDayPlays(gid, reactsName, game.cycle, cb), [gid, reactsName, dayOn]) ?? EMPTY;
@@ -329,10 +324,8 @@ function Console({ gid, game }) {
   if (newGame) return <Setup onCancel={() => setNewGame(false)} />;
 
   const kit = dayKit(pack);
-  const todayTitle = kit.dayGames[kind]?.title ?? 'THE RUN';
+  const todayTitle = kit.dayGames[kind]?.title ?? 'WORD';
   const label = nextLabel(game, alive.length, todayTitle);
-  const rotating = (game.config?.games ?? DEFAULT_GAMES).length > 1;
-  const nextKind = gameOfDay(game.config, game.phase === PHASE.LOBBY || game.phase === PHASE.CASTING ? 1 : game.cycle + 1);
   const day = secret?.day?.[game.cycle];
   const lines = narrationFor(game, pack, nameOf);
   const killerIds = roles.filter((r) => r.role === 'killer').map((r) => r.id);
@@ -380,6 +373,8 @@ function Console({ gid, game }) {
         {scoring && kind === 'word' && <Stat n={posts.length} label={`of ${alive.length} clues`} />}
         {scoring && kind === 'word' && <Stat n={reacts.length} label="picked" />}
         {scoring && kind === 'draw' && <Stat n={posts.length} label={`of ${alive.length} drew`} />}
+        {scoring && kind === 'fake' && <Stat n={posts.length} label={`of ${alive.length} drew`} />}
+        {scoring && kind === 'pack' && <Stat n={posts.length} label={`of ${alive.length} packed`} />}
         {scoring && kind === 'draw' && <Stat n={reacts.length} label="guessing" />}
       </div>
 
@@ -427,6 +422,12 @@ function Console({ gid, game }) {
         <section className="er-card mt-6">
           <p className="er-mono">Today: {todayTitle}</p>
           <p className="font-body text-[15px] text-bone mt-1">{kit.dayGames[kind]?.rule}</p>
+          {showRoles && kind === 'fake' && day?.word && (
+            <p className="font-typewriter text-[18px] text-bone mt-2">The word: {day.word} · the Killers' hint: {day.hint}</p>
+          )}
+          {showRoles && kind === 'pack' && day?.place && (
+            <p className="font-typewriter text-[18px] text-bone mt-2">The trip: {day.place} · the Killers' hint: {day.hint}</p>
+          )}
           {showRoles && kind === 'word' && day?.word && (
             <p className="font-typewriter text-[18px] text-bone mt-2">The word: {day.word} · the Killers' hint: {day.hint}</p>
           )}
@@ -516,12 +517,6 @@ function Console({ gid, game }) {
         <p className="font-body text-[13px] text-dim mt-1 break-all">
           {gid}{secret?.counts ? ` · dealt ${secret.counts.killer} killers` : ''}{secret?.plantUsed ? ' · frame used' : ''}
         </p>
-        <p className="er-mono mt-4">Morning games{game.phase !== PHASE.FINALE ? ` · next: ${kit.dayGames[nextKind]?.title ?? nextKind}` : ''}</p>
-        <div className="grid grid-cols-2 gap-2 mt-2">
-          <Action tone={rotating ? undefined : 'ghost'} onClick={() => run(() => setDayGames(gid, DEFAULT_GAMES))}>Rotate all three</Action>
-          <Action tone={rotating ? 'ghost' : undefined} onClick={() => run(() => setDayGames(gid, ['run']))}>Run every day</Action>
-        </div>
-        <p className="font-body text-[13px] text-dim mt-1">Takes effect at the next alarm. Today's game carries on.</p>
         <Action tone="ghost" className="mt-4" onClick={() => window.confirm('Start a brand new game? Everyone will need to arrive again.') && setNewGame(true)}>
           New game
         </Action>

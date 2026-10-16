@@ -34,7 +34,7 @@ export default function NightTutorial({ mode = 'intro', endsAt = 0, onDone }) {
 }
 
 /** The last page: every role's move in a fan, one of them yours. */
-const FAN = ['watch', 'protect', 'hunt', 'trace', 'whisper'];
+const FAN = ['watch', 'protect', 'hunt', 'trace', 'pass'];
 function Ready({ mode }) {
   return (
     <div className="os-wt__ready os-nt-ready">

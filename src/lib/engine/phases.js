@@ -62,6 +62,9 @@ export const DEFAULT_DURATIONS = Object.freeze({
   // The word and drawing days (minigames.js) need longer than the run.
   game_word: 125 * SEC,
   game_draw: 140 * SEC,
+  // Fake Artist and Pack the Bag (2026-10-16): their steps, plus a few seconds for the last write.
+  game_fake: 60 * SEC,
+  game_pack: 55 * SEC,
   dawn: 60 * SEC,
   investigation: 8 * MIN,
   roundtable: 6 * MIN,

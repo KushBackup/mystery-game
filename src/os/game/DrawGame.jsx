@@ -218,7 +218,7 @@ function DrawStep({ gid, c, me, word }) {
  * a stroke in progress never re-renders React. The canvas is clear: the page
  * and its dots are CSS behind it.
  */
-function DrawPad({ strokes, ink, onStroke }) {
+export function DrawPad({ strokes, ink, onStroke }) {
   const wrap = useRef(null);
   const canvas = useRef(null);
   // The pills, the word chip, the page's margins and the pen tray stay on screen with it.

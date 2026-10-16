@@ -238,7 +238,9 @@ function sceneGreenrOpen(c) {
 }
 
 // ---------------------------------------------------------------- day 1
-// The ninety seconds: two hands round a phone held sideways, the whale between the coral walls.
+// The morning game: two hands round a phone held sideways, a wall of one-word clues on it, one that doesn't fit.
+// Redrawn 2026-10-16, when Word became the only morning game; it showed the whale's run before. The clues are
+// for POPCORN, the tutorial's example (never a live pair), and the word itself is never shown.
 function sceneNinetySeconds(c) {
   newsprint(c);
   nightWash(c, .95);
@@ -254,19 +256,26 @@ function sceneNinetySeconds(c) {
   handset(c, 960, 520, pw, ph, -Math.PI / 2 + .03, 610, (g, sx, sy, sw, sh) => {
     g.save(); g.translate(sx + sw / 2, sy + sh / 2); g.rotate(Math.PI / 2);
     const gw = sh, gh = sw, x0 = -gw / 2, y0 = -gh / 2;   // the game, landscape
-    const bg = g.createLinearGradient(0, y0, 0, -y0); bg.addColorStop(0, '#2a66c4'); bg.addColorStop(1, NAVY); g.fillStyle = bg; g.fillRect(x0, y0, gw, gh);
-    for (let k = 0; k < 14; k++) { const r = rng(620 + k); dot(g, x0 + r() * gw, y0 + r() * gh, 2 + r() * 3, 2 + r() * 3, alpha(FOAM, .35)); }
-    for (const [px, gap, gy] of [[.38, .36, .18], [.68, .34, -.12], [.95, .36, .1]]) {
-      const X = x0 + px * gw, hw = gw * .055, top = gy * gh - gap * gh / 2, bot = gy * gh + gap * gh / 2;
-      g.fillStyle = CORAL; g.fillRect(X - hw, y0 - 4, hw * 2, top - y0 + 4); g.fillRect(X - hw, bot, hw * 2, -y0 - bot + 4);
-      g.fillRect(X - hw * 1.25, top - 18, hw * 2.5, 18); g.fillRect(X - hw * 1.25, bot, hw * 2.5, 18);
+    g.fillStyle = PAPER; g.fillRect(x0, y0, gw, gh);
+    for (let k = 1; k < 9; k++) { g.fillStyle = alpha(SEA, .14); g.fillRect(x0, y0 + gh * (.08 + k * .105), gw, 2); }   // notebook rules
+    g.fillStyle = alpha(RED, .25); g.fillRect(x0 + gw * .07, y0, 2, gh);
+    // the bar: the game's name, the clock
+    g.fillStyle = NAVY; g.fillRect(x0, y0, gw, gh * .15);
+    textOn(g, 'WORD', 0, y0 + gh * .075, gh * .085, { weight: 800 });
+    g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(x0 + gw * .05, y0 + gh * .065, gw * .18, 8); g.fillStyle = '#ffffff'; g.fillRect(x0 + gw * .05, y0 + gh * .065, gw * .18 * .45, 8);
+    textOn(g, '0:41', x0 + gw * .86, y0 + gh * .078, gh * .07, { weight: 600 });
+    // the wall: six clues, one of them a guess
+    const notes = [['salty', NOTE.butter], ['cinema', NOTE.sky], ['butter', NOTE.mint], ['crunch', NOTE.lilac], ['food?', NOTE.butter], ['kernel', NOTE.sky]];
+    for (const [k, [word, col]] of notes.entries()) {
+      const cx = x0 + gw * (.22 + (k % 3) * .28), cy = y0 + gh * (.37 + Math.floor(k / 3) * .36), r = rng(650 + k);
+      g.save(); g.translate(cx, cy); g.rotate((r() - .5) * .14);
+      sticky(g, gw * .22, gh * .27, col, 660 + k * 5);
+      txt(g, word, 0, 6, gh * .1, { fit: gw * .19 });
+      g.restore();
     }
-    const trail = []; for (let k = 0; k <= 10; k++) trail.push([x0 + gw * (.02 + k * .018), gh * (.1 - .16 * Math.sin(k / 10 * Math.PI) + k * .006)]);
-    for (const [k, p] of trail.entries()) if (k % 2 === 0) dot(g, p[0], p[1], 4, 4, alpha(FOAM, .55));
-    whale(g, x0 + gw * .24, gh * .05, gw * .1, '#ffffff', -.25);
-    textOn(g, '23', 0, y0 + gh * .11, gh * .13, { weight: 800, col: GOLD });
-    g.fillStyle = 'rgba(255,255,255,.25)'; g.fillRect(x0 + gw * .06, y0 + gh * .05, gw * .2, 10); g.fillStyle = '#ffffff'; g.fillRect(x0 + gw * .06, y0 + gh * .05, gw * .2 * .45, 10);
-    textOn(g, '0:41', x0 + gw * .16, y0 + gh * .13, gh * .07, { weight: 600 });
+    // somebody has circled the one that doesn't fit
+    const [mx, my] = [x0 + gw * .50, y0 + gh * .73];
+    ln(g, ellPts(mx, my, gw * .14, gh * .19, -.08, 28), 4, 670, true, RED, { amp: 1.4 });
     g.restore();
   });
   // the thumbs on the glass

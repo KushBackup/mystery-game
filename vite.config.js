@@ -42,7 +42,7 @@ export default defineConfig({
       },
       workbox: {
         // assets/*.webp: the Backroom wallpaper (src/os/art/backroom.webp), needed offline; public/news/*.webp stays runtime-cached below
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}', 'assets/*.webp'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,json,woff2}', 'assets/*.webp', 'pack/*.webp'],
         runtimeCaching: [
           {
             // The News app's drawn pictures (public/news/): fetched the first time a story is opened, then kept

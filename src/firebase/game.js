@@ -253,6 +253,10 @@ export const savePicks = (gid, cycle, pid, picks) =>
 export const saveDrawing = (gid, cycle, pid, strokes, checks) =>
   trackWrite(setDoc(sub(gid, 'drawings', `${cycle}_${pid}`), { pid, cycle, strokes, checks, at: serverTimestamp() }), { quiet: true });
 
+/** Pack the Bag: what is in your bag so far. Private until the game locks. */
+export const saveBag = (gid, cycle, pid, items) =>
+  trackWrite(setDoc(sub(gid, 'bags', `${cycle}_${pid}`), { pid, cycle, items: items.slice(0, 3), at: Date.now() }), { quiet: true });
+
 export const saveGuesses = (gid, cycle, pid, answers) =>
   trackWrite(setDoc(sub(gid, 'guesses', `${cycle}_${pid}`), { pid, cycle, answers, at: Date.now() }), { quiet: true });
 
@@ -274,6 +278,12 @@ export const subscribeMyJoin = (gid, pair, pid, cb) => watchDoc('join', sub(gid,
 export const postLastWords = (gid, pid, name, clue) =>
   trackWrite(setDoc(sub(gid, 'chat', `last_${pid}`), {
     kind: 'last', pid, name, inboxId: clue.id, fact: { trait: clue.fact.trait, group: clue.fact.group }, at: Date.now(),
+  }));
+
+/** Share in chat: one of your own photos, posted to the room. Once per photo (rules: sharedPhoto). */
+export const sharePhoto = (gid, pid, name, clue) =>
+  trackWrite(setDoc(sub(gid, 'chat', `photo_${clue.id}_${pid}`), {
+    kind: 'photo', pid, name, inboxId: clue.id, cycle: clue.cycle, fact: { trait: clue.fact.trait, group: clue.fact.group }, at: Date.now(),
   }));
 
 export const sendToChannel =(gid, channel, pid, name, text) =>

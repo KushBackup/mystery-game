@@ -73,7 +73,7 @@ const ENDGAME_ROUNDS = Number(args.endgame ?? DEFAULT_ENDGAME);
 const VERBOSE = args.verbose === 'true';
 const NOISE = Number(args.noise ?? 0.6); // how far a real room strays from the best guess
 const SHARE_Q = Number(args.share ?? 0.75); // chance one fragment-holder speaks up
-const PASS_P = Number(args.pass ?? 0.8); // chance a Faithful ghost passes one of its true clue photos to a living guest (0 = whispers only)
+const PASS_P = Number(args.pass ?? 0.8); // chance a Faithful ghost passes one of its true clue photos to a living guest (0 = never)
 const LAST_P = Number(args.last ?? 0.7); // chance a Faithful guest killed in the night posts their true photo as last words
 const LIE_P = Number(args.lie ?? 0); // chance a Killer holding an unspoken clue announces a false one
 const SIGHT_P = Number(args.sight ?? 0); // chance a Faithful ghost exposes such a lie (ghost sight)

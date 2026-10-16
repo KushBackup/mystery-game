@@ -13,12 +13,12 @@
  * delivery's line) turns into row text — also shared, for the same reason.
  */
 
-import { deliveryLine } from '../data/killersCopy';
+import { deliveryLine, SHARE } from '../data/killersCopy';
 import { photoSource } from './words';
 import { mediaFor, FORM_NAME } from './evidence';
 
 const SYSTEM_KINDS = new Set(['check', 'trace', 'saved', 'quiet', 'recruited', 'fact']);
-const UNKNOWN_KINDS = new Set(['whisper', 'watch']);
+const UNKNOWN_KINDS = new Set(['watch']);
 
 /** Which threads this guest can see, with their message lists, unread counts and unread items. */
 export function threadsFor(ctx, seen) {
@@ -89,6 +89,7 @@ export function preview(id, m, ctx) {
   if (m.kind === 'added') return m.text;
   if (m.kind === 'poll') return 'DEEP BLUE created a poll';
   if (m.kind === 'last') return `${m.pid === ctx.me.pid ? 'You' : m.name} left a last message`;
+  if (m.kind === 'photo') return SHARE.preview(m.pid === ctx.me.pid ? 'You' : m.name);
   if (id === 'room' || id === 'spirits' || id === 'den') return `${m.pid === ctx.me.pid ? 'You' : m.name}: ${m.text}`;
   return systemText(m, ctx);
 }

@@ -1,4 +1,4 @@
-import { drawPortrait, seedOf, ART_W, ART_H, FACE_CROP, LAYERS } from './portraitArt';
+import { drawPortrait, seedOf, ART_W, ART_H, FACE_CROP, FIGURE_CROP, LAYERS } from './portraitArt';
 
 /**
  * Painting contact photos, cached, for Portrait.jsx.
@@ -19,9 +19,12 @@ export const fontsReady = () => typeof document === 'undefined' || !document.fon
 export const dprOf = () => Math.min(MAX_DPR, typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1);
 export const seedNum = (seed) => (typeof seed === 'number' ? seed : seedOf(seed ?? 'guest'));
 
-/** Size the context so the drawing's units fill the canvas (or its head-and-shoulders crop). */
-export function frame(g, w, full) {
-  if (full) {
+/** Size the context so the drawing's units fill the canvas (or its head-and-shoulders crop, or the figure alone). */
+export function frame(g, w, full, figure = false) {
+  if (figure) {
+    const k = w / FIGURE_CROP.w;
+    g.setTransform(k, 0, 0, k, -FIGURE_CROP.x * k, -FIGURE_CROP.y * k);
+  } else if (full) {
     const k = w / ART_W;
     g.setTransform(k, 0, 0, k, 0, 0);
   } else {
@@ -39,7 +42,7 @@ const CACHE = new Map(); // key -> canvas, least recently used first
 const CACHE_PIXELS = 16e6;
 let cachePixels = 0;
 
-export const cacheKey = (w, h, { full, mystery, seed, traits }) => `${full ? 'F' : 'C'}${mystery ? 'M' : ''}${w}x${h}:${seed}:${keyOf(traits)}`;
+export const cacheKey = (w, h, { full, figure, mystery, seed, traits }) => `${figure ? 'P' : full ? 'F' : 'C'}${mystery ? 'M' : ''}${w}x${h}:${seed}:${keyOf(traits)}`;
 export const isCached = (w, h, opts) => CACHE.has(cacheKey(w, h, opts));
 
 /** The photo painted at w x h device pixels: from the cache, or painted now. */
@@ -55,8 +58,8 @@ export function cached(w, h, opts) {
   c.width = w;
   c.height = h;
   const g = c.getContext('2d');
-  frame(g, w, opts.full);
-  drawPortrait(g, opts.traits ?? {}, opts.seed, { face: !opts.full, mystery: opts.mystery });
+  frame(g, w, opts.full, opts.figure);
+  drawPortrait(g, opts.traits ?? {}, opts.seed, { face: !opts.full && !opts.figure, figure: opts.figure, mystery: opts.mystery });
   if (fontsReady()) {
     CACHE.set(key, c);
     cachePixels += w * h;
@@ -70,12 +73,15 @@ export function cached(w, h, opts) {
 }
 
 /** Paint a photo ahead of time, so the tap that shows it is instant. Same arguments as <Portrait>. */
-export function warmPortrait({ traits, seed, size = 84, full = false, mystery = false }) {
+export function warmPortrait({ traits, seed, size = 84, full = false, figure = false, mystery = false }) {
   if (typeof document === 'undefined') return;
   const dpr = dprOf();
-  const h = full ? Math.round((size * ART_H) / ART_W) : size;
-  cached(Math.round(size * dpr), Math.round(h * dpr), { traits, seed: seedNum(seed), full, mystery });
+  const h = heightOf(size, full, figure);
+  cached(Math.round(size * dpr), Math.round(h * dpr), { traits, seed: seedNum(seed), full, figure, mystery });
 }
+
+/** A picture's height for its width: the 3:4 photo, the tall figure, or the square crop. */
+export const heightOf = (w, full, figure) => (figure ? Math.round((w * FIGURE_CROP.h) / FIGURE_CROP.w) : full ? Math.round((w * ART_H) / ART_W) : w);
 
 /** Photos waiting to be painted: a few per frame, so the frame still lands. */
 const queue = [];

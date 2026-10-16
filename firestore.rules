@@ -159,7 +159,7 @@ service cloud.firestore {
         allow delete: if isHost();
       }
 
-      // "<cycle>_<pid>" → one night action. Ghosts act too (their whisper), and
+      // "<cycle>_<pid>" → one night action. Ghosts act too (pass a photo), and
       // a recruit answers here during the recruit beat.
       match /actions/{id} {
         allow read: if isHost() || ownsId(id);
@@ -195,15 +195,10 @@ service cloud.firestore {
                   && request.resource.data.kind == 'scour' && request.resource.data.target == null)
               ))
               ||
-              (myStatus() == 'ghost' && (
-                (request.resource.data.keys().hasOnly(['pid', 'cycle', 'kind', 'target', 'word', 'at'])
-                  && request.resource.data.kind == 'whisper' && isAlive(request.resource.data.target)
-                  && shortText(request.resource.data.word))
-                ||
-                (request.resource.data.keys().hasOnly(['pid', 'cycle', 'kind', 'target', 'fact', 'at'])
-                  && request.resource.data.kind == 'pass' && isAlive(request.resource.data.target)
-                  && validFact(request.resource.data.fact))
-              ))
+              (myStatus() == 'ghost'
+                && request.resource.data.keys().hasOnly(['pid', 'cycle', 'kind', 'target', 'fact', 'at'])
+                && request.resource.data.kind == 'pass' && isAlive(request.resource.data.target)
+                && validFact(request.resource.data.fact))
             ))
             || (game().phase == 'recruit'
               && request.resource.data.keys().hasOnly(['pid', 'cycle', 'kind', 'accept', 'at'])
@@ -289,11 +284,21 @@ service cloud.firestore {
       // for the guesser's instant "Correct!"; the host scores the typed text.
       match /drawings/{id} {
         allow read: if signedIn();
-        allow create, update: if todays(id) && dayGame('draw') && myStatus() in ['alive', 'ghost']
+        allow create, update: if todays(id) && (dayGame('draw') || dayGame('fake')) && myStatus() in ['alive', 'ghost']
           && ownDoc(['pid', 'cycle', 'strokes', 'checks', 'at'])
           && request.resource.data.strokes is string && request.resource.data.strokes.size() <= 30000
           && request.resource.data.checks is list && request.resource.data.checks.size() <= 6;
         allow delete: if isHost();
+      }
+
+      // "<cycle>_<pid>" → { items: [id] }: Pack the Bag (2026-10-16). Private
+      // until the game locks: the host opens every bag at once in game.dayGame,
+      // so nobody can copy a bag that is still being packed.
+      match /bags/{id} {
+        allow read: if isHost() || ownsId(id);
+        allow create, update: if todays(id) && dayGame('pack') && myStatus() in ['alive', 'ghost']
+          && ownDoc(['pid', 'cycle', 'items', 'at'])
+          && request.resource.data.items is list && request.resource.data.items.size() <= 3;
       }
 
       // "<cycle>_<pid>" → { answers: { drawerPid: { text, ms } } }. Private.
@@ -305,7 +310,7 @@ service cloud.firestore {
           && request.resource.data.answers is map && request.resource.data.answers.size() <= 40;
       }
 
-      // Fragments, watch results, checks, whispers, recruit offers. Addressed to
+      // Fragments, watch results, checks, traces, recruit offers. Addressed to
       // one pid; clients must query with where('to', '==', pid).
       match /inbox/{id} {
         allow read: if isHost() || (hasBinding() && resource.data.to == me());
@@ -350,13 +355,30 @@ service cloud.firestore {
           && clue.fact.trait == d.fact.trait && clue.fact.group == d.fact.group;
       }
 
+      // Share in chat (2026-10-16): a living guest posts one of the photos in
+      // their own Photos to the room, once per photo (the id is fixed by the
+      // inbox doc, and there is no update rule). The fact must match a whole
+      // clue photo in their own inbox, so nobody can share a photo they don't
+      // hold. It carries no `via`: the bubble never says where it came from.
+      function sharedPhoto(id) {
+        let d = request.resource.data;
+        let clue = get(/databases/$(database)/documents/games/$(gid)/inbox/$(d.inboxId)).data;
+        return hasBinding() && myStatus() == 'alive'
+          && d.keys().hasOnly(['kind', 'pid', 'name', 'fact', 'inboxId', 'cycle', 'at'])
+          && d.kind == 'photo' && d.pid == me() && d.inboxId is string && d.name is string
+          && id == 'photo_' + d.inboxId + '_' + me()
+          && validFact(d.fact)
+          && clue.to == me() && clue.kind == 'fact' && d.cycle == clue.cycle
+          && clue.fact.trait == d.fact.trait && clue.fact.group == d.fact.group;
+      }
+
       match /chat/{id} {
         allow read: if signedIn();
         // A living guest's line is text only: no `kind` or `fact`, so nobody alive can fake last words.
         allow create: if (hasBinding() && myStatus() == 'alive'
             && request.resource.data.pid == me() && shortText(request.resource.data.text)
             && !request.resource.data.keys().hasAny(['kind', 'fact', 'inboxId']))
-          || lastWords(id);
+          || lastWords(id) || sharedPhoto(id);
         allow delete: if isHost();
       }
 

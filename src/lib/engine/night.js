@@ -27,8 +27,10 @@
  *   6. Scourers (and anyone who did nothing) each receive one clue fragment.
  *   7. The paper's witness: one more true fact about the hand, printed for
  *      everyone in the morning News (`witness`, see clues.js witnessFact).
- *   8. Ghosts each receive one *true* clue, and deliver their whispers, or
- *      pass one of their own true clue photos to a living guest (`pass`).
+ *   8. Ghosts each receive one *true* clue, and may pass one of their own
+ *      true clue photos to a living guest (`pass`). It arrives whole, in the
+ *      guest's Photos. (The whisper, one word from a list, was cut on
+ *      2026-10-16, the user's call: passing the photo is the ghost's one move.)
  *      A ghost can only pass a clue it really holds: `ctx.held` lists each
  *      ghost's own clue photos (their via 'ghost' inbox), read by the host.
  *
@@ -189,7 +191,7 @@ const clean = (o) => Object.fromEntries(Object.entries(o).map(([k, v]) => [k, v 
  *
  * @param ctx.players   { [pid]: { status } }, the host's full view
  * @param ctx.roles     { [pid]: role }
- * @param ctx.actions   { [pid]: { kind: 'watch'|'scour'|'protect'|'check'|'whisper'|'pass', target, word, fact } }
+ * @param ctx.actions   { [pid]: { kind: 'watch'|'scour'|'protect'|'check'|'pass', target, fact } }
  * @param ctx.held      { [ghostPid]: [{ trait, group }] }, the true clue photos each ghost holds
  * @param ctx.den       { [killerPid]: { victim, hand, frame, recruit } }
  * @param ctx.secret    { lastProtected, checksLeft, plantUsed, recruitDue, hands }
@@ -260,18 +262,16 @@ export function resolveNight(ctx) {
     }
   }
 
-  // --- Ghost whispers, and passed clues ---------------------------------------
+  // --- Ghosts' passed clues ---------------------------------------------------
   // A pass carries a copy of one of the ghost's own true clue photos; a fact the
   // ghost doesn't hold (a forged action) is dropped, like any invalid move.
-  const whisperDeliveries = [];
+  const passDeliveries = [];
   const holds = (pid, f) => Boolean(f) && (ctx.held?.[pid] ?? []).some((h) => h.trait === f.trait && h.group === f.group);
   for (const pid of ghosts) {
     const a = actions[pid];
     if (!a?.target || players[a.target]?.status !== 'alive') continue;
-    if (a.kind === 'whisper' && a.word) {
-      whisperDeliveries.push({ to: a.target, kind: 'whisper', from: pid, word: a.word });
-    } else if (a.kind === 'pass' && holds(pid, a.fact)) {
-      whisperDeliveries.push({ to: a.target, kind: 'fact', via: 'pass', from: pid, fact: strip(a.fact) });
+    if (a.kind === 'pass' && holds(pid, a.fact)) {
+      passDeliveries.push({ to: a.target, kind: 'fact', via: 'pass', from: pid, fact: strip(a.fact) });
     }
   }
 
@@ -283,7 +283,7 @@ export function resolveNight(ctx) {
       facts: [],
       deliveries: [
         ...deliveries,
-        ...whisperDeliveries,
+        ...passDeliveries,
         { to: recruitTarget, kind: 'recruitOffer' },
       ],
       publicDawn: { victims: [], attempted: null },
@@ -296,7 +296,7 @@ export function resolveNight(ctx) {
   }
 
   if (!victim) {
-    return { deaths: [], facts: [], trueFacts: [], deliveries: [...deliveries, ...whisperDeliveries], publicDawn: { victims: [], attempted: null }, secretPatch };
+    return { deaths: [], facts: [], trueFacts: [], deliveries: [...deliveries, ...passDeliveries], publicDawn: { victims: [], attempted: null }, secretPatch };
   }
 
   // --- The murder ------------------------------------------------------------
@@ -320,7 +320,7 @@ export function resolveNight(ctx) {
     deaths: out.deaths,
     facts: out.facts,
     trueFacts: out.trueFacts,
-    deliveries: [...deliveries, ...out.deliveries, ...whisperDeliveries],
+    deliveries: [...deliveries, ...out.deliveries, ...passDeliveries],
     publicDawn: out.publicDawn,
     witness: out.witness,
     pairs: out.pairs,

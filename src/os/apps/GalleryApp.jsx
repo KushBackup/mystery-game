@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useMyJoin } from '../../hooks/useKillers';
-import { joinHalf } from '../../firebase/game';
-import { SPLIT } from '../../data/killersCopy';
+import { joinHalf, sharePhoto } from '../../firebase/game';
+import { SPLIT, SHARE } from '../../data/killersCopy';
 import { Face } from '../art/Portrait';
 import { sfxSent } from '../sfx';
 import { AppFrame, Empty } from '../ui';
@@ -24,6 +24,9 @@ import { publicFacts, fitCount } from '../suspects';
  *
  * A planted clue (the Killers' frame) looks exactly like any other. That is
  * the point of it.
+ *
+ * A living guest can share any photo of their own to The Room (ShareToRoom
+ * below): a tap, a confirm, and everyone sees it in their chat.
  *
  * A ghost has a second album, The Room: every clue the living got last night
  * and who got it (ctx.ghostSight, host-written, readable by ghosts only). It
@@ -83,6 +86,7 @@ export default function GalleryApp({ ctx, onClose }) {
           )}
           {form !== 'voice' && <p className="text-[19px] leading-snug mt-2 os-selectable">{flavour}</p>}
           <p className="mt-3 pt-3 border-t border-os-chrome/25 text-[15px] text-os-gold os-selectable">{plain}</p>
+          {album === 'mine' && me?.status === 'alive' && <ShareToRoom key={d.id} ctx={ctx} d={d} />}
         </div>
         <div className="grid grid-cols-2 gap-2 px-4 pb-6">
           <button type="button" className="os-btn os-btn--dark" disabled={open === 0} onClick={() => view(open - 1)}><Glyph name="back" size={12} /> Newer</button>
@@ -181,6 +185,51 @@ function TornPhoto({ ctx, d }) {
         <p className="text-[12px] text-os-chrome mt-1">{wrong ? <span className="text-os-red">{SPLIT.wrong}</span> : state === 'error' ? <span className="text-os-red">{SPLIT.error}</span> : `${SPLIT.theirs.replace(':', '.')} ${SPLIT.why}`}</p>
       </div>
     </div>
+  );
+}
+
+/**
+ * Share in chat: post this photo to The Room, where every guest sees it.
+ * One tap asks, a second shares; once shared it stays shared (the rules allow
+ * one post per photo), and the button becomes a way into the chat.
+ */
+function ShareToRoom({ ctx, d }) {
+  const { gid, me } = ctx;
+  const [state, setState] = useState(''); // '' | 'ask' | 'sending' | 'error'
+  const shared = (ctx.chat ?? []).some((m) => m.kind === 'photo' && m.inboxId === d.id && m.pid === me.pid);
+  if (shared) {
+    return (
+      <div className="flex items-center justify-between gap-3 mt-4">
+        <span className="os-label text-[11px] text-os-chrome">{SHARE.done.toUpperCase()}</span>
+        <button type="button" className="os-btn os-btn--dark os-btn--sm" onClick={() => ctx.open('messages')}>{SHARE.open}</button>
+      </div>
+    );
+  }
+  const send = async () => {
+    setState('sending');
+    try {
+      await sharePhoto(gid, me.pid, me.name, d);
+      sfxSent();
+      setState('');
+    } catch {
+      setState('error');
+    }
+  };
+  if (state === 'ask' || state === 'sending' || state === 'error') {
+    return (
+      <div className="mt-4">
+        <p className="text-[14px] text-os-chrome">{state === 'error' ? <span className="text-os-red">{SHARE.error}</span> : SHARE.confirm}</p>
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <button type="button" className="os-btn os-btn--dark" disabled={state === 'sending'} onClick={() => setState('')}>{SHARE.cancel}</button>
+          <button type="button" className="os-btn" disabled={state === 'sending'} onClick={send}>{state === 'sending' ? SHARE.sending : SHARE.send}</button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <button type="button" className="os-btn w-full mt-4" onClick={() => setState('ask')}>
+      <Glyph name="chat" size={14} /> {SHARE.button}
+    </button>
   );
 }
 

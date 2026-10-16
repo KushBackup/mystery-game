@@ -33,7 +33,7 @@ export default function ClockApp({ ctx, onClose }) {
   const current = PART_OF[game.phase] ?? game.phase;
   const speed = game.config?.clock?.speed;
   const plan = daySchedule(game, now);
-  const today = dayKit(pack).dayGames[game.minigame ?? 'run']?.title ?? 'The run';
+  const today = dayKit(pack).dayGames[game.minigame ?? 'word']?.title ?? 'WORD';
   const title = (id) => (id === 'game' ? `Morning game · ${today}` : TITLE[id]);
   const t = clockNow(game, now);
 

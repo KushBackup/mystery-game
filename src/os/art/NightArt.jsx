@@ -127,6 +127,8 @@ function Skyline() {
 // 48 × 48 units, foam lines on the tile's deep blue (os.css .os-nt-art). One per move.
 
 const L = { fill: 'none', stroke: 'currentColor', strokeWidth: 2.6, strokeLinecap: 'round', strokeLinejoin: 'round' };
+// The holes in a picture (the eye's pupil, the magnifier's glass) take the colour behind them.
+const HOLE = { fill: 'var(--nt-hole, #0e1f47)' };
 
 const ART = {
   // An eye wide open in the dark, the moon caught in it.
@@ -134,7 +136,7 @@ const ART = {
     <>
       <path d="M6 25c5-9 11-13 18-13s13 4 18 13c-5 9-11 13-18 13S11 34 6 25Z" {...L} />
       <circle cx="24" cy="25" r="7" fill="currentColor" />
-      <circle cx="24" cy="25" r="3" fill="#0e1f47" />
+      <circle cx="24" cy="25" r="3" style={HOLE} />
       <circle cx="26.6" cy="22.4" r="1.6" fill="#fff" />
       <path d="M12 14l-2-4M24 10V6M36 14l2-4" {...L} strokeWidth={2.2} />
     </>
@@ -144,7 +146,7 @@ const ART = {
     <>
       <path d="M10 6h20v30l-3-2-3 2-3-2-3 2-3-2-3 2-2-1Z" {...L} strokeWidth={2.3} />
       <path d="M14 12h12M14 17h9M14 22h12M14 27h7" {...L} strokeWidth={2} opacity="0.7" />
-      <circle cx="31" cy="30" r="7.5" {...L} fill="#0e1f47" />
+      <circle cx="31" cy="30" r="7.5" {...L} style={HOLE} />
       <path d="M36.5 35.5 42 41" {...L} strokeWidth={3.2} />
       <path d="M28 30h6" {...L} strokeWidth={2} />
     </>
@@ -165,15 +167,6 @@ const ART = {
     <>
       <path d="M24 5 39 10v11c0 10-6.4 17-15 21-8.6-4-15-11-15-21V10Z" {...L} />
       <path d="M24 31c-6-4-8.6-7-8.6-10.2 0-2.6 2-4.4 4.4-4.4 1.8 0 3.2 1 4.2 2.6 1-1.6 2.4-2.6 4.2-2.6 2.4 0 4.4 1.8 4.4 4.4 0 3.2-2.6 6.2-8.6 10.2Z" fill="currentColor" />
-    </>
-  ),
-  // A small ghost, a breath of words.
-  whisper: (
-    <>
-      <path d="M8 40V20a12 12 0 0 1 24 0v20l-4-3-4 3-4-3-4 3-4-3Z" {...L} />
-      <circle cx="16" cy="21" r="2" fill="currentColor" />
-      <circle cx="24" cy="21" r="2" fill="currentColor" />
-      <path d="M35 14c3 1 5 3 5 6M36 8c5 2 8 6 8 12" {...L} strokeWidth={2.2} />
     </>
   ),
   // A photo handed on: a polaroid tilted out of a ghost's sheet.
@@ -220,5 +213,18 @@ export function MoveArt({ kind, size = 52, done = false, className = '' }) {
         </span>
       )}
     </span>
+  );
+}
+
+/**
+ * The same picture without its tile: a line icon in `currentColor`, for the
+ * Night app's light surfaces (the sheet, the dock, the room's markers).
+ * `size` is the icon's side in CSS px.
+ */
+export function MoveGlyph({ kind, size = 22, className = '' }) {
+  return (
+    <svg className={`os-nt-glyph ${className}`} viewBox="0 0 48 48" width={size} height={size} aria-hidden="true">
+      {ART[kind] ?? ART.moon}
+    </svg>
   );
 }

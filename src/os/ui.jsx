@@ -13,15 +13,16 @@ import { lookLine } from './dossier';
 
 /**
  * An app's window: nav bar on top, a scrolling body, optional footer (a compose
- * bar), and `overlay` (an action sheet) above everything. The shell zooms the whole app in from its icon; `enter` is for moving
+ * bar), and `overlay` (an action sheet) above everything. `top` replaces the
+ * navigation bar with an app's own header (the Night app's). The shell zooms the whole app in from its icon; `enter` is for moving
  * *inside* an app: 'push' slides a detail in from the right, 'pop' slides the
  * list back in from the left (see nav.js).
  */
-export function AppFrame({ title, onBack, backLabel = 'Home', right, tone = 'blue', light = false, dark = false, paper = false, footer, overlay, children, bodyClass = '', bodyRef, enter }) {
+export function AppFrame({ title, onBack, backLabel = 'Home', right, tone = 'blue', light = false, dark = false, paper = false, top, footer, overlay, children, bodyClass = '', bodyRef, enter, className = '' }) {
   const motion = enter === 'push' ? 'os-nav-push' : enter === 'pop' ? 'os-nav-pop' : '';
   return (
-    <section className={`os-app ${motion} ${light ? 'os-app--light os-pinstripe' : ''} ${dark ? 'os-app--dark' : ''} ${paper ? 'os-app--paper' : ''}`}>
-      <NavBar title={title} onBack={onBack} backLabel={backLabel} right={right} tone={tone} />
+    <section className={`os-app ${motion} ${light ? 'os-app--light os-pinstripe' : ''} ${dark ? 'os-app--dark' : ''} ${paper ? 'os-app--paper' : ''} ${className}`}>
+      {top ?? <NavBar title={title} onBack={onBack} backLabel={backLabel} right={right} tone={tone} />}
       <div ref={bodyRef} className={`os-scroll flex-1 min-h-0 ${bodyClass}`}>{children}</div>
       {footer}
       {overlay}

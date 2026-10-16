@@ -22,15 +22,17 @@ import { useKeyboard } from '../keyboard';
 /**
  * Messages: the group chat everyone is in, plus the threads nobody chose.
  *
- *   The Room   every guest. The living post; ghosts can only read, except
- *              that a guest killed last night may post one photo as their
- *              last words (LastWords below, threads.js lastWordsDue).
+ *   The Room   every guest. The living post, and can share a photo from
+ *              Photos (PhotoBubble below, GalleryApp ShareToRoom); ghosts
+ *              can only read, except that a guest killed last night may
+ *              post one photo as their last words (LastWords below,
+ *              threads.js lastWordsDue).
  *   (a group)  a living Killer's partners, titled with their names
  *              (threads.js). At night DEEP BLUE posts a poll in it: who goes.
  *   Spirits    the ghosts, among themselves.
  *   DEEP BLUE  the app talking to you: your results, your photos, and its
  *              own remarks each night, morning and vote (voice.js).
- *   Unknown    whispers from the dead, and what you saw on watch.
+ *   Unknown    what you saw on watch.
  *
  * The channel lists come from the shell's subscriptions (PhoneOS), never a
  * second listener here: one onSnapshot per channel per phone (Lessons.md).
@@ -153,6 +155,7 @@ function ThreadView({ ctx, thread, onBack }) {
           empty={thread.id === 'spirits' ? 'The dead talk here. Only the dead.' : 'Say hello. Everyone in the room is here.'}
           poll={() => <PollBubble ctx={ctx} />}
           last={(m) => <LastBubble m={m} ctx={ctx} />}
+          photo={(m) => <PhotoBubble m={m} ctx={ctx} />}
         />
       ) : (
         <SystemThread list={thread.list} ctx={ctx} />
@@ -176,6 +179,20 @@ function LastBubble({ m, ctx }) {
         <div className="os-last__item"><Evidence fact={m.fact} seed={m.inboxId} pack={ctx.pack} stamp={day ? `D${day}` : undefined} /></div>
         <p className="os-last__plain">{plain}</p>
         <p className="os-last__foot">{LAST_WORDS.true}</p>
+      </div>
+    </div>
+  );
+}
+
+/** A photo a guest shared from their Photos: the picture, what it says, no word on where it came from. */
+function PhotoBubble({ m, ctx }) {
+  const mine = m.pid === ctx.me.pid;
+  return (
+    <div className={`os-bubble-row os-rise ${mine ? 'os-bubble-row--me' : ''}`}>
+      <span className="os-bubble-name">{mine ? 'You' : m.name}</span>
+      <div className={`os-bubble os-bubble--photo ${mine ? 'os-bubble--me' : ''}`}>
+        <div className="os-bubble__pic"><Evidence fact={m.fact} seed={m.inboxId} pack={ctx.pack} stamp={m.cycle ? `D${m.cycle}` : undefined} /></div>
+        <p className="os-bubble__cap">{clueWords(ctx.pack, m.fact).plain}</p>
       </div>
     </div>
   );
@@ -249,7 +266,7 @@ function PollBubble({ ctx }) {
 }
 
 /** Chat bubbles: yours green on the right, theirs grey on the left, names when the speaker changes. */
-export function Thread({ messages, me, empty = 'Nothing yet.', poll = null, last = null }) {
+export function Thread({ messages, me, empty = 'Nothing yet.', poll = null, last = null, photo = null }) {
   const end = useRef(null);
   useEffect(() => toBottom(end.current), [messages.length]);
   // The keyboard coming up shortens the list: keep the newest message just above the compose bar.
@@ -266,6 +283,7 @@ export function Thread({ messages, me, empty = 'Nothing yet.', poll = null, last
         if (m.event) return <p key={m.id} className="os-event os-rise">{m.text}</p>;
         if (m.kind === 'poll') return <React.Fragment key={m.id}>{poll?.(m)}</React.Fragment>;
         if (m.kind === 'last') return <React.Fragment key={m.id}>{last?.(m)}</React.Fragment>;
+        if (m.kind === 'photo') return <React.Fragment key={m.id}>{photo?.(m)}</React.Fragment>;
         const prev = messages[i - 1];
         const mine = m.pid === me.pid;
         const gap = !prev || (m.at ?? 0) - (prev.at ?? 0) > 5 * 60_000;

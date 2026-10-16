@@ -774,3 +774,9 @@ Second, wrapping. Adding an 18px mark plus an 8px gap to `Guests on record` wrap
 **Why it was wrong:** Firestore connections were treated as free. Over HTTP/1.1 they are a hard budget of six per browser, and every separate Firebase app spends from it.
 
 **What to do instead:** A host bot is connected only while it works: `online()` in src/firebase/hostBots.js turns its network on, runs the work, and turns it off (`driveBots` takes it as `around`). Anything new a bot does from the browser must go through `online()`. When a local write hangs but the emulator answers curl quickly, check DevTools → Network for requests to :8080 stuck in "Stalled".
+
+### 2026-10-16 — Driving the Night app on the emulator: three traps
+
+**What happened:** Building a browser drive for the Night lounge, three things wasted runs. (1) `await import('/mystery-game/src/firebase/app.js')` inside the page made a second copy of the module, which threw "initializeFirestore() has already been called"; the page's own uid had to be read from Firebase's IndexedDB (`firebaseLocalStorageDb`) instead. (2) `host.advance` from `night` resolves straight to dawn, so a drive that "locks the night" with it never sees the locked room. (3) Playwright clicks a button's centre, and a guest behind a table has their body covered by the guest in front, so the click is intercepted.
+
+**What to do instead:** Read the page's uid from storage, never by importing app modules into the page. To see `night_locked`, set the phase on the emulator game doc directly, take the screenshots, set it back to `night`, then advance. Tap lounge guests by the head (`position: { x: 23, y: 10 }`), as a person would. The drive lives in `node_modules/.drive/drive.mjs` (ignored by git) so it resolves the project's own `firebase` packages.

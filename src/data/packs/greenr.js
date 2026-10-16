@@ -12,8 +12,6 @@
  *     the plain meaning ("Drink: gin, vodka, rum, whisky or a cocktail"),
  *     generated from data/traits.js, so flavour can be evocative without
  *     being a riddle;
- *   - the whisper words Ghosts may send. No trait words ("gin", "glasses"),
- *     or a Ghost's one word becomes a clue better than the room's.
  *
  * Every line is short. Players read at most one card at a time, and the
  * host's voice carries the story (Lessons.md: the reading-load feedback).
@@ -96,10 +94,4 @@ export default {
       cage: 'Birdseed or fish flakes in the figure’s pocket.',
     },
   },
-
-  whispers: [
-    'Liar', 'Trust', 'Watch', 'Wrong', 'Framed', 'Fake', 'Close', 'Near', 'Far',
-    'Left', 'Right', 'Table', 'Bar', 'Door', 'Garden', 'Stair', 'Again', 'Twice',
-    'Yes', 'No', 'Friend', 'Beware', 'Quiet', 'Hurry',
-  ],
 };

@@ -84,7 +84,7 @@ function liveStory(s, pack, nameOf) {
   if (s.kind === 'day') {
     const t = live.day?.[s.game] ?? live.day?.run;
     if (!t) return null;
-    const vars = { word: s.word ?? '', hint: s.hint ?? '', day: s.cycle };
+    const vars = { word: s.word ?? '', hint: s.hint ?? '', place: String(s.place ?? '').replace(/^The /, 'the '), day: s.cycle };
     const drawn = s.game === 'draw' ? Object.entries(s.words ?? {}).map(([pid, w]) => `${nameOf(pid)} drew ${w}.`) : [];
     return {
       ...base,

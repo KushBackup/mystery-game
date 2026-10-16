@@ -108,10 +108,10 @@ export const ROLE_CARD = {
  * the person beside you can see. `until` is when the morning game closes, on
  * the game clock (engine/clock.js), the one deadline the line names.
  */
-export function nowLine({ phase, status, hasActed, cycle, minigame = 'run', pack, until = '', intro = false }) {
+export function nowLine({ phase, status, hasActed, cycle, minigame = 'word', pack, until = '', intro = false }) {
   if (status === 'vanished') return 'You left the game. Thanks for playing.';
   if (status === 'ghost' && !['night', 'alarm', 'game', 'roundtable', 'revote', 'endgame', 'finale'].includes(phase)) return 'No signal.';
-  const title = pack?.dayGames?.[minigame]?.title ?? 'The run';
+  const title = pack?.dayGames?.[minigame]?.title ?? 'WORD';
   switch (phase) {
     case 'lobby':
       return 'You’re in. Waiting for the host.';
@@ -227,8 +227,6 @@ export function deliveryLine(d, nameOf) {
       const [a, b] = (d.targets ?? []).map(nameOf);
       return d.hit ? `TRACE: ${a} or ${b} did tonight’s hacking.` : `Trace: neither ${a} nor ${b} did tonight’s hacking.`;
     }
-    case 'whisper':
-      return `${nameOf(d.from)} whispers from beyond: “${d.word}”`;
     case 'saved':
       return `You saved ${nameOf(d.target)} tonight.`;
     case 'quiet':
@@ -248,7 +246,6 @@ export const DELIVERY_TAG = {
   watch: 'Watch',
   check: 'Check',
   trace: 'Trace',
-  whisper: 'Whisper',
   saved: 'Saved',
   quiet: 'Search',
   recruited: 'Recruited',
@@ -304,6 +301,23 @@ export const LAST_WORDS = {
   nudge: 'Post one photo to the room before the vote.',
 };
 
+/**
+ * Share in chat (GalleryApp ShareToRoom, MessagesApp PhotoBubble): a living
+ * guest posts one of their own photos to The Room, once per photo. The bubble
+ * never says where the photo came from: the guest can say, the room decides.
+ */
+export const SHARE = {
+  button: 'Share in chat',
+  confirm: 'Everyone in The Room will see this photo.',
+  send: 'Share',
+  cancel: 'Cancel',
+  sending: 'Sharing…',
+  done: 'Shared in The Room',
+  open: 'Open chat',
+  error: 'Not shared. Try again.',
+  preview: (who) => `${who} shared a photo`,
+};
+
 export const NIGHT = {
   title: (cycle) => `Night ${cycle}`,
   /** The hero's countdown: minutes, then seconds; never m:ss (it would read as a time of day). */
@@ -319,31 +333,62 @@ export const NIGHT = {
     noneGhost: 'No move tonight. Your own clue photo still arrives at dawn.',
   },
   ghost: {
-    line: 'You were killed, but you still play. Help the living find the Killers.',
-    head: 'Choose your move',
-    foot: 'One move a night. Your own clue photo arrives at dawn either way.',
+    line: 'You were killed, but you still play. Pass one of your true photos to a living guest; your own arrives at dawn either way.',
   },
   faithful: {
-    line: 'One Killer is out tonight. Pick one move to hunt them.',
-    foot: 'No move? You dig through the logs.',
-    head: 'Choose your move',
+    line: 'One Killer is out tonight. Make one move to hunt them. No move? You dig through the logs.',
   },
-  more: 'Good to know',
-  bar: {
-    move: 'Choose a move above',
-    confirm: 'Confirm',
-    saving: 'Saving…',
-  },
-  saved: 'Tonight’s move',
-  wait: 'Your result arrives at dawn. Until then, act normal.',
   help: 'How the night works',
+  /** The lounge (NightRoom.jsx): the party seen from above, a guest or the computer to tap. */
+  room: {
+    hint: {
+      faithful: 'Tap a guest to watch, or the computer to dig',
+      detective: 'Tap a guest, or the computer to dig',
+      doctor: 'Tap the guest you want to keep safe',
+      killer: 'Tap a guest to vote with your partners',
+      recruit: 'Tap the guest you want to invite in',
+      ghost: 'Tap a living guest to pass them a photo',
+    },
+    change: 'Tap anyone else to change it',
+    you: 'You',
+    killed: 'killed',
+    partner: 'Partner',
+    selfLine: 'That’s you. Tap someone else in the room.',
+    partnerLine: (pick) => (pick ? `Your partner. They vote ${pick}.` : 'Your partner. No vote from them yet.'),
+    alsoVote: (names) => `${names.join(', ')} ${names.length === 1 ? 'votes' : 'vote'} for them too.`,
+    computer: {
+      tag: 'DEEP BLUE',
+      title: 'The computer',
+      line: 'DEEP BLUE’s logs. Everything that happened tonight is in there.',
+      doctor: 'Not your night for the logs. You have someone to keep safe.',
+      killer: 'Not tonight. You have a target to pick.',
+      ghost: 'Your hands go through the keys. Reach a living guest instead.',
+    },
+    traceWith: (name) => `Trace ${name} + one more`,
+    traceShort: 'Then tap a second guest. Was one of the two tonight’s Killer?',
+    traceNext: (name) => `Tap a second guest to trace with ${name}`,
+    protectSelf: 'Protect yourself',
+    protectDawn: 'If the Killers chose them, they live.',
+    noProtect: 'You protected nobody tonight.',
+    vote: (name) => `Vote to kill ${name}`,
+    voteShort: 'Most votes among you is killed at dawn.',
+    invite: (name) => `Invite ${name} in`,
+    inviteShort: 'Yes: they join you. No: they become tonight’s target.',
+    passTo: (name) => `Pass ${name} a photo`,
+    photoFor: (name) => `Tap the photo ${name} gets`,
+    how: 'How it works',
+    cancel: 'Cancel',
+    find: 'Find a guest',
+    done: 'Done',
+    found: (n) => `${n} found`,
+    none: 'Nobody',
+  },
   moves: {
     watch: {
       title: 'Watch a guest',
       short: 'Try to catch a Killer in the act.',
       odds: 'About 6 in 10',
       dawn: 'You may see them slip away.',
-      hint: 'Tap a guest to watch',
       verb: (name) => `Watch ${name}`,
       how: [
         ['Tonight', 'Pick one guest and keep an eye on them all night.'],
@@ -352,7 +397,6 @@ export const NIGHT = {
         ['Careful', '“A quiet night” doesn’t clear them. You may have missed it.'],
         ['Why', 'The only move that can point straight at one person.'],
       ],
-      pick: 'Who do you watch?',
       done: (name) => `You’re watching ${name}.`,
     },
     scour: {
@@ -360,7 +404,6 @@ export const NIGHT = {
       short: 'Get one sure clue about tonight’s Killer, in two halves.',
       odds: 'Sure clue',
       dawn: 'Half a clue photo. Someone else has the other half.',
-      hint: 'No guest to pick. Just dig.',
       how: [
         ['Tonight', 'You go through DEEP BLUE’s logs instead of watching anyone.'],
         ['At dawn', 'Half a clue photo lands in Photos. Your phone names the guest who has the other half.'],
@@ -368,7 +411,6 @@ export const NIGHT = {
         ['After', 'Check it against everyone’s answers in Contacts to narrow down who it could be.'],
         ['Why', 'A clue every night, guaranteed. It narrows the field but never names one person.'],
       ],
-      cta: 'Dig tonight',
       done: () => 'You’re digging through the logs.',
     },
     trace: {
@@ -376,7 +418,6 @@ export const NIGHT = {
       short: 'Find out if one of two guests struck tonight.',
       odds: 'Yes or no',
       dawn: 'Was one of them the Killer?',
-      hint: (n) => (n === 1 ? 'Tap one more guest' : 'Tap two guests to trace'),
       verb: (a, b) => `Trace ${a} + ${b}`,
       how: [
         ['Tonight', 'Pick two guests. DEEP BLUE checks their phones against tonight’s logs.'],
@@ -384,21 +425,18 @@ export const NIGHT = {
         ['Careful', '“Neither” clears them for tonight only. A different Killer may strike another night.'],
         ['Why', 'A hit traps a Killer in a pair of two.'],
       ],
-      pick: (n) => `Pick two guests · ${n}/2`,
       done: (a, b) => `You’re tracing ${a} and ${b}.`,
     },
     protect: {
       title: 'Protect a guest',
       short: 'Keep one guest safe from the Killers tonight.',
       line: 'One Killer is out tonight. You can keep one guest safe.',
-      hint: 'Tap a guest to protect',
       verb: (name) => `Protect ${name}`,
       how: [
         ['Tonight', 'Pick one guest to protect. It can be you.'],
         ['At dawn', 'If the Killers chose them, they live, and nobody is killed tonight. DEEP BLUE tells you if you saved someone.'],
         ['Rule', 'You can’t protect the same guest two nights in a row.'],
       ],
-      pick: 'Who do you protect?',
       barred: 'Protected last night',
       done: (name) => `You’re protecting ${name}.`,
     },
@@ -406,47 +444,19 @@ export const NIGHT = {
       title: 'Pass a photo on',
       short: 'Give one of your true clue photos to a living guest.',
       odds: 'Always true',
-      dawn: 'They get a copy, with your name.',
+      dawn: 'The whole photo, signed with your name.',
       none: 'No photo yet. Your first arrives at dawn.',
       how: [
         ['Tonight', 'Pick one of your clue photos, then one living guest.'],
-        ['At dawn', 'A copy lands in their Photos, signed with your name. You keep yours.'],
+        ['At dawn', 'The whole photo lands in their Photos, signed with your name. No code to type. You keep yours.'],
         ['Why', 'Ghost photos are always true, even on a night the Killers bend the clues.'],
         ['Careful', 'They can’t prove it came from you. The room has to trust them.'],
       ],
-      photo: 'Pick a photo',
-      pick: 'Who gets it?',
-      pickFirst: 'Then pick who gets it',
-      hint: (has) => (has ? 'Tap who gets it' : 'Tap a photo first'),
-      verb: (name) => `Photo to ${name}`,
       done: (name) => `${name} gets your photo at dawn.`,
-    },
-    whisper: {
-      title: 'Whisper from beyond',
-      short: 'Send one word to a living guest.',
-      odds: 'One word',
-      dawn: 'They read it, signed with your name.',
-      line: 'You were killed, but you still play. Help the living find the Killers.',
-      how: [
-        ['Tonight', 'Pick one word, then one living guest.'],
-        ['At dawn', 'They read your word, signed with your name.'],
-        ['Also', 'Every night you get a clue photo of your own. Ghost clues are always true.'],
-      ],
-      word: 'Pick a word',
-      pick: (word) => `Who hears “${word}”?`,
-      pickFirst: 'Then pick who hears it',
-      hint: (word) => (word ? `Tap who hears “${word}”` : 'Tap a word first'),
-      verb: (name, word) => `“${word}” to ${name}`,
-      done: (name, word) => `${name} will hear “${word}”.`,
     },
   },
   killer: {
     line: 'Pick tonight’s target with your partners. Most votes wins.',
-    partners: 'Your partners',
-    alone: 'You’re alone tonight. Your vote decides.',
-    noPick: 'No vote yet',
-    picked: (name) => `Votes ${name}`,
-    hint: 'Tap a name to vote',
     mineBar: (name) => `Your vote: ${name}`,
     lead: (n) => `${n} vote${n === 1 ? '' : 's'} · leading`,
     leads: (name) => `${name} leads`,
@@ -459,7 +469,6 @@ export const NIGHT = {
       ['Turns', 'One of you strikes each night, in turn. Tonight’s clues describe that one, and guests watching them may see them.'],
       ['No vote', 'DEEP BLUE picks someone for you.'],
     ],
-    mine: (name) => `Your pick: ${name}. You can change it.`,
   },
   recruit: {
     line: 'One of you is gone. Pick a guest to invite in.',
@@ -469,6 +478,5 @@ export const NIGHT = {
     ],
   },
   result: 'Your result arrives at dawn.',
-  changeBtn: 'Change my move',
   count: (alive, gone) => `${alive} still in the game${gone ? ` · ${gone} killed` : ''}`,
 };

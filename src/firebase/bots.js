@@ -19,6 +19,7 @@ import { TRAITS, GENDER } from '../data/traits.js';
 import { PACKS, DEFAULT_PACK_ID, dayKit } from '../data/packs/index.js';
 import { STEPS, checksOf, guessHits, wordForms, assignDrawings, spoils } from '../lib/engine/minigames.js';
 import { encode } from '../os/game/strokes.js';
+import { PLACES } from '../data/packItems.js';
 
 export const NAMES = ['Aarav', 'Diya', 'Kabir', 'Meera', 'Rohan', 'Ishita', 'Vikram', 'Tara', 'Neel', 'Anaya', 'Dev', 'Zoya',
   'Arjun', 'Kiara', 'Sahil', 'Riya', 'Omar', 'Leela', 'Yash', 'Sana', 'Karan', 'Nisha', 'Aditya', 'Pooja', 'Farhan',
@@ -71,11 +72,11 @@ export async function act(bot, gid, game) {
   const action = (a) => setDoc(G(bot, gid, 'actions', `${c}_${bot.pid}`), { ...a, pid: bot.pid, cycle: c, at: serverTimestamp() });
 
   if (bot.status === 'ghost') {
-    // Pass one of its own clue photos on, or whisper a word (engine/night.js).
+    // Pass one of its own clue photos on (engine/night.js), most nights.
     const mine = await getDocs(query(collection(bot.db, 'games', gid, 'inbox'), where('to', '==', bot.pid)));
     const held = mine.docs.map((d) => d.data()).filter((d) => d.kind === 'fact' && d.via === 'ghost' && d.fact);
-    if (held.length && Math.random() < 0.6) return action({ kind: 'pass', target: rnd(alive).pid, fact: rnd(held).fact });
-    return action({ kind: 'whisper', target: rnd(alive).pid, word: rnd(PACKS[DEFAULT_PACK_ID].whispers) });
+    if (held.length && Math.random() < 0.8) return action({ kind: 'pass', target: rnd(alive).pid, fact: rnd(held).fact });
+    return;
   }
   if (bot.status !== 'alive') return;
   if (bot.role === 'killer') {
@@ -153,6 +154,25 @@ export async function playDay(bot, gid, game, stage) {
       const picks = wall.sort(() => Math.random() - 0.5).slice(0, 3);
       await quiet(setDoc(G(bot, gid, 'picks', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, picks, at: Date.now() }));
     }
+    return;
+  }
+  if (game.minigame === 'fake') {
+    if (stage === 0) {
+      const pts = Array.from({ length: 8 }, (_, i) => [20 + i * 25, 60 + Math.floor(Math.random() * 120)]);
+      await quiet(setDoc(G(bot, gid, 'drawings', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, strokes: encode([{ ink: 0, points: pts }]), checks: [], at: serverTimestamp() }));
+    }
+    return;
+  }
+  if (game.minigame === 'pack') {
+    if (stage !== 0) return;
+    // A bot told the trip packs two of its things and one at random; a bot with only the hint packs at random.
+    const mine = await myDayWord(bot, gid, game);
+    const table = mine?.items ?? [];
+    if (!table.length) return;
+    const own = mine.place ? PLACES.find((p) => p.name === mine.place)?.items ?? [] : [];
+    const fit = table.filter((id) => own.includes(id)).sort(() => Math.random() - 0.5).slice(0, 2);
+    const rest = table.filter((id) => !fit.includes(id)).sort(() => Math.random() - 0.5);
+    await quiet(setDoc(G(bot, gid, 'bags', `${c}_${bot.pid}`), { pid: bot.pid, cycle: c, items: [...fit, ...rest].slice(0, 3), at: Date.now() }));
     return;
   }
   if (game.minigame === 'draw') {
@@ -288,7 +308,8 @@ export function driveBots(db, gid, bots, { log = () => {}, onPhase = () => {}, a
         // Post during the first step that takes input, react in the last, like a phone.
         const scale = Math.min(1, ((g.phaseEndsAt - (g.revealAt ?? 0)) - 2000) / steps.reduce((n, [, x]) => n + x * 1000, 0));
         const at = (i) => (g.revealAt ?? 0) + steps.slice(0, i).reduce((n, [, x]) => n + x * 1000 * scale, 0);
-        const post = steps.length === 3 ? 1 : 0;
+        // The first step that takes input: Word's and Fake Artist's Read, and Pack's, are only for reading.
+        const post = Math.max(0, steps.findIndex(([name]) => name !== 'read'));
         await sleep(Math.max(0, at(post) - Date.now()) + 2000 + Math.random() * 4000);
         await all((b) => playDay(b, gid, g, 0));
         await sleep(Math.max(0, at(steps.length - 1) - Date.now()) + 2000);

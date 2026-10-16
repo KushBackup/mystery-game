@@ -277,6 +277,52 @@ async function lastWordsChecks(bots, gid, game, players) {
   return results;
 }
 
+/**
+ * Share in chat (firestore.rules sharedPhoto): a living guest may post a whole
+ * photo they hold to the room, once; not one they don't hold, not a ghost, not
+ * under another id. And a ghost's pass arrives as a whole photo, no code.
+ */
+async function shareChecks(bots, gid, players) {
+  const results = [];
+  const photos = async (bot) => (await getDocs(query(collection(bot.db, 'games', gid, 'inbox'), where('to', '==', bot.pid))))
+    .docs.map((d) => ({ id: d.id, ...d.data() })).filter((d) => d.kind === 'fact' && d.fact);
+  const living = [];
+  for (const b of bots.filter((x) => players[x.pid]?.status === 'alive')) {
+    const mine = await photos(b);
+    if (mine.length) living.push([b, mine]);
+    if (living.length === 2) break;
+  }
+  const ghost = bots.find((b) => players[b.pid]?.status === 'ghost');
+  if (living.length < 2 || !ghost) return results;
+  const [[a, mineA], [b, mineB]] = living;
+  const share = (bot, clue, { fact = clue.fact, id = `photo_${clue.id}_${bot.pid}` } = {}) => setDoc(G(bot, gid, 'chat', id), {
+    kind: 'photo', pid: bot.pid, name: bot.name, inboxId: clue.id, cycle: clue.cycle, fact: { trait: fact.trait, group: fact.group }, at: Date.now(),
+  });
+  const f = mineA[0].fact;
+  const wrong = f.trait === 'top' ? { trait: 'top', group: f.group === 'dark' ? 'pale' : 'dark' } : { trait: 'top', group: 'dark' };
+  await expectDenied('living guest shares a photo they do not hold', () => share(a, mineB[0], { id: `photo_${mineB[0].id}_${a.pid}` }), results);
+  await expectDenied('living guest shares a forged fact', () => share(a, mineA[0], { fact: wrong }), results);
+  await expectDenied('living guest shares under another id', () => share(a, mineA[0], { id: `photo_x${mineA[0].id}_${a.pid}` }), results);
+  const ghostPhotos = await photos(ghost);
+  if (ghostPhotos.length) await expectDenied('a ghost shares a photo in the room', () => share(ghost, ghostPhotos[0]), results);
+  await expectAllowed('living guest shares their own photo', () => share(a, mineA[0]), results);
+  await expectDenied('living guest shares the same photo twice', () => share(a, mineA[0]), results);
+  await expectAllowed('another guest shares too', () => share(b, mineB[0]), results);
+  return results;
+}
+
+/** Every passed photo so far, read by the host: a whole fact with its ghost's name, never a half. */
+async function passChecks(db, gid) {
+  const passed = (await getDocs(query(collection(db, 'games', gid, 'inbox'), where('via', '==', 'pass')))).docs.map((d) => d.data());
+  if (!passed.length) return [];
+  const whole = passed.every((d) => d.kind === 'fact' && d.fact?.trait && d.fact?.group && d.from && !d.code);
+  const whispers = (await getDocs(query(collection(db, 'games', gid, 'inbox'), where('kind', '==', 'whisper')))).size;
+  return [
+    [whole ? 'ok' : 'FAIL', `ghosts' passed photos arrive whole (${passed.length})`, whole ? 'whole' : 'not whole'],
+    [whispers ? 'FAIL' : 'ok', 'no whispers delivered', `${whispers}`],
+  ];
+}
+
 /** Rule checks that need the run open: scores can only go up, and only your own. */
 async function runChecks(bots, gid, game) {
   const results = [];
@@ -463,6 +509,14 @@ async function selftest(n) {
         security.push(...await lastWordsChecks(bots, gid, g, players));
       }
       await Promise.all(bots.map((x) => lastWords(x, gid, g).catch(() => {})));
+      if (!ranChecks.has('share')) {
+        const checks = await shareChecks(bots, gid, players);
+        if (checks.length) { ranChecks.add('share'); security.push(...checks); }
+      }
+      if (!ranChecks.has('pass')) {
+        const checks = await passChecks(db, gid);
+        if (checks.length) { ranChecks.add('pass'); security.push(...checks); }
+      }
       if (!ranChecks.has('joins')) {
         const checks = await joinChecks(bots, gid);
         if (checks.length) { ranChecks.add('joins'); security.push(...checks); }

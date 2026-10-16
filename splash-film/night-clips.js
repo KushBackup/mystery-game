@@ -457,15 +457,31 @@ function traceClip(c, tau, i) {
 }
 
 // ---------------------------------------------------------------- clip 7: the ghost
-// Zed, a little ghost now, floats among two word cards and a clue photo (he could pass it instead); picks HURRY;
-// it drifts to Ada's ear. She sits up.
-const WORDS7 = [{ w: 'Door', x: 640, y: 250, r: -.08, col: NOTE.sky }, { w: 'Hurry', x: 700, y: 520, r: .06, col: NOTE.butter }, { w: 'photo', photo: true, x: 600, y: 800, r: -.04 }];
+// Zed, a little ghost now, floats with two of his true clue photos; picks one; it glides along a dotted line
+// into Ada's phone. Her screen lights, the photo pops up whole, she sits up. (Was a whispered word, "Hurry",
+// until 2026-10-16: the whisper is cut, passing a photo is a ghost's one move.)
+const PHOTOS7 = [{ x: 640, y: 300, r: -.08, kind: 'cup' }, { x: 690, y: 660, r: .06, kind: 'glasses' }];
 const PICK_AT = 1.45, FLY = [1.85, 2.85];
 function ghost(c, x, y, f, seed, t) {
   c.save(); c.translate(x, y);
   const tail = [[-80, -20], [-84, 120], [-62, 170 + Math.sin(t * 6) * 10], [-30, 150], [0, 182 + Math.sin(t * 6 + 1) * 10], [30, 150], [62, 172 + Math.sin(t * 6 + 2) * 10], [84, 120], [80, -20]];
   c.save(); c.globalAlpha = .9; shape(c, tail, '#cfe3ff', seed, { w: 5.5, base: '#f4f8ff', al: .6, corner: 1 }); c.restore();
   head(c, CAST.zed, 0, -40, 1.05, f, seed + 10);
+  c.restore();
+}
+// A ghost's clue photo: a white frame and a pale picture with one doodle (glasses, or a glass of something).
+function ghostPhoto(c, x, y, r, s, seed, kind, al = 1) {
+  if (s <= 0 || al <= 0) return;
+  c.save(); c.globalAlpha = al; c.translate(x, y); c.rotate(r); c.scale(s, s);
+  const pts = warp(rectPts(-80, -80, 160, 176), seed, 1.5, true, 30);
+  c.save(); c.shadowColor = 'rgba(36,50,79,.3)'; c.shadowBlur = 10 * S; c.shadowOffsetY = 6 * S; c.fillStyle = '#ffffff'; c.fill(curvePath(pts, true, .4)); c.restore();
+  c.fillStyle = '#e9eef8'; c.fillRect(-68, -68, 136, 116);
+  if (kind === 'glasses') glassesDoodle(c, 0, -10, .42, seed + 10);
+  else {
+    ln(c, [[-24, -44], [24, -44], [18, 26], [-18, 26]], 4.5, seed + 10, true, INK, { amp: .4, corner: .9 });
+    ln(c, [[-21, -18], [21, -18]], 3.5, seed + 11, false, alpha(INK, .6), { amp: .4 });
+  }
+  ln(c, pts, 2.4, seed + 1, true, alpha(INK, .35), { amp: .4 });
   c.restore();
 }
 function ghostClip(c, tau, i) {
@@ -476,47 +492,42 @@ function ghostClip(c, tau, i) {
   const picked = t2 >= PICK_AT;
   const gf = picked ? { eyes: 'happy', mouth: 'grin', brows: 'up' } : { eyes: 'look', gaze: [1, (Math.floor(t2 * 2) % 3) - 1], turn: .3, mouth: 'smile' };
   ghost(c, G[0], G[1], gf, 10200 + bz(i), t2);
-  // Ada, on the right
-  const A = [1150, 560], heard = tau >= FLY[1], EAR = [A[0] - 80, A[1] + 420 - 246 * 1.15];
-  const af = heard ? { eyes: 'wide', gaze: [-1, 0], mouth: 'o', brows: 'up' } : { eyes: 'dot', gaze: [0, .6], mouth: 'smile' };
-  figure(c, CAST.ada, A[0], A[1] + 420, 1.15, af, 10300 + bz(i), { up: heard ? 10 : 0, phone: true });
-  dusk(c, .75, [{ x: G[0], y: G[1], r: 320, k: .5 }, { x: A[0], y: A[1], r: 300, k: .4 }]);
+  // Ada, on the right, on her phone
+  const A = [1150, 560], landed = tau >= FLY[1], PHONE = [A[0], A[1] + 420 - 118 * 1.15];
+  const af = landed ? { eyes: 'wide', gaze: [-.3, .9], mouth: 'o', brows: 'up' } : { eyes: 'dot', gaze: [0, .6], mouth: 'smile' };
+  figure(c, CAST.ada, A[0], A[1] + 420, 1.15, af, 10300 + bz(i), { up: landed ? 10 : 0, phone: true });
+  dusk(c, .75, [{ x: G[0], y: G[1], r: 320, k: .5 }, { x: A[0], y: A[1], r: 300, k: landed ? .6 : .4 }]);
   glow(c, G[0], G[1], 300, '#cfe3ff', .35);
-  // the word cards
-  WORDS7.forEach((Wd, q) => {
+  // the line the picked photo travels, then the two photos
+  const P1 = PHOTOS7[1], u = easeInOutSine(win(tau, FLY[0], FLY[1]));
+  if (tau >= FLY[0] && !landed) dotted(c, [P1.x, P1.y], PHONE, u, CHALK, 30, 5);
+  PHOTOS7.forEach((P, q) => {
     const fl = Math.sin(t2 * 2.4 + q * 2) * 10;
-    let x = Wd.x, y = Wd.y + fl, s = 1, al = 1, r = Wd.r;
+    let x = P.x, y = P.y + fl, s = 1, al = 1, r = P.r;
     if (q === 1) {
-      if (picked) { s = 1 + .12 * (1 - win(tau, PICK_AT, PICK_AT + .25)); }
-      const u = win(tau, FLY[0], FLY[1]);
-      if (u > 0) { const p = arc([Wd.x, Wd.y], [EAR[0] - 70, EAR[1] - 40], easeInOutSine(u), 140); x = p[0]; y = p[1]; s = lerp(1, .6, u); r = lerp(Wd.r, -.2, u); }
+      if (landed) return;
+      if (picked) s = 1 + .12 * (1 - win(tau, PICK_AT, PICK_AT + .25));
+      if (u > 0) { const p = arc([P.x, P.y], PHONE, u, 160); x = p[0]; y = p[1]; s = lerp(1, .3, u); r = lerp(P.r, -.08, u); }
     } else if (picked) al = 1 - win(tau, PICK_AT, PICK_AT + .3) * .75;
-    if (al <= 0) return;
-    c.save(); c.globalAlpha = al; c.translate(x, y); c.rotate(r); c.scale(s, s);
-    if (Wd.photo) {   // a ghost can pass one of its true clue photos instead of a word
-      const pts = warp(rectPts(-80, -80, 160, 176), 10450, 1.5, true, 30);
-      c.save(); c.shadowColor = 'rgba(36,50,79,.3)'; c.shadowBlur = 10 * S; c.shadowOffsetY = 6 * S; c.fillStyle = '#ffffff'; c.fill(curvePath(pts, true, .4)); c.restore();
-      c.fillStyle = '#e9eef8'; c.fillRect(-68, -68, 136, 116);
-      glassesDoodle(c, 0, -10, .42, 10460);
-      ln(c, pts, 2.4, 10451, true, alpha(INK, .35), { amp: .4 });
-    } else {
-      sticky(c, 230, 120, Wd.col, 10400 + q);
-      txt(c, Wd.w, 0, 6, 70, { fit: 190 });
-    }
-    c.restore();
+    ghostPhoto(c, x, y, r, s, 10450 + q * 20, P.kind, al);
   });
-  // Zed's pointing, as a little wisp from the sheet to the card
-  if (picked && tau < FLY[0] + .2) brush(c, [[G[0] + 90, G[1] + 40], [500, 520], [WORDS7[1].x - 130, WORDS7[1].y]], { w: 6, color: CHALK, p: win(tau, PICK_AT - .2, PICK_AT), seed: 10500, al: .7 });
-  if (heard) {
-    const k = win(tau, FLY[1], FLY[1] + .5);
-    for (let q = 0; q < 3; q++) ln(c, [[EAR[0] - 10, EAR[1] + 10 + q * 24 - 24], [EAR[0] - 10 - 34 * k, EAR[1] + 4 + q * 34 - 34]], 5, 10600 + q, false, CHALK, { amp: .4 });
+  // Zed's pointing, as a little wisp from the sheet to the photo
+  if (picked && tau < FLY[0] + .2) brush(c, [[G[0] + 90, G[1] + 40], [500, 600], [P1.x - 100, P1.y]], { w: 6, color: CHALK, p: win(tau, PICK_AT - .2, PICK_AT), seed: 10500, al: .7 });
+  // her screen lights, and the whole photo pops up off it, signed
+  if (landed) {
+    const lk = win(tau, FLY[1], FLY[1] + .1);
+    c.save(); c.translate(PHONE[0], PHONE[1]); c.rotate(-.08); c.scale(1.15, 1.15); litScreen(c, 50, 92, lk); c.restore();
+    glow(c, PHONE[0], PHONE[1], 160, '#9cc6ff', .4 * lk);
+    const pk = easeOutBack(win(tau, FLY[1] + .1, FLY[1] + .4));
+    ghostPhoto(c, A[0] - 240, A[1] - 200, -.08, 1.15 * pk, 10470, 'glasses');
+    if (pk > 0) txt(c, 'from Zed', A[0] - 240, A[1] + 20, 44, { col: CHALK, al: win(tau, FLY[1] + .3, FLY[1] + .55) });
   }
 }
 
 // ---------------------------------------------------------------- clip 8: dawn
 // The sun comes up in the window and the dark lifts; the phones buzz, everyone wakes; each phone throws up a result.
 const DAWN_LIFT = [.15, 1.0];
-const RESULTS = ['eye', 'photo', 'shield', 'word'];
+const RESULTS = ['eye', 'photo', 'shield', 'photo'];   // the fourth was a whispered word until 2026-10-16
 function resultIcon(c, kind, x, y, k, seed) {
   if (k <= 0) return;
   c.save(); c.translate(x, y); c.scale(k, k);
@@ -526,7 +537,6 @@ function resultIcon(c, kind, x, y, k, seed) {
   if (kind === 'eye') { ln(c, [[-40, 0], [-20, -20], [20, -20], [40, 0], [20, 20], [-20, 20]], 5, seed + 2, true, INK, { amp: .3, corner: .9 }); dot(c, 0, 0, 13, 13, SEA); dot(c, 0, 0, 6, 6, INK); }
   else if (kind === 'photo') { shape(c, rectPts(-34, -38, 68, 76), null, seed + 2, { w: 4, base: '#ffffff', corner: .3 }); c.fillStyle = '#e9eef8'; c.fillRect(-26, -30, 52, 46); glassesDoodle(c, 0, -8, .16, seed + 3); }
   else if (kind === 'shield') { shieldShape(c, 0, 4, .3, 0, seed + 2); }
-  else { txt(c, '“Hurry”', 0, 4, 34); }
   c.restore();
 }
 function dawnClip(c, tau, i) {

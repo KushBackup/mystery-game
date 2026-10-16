@@ -124,7 +124,7 @@ export const ClueCard = ({ pack, fact, cycle, via }) => {
   );
 };
 
-/** Anything else in the inbox: a watch, a check, a whisper. (A ghost's passed photo is a clue above.) */
+/** Anything else in the inbox: a watch, a check, a trace. (A ghost's passed photo is a clue above.) */
 export const DeliveryCard = ({ d, nameOf }) => (
   <article className={`er-card ${d.kind === 'check' && d.team === 'killers' ? 'er-card--signal' : ''} er-enter-quick`}>
     <p className="er-mono mb-1">Night {d.cycle} · {DELIVERY_TAG[d.kind] ?? d.kind}</p>

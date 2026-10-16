@@ -662,6 +662,10 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   user-select: text;
 }
+/* A photo shared from Photos (MessagesApp PhotoBubble): the picture fills the bubble, its plain line under it. */
+.os-bubble--photo { width: 64%; max-width: 250px; padding: 4px; }
+.os-bubble__pic { overflow: hidden; border-radius: 14px; background: #000; }
+.os-bubble__cap { padding: 6px 8px 3px; font-size: 14px; font-weight: 600; line-height: 1.3; }
 .os-bubble--me {
   color: #04290c;
   background: linear-gradient(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 52%), #7fe48e;
@@ -1322,8 +1326,6 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 .os-night .os-search { background: #050b1c; border-color: #000; color: #8da2c3; }
 .os-night .os-search input { color: #eaf3ff; }
 
-/* The help button in the bar: the Word board's round "?". */
-.os-nt-help { width: 32px; justify-content: center; padding: 0; border-radius: 50%; font-size: 17px; font-weight: 700; }
 
 /* The sky. The picture fills the box, anchored to the river; the words sit over the sky part. */
 .os-nt-sky { position: relative; min-height: 250px; overflow: hidden; isolation: isolate; }
@@ -1338,21 +1340,17 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 .os-nt-sky__line { max-width: min(92%, 330px); margin-top: 10px; font-size: 15.5px; line-height: 1.35; color: #d3e0f6; text-wrap: pretty; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6); }
 .os-nt-sky__count { margin-top: 6px; font-size: 12.5px; font-weight: 600; color: #8fa3c2; font-variant-numeric: tabular-nums; }
 .os-nt-sky--day .os-nt-sky__title { font-size: 30px; }
-.os-nt-sky--compact { min-height: 150px; }
-.os-nt-sky--compact .os-nt-sky__text { padding-bottom: 40px; }
 /* A short phone (iPhone 5) keeps the moves above the fold: a lower sky, a smaller title. */
 @media (max-height: 640px) {
   .os-nt-sky { min-height: 180px; }
   .os-nt-sky__text { padding-bottom: 50px; }
   .os-nt-sky__title { margin-top: 6px; font-size: 32px; }
   .os-nt-sky__line { margin-top: 6px; font-size: 15px; }
-  .os-nt-sky--compact { min-height: 120px; }
-  .os-nt-sky--compact .os-nt-sky__text { padding-bottom: 34px; }
 }
 .os-nt-sky__tw { opacity: 0.3; animation: os-nt-twinkle 4.4s ease-in-out infinite; }
 @keyframes os-nt-twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
 
-/* A move's picture: a glossy deep-blue tile, foam lines. A tick when it is yours. */
+/* A move's picture on a glossy deep-blue tile: only the tutorial's last page uses it now (the app uses MoveGlyph). */
 .os-nt-art {
   position: relative; flex: 0 0 auto; display: inline-grid; place-items: center; border-radius: 23%;
   color: #eaf3ff;
@@ -1370,131 +1368,322 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
   color: #fff; background: linear-gradient(#6fe384, #2fb24a); box-shadow: 0 0 0 2.5px #0d1a3d, 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-/* The moves on the list. */
-.os-nt-moves { display: grid; gap: 10px; }
-.os-nt-move {
-  width: 100%; display: flex; align-items: center; gap: 14px; padding: 14px 10px 14px 14px; border: 0; border-radius: 16px;
-  text-align: left; font: inherit; color: #eaf3ff; background: var(--nt-card); box-shadow: var(--nt-lift);
-  cursor: pointer; touch-action: manipulation; transition: scale 120ms ease-out, box-shadow 160ms ease-out;
-}
-.os-nt-move:active { scale: 0.96; }
-.os-nt-move.is-on { box-shadow: inset 0 0 0 1.5px rgba(111, 227, 132, 0.85), var(--nt-lift); }
-.os-nt-move__main { flex: 1 1 auto; min-width: 0; display: block; }
-.os-nt-move__top { display: flex; align-items: flex-start; gap: 8px; }
-.os-nt-move__title { flex: 1 1 auto; min-width: 0; font-size: 18px; font-weight: 700; line-height: 1.2; color: #fff; }
-.os-nt-move__short { display: block; margin-top: 3px; font-size: 14.5px; line-height: 1.32; color: var(--nt-soft); text-wrap: pretty; }
-.os-nt-move__dawn { display: flex; align-items: center; gap: 6px; margin-top: 7px; font-size: 13.5px; font-weight: 600; line-height: 1.25; color: #d7e3f8; }
-.os-nt-move__chev { flex: 0 0 auto; fill: none; stroke: #6f86b3; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-.os-nt-pill {
-  flex: 0 0 auto; padding: 3px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 700; line-height: 1.25; white-space: nowrap;
-  color: #a9cdff; background: rgba(61, 139, 242, 0.2); box-shadow: inset 0 0 0 1px rgba(61, 139, 242, 0.35);
-}
-.os-nt-tag { display: inline-block; margin-top: 8px; padding: 2px 8px; border-radius: 9px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: #052b10; background: #6fe384; }
-.os-nt-sun { flex: 0 0 auto; fill: none; stroke: var(--nt-sun); stroke-width: 2.2; stroke-linecap: round; }
-.os-nt-sun circle { fill: var(--nt-sun); stroke: none; }
-.os-nt-moon { flex: 0 0 auto; fill: #dfe9ff; }
 
-/* A move in full: the head card, and its two beats from the moon to the sun. */
-.os-nt-head { margin: 14px 10px 0; padding: 16px 14px 14px; border-radius: 18px; background: var(--nt-card); box-shadow: var(--nt-lift); }
-.os-nt-head__row { display: flex; align-items: center; gap: 14px; }
-.os-nt-head__title { font-size: 21px; font-weight: 700; line-height: 1.15; color: #fff; text-wrap: balance; }
-.os-nt-head__short { margin-top: 4px; font-size: 15px; line-height: 1.32; color: var(--nt-soft); text-wrap: pretty; }
-.os-nt-steps { position: relative; list-style: none; margin: 16px 0 0; padding: 14px 0 0; display: grid; gap: 14px; border-top: 1px solid rgba(255, 255, 255, 0.08); }
-.os-nt-steps::before { content: ''; position: absolute; left: 13px; top: 42px; bottom: 26px; border-left: 2px dotted rgba(223, 233, 255, 0.28); }
-.os-nt-steps__row { position: relative; display: grid; grid-template-columns: 28px 1fr; column-gap: 12px; row-gap: 1px; }
-.os-nt-steps__dot { grid-row: span 2; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #0b1838; box-shadow: inset 0 0 0 1.5px rgba(223, 233, 255, 0.22); }
-.os-nt-steps__label { font-size: 11.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--nt-label); }
-.os-nt-steps__text { font-size: 15px; line-height: 1.38; color: #e6eefb; text-wrap: pretty; }
-.os-nt-num { display: inline-grid; place-items: center; width: 20px; height: 20px; margin-right: 8px; border-radius: 50%; font-size: 12px; font-weight: 800; color: #dfe9ff; background: rgba(61, 139, 242, 0.32); text-shadow: none; }
 
-/* The rows under the list. */
-.os-nt-more { border-radius: 14px; background: rgba(16, 30, 69, 0.75); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); overflow: hidden; }
-.os-nt-more__row { display: grid; grid-template-columns: 78px 1fr; gap: 10px; padding: 11px 12px; }
-.os-nt-more__row + .os-nt-more__row { border-top: 1px solid rgba(255, 255, 255, 0.07); }
-.os-nt-more dt { padding-top: 2px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nt-label); }
-.os-nt-more dd { margin: 0; font-size: 15px; line-height: 1.38; color: #dbe6f7; text-wrap: pretty; }
 
-/* The toolbar along the bottom: the next thing to do, then who it is for and Confirm. */
-.os-nt-bar {
-  flex: 0 0 auto; display: flex; align-items: center; gap: 10px; min-height: 64px;
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
-  background: linear-gradient(#1f2c4a, #0d1427); border-top: 1px solid #000; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
-}
-.os-nt-bar__hint { flex: 1; text-align: center; font-size: 15.5px; font-weight: 600; color: #a9bbdb; text-shadow: 0 -1px 0 #000; }
-.os-nt-bar__who { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; gap: 10px; animation: os-nt-in 200ms ease-out; }
-.os-nt-bar__faces { flex: 0 0 auto; display: flex; }
-.os-nt-bar__faces > * + * { margin-left: -10px; }
-.os-nt-bar__faces .os-face { box-shadow: 0 0 0 2px #121a30; }
-.os-nt-bar__label { min-width: 0; font-size: 16.5px; font-weight: 700; line-height: 1.2; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.os-nt-bar__label small { display: block; margin-top: 2px; font-size: 12.5px; font-weight: 600; color: #a9bbdb; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.os-nt-go {
-  flex: 0 0 auto; min-height: 44px; padding: 0 20px; border-radius: 10px; border: 1px solid #1d7a31;
-  font: inherit; font-size: 17px; font-weight: 700; color: #fff; text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.35);
-  background: linear-gradient(rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.08) 50%, rgba(0, 0, 0, 0.06) 51%, rgba(0, 0, 0, 0)), linear-gradient(#6fe384, #2fb24a);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  cursor: pointer; touch-action: manipulation; transition: scale 120ms ease-out;
-}
-.os-nt-go:active { scale: 0.96; }
-@keyframes os-nt-in { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
 
-/* The sealed move. */
-.os-nt-sealed {
-  margin: 16px 10px 0; padding: 26px 18px 22px; text-align: center; border-radius: 20px;
-  background: radial-gradient(120% 70% at 50% 0%, rgba(111, 227, 132, 0.1), transparent 60%), var(--nt-card); box-shadow: var(--nt-lift);
-}
-.os-nt-sealed__pic { display: inline-flex; align-items: center; }
-.os-nt-sealed__face { margin-left: -14px; box-shadow: 0 0 0 3px #13224b, 0 4px 10px rgba(0, 0, 0, 0.5); }
-.os-nt-sealed__face + .os-nt-sealed__face { margin-left: -18px; }
-.os-nt-sealed__kicker { margin-top: 16px; font-size: 12px; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase; color: #6fe384; }
-.os-nt-sealed__line { margin-top: 6px; font-size: 20px; font-weight: 700; line-height: 1.3; color: #fff; text-wrap: balance; }
-.os-nt-sealed__sub { margin-top: 8px; font-size: 15px; line-height: 1.45; color: var(--nt-soft); text-wrap: pretty; }
-.os-nt-change {
-  margin-top: 18px; min-height: 44px; padding: 0 18px; border: 0; border-radius: 10px;
-  font: inherit; font-size: 16px; font-weight: 600; color: #dfe9ff; background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16);
-  cursor: pointer; touch-action: manipulation; transition: scale 120ms ease-out, background-color 120ms ease-out;
-}
-.os-nt-change:active { scale: 0.96; background-color: rgba(255, 255, 255, 0.14); }
-.os-nt-sealed.is-fresh { animation: os-nt-seal 420ms var(--ease-enter); }
-.os-nt-sealed.is-fresh .os-nt-art__tick { animation: os-nt-tick 560ms cubic-bezier(0.2, 0, 0, 1); }
-@keyframes os-nt-seal { from { opacity: 0; scale: 0.94; translate: 0 10px; } to { opacity: 1; scale: 1; translate: 0 0; } }
-/* The tick waits inside its own keyframes (never animation-delay: Lessons 2026-10-02). */
 @keyframes os-nt-tick { 0%, 40% { opacity: 0; scale: 0.25; filter: blur(4px); } 100% { opacity: 1; scale: 1; filter: blur(0); } }
 
-/* The Killers' partners. */
-.os-nt-partners { list-style: none; margin: 0; padding: 0 0 2px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
-.os-nt-partners::-webkit-scrollbar { display: none; }
-.os-nt-partner { flex: 0 0 auto; display: flex; align-items: center; gap: 9px; max-width: 220px; padding: 6px 14px 6px 6px; border-radius: 999px; background: rgba(16, 30, 69, 0.92); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1); }
-.os-nt-partner b { display: block; font-size: 15px; font-weight: 700; line-height: 1.2; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.os-nt-partner small { display: block; font-size: 12.5px; line-height: 1.25; color: #8fa3c2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.os-nt-partner small.is-in { color: #a9cdff; font-weight: 600; }
-.os-nt-alone { padding: 2px 4px; font-size: 15px; line-height: 1.4; color: var(--nt-soft); }
+/* --- The lounge (apps/NightRoom.jsx, art/loungeArt.js): the party from high
+       up, every guest a drawn figure at a table, the computer in the corner.
+       Blue rings what you are choosing, green what you sent. The room is
+       painted on a canvas; figures, tables and markers are stacked over it by
+       their feet's height, so a guest behind a table stands behind it. ---- */
+.os-nt-room-wrap { position: relative; }
+.os-nt-room { position: relative; width: 100%; overflow: hidden; isolation: isolate; background: #141c3a; }
+.os-nt-room__art { position: absolute; left: 0; top: 0; display: block; }
+.os-nt-table { position: absolute; display: block; pointer-events: none; }
 
-/* A ghost's words, then the guest. */
-.os-nt-words { display: flex; flex-wrap: wrap; gap: 8px; }
-.os-nt-word {
-  min-height: 40px; padding: 0 15px; border: 0; border-radius: 999px; font: inherit; font-size: 16px; font-weight: 600;
-  color: #dfe9ff; background: rgba(255, 255, 255, 0.07); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
-  cursor: pointer; touch-action: manipulation; transition: scale 120ms ease-out, background-color 120ms ease-out;
+.os-nt-fig {
+  --ring: #4a9bf5;
+  position: absolute; display: flex; align-items: flex-end; justify-content: center; padding: 0 0 6px; border: 0; margin: 0;
+  background: none; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  transition: opacity 180ms ease-out;
 }
-.os-nt-word:active { scale: 0.96; }
-.os-nt-word.is-on { color: #fff; background: linear-gradient(#4a9bf5, #0b6fe3); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5); }
-/* A ghost's photos to pass on: two across, the picked one ringed. */
-.os-nt-move:disabled { cursor: default; opacity: 0.5; scale: 1; }
-.os-nt-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.os-nt-photo {
-  display: block; padding: 0; border: 0; border-radius: 12px; overflow: hidden; text-align: left; font: inherit;
-  color: #dfe9ff; background: rgba(255, 255, 255, 0.07); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
-  cursor: pointer; touch-action: manipulation; transition: scale 120ms ease-out, box-shadow 120ms ease-out;
+.os-nt-fig:disabled { cursor: default; }
+.os-nt-fig:focus-visible { outline: none; }
+/* the ring at their feet: blue while you choose them, green once your move is on them */
+.os-nt-fig::before {
+  content: ''; position: absolute; left: 50%; bottom: 2px; width: 46px; height: 13px; margin-left: -23px; border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--ring), 0 0 14px 2px var(--ring); opacity: 0; transition: opacity 160ms ease-out; pointer-events: none;
 }
-.os-nt-photo:active { scale: 0.96; }
-.os-nt-photo.is-on { box-shadow: 0 0 0 3px #4a9bf5, 0 1px 3px rgba(0, 0, 0, 0.5); }
-.os-nt-photo__cap { display: block; padding: 7px 9px 9px; font-size: 13px; line-height: 1.3; text-wrap: pretty; }
+.os-nt-fig.is-sel::before, .os-nt-fig.is-marked::before, .os-nt-fig:focus-visible::before { opacity: 1; }
+.os-nt-fig.is-mine { --ring: #6fe384; }
+.os-nt-fig.is-mine::before { opacity: 0.9; }
+.os-nt-fig__shadow {
+  position: absolute; left: 50%; bottom: 3px; width: 36px; height: 9px; margin-left: -18px; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0)); pointer-events: none;
+}
+.os-nt-fig__body { position: relative; z-index: 1; display: block; transition: translate 180ms cubic-bezier(0.2, 0.9, 0.25, 1); }
+.os-nt-fig:active:not(:disabled) .os-nt-fig__body { translate: 0 -2px; }
+.os-nt-fig.is-sel .os-nt-fig__body { translate: 0 -5px; }
+.os-nt-fig.is-ghost .os-nt-fig__body { opacity: 0.55; }
+.os-nt-fig.is-dim { opacity: 0.28; }
+/* a Killer's partner: a small red dot before the name, quiet enough not to read across a table;
+
+
+/* The computer: a hotspot over the painted desk, its screen humming. */
+.os-nt-pc { position: absolute; padding: 0; border: 0; border-radius: 12px; background: none; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.os-nt-pc:disabled { cursor: default; }
+.os-nt-pc:focus-visible { outline: 2px solid #fff; outline-offset: -2px; }
+.os-nt-pc__glow {
+  position: absolute; left: 50%; top: 16px; width: 46px; height: 32px; margin-left: -23px; border-radius: 4px;
+  box-shadow: 0 0 20px 6px rgba(110, 230, 255, 0.32); animation: os-nt-hum 3.6s ease-in-out infinite; pointer-events: none;
+}
+.os-nt-pc.is-marked .os-nt-pc__glow, .os-nt-pc.is-mine .os-nt-pc__glow { box-shadow: 0 0 26px 10px rgba(110, 230, 255, 0.5); }
+@keyframes os-nt-hum { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+
+.os-nt-trace { position: absolute; left: 0; top: 0; z-index: 4000; overflow: visible; pointer-events: none; }
+.os-nt-trace path { fill: none; stroke: #4a9bf5; stroke-width: 2.6; stroke-linecap: round; stroke-dasharray: 0.1 7; filter: drop-shadow(0 0 3px rgba(74, 155, 245, 0.9)); }
+.os-nt-trace.is-mine path { stroke: #6fe384; filter: drop-shadow(0 0 3px rgba(111, 227, 132, 0.9)); }
+
+/* --- The Night app's chrome (2026-10-16, the user's ask: "very light, very
+       intuitive, minimalistic", not blocky). The night is the art (the sky,
+       the lounge); everything you touch is light paper floating on it: a thin
+       header, the dock, the sheet. No gloss, no bevels, no gradients on
+       controls. Hairlines and one soft shadow for depth. Colour is only for
+       meaning: sea blue is choosing, green is sent, and each move keeps one
+       washed-out tint for its icon. Tap feedback is a 0.96 press; the sheet
+       slides up the iOS way; nothing else moves. ---- */
+.os-nt-app {
+  --nt-paper: #fbfaf7;
+  --nt-paper-2: #f2f0eb;
+  --nt-ink: #1d2130;
+  --nt-ink-2: #3b3f4c;
+  --nt-muted: #75767f;
+  --nt-hair: rgba(17, 20, 32, 0.08);
+  --nt-sea: #2f6fe4;
+  --nt-sea-soft: #e7eefc;
+  --nt-green: #2f9e5a;
+  --nt-green-soft: #e5f3ea;
+  --nt-red: #a63a33;
+  --nt-red-soft: #fbeceb;
+  --nt-gold: #946a12;
+  --nt-gold-soft: #f9f1dc;
+  --nt-violet: #5e4fae;
+  --nt-violet-soft: #efecfa;
+  --nt-press: cubic-bezier(0.2, 0, 0, 1);
+  background: #060c21;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The header: the night's own, flat. Back on the left, the night in the middle, find and "?" on the right. */
+.os-nt-top {
+  flex: 0 0 auto; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; min-height: 52px; padding: 4px 6px;
+  background: #050b1e; color: #eaf1ff;
+}
+.os-nt-top__side { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.os-nt-top__side--right { justify-content: flex-end; }
+.os-nt-top__back {
+  display: inline-flex; align-items: center; gap: 2px; min-height: 44px; padding: 0 10px 0 4px; border: 0; background: none;
+  font: inherit; font-size: 16px; font-weight: 500; color: rgba(234, 241, 255, 0.86); cursor: pointer; touch-action: manipulation;
+  transition: opacity 120ms ease-out;
+}
+.os-nt-top__back:active { opacity: 0.55; }
+.os-nt-top__back svg { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.os-nt-top__mid { text-align: center; min-width: 0; }
+.os-nt-top__title { font-size: 17px; font-weight: 600; line-height: 1.2; letter-spacing: -0.01em; color: #fff; }
+.os-nt-top__sub { margin-top: 1px; font-size: 12px; font-weight: 500; line-height: 1.2; color: rgba(214, 226, 247, 0.62); font-variant-numeric: tabular-nums; }
+.os-nt-top__btn {
+  position: relative; display: grid; place-items: center; width: 36px; height: 36px; margin: 4px 2px; border: 0; border-radius: 50%;
+  color: #eaf1ff; background: rgba(255, 255, 255, 0.08); cursor: pointer; touch-action: manipulation;
+  transition-property: scale, background-color, color; transition-duration: 140ms; transition-timing-function: var(--nt-press);
+}
+.os-nt-top__btn::after { content: ''; position: absolute; inset: -4px; }
+.os-nt-top__btn:active { scale: 0.96; }
+.os-nt-top__btn.is-on { color: var(--nt-ink); background: var(--nt-paper); }
+.os-nt-top__btn svg { fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; }
+.os-nt-top__q { font-size: 16px; font-weight: 600; line-height: 1; }
+
+/* The sky: a thin band now, the moon and one line about the night. */
+.os-nt-sky--room { min-height: 0; }
+.os-nt-sky--room .os-nt-sky__text { padding: 4px 18px 16px; }
+.os-nt-sky--room .os-nt-sky__line { max-width: min(76%, 300px); margin-top: 0; font-size: 14px; line-height: 1.42; color: rgba(234, 241, 255, 0.84); text-shadow: none; }
+.os-nt-sky--room .os-nt-sky__count { margin-top: 6px; font-size: 12px; font-weight: 500; color: rgba(169, 187, 219, 0.78); }
+@media (max-height: 640px) {
+  .os-nt-sky--room .os-nt-sky__text { padding: 2px 16px 10px; }
+  .os-nt-sky--room .os-nt-sky__line { font-size: 13.5px; }
+  .os-nt-sky--room .os-nt-sky__count { display: none; }
+}
+.os-night--room { padding-bottom: 0; }
+.os-night--room.has-dock { padding-bottom: 96px; }
+
+/* Not night yet. */
+.os-nt-day { text-align: center; }
+.os-nt-day .os-nt-sky--day { min-height: 170px; }
+.os-nt-day__title { margin-top: 22px; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; color: #fff; }
+.os-nt-day__line { max-width: 280px; margin: 8px auto 0; font-size: 15px; line-height: 1.45; color: rgba(214, 226, 247, 0.7); text-wrap: pretty; }
+
+/* Find: a light field under the header, from its search button. */
+.os-nt-find {
+  position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 6px; padding: 8px 8px 8px 12px;
+  background: rgba(5, 11, 30, 0.86); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  animation: os-nt-drop 200ms ease-out both;
+}
+.os-nt-find__field {
+  flex: 1 1 auto; display: flex; align-items: center; gap: 8px; min-width: 0; height: 40px; padding: 0 12px; border-radius: 12px;
+  color: var(--nt-muted); background: var(--nt-paper);
+}
+.os-nt-find__field input { flex: 1 1 auto; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 16px; color: var(--nt-ink); user-select: text; }
+.os-nt-find__n { flex: 0 0 auto; font-size: 12.5px; font-weight: 500; color: var(--nt-muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.os-nt-find__done {
+  flex: 0 0 auto; min-height: 44px; padding: 0 10px; border: 0; background: none; font: inherit; font-size: 15.5px; font-weight: 600;
+  color: #eaf1ff; cursor: pointer; transition: opacity 120ms ease-out;
+}
+.os-nt-find__done:active { opacity: 0.55; }
+@keyframes os-nt-drop { from { opacity: 0; translate: 0 -6px; } }
+
+/* Names in the room: small, quiet, on a little smoked glass. */
+.os-nt-fig__tag {
+  position: absolute; left: 50%; bottom: -8px; z-index: 2; translate: -50% 0; max-width: 68px; padding: 0 6px; border-radius: 6px;
+  font-size: 10.5px; font-weight: 600; line-height: 15px; letter-spacing: 0.01em; color: #eef3ff;
+  background: rgba(8, 12, 28, 0.6); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none;
+}
+.os-nt-fig.is-back .os-nt-fig__tag { bottom: auto; top: -15px; }
+.os-nt-fig__tag.is-me { color: var(--nt-ink); background: var(--nt-paper); }
+.os-nt-fig.is-ghost .os-nt-fig__tag { color: rgba(214, 226, 247, 0.55); background: rgba(8, 12, 28, 0.4); }
+.os-nt-fig.is-hit .os-nt-fig__tag { color: #fff; background: var(--nt-sea); }
+.os-nt-fig__tag.is-mate::before { content: ''; display: inline-block; width: 6px; height: 6px; margin: 0 4px 1px 0; border-radius: 50%; background: #f07a70; vertical-align: middle; }
+.os-nt-fig__tag.is-barred { color: rgba(214, 226, 247, 0.6); background: rgba(8, 12, 28, 0.45); text-decoration: line-through; }
+.os-nt-fig::before { box-shadow: 0 0 0 1.5px var(--ring), 0 0 12px 1px var(--ring); }
+.os-nt-fig { --ring: #6c9cf5; }
+.os-nt-fig.is-mine { --ring: #5fd38a; }
+
+/* A move pinned over a guest: a small paper dot with the move's line icon; green once sent. */
+.os-nt-mark { position: absolute; left: 50%; top: 4px; z-index: 3; display: inline-flex; align-items: center; translate: 6px -40%; pointer-events: none; }
+.os-nt-fig.is-back .os-nt-mark { top: 32px; }
+.os-nt-mark__dot {
+  --nt-hole: var(--nt-paper);
+  display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%;
+  color: var(--nt-sea); background: var(--nt-paper); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.os-nt-mark.is-mine .os-nt-mark__dot { --nt-hole: var(--nt-green); color: #fff; background: var(--nt-green); }
+.os-nt-mark__face { margin-left: -5px; box-shadow: 0 0 0 1.5px var(--nt-paper); }
+.os-nt-mark__dot + .os-nt-mark__face { margin-left: -4px; }
+.os-nt-mark.is-fresh { animation: os-nt-pin 320ms cubic-bezier(0.2, 0, 0, 1) both; }
+@keyframes os-nt-pin { from { opacity: 0; scale: 0.25; filter: blur(4px); } to { opacity: 1; scale: 1; filter: blur(0); } }
+.os-nt-pc__tag {
+  position: absolute; left: 50%; top: 0; translate: -50% 0; padding: 0 6px; border-radius: 5px;
+  font-size: 9px; font-weight: 700; letter-spacing: 0.14em; line-height: 14px; color: #8ff3ff; background: rgba(4, 18, 32, 0.6); white-space: nowrap;
+}
+.os-nt-pc.is-mine .os-nt-pc__tag { color: #fff; background: var(--nt-green); }
+.os-nt-glyph { display: block; overflow: visible; }
+
+/* The dock: one light card floating over the bottom of the room, always saying the next thing. */
+.os-nt-dock {
+  position: absolute; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); z-index: 20;
+  display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 12px 10px 12px; border-radius: 20px;
+  color: var(--nt-ink); background: rgba(251, 250, 247, 0.95); -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2);
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.55), 0 1px 2px rgba(0, 0, 0, 0.2);
+  animation: os-nt-dock 280ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+@keyframes os-nt-dock { from { opacity: 0; translate: 0 10px; } }
+.os-nt-dock__tap, .os-nt-dock__icon {
+  --nt-hole: var(--nt-sea-soft);
+  flex: 0 0 auto; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: var(--nt-sea); background: var(--nt-sea-soft);
+}
+.os-nt-dock__tap svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+.os-nt-dock__hint { flex: 1 1 auto; min-width: 0; font-size: 15px; font-weight: 500; line-height: 1.32; color: var(--nt-ink); text-wrap: pretty; }
+.os-nt-dock__faces { flex: 0 0 auto; display: flex; }
+.os-nt-dock__faces > * + * { margin-left: -10px; }
+.os-nt-dock__faces .os-face { box-shadow: 0 0 0 2px var(--nt-paper); }
+.os-nt-dock__text { flex: 1 1 auto; min-width: 0; display: block; }
+.os-nt-dock__label { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; font-size: 15.5px; font-weight: 600; line-height: 1.25; color: var(--nt-ink); overflow: hidden; text-wrap: pretty; }
+.os-nt-dock__sub { display: block; margin-top: 2px; font-size: 13px; line-height: 1.25; color: var(--nt-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.os-nt-dock__state { flex: 0 0 auto; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; color: var(--nt-green); background: var(--nt-green-soft); }
+.os-nt-dock__state.is-locked { color: var(--nt-muted); background: var(--nt-paper-2); }
+.os-nt-dock__state svg { fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.os-nt-dock__action {
+  flex: 0 0 auto; min-height: 44px; padding: 0 8px; border: 0; background: none; font: inherit; font-size: 15px; font-weight: 600;
+  color: var(--nt-sea); cursor: pointer; transition: opacity 120ms ease-out;
+}
+.os-nt-dock__action:active { opacity: 0.55; }
+
+/* The sheet: light paper sliding up over the night. */
+.os-ns { position: absolute; inset: 0; z-index: 50; display: flex; flex-direction: column; justify-content: flex-end; }
+.os-ns__scrim { position: absolute; inset: 0; border: 0; background: rgba(2, 5, 16, 0.5); cursor: default; animation: os-fade 220ms ease-out both; }
+.os-ns__panel {
+  position: relative; display: flex; flex-direction: column; max-height: 86%; padding: 8px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  color: var(--nt-ink); background: var(--nt-paper); border-radius: 24px 24px 0 0;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
+  animation: os-ns-up 340ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+@keyframes os-ns-up { from { translate: 0 100%; } }
+.os-ns__grab { flex: 0 0 auto; width: 36px; height: 5px; margin: 0 auto 10px; border-radius: 3px; background: rgba(17, 20, 32, 0.14); }
+.os-ns__who { flex: 0 0 auto; display: flex; align-items: center; gap: 12px; padding: 2px 0 14px; }
+.os-ns__face { box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08); }
+.os-ns__name { font-size: 19px; font-weight: 650; line-height: 1.2; letter-spacing: -0.01em; color: var(--nt-ink); text-wrap: balance; }
+.os-ns__look { margin-top: 3px; font-size: 13.5px; line-height: 1.35; color: var(--nt-muted); text-wrap: pretty; }
+.os-ns__x {
+  position: relative; flex: 0 0 auto; display: grid; place-items: center; align-self: flex-start; width: 30px; height: 30px; border: 0; border-radius: 50%;
+  color: var(--nt-muted); background: var(--nt-paper-2); cursor: pointer; touch-action: manipulation;
+  transition: scale 140ms var(--nt-press);
+}
+.os-ns__x::after { content: ''; position: absolute; inset: -7px; }
+.os-ns__x:active { scale: 0.96; }
+.os-ns__x svg { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; }
+.os-ns__body { flex: 1 1 auto; min-height: 0; display: grid; align-content: start; gap: 12px; margin: 0 -4px; padding: 2px 4px 4px; overflow-y: auto; scrollbar-width: none; }
+.os-ns__body::-webkit-scrollbar { display: none; }
+.os-ns__note { font-size: 15px; line-height: 1.48; color: var(--nt-ink-2); text-wrap: pretty; }
+.os-ns__opts { display: grid; gap: 8px; }
+.os-ns__opt {
+  display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 12px 10px 12px 12px; border: 0; border-radius: 20px;
+  text-align: left; font: inherit; color: var(--nt-ink); background: #fff;
+  box-shadow: 0 0 0 1px var(--nt-hair), 0 1px 2px rgba(17, 20, 32, 0.04);
+  cursor: pointer; touch-action: manipulation;
+  transition-property: scale, box-shadow; transition-duration: 140ms; transition-timing-function: var(--nt-press);
+}
+.os-ns__opt:active { scale: 0.96; }
+.os-ns__opt.is-on { box-shadow: 0 0 0 1.5px var(--nt-green), 0 1px 2px rgba(17, 20, 32, 0.04); }
+.os-ns__opt:disabled { cursor: default; opacity: 0.5; scale: 1; }
+.os-ns__icon {
+  --nt-hole: var(--nt-sea-soft);
+  flex: 0 0 auto; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; color: var(--nt-sea); background: var(--nt-sea-soft);
+}
+.os-ns__icon--protect { --nt-hole: var(--nt-green-soft); color: var(--nt-green); background: var(--nt-green-soft); }
+.os-ns__icon--hunt, .os-ns__icon--recruit { --nt-hole: var(--nt-red-soft); color: var(--nt-red); background: var(--nt-red-soft); }
+.os-ns__icon--pass { --nt-hole: var(--nt-violet-soft); color: var(--nt-violet); background: var(--nt-violet-soft); }
+.os-ns__icon--scour, .os-ns__icon--pc { --nt-hole: var(--nt-gold-soft); color: var(--nt-gold); background: var(--nt-gold-soft); }
+.os-ns__icon--pc { width: 46px; height: 46px; border-radius: 14px; }
+.os-ns__main { flex: 1 1 auto; min-width: 0; display: block; padding-top: 1px; }
+.os-ns__top { display: block; }
+.os-ns__title { display: inline; font-size: 16.5px; font-weight: 600; line-height: 1.25; color: var(--nt-ink); }
+.os-ns__short { display: block; margin-top: 3px; font-size: 14px; line-height: 1.4; color: var(--nt-muted); text-wrap: pretty; }
+.os-ns__meta { display: flex; align-items: flex-start; gap: 6px; margin-top: 6px; font-size: 13px; line-height: 1.35; color: var(--nt-ink-2); }
+.os-ns__meta .os-ns__sun { margin-top: 2px; }
+.os-ns__tag {
+  display: inline-block; padding: 2px 7px; white-space: nowrap; vertical-align: 2px; border-radius: 999px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--nt-sea); background: var(--nt-sea-soft);
+}
+.os-ns__sun { flex: 0 0 auto; fill: none; stroke: #c9902a; stroke-width: 2; stroke-linecap: round; }
+.os-ns__sun circle { fill: #e6b04a; stroke: none; }
+.os-ns__go { flex: 0 0 auto; align-self: center; display: grid; place-items: center; width: 22px; color: #b3b4bb; }
+.os-ns__go svg { fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.os-ns__opt.is-on .os-ns__go { color: var(--nt-green); }
+
+/* How it works: no box, a hairline and a plus. */
+.os-ns__how { border-top: 1px solid var(--nt-hair); }
+.os-ns__howbtn {
+  display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 46px; padding: 0 2px; border: 0; background: none;
+  font: inherit; font-size: 14.5px; font-weight: 600; color: var(--nt-ink-2); cursor: pointer; touch-action: manipulation;
+}
+.os-ns__plus { position: relative; width: 12px; height: 12px; }
+.os-ns__plus::before, .os-ns__plus::after { content: ''; position: absolute; left: 0; top: 5px; width: 12px; height: 2px; border-radius: 1px; background: currentColor; transition: rotate 180ms var(--nt-press), opacity 180ms ease-out; }
+.os-ns__plus::after { rotate: 90deg; }
+.os-ns__how.is-open .os-ns__plus::after { rotate: 0deg; opacity: 0; }
+.os-ns__rows { display: grid; margin: 0 0 4px; }
+.os-ns__row { display: grid; grid-template-columns: 68px 1fr; gap: 10px; padding: 10px 2px; border-top: 1px solid var(--nt-hair); }
+.os-ns__row dt { padding-top: 2px; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--nt-muted); }
+.os-ns__row dd { margin: 0; font-size: 14.5px; line-height: 1.45; color: var(--nt-ink-2); text-wrap: pretty; }
+
+/* A ghost's move: tap the photo the guest gets. */
+.os-ns__photos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.os-ns__photo {
+  display: block; padding: 0; border: 0; border-radius: 14px; overflow: hidden; text-align: left; font: inherit; color: var(--nt-ink-2); background: #fff;
+  box-shadow: 0 0 0 1px var(--nt-hair); cursor: pointer; touch-action: manipulation; transition: scale 140ms var(--nt-press);
+}
+.os-ns__photo:active { scale: 0.96; }
+.os-ns__photo.is-on { box-shadow: 0 0 0 2px var(--nt-green); }
+.os-ns__cap { display: block; padding: 8px 10px 10px; font-size: 13px; line-height: 1.3; text-wrap: pretty; }
+.os-nt-pc .os-nt-mark { left: auto; right: 2px; top: 6px; translate: 0 0; }
+
+
+
 /* The ghost tutorial's last page: the ghost bobs, gently. */
 .os-gt-float { animation: os-gt-float 2.6s ease-in-out infinite; }
 @keyframes os-gt-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
 @media (prefers-reduced-motion: reduce) { .os-gt-float { animation: none; } }
-.os-nt-step2 { scroll-margin-top: 8px; transition: opacity 200ms ease-out; }
-.os-nt-step2.is-waiting { opacity: 0.45; }
 
 /* The tutorial on the night sky (Tutorial.jsx tone="night"). */
 .os-night--tut {
@@ -1514,6 +1703,14 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 .os-wt--night .os-wt__title { color: #fff; }
 .os-wt--night .os-wt__line { color: #c9d8f2; }
 .os-wt--night .os-wt__back { background: rgba(255, 255, 255, 0.08); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2); }
+/* In the Night app's light chrome (2026-10-16): the pager's buttons are paper, not gloss. */
+.os-nt-app .os-wt--night .os-btn {
+  border: 0; border-radius: 16px; font-weight: 600; text-shadow: none; color: var(--nt-ink); background: var(--nt-paper);
+  box-shadow: 0 8px 22px -10px rgba(0, 0, 0, 0.6); transition: scale 140ms var(--nt-press);
+}
+.os-nt-app .os-wt--night .os-btn:active { scale: 0.96; filter: none; }
+.os-nt-app .os-wt--night .os-btn--green { color: #fff; background: var(--nt-green); }
+.os-nt-app .os-wt--night .os-wt__back { border-radius: 16px; box-shadow: none; }
 .os-nt-ready__fan { position: relative; width: 250px; height: 118px; margin-bottom: 8px; }
 .os-nt-ready__card {
   position: absolute; left: 50%; top: 22px; margin-left: -29px;
@@ -1523,7 +1720,8 @@ button.os-cell:active, .os-cell--on { background: linear-gradient(#4a9bf5, #0b6f
 @keyframes os-nt-fan { from { opacity: 0; rotate: 0deg; translate: 0 18px; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .os-nt-sky__tw, .os-nt-bar__who, .os-nt-sealed.is-fresh, .os-nt-sealed.is-fresh .os-nt-art__tick, .os-nt-ready__card { animation: none; }
+  .os-nt-sky__tw, .os-nt-ready__card, .os-nt-mark.is-fresh, .os-nt-pc__glow, .os-ns__panel, .os-ns__scrim, .os-nt-dock, .os-nt-find { animation: none; }
+  .os-nt-fig__body { transition: none; }
   .os-nt-sky__tw { opacity: 0.6; }
 }
 
@@ -2462,3 +2660,97 @@ button.os-field:active .os-field__label, button.os-field:active .os-field__ok, b
 .os-torn--r .os-torn__paper { clip-path: polygon(14% 0, 100% 0, 100% 100%, 12% 100%, 0 85%, 16% 70%, 0 55%, 14% 40%, 0 26%, 14% 12%); }
 .os-torn__code { font-size: 24px; font-weight: 800; letter-spacing: 0.3em; color: var(--color-os-gold); font-variant-numeric: tabular-nums; }
 .os-torn__input { flex: 1; min-width: 0; height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.35); background: rgba(0, 0, 0, 0.35); color: #fff; font-size: 18px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; }
+
+/* ---------------------------------------------------------------------------------------
+   Pack the Bag (os/game/PackGame.jsx). The things are one drawn sheet (public/pack/items.webp),
+   cut with background-position. Stickers on the Word board's paper; the suitcase is tan leather.
+   --------------------------------------------------------------------------------------- */
+.os-pk-item { display: inline-block; flex: 0 0 auto; background-repeat: no-repeat; }
+
+.os-pk-table { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; list-style: none; margin: 0; padding: 2px 0 0; }
+.os-pk-tile {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%;
+  padding: 10px 4px 8px; border: 0; border-radius: 14px; font: inherit; color: var(--wb-ink);
+  background: var(--wb-card); box-shadow: var(--wb-lift); rotate: var(--tilt, 0deg);
+  cursor: pointer; touch-action: manipulation;
+  transition: scale 120ms ease-out, rotate 180ms ease-out, opacity 160ms ease-out, box-shadow 160ms ease-out;
+}
+.os-pk-tile:active { scale: 0.94; }
+.os-pk-tile:disabled { cursor: default; }
+.os-pk-tile .os-pk-item { transition: translate 220ms var(--ease-land), scale 220ms var(--ease-land); }
+.os-pk-tile:not(:disabled):hover .os-pk-item { translate: 0 -2px; }
+.os-pk-tile__label { font-size: 12px; font-weight: 700; line-height: 1.15; text-align: center; color: var(--wb-soft); }
+.os-pk-tile.is-packed { rotate: 0deg; opacity: 0.55; box-shadow: inset 0 0 0 2px rgba(36, 50, 79, 0.25); background: transparent; }
+.os-pk-tile.is-packed .os-pk-item { scale: 0.82; }
+.os-pk-tile__tick {
+  position: absolute; top: -8px; right: -6px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--wb-ink); color: #fff; font-size: 14px; font-weight: 800; animation: os-wb-stamp 240ms var(--ease-land);
+}
+
+/* The suitcase, docked to the bottom of the board while you pack. */
+.os-pk-case {
+  position: sticky; bottom: 10px; z-index: 4; margin-top: 10px; padding: 14px 14px 10px; border-radius: 18px;
+  background: linear-gradient(180deg, #d99a68, #c3804f); color: #fff;
+  box-shadow: inset 0 0 0 2px rgba(36, 50, 79, 0.85), inset 0 -6px 0 rgba(0, 0, 0, 0.12), 0 14px 22px -12px rgba(36, 50, 79, 0.6);
+}
+.os-pk-case::before, .os-pk-case::after {   /* the two straps */
+  content: ''; position: absolute; top: 0; bottom: 0; width: 12px; background: rgba(93, 52, 26, 0.55); pointer-events: none;
+}
+.os-pk-case::before { left: 22%; }
+.os-pk-case::after { right: 22%; }
+.os-pk-case__handle {
+  position: absolute; top: -16px; left: 50%; width: 64px; height: 20px; translate: -50% 0;
+  border: 4px solid #24324f; border-bottom: 0; border-radius: 12px 12px 0 0; background: transparent;
+}
+.os-pk-case__slots { position: relative; z-index: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.os-pk-slot {
+  display: grid; place-items: center; height: 70px; border: 2px dashed rgba(255, 255, 255, 0.6); border-radius: 12px; padding: 0;
+  background: rgba(36, 50, 79, 0.18);
+}
+.os-pk-slot.is-full { border: 0; background: #fffdf7; box-shadow: 0 3px 0 rgba(36, 50, 79, 0.35); cursor: pointer; animation: os-pk-drop 300ms var(--ease-land); }
+.os-pk-slot.is-full:disabled { cursor: default; }
+.os-pk-slot.is-full:not(:disabled):active { scale: 0.94; }
+.os-pk-case__line { position: relative; z-index: 1; margin: 8px 0 0; text-align: center; font-family: var(--wb-hand); font-size: 20px; line-height: 1.1; }
+.os-pk-case.is-shut .os-pk-slot { filter: saturate(0.8); }
+@keyframes os-pk-drop { from { translate: 0 -26px; scale: 1.2; opacity: 0; } 60% { translate: 0 3px; scale: 0.96; opacity: 1; } to { translate: 0 0; scale: 1; } }
+
+/* The reveal: what the room packed, then every bag. */
+.os-pk-tally { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; list-style: none; margin: 0; padding: 0; }
+.os-pk-tally li {
+  position: relative; display: flex; flex-direction: column; align-items: center; padding: 6px 2px 4px; border-radius: 12px;
+  background: var(--wb-card); box-shadow: var(--wb-lift);
+}
+.os-pk-tally b { font-size: 18px; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.os-pk-tally li.is-none { opacity: 0.4; box-shadow: none; background: transparent; }
+.os-pk-fit {
+  position: absolute; top: -6px; right: -4px; display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--color-os-sea); color: #fff; font-size: 12px; font-weight: 800;
+}
+.os-pk-note { margin: 6px 0 0; font-size: 12px; font-weight: 600; color: var(--wb-soft); }
+.os-pk-note::first-letter { color: var(--color-os-sea); }
+
+.os-pk-bags { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px 12px; list-style: none; margin: 0; padding: 14px 2px 6px; }
+.os-pk-bag {
+  position: relative; display: flex; flex-direction: column; padding: 18px 8px 8px; border-radius: 14px;
+  background: linear-gradient(180deg, #d99a68, #c3804f); rotate: var(--tilt, 0deg);
+  box-shadow: inset 0 0 0 2px rgba(36, 50, 79, 0.85), 0 10px 16px -10px rgba(36, 50, 79, 0.55);
+  animation: os-pk-open 380ms var(--ease-land) both; animation-delay: calc(min(var(--i, 0), 14) * 60ms);
+}
+.os-pk-bag__tag {
+  position: absolute; top: -12px; left: 10px; max-width: calc(100% - 20px); padding: 2px 10px; border-radius: 4px 10px 10px 4px;
+  background: #fff2a8; color: var(--wb-ink); font-family: var(--wb-hand); font-size: 18px; line-height: 1.2;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; box-shadow: 0 2px 3px rgba(36, 50, 79, 0.3); rotate: -3deg;
+}
+.os-pk-bag__in { display: flex; justify-content: center; gap: 4px; padding: 6px 4px; border-radius: 10px; background: #fffdf7; box-shadow: inset 0 2px 4px rgba(36, 50, 79, 0.25); }
+.os-pk-bag__thing { position: relative; }
+.os-pk-bag__thing.is-fit::after {
+  content: '✓'; position: absolute; right: -3px; bottom: -3px; display: grid; place-items: center; width: 15px; height: 15px; border-radius: 50%;
+  background: var(--color-os-sea); color: #fff; font-size: 10px; font-weight: 800;
+}
+@keyframes os-pk-open { from { opacity: 0; translate: 0 14px; scale: 0.92; } to { opacity: 1; translate: 0 0; scale: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .os-pk-slot.is-full, .os-pk-bag, .os-pk-tile__tick { animation: none; }
+}
+/* A trip or hint ("Somewhere outdoors") is longer than a Word word: the pinned chip takes it on one line. */
+.os-pk .os-wb-card--chip .os-wb-card__word { font-size: 24px; line-height: 1.05; }

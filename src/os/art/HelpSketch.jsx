@@ -387,6 +387,16 @@ const DRAW = {
     k.text(284, 136, 'Run', { size: 14 });
   },
 
+  pack: (k) => {
+    // a suitcase, three things going in, and the trip on a ticket
+    k.box(96, 66, 128, 74, 10);
+    k.box(140, 54, 40, 14, 5);
+    k.line(130, 66, 130, 140, { w: 1.8 }).line(190, 66, 190, 140, { w: 1.8 });
+    k.circle(46, 40, 14).circle(274, 44, 12).box(258, 92, 34, 24, 4);
+    k.arrow(60, 52, 112, 82, { bend: -0.2 }).arrow(262, 58, 214, 82, { bend: 0.2 });
+    k.text(160, 34, 'pack 3', { size: 16 });
+  },
+
   news: (k) => {
     // the morning paper: one name, killed in the night; or nobody, if a Doctor saved them
     k.moon(34, 40, 14).sparkle(58, 24, 3.5);
@@ -553,12 +563,11 @@ const DRAW = {
   },
 
   ghost: (k) => {
-    // A ghost passes a true photo to a living guest; a whispered word floats beside it.
+    // A ghost passes a true photo to a living guest; it lands whole on their phone.
     k.ghost(78, 30, { s: 1.6 });
     k.photo(136, 30, 50, 60, { rot: 8, label: 'true' });
     k.arrow(196, 64, 236, 72, { bend: -0.2 });
     k.person(272, 80, { arms: 'up', face: 'wow', s: 0.9 });
-    k.text(160, 112, '“Hurry”', { size: 13 });
     k.sparkle(36, 30, 4).sparkle(214, 104, 3).sparkle(30, 110, 3.5);
     k.text(160, 146, 'still playing', { size: 15 });
   },

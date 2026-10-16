@@ -207,8 +207,8 @@ screen lights it; what glows (screens, eyes, chalk lettering) is drawn after.
 | 4 | dig | 13.75 s | 4.50 s | 330–437 | Ben under a desk lamp; a log curls out of his phone; a magnifier stops on a line; a clue photo (glasses) pops up |
 | 5 | doctor | 18.25 s | 4.50 s | 438–545 | Ben asleep; Cleo throws up a shield; a red ring homes in, clangs off and fades |
 | 6 | trace | 22.75 s | 4.50 s | 546–653 | Two phones on the table; a held phone sends a dotted line to each; they ping; a loop round both; "yes or no?" |
-| 7 | ghost | 27.25 s | 4.50 s | 654–761 | Zed the ghost among two word cards and a clue photo (2026-10-03: a ghost may pass a photo instead) picks HURRY; it drifts to Ada's ear; she sits up |
-| 8 | dawn | 31.75 s | 4.75 s | 762–875 | The sun comes up, the dark lifts; phones buzz, everyone wakes; each phone throws up a result; DAWN |
+| 7 | ghost | 27.25 s | 4.50 s | 654–761 | Zed the ghost with two of his clue photos picks one; it glides along a dotted line into Ada's phone; her screen lights, the photo pops up "from Zed"; she sits up (redrawn 2026-10-16: the whisper, HURRY to her ear, is cut) |
+| 8 | dawn | 31.75 s | 4.75 s | 762–875 | The sun comes up, the dark lifts; phones buzz, everyone wakes; each phone throws up a result (an eye, a photo, a shield, a photo; the last was a whispered word until 2026-10-16); DAWN |
 
 ```bash
 cd splash-film
@@ -253,7 +253,7 @@ ghost of any cast member with nubs for hands, `bubble()`, `polaroid()`,
 | 1 | rise | 0.00 s | 4.75 s | 0–113 | Zed's phone goes to static; a puff; he floats up as a ghost and waves; BOO! |
 | 2 | mute | 4.75 s | 4.50 s | 114–221 | The four chat; Zed calls "Hey!", "HELLO?"; his dotted bubbles sink through them; he shrugs |
 | 3 | truth | 9.25 s | 4.50 s | 222–329 | Night; a clue photo zigzags down to Zed; TRUE thumps onto it |
-| 4 | pass | 13.75 s | 4.50 s | 330–437 | Zed picks the photo over a word card; it glides into Ada's phone, "from Zed"; she wakes |
+| 4 | pass | 13.75 s | 4.50 s | 330–437 | Zed looks his photo over and sends it; it glides into Ada's phone, "from Zed"; she wakes (the word card beside it was cut 2026-10-16) |
 | 5 | spirits | 18.25 s | 4.50 s | 438–545 | Zed, Cleo and Dev as ghosts; bubbles: a photo, "Ada?", "yes!"; SPIRITS |
 | 6 | play | 22.75 s | 4.75 s | 546–659 | Zed plays; an EVERY DAY note ticks "play"; a ticked ballot into the VOTE box, and "vote" ticks (redrawn 2026-10-16) |
 
@@ -272,7 +272,7 @@ done
 
 - **Nobody's death is shown.** Zed's phone goes to static and he pops out of a puff, delighted.
 - **No red, no gold.** Nobody here is a Killer; the TRUE stamp and the ballot's tick are the kit's blue.
-- **True to the engine.** The words beside each clip follow engine/night.js (the true clue, the pass, the whisper), the morning games (ghosts play but can't place) and every vote.
+- **True to the engine.** The words beside each clip follow engine/night.js (the true clue, the pass), the morning games (ghosts play but can't place) and every vote.
 
 ## news.html — the News app's pictures
 
@@ -287,7 +287,7 @@ It loads `board-kit.js` for the ink line and the cast's cartoon heads.
 | Frame | Picture | Used by |
 |---|---|---|
 | 0–3 | nine-dead, seven-am, stay-together, greenr-open | Day 0 articles |
-| 4–6 | ninety-seconds, panjim-stops, ferry-crews | Day 1 |
+| 4–6 | ninety-seconds, panjim-stops, ferry-crews | Day 1. ninety-seconds shows a Word wall since 2026-10-16 (Word became the only morning game); it drew the whale's run before |
 | 7–9 | twenty-three, bars-split, nobody-wins | Day 2 |
 | 10–11 | scores-dispute (retired 2026-10-15), vigil | Day 3 |
 | 12–13 | cannot-delete, empty-servers | Day 4 |
@@ -310,6 +310,15 @@ for i in "${!names[@]}"; do
   ffmpeg -v error -y -i out/news/news-frames/$(printf "%04d" $i).png \
     -c:v libwebp -quality 80 -compression_level 6 ../public/news/${names[$i]}.webp
 done
+```
+
+## items.html — Pack the Bag's item sheet
+
+The 50 things a guest can pack (2026-10-16), one still: 10 × 5 cells of 216 units on a transparent ground, in the Word board's sticker look. The order of `ITEMS` is the sprite index and must match `ITEMS` in `src/data/packItems.js`.
+
+```bash
+node render.mjs items.html --only 0 --out out/items
+ffmpeg -v error -y -i out/items/items-frames/0000.png -vf scale=1920:-1 -c:v libwebp -quality 85 -compression_level 6 ../public/pack/items.webp
 ```
 
 A new picture is a new entry at the end of `NEWS_SCENES` in news.html, its

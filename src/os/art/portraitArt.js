@@ -39,15 +39,22 @@ export const ART_H = 400;
  */
 export const FACE_CROP = { x: 100, y: 57, w: 100, h: 100 };
 
+/**
+ * The figure alone, head to shoes, for the Night app's lounge: the person
+ * without their room, on a transparent canvas. Wide enough for the drink arm
+ * and the hand on the hip, tall enough for a bun and a heel.
+ */
+export const FIGURE_CROP = { x: 86, y: 54, w: 128, h: 332 };
+
 const TAU = Math.PI * 2;
-const INK = '#2a2622';
-const PAPER = '#f6f1e6';
+export const INK = '#2a2622';
+export const PAPER = '#f6f1e6';
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 
 // ---------------------------------------------------------------- random
 
-function rng(seed) {
+export function rng(seed) {
   let a = (seed * 1000003) >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) | 0;
@@ -56,7 +63,7 @@ function rng(seed) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-function hash(k, seed = 0) {
+export function hash(k, seed = 0) {
   let a = (Math.imul(k | 0, 0x9e3779b1) + Math.imul((seed * 4096) | 0, 0x85ebca77)) | 0;
   a ^= a >>> 15; a = Math.imul(a, 0x2c1b3c6d); a ^= a >>> 12; a = Math.imul(a, 0x297a2d39); a ^= a >>> 15;
   return (a >>> 0) / 4294967296;
@@ -76,7 +83,7 @@ const pick = (list, r) => list[Math.floor(r * list.length) % list.length];
 // ---------------------------------------------------------------- geometry
 
 /** Catmull-Rom through the points; turns sharper than `corner` stay corners (a heel keeps its edge). */
-function smoothPts(pts, close = false, step = 1.6, corner = 1.1) {
+export function smoothPts(pts, close = false, step = 1.6, corner = 1.1) {
   const n = pts.length;
   if (n < 3) return pts.map((p) => p.slice());
   const P = (i) => (close ? pts[((i % n) + n) % n] : pts[clamp(i, 0, n - 1)]);
@@ -105,14 +112,14 @@ function smoothPts(pts, close = false, step = 1.6, corner = 1.1) {
   if (!close) out.push(pts[n - 1].slice());
   return out;
 }
-function pathOf(pts, close = true) {
+export function pathOf(pts, close = true) {
   const p = new Path2D();
   pts.forEach((q, i) => (i ? p.lineTo(q[0], q[1]) : p.moveTo(q[0], q[1])));
   if (close) p.closePath();
   return p;
 }
-const curve = (pts, close = true, corner) => pathOf(smoothPts(pts, close, 1.6, corner), close);
-function ellPts(cx, cy, rx, ry, n = 28, rot = 0) {
+export const curve = (pts, close = true, corner) => pathOf(smoothPts(pts, close, 1.6, corner), close);
+export function ellPts(cx, cy, rx, ry, n = 28, rot = 0) {
   const out = [];
   for (let i = 0; i < n; i++) {
     const a = (i / n) * TAU, x = rx * Math.cos(a), y = ry * Math.sin(a);
@@ -121,7 +128,7 @@ function ellPts(cx, cy, rx, ry, n = 28, rot = 0) {
   return out;
 }
 /** An outline bent by slow noise: a rectangle that is not quite one. */
-function warp(pts, seed, amp = 1.2, close = true, step = 10) {
+export function warp(pts, seed, amp = 1.2, close = true, step = 10) {
   const n = pts.length, out = [], segs = close ? n : n - 1;
   for (let i = 0; i < segs; i++) {
     const a = pts[i], b = pts[(i + 1) % n];
@@ -135,8 +142,8 @@ function warp(pts, seed, amp = 1.2, close = true, step = 10) {
     return [p[0] + amp * noise1(s / 40 + 3, seed), p[1] + amp * noise1(s / 40 + 40, seed + 1)];
   });
 }
-const rectPts = (x, y, w, h) => [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
-const shift = (pts, dx, dy) => pts.map(([x, y]) => [x + dx, y + dy]);
+export const rectPts = (x, y, w, h) => [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
+export const shift = (pts, dx, dy) => pts.map(([x, y]) => [x + dx, y + dy]);
 
 // ---------------------------------------------------------------- colour
 
@@ -145,9 +152,9 @@ function parse(c) {
   return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16));
 }
 const hex = (rgb) => `#${rgb.map((v) => Math.round(clamp(v, 0, 255)).toString(16).padStart(2, '0')).join('')}`;
-const mix = (a, b, t) => { const A = parse(a), B = parse(b); return hex(A.map((v, i) => lerp(v, B[i], t))); };
-const shade = (c, t) => mix(c, '#1a1612', t);
-const tint = (c, t) => mix(c, '#ffffff', t);
+export const mix = (a, b, t) => { const A = parse(a), B = parse(b); return hex(A.map((v, i) => lerp(v, B[i], t))); };
+export const shade = (c, t) => mix(c, '#1a1612', t);
+export const tint = (c, t) => mix(c, '#ffffff', t);
 
 // ---------------------------------------------------------------- marks
 
@@ -158,14 +165,14 @@ const profile = (u, keys) => {
   }
   return keys[keys.length - 1][1];
 };
-const TAPER = [[0, 0.2], [0.14, 0.9], [0.5, 1], [0.84, 0.8], [1, 0.12]];
-const EVEN = [[0, 0.75], [0.5, 1], [1, 0.75]];
+export const TAPER = [[0, 0.2], [0.14, 0.9], [0.5, 1], [0.84, 0.8], [1, 0.12]];
+export const EVEN = [[0, 0.75], [0.5, 1], [1, 0.75]];
 
 /**
  * The pen: a filled ribbon whose width follows an authored pressure profile,
  * wandering a little off the drawn path. One gesture, no outline drawn twice.
  */
-function pen(g, pts, { w = 1.6, color = INK, alpha = 1, close = false, seed = 1, rough = 0.5, pressure = TAPER, corner } = {}) {
+export function pen(g, pts, { w = 1.6, color = INK, alpha = 1, close = false, seed = 1, rough = 0.5, pressure = TAPER, corner } = {}) {
   const q = smoothPts(pts, close, 1.2, corner);
   const n = q.length;
   if (n < 2) return;
@@ -193,7 +200,7 @@ function pen(g, pts, { w = 1.6, color = INK, alpha = 1, close = false, seed = 1,
 }
 
 /** Ink with a pencil gesture under it: the construction line a hand draws first, never quite on the ink. */
-function line(g, pts, o = {}) {
+export function line(g, pts, o = {}) {
   const { seed = 1, sketch = 0.28 } = o;
   if (sketch > 0) pen(g, shift(pts, (hash(seed, 5) - 0.5) * 1.4, (hash(seed, 6) - 0.5) * 1.4), { ...o, w: (o.w ?? 1.6) * 0.45, alpha: sketch, seed: seed + 11, rough: 1.1, pressure: EVEN });
   pen(g, pts, o);
@@ -256,7 +263,7 @@ function grainPattern(g, color, seed) {
  * granulating inside it and drying darker at its edge. Multiply, so washes
  * glaze over each other the way paint does.
  */
-function wash(g, pts, color, { seed = 1, alpha = 0.85, dx = 0.8, dy = 0.6, amp = 0.9, gran = 0.22, edge = 0.5, close = true, corner } = {}) {
+export function wash(g, pts, color, { seed = 1, alpha = 0.85, dx = 0.8, dy = 0.6, amp = 0.9, gran = 0.22, edge = 0.5, close = true, corner } = {}) {
   const shape = smoothPts(warp(shift(pts, dx, dy), seed, amp, close, 8), close, 1.6, corner);
   const path = pathOf(shape, true);
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -295,7 +302,7 @@ function wash(g, pts, color, { seed = 1, alpha = 0.85, dx = 0.8, dy = 0.6, amp =
  * `tone(x, y)` is dark enough, leaning along `dir(x, y)`. Grid ids decide
  * each stroke, so a held drawing keeps its marks.
  */
-function hatch(g, path, [x, y, w, h], { seed = 1, color = INK, gap = 3.2, len = 7, width = 0.5, alpha = 0.5, tone = () => 0.5, dir = () => 0.9 } = {}) {
+export function hatch(g, path, [x, y, w, h], { seed = 1, color = INK, gap = 3.2, len = 7, width = 0.5, alpha = 0.5, tone = () => 0.5, dir = () => 0.9 } = {}) {
   g.save();
   g.clip(path);
   g.strokeStyle = color;
@@ -318,7 +325,7 @@ function hatch(g, path, [x, y, w, h], { seed = 1, color = INK, gap = 3.2, len = 
 }
 
 /** Paper-coloured fill under a drawn shape, so it hides what is behind it (skin is paper). */
-function solid(g, pts, color = PAPER, close = true, corner) {
+export function solid(g, pts, color = PAPER, close = true, corner) {
   g.save();
   g.fillStyle = color;
   g.fill(curve(pts, close, corner));
@@ -326,7 +333,7 @@ function solid(g, pts, color = PAPER, close = true, corner) {
 }
 
 /** A drawn thing: paper (or colour) under it, a wash, and its ink line. */
-function thing(g, pts, { fill, color, seed = 1, w = 1.5, alpha = 0.9, corner, sketch, edge } = {}) {
+export function thing(g, pts, { fill, color, seed = 1, w = 1.5, alpha = 0.9, corner, sketch, edge } = {}) {
   if (fill) solid(g, pts, fill, true, corner);
   if (color) wash(g, pts, color, { seed: seed + 1, alpha, corner, edge });
   line(g, pts, { close: true, w, seed, corner, sketch });
@@ -1768,7 +1775,7 @@ export function brushMask(g, id, seed, t) {
  * Paint the whole photo. The context must already be scaled so that the
  * drawing's 300 x 400 units fill the target (Portrait.jsx does this).
  */
-export function drawPortrait(g, traits = {}, seed = 0, { face = false, mystery = false } = {}) {
+export function drawPortrait(g, traits = {}, seed = 0, { face = false, mystery = false, figure = false } = {}) {
   const t = traits ?? {};
   const S = sceneFor(seed, mystery ? 'open' : lookOf(t.gender));
   const layer = (id) => drawLayer(g, id, t, S);
@@ -1779,24 +1786,25 @@ export function drawPortrait(g, traits = {}, seed = 0, { face = false, mystery =
     if (!mystery) hairFront(g, S.hair, S);
     g.restore();
   };
-  room(g, S, face);
-  if (!face) {
+  // `figure` is the person alone (the Night lounge): no room, no wall, no pet.
+  if (!figure) room(g, S, face);
+  if (!face && !figure) {
     PROPS[S.leftProp](g, 42, S);
     PROPS[S.rightProp](g, 258, S);
     layer('season');
     layer('siblings');
   }
-  wallShadow(g, S);
+  if (!figure) wallShadow(g, S);
   if (!mystery) { g.save(); headSpace(g); hairBack(g, S.hair, S); g.restore(); }
   if (!face) {
     // The thumbnail crop shows head and shoulders only, so it skips everything
     // below the waist. Back to front: legs, then shoes, then the trousers, so a
     // hem falls over a boot and never the other way round.
-    floorShadow(g, S);
+    if (!figure) floorShadow(g, S);
     legs(g, S, !t.shoes);
     layer('shoes');
     trousers(g, S);
-    layer('pet');
+    if (!figure) layer('pet');
   }
   freeArm(g, S);
   theHead();

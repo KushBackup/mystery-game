@@ -24,7 +24,7 @@
  * in secret.pendingTop for the game lock, where the day's top three each get
  * one (engine/morning.js topOfDay), told privately. There is no public board.
  *
- * The morning game rotates (engine/minigames.js): word, drawing, run. The
+ * The morning game rotates (engine/minigames.js): Word, Fake Artist, Pack the Bag. The
  * commit that opens dawn also picks the day's game and sends each guest
  * their word, after any recruit has answered, so a guest turned tonight gets
  * the Killers' hint, not the word. The game lock turns whatever the day
@@ -40,6 +40,7 @@ import { auth, authReady, db } from './app.js';
 import { serverNow, measureOffset } from '../lib/clockSkew.js';
 import { gameRef, sub, col } from './game.js';
 import { TRAITS } from '../data/traits.js';
+import { PLACES } from '../data/packItems.js';
 import { DEFAULT_PACK_ID, packFor, dayKit } from '../data/packs/index.js';
 import {
   PHASE, DEFAULT_DURATIONS, DEFAULT_CYCLES, ENDGAME_ROUNDS, phaseTiming, lockFor,
@@ -47,6 +48,7 @@ import {
   makeRng, freshSeed, resolveNight, resolveRecruit, topOfDay, DEFAULT_NIGHT_CONFIG,
   tallyBanish, breakTie, checkWin, applyLeaves, recruitNeed, fateRecruit,
   DEFAULT_GAMES, gameOfDay, introDay, pickWord, dealDrawWords, shownWord, scoreWordDay, scoreDrawDay,
+  pickPlace, dealPack, scoreFakeDay, scorePackDay,
   planEvening, clockAtStart,
 } from '../lib/engine/index.js';
 
@@ -246,7 +248,7 @@ function timed(game, phase, now = serverNow(), cycle = game.cycle) {
   const intro = phase === PHASE.ALARM && introDay(game.config, cycle);
   return {
     phase,
-    ...phaseTiming(phase, now, game.config?.durations ?? DEFAULT_DURATIONS, game.minigame ?? 'run', intro),
+    ...phaseTiming(phase, now, game.config?.durations ?? DEFAULT_DURATIONS, game.minigame ?? 'word', intro),
     clockAt: clockAtStart(game, phase, now, cycle),
   };
 }
@@ -531,15 +533,28 @@ function planDayGame(g, world, rolePatch = {}) {
   const living = Object.keys(world.players).filter((p) => ['alive', 'ghost'].includes(world.players[p].status) && roles[p]).sort();
   const kit = dayKit(packFor(g.packId));
   const { seed } = world.secret;
-  if (kind === 'word') {
+  if (kind === 'word' || kind === 'fake') {
+    // Fake Artist draws from the same pairs as Word, and never repeats one Word used.
     const used = world.secret.wordsUsed ?? [];
     const pair = pickWord(seed, g.cycle, kit.wordPairs, used);
     return {
       kind,
       deliveries: living.map((pid) => (teamOf(roles[pid]) === 'killers'
-        ? { to: pid, kind: 'word', hint: pair.hint }
-        : { to: pid, kind: 'word', word: pair.word, hint: pair.hint })),
+        ? { to: pid, kind, hint: pair.hint }
+        : { to: pid, kind, word: pair.word, hint: pair.hint })),
       secretPatch: { wordsUsed: [...used, pair.id], [`day.${g.cycle}`]: { kind, id: pair.id, word: pair.word, hint: pair.hint } },
+    };
+  }
+  if (kind === 'pack') {
+    const used = world.secret.placesUsed ?? [];
+    const place = pickPlace(seed, g.cycle, PLACES, used);
+    const items = dealPack(seed, g.cycle, place, PLACES);
+    return {
+      kind,
+      deliveries: living.map((pid) => (teamOf(roles[pid]) === 'killers'
+        ? { to: pid, kind, hint: place.hint, items }
+        : { to: pid, kind, place: place.name, hint: place.hint, items })),
+      secretPatch: { placesUsed: [...used, place.id], [`day.${g.cycle}`]: { kind, id: place.id, place: place.name, hint: place.hint, items, fits: place.items } },
     };
   }
   if (kind === 'draw') {
@@ -566,10 +581,22 @@ function writeDayGame(tx, gid, cycle, day) {
  */
 async function dayScores(gid, g, world) {
   const day = world.secret.day?.[g.cycle];
-  const kind = g.minigame ?? day?.kind ?? 'run';
+  const kind = g.minigame ?? day?.kind ?? 'word';
   if (kind === 'word' && day?.word) {
     const [clues, picks] = await Promise.all([dayDocs(gid, 'clues', g.cycle), dayDocs(gid, 'picks', g.cycle)]);
     return { scores: scoreWordDay({ clues, picks, word: day.word }), reveal: { kind, cycle: g.cycle, word: day.word, hint: day.hint } };
+  }
+  if (kind === 'fake' && day?.word) {
+    const drawings = await dayDocs(gid, 'drawings', g.cycle);
+    return { scores: scoreFakeDay({ drawings, seed: world.secret.seed, cycle: g.cycle }), reveal: { kind, cycle: g.cycle, word: day.word, hint: day.hint } };
+  }
+  if (kind === 'pack' && day?.place) {
+    const bags = await dayDocs(gid, 'bags', g.cycle);
+    const opened = Object.fromEntries(Object.entries(bags).map(([pid, b]) => [pid, (b.items ?? []).filter((id) => day.items.includes(id)).slice(0, 3)]).filter(([, items]) => items.length));
+    return {
+      scores: scorePackDay({ bags, fits: day.fits, table: day.items }),
+      reveal: { kind, cycle: g.cycle, place: day.place, hint: day.hint, items: day.items, fits: day.fits, bags: opened },
+    };
   }
   if (kind === 'draw' && day?.words) {
     const [drawings, guesses] = await Promise.all([dayDocs(gid, 'drawings', g.cycle), dayDocs(gid, 'guesses', g.cycle)]);
@@ -618,6 +645,9 @@ async function resolveRecruitPhase(gid) {
 
 // --- The morning game ----------------------------------------------------------------
 
+/** What the paper prints about the day's game: the reveal without the room's bags. */
+const headline = ({ bags, items, fits, ...rest }) => rest; // eslint-disable-line no-unused-vars
+
 /**
  * The day's game is over: read the scores, send the top three a clue photo,
  * and open daylight. Nobody dies here. `dayGame` is what the room may now see
@@ -639,7 +669,8 @@ async function resolveGamePhase(gid) {
     tx.update(gameRef(gid), {
       ...timed(g, PHASE.INVESTIGATION),
       dayGame: clean(reveal),
-      news: arrayUnion(clean({ ...reveal, kind: 'day', game: reveal.kind, at: serverNow() })),
+      // The paper gets the headline only: a whole room's bags would bloat the game doc twice over.
+      news: arrayUnion(clean({ ...headline(reveal), kind: 'day', game: reveal.kind, at: serverNow() })),
     });
   });
   if (done && delivered.length) await writeSight(gid, g.cycle, sightOf(delivered, g.cycle, 'morning'), true);

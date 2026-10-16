@@ -172,8 +172,8 @@ function truthClip(c, tau, i) {
 }
 
 // ---------------------------------------------------------------- clip 4: pass it on
-// Night. Zed holds two things: his photo and a word card. He picks the photo; it glides along a dotted
-// line into Ada's phone. Her screen lights, she sits up and stares at it.
+// Night. Zed holds his photo, looks it over, and sends it; it glides along a dotted line into Ada's phone.
+// Her screen lights, she sits up and stares at it. (A word card he could whisper instead was cut on 2026-10-16.)
 const PICK4 = .9, SEND = [1.3, 2.4], LAND = 2.4;
 function passClip(c, tau, i) {
   page(c);
@@ -190,9 +190,6 @@ function passClip(c, tau, i) {
   spook(c, CAST.zed, G[0], G[1], zf, 15200 + bz(i), t2, { arms: [[40, -30], [70, 20]] });
   dusk(c, .74, [{ x: G[0], y: G[1] + 60, r: 330, k: .5 }, { x: A[0], y: A[1] + 120, r: 320, k: heard ? .6 : .25 }]);
   glow(c, G[0], G[1] + 60, 300, '#cfe3ff', .3);
-  // the word card, left behind
-  const wk = picked ? 1 - win(tau, PICK4, PICK4 + .35) * .8 : 1;
-  c.save(); c.globalAlpha = wk; c.translate(G[0] + 230, G[1] - 170 + Math.sin(t2 * 2.4) * 8); c.rotate(.08); sticky(c, 200, 104, NOTE.butter, 15400); txt(c, 'Hurry', 0, 6, 62, { fit: 160 }); c.restore();
   // the photo: held, then flown to her phone along a dotted line, shrinking
   const u = easeInOutSine(win(tau, SEND[0], SEND[1]));
   const start = [G[0] + 250, G[1] + 120];

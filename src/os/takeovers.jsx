@@ -12,14 +12,55 @@ import GhostTutorial from './GhostTutorial';
 import { prefetchGhostTutorial } from '../data/ghostTutorial';
 import { narrate } from '../data/packs/index.js';
 import { HIJACK } from '../data/killersCopy';
-import { sfxSting, sfxPing, sfxNightfall, sfxDaybreak, sfxStatic } from './sfx';
+import { weatherLine } from './weather';
+import { sfxSting, sfxPing, sfxNightfall, sfxDaybreak, sfxStatic, startAlarm, stopAlarm } from './sfx';
 
 /**
  * Moments that take the whole phone, over any app: the role arriving at
- * casting, and the Killers' recruit offer as a phone call. Each one is synced
- * to the room's shared `revealAt` instant. (The morning alarm was one until
- * 2026-10-02; it is a notification now, in PhoneOS.jsx.)
+ * casting, the Killers' recruit offer as a phone call, and the morning alarm.
+ * Each one is synced to the room's shared `revealAt` instant. (The alarm was
+ * a notification from 2026-10-02; on 2026-10-16 the user asked for it back as
+ * the iPhone's ringing alarm screen, with the slide opening the day's game.)
  */
+
+/**
+ * The morning alarm, the way an iPhone's lock screen rings: the clock, the
+ * alarm's label, and a slider. It rings until slid; the slide is the guest's
+ * own move, and it opens DEEP BLUE (PhoneOS.jsx), which is the whole point.
+ */
+export function AlarmScreen({ game, pack, title, text, onStop }) {
+  const clock = useWorldClock(game);
+  const weather = weatherLine(pack, game);
+  useEffect(() => {
+    startAlarm();
+    return stopAlarm;
+  }, []);
+  return (
+    <div className="os-lock os-alarm">
+      <Wallpaper variant="lock" className="os-wall" />
+      <div className="os-stars" aria-hidden="true" />
+      <div className="relative os-lock__clockbar">
+        <p className="os-lock__time">{clock}</p>
+        <p className="os-lock__date">{weather ?? `Day ${game.cycle}`}</p>
+      </div>
+      <div className="relative flex-1 flex flex-col items-center justify-center gap-5 px-4" role="alert">
+        <div className="os-alarm__ring text-white" style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.6))' }}>
+          <Glyph name="alarm" size={64} />
+        </div>
+        <div className="os-notif w-full max-w-[340px]">
+          <AppIcon name="clock" size={32} className="shrink-0" />
+          <div className="min-w-0">
+            <p className="os-notif__title">{title}</p>
+            <p className="os-notif__text">{text}</p>
+          </div>
+        </div>
+      </div>
+      <div className="relative os-lock__slider">
+        <SlideToUnlock label="slide to snooze" onDone={onStop} />
+      </div>
+    </div>
+  );
+}
 
 /**
  * Casting: the role arrives as a text from DEEP BLUE. The lock-screen beat

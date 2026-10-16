@@ -13,12 +13,12 @@
  *   1. Only a ghost sees it, and every ghost sees the same slides whatever
  *      their role was: never "your team", never a Killer-only line.
  *   2. True to the engine: engine/night.js (each ghost's nightly true clue,
- *      the whisper, the pass, which only carries a photo the ghost holds),
+ *      the pass, which only carries a photo the ghost holds; the whisper was cut 2026-10-16),
  *      last words (one photo posted to the Room on the day the Killers kill a guest)
  *      and ghost sight (Photos → The Room, every clue the living got),
  *      the morning games (ghosts play but can't place), every vote, firestore.rules (the
  *      dead read the Room but can't post; Spirits is theirs). Help's Ghost
- *      topic and NIGHT.moves.pass/whisper in killersCopy.js say the same.
+ *      topic and NIGHT.moves.pass in killersCopy.js say the same.
  *   3. Plain words, one idea a line, about 12 words a line.
  *   4. The clips' cast is the other tutorials' (Ada, Cleo, Dev, Zed). Zed is
  *      the ghost; nobody's death is shown.
@@ -33,7 +33,7 @@ export const FILM_SLIDES = Object.freeze([
   { id: 'rise', n: 1, title: 'Welcome to the spirit world.', line: 'You were killed, but you’re still in the game. Your side can still win.' },
   { id: 'mute', n: 2, title: 'The living can’t hear you.', line: 'You can read the Room, but not post. Except once: on the morning you’re killed, post one photo there.' },
   { id: 'truth', n: 3, title: 'Every night, a true clue photo.', line: 'Ghost photos never lie. In Photos, The Room shows every clue the living got.' },
-  { id: 'pass', n: 4, title: 'Pass a photo to a living guest.', line: 'Open Night, pick a photo, then a guest. Or whisper them one word.' },
+  { id: 'pass', n: 4, title: 'Pass a photo to a living guest.', line: 'Open Night, tap a living guest, then the photo. It lands whole in their Photos.' },
   { id: 'spirits', n: 5, title: 'Plot with the dead in Spirits.', line: 'Spirits is in Messages. Only ghosts can read it.' },
   { id: 'play', n: 6, title: 'Keep playing every morning.', line: 'And vote in every vote. Open Vote on your home screen.' },
 ].map((s) => ({ ...s, kind: 'film', clip: clip(s.n), poster: poster(s.n) })));

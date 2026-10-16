@@ -1,14 +1,26 @@
 /**
- * The day's game. Every morning the whole room plays one of three, in turn:
+ * The day's game. Every morning the whole room plays one of three, in turn.
+ * Each is a social-deduction game: the Faithful know something the Killers
+ * don't, and what everyone made goes up for the room to read.
  *
  *   word   Faithful see a secret word, Killers only its category. Everyone
  *          posts one word that fits; the clues stream onto a public wall in
  *          the order they land, so a Killer can wait and read, but waiting
  *          shows. Then everyone picks the three clues that fit best.
- *   draw   Everyone draws their own secret word at once, then guesses a
- *          handful of other people's drawings by typing. Fast right answers
- *          score; so does a drawing other people get.
- *   run    The DEEP BLUE run (os/game/physics.js), unchanged.
+ *   fake   Fake Artist. The same word and hint, but everyone draws it. The
+ *          drawings go up together when the pens go down, for the room to
+ *          argue over. No stars (the user's call, 2026-10-16: they confused
+ *          people); the clue photos are a draw among everyone who drew.
+ *   pack   Pack the Bag. Faithful are told where the room is going, Killers
+ *          only the hint (data/packItems.js). Everyone packs three of the
+ *          same twelve things. The bags stay shut until the game ends, then
+ *          open for everyone at once.
+ *
+ * Sketch ('draw') and the DEEP BLUE run ('run', os/game/physics.js) had no
+ * hidden side, so the user retired them on 2026-10-16 and asked for Fake
+ * Artist and Pack the Bag the same day. Their code is still here, but KINDS
+ * no longer offers them, so an older game's `config.games` that lists any
+ * of them falls back to the default rotation.
  *
  * Whatever the game, it ends in one score per guest, `{ pid: { best } }`,
  * which is exactly what topOfDay (morning.js) reads. So the top-three photos
@@ -22,8 +34,8 @@
 
 import { hashString, makeRng, pick, shuffle } from './rng.js';
 
-export const KINDS = ['word', 'draw', 'run'];
-export const DEFAULT_GAMES = Object.freeze(['word', 'draw', 'run']);
+export const KINDS = ['word', 'fake', 'pack'];
+export const DEFAULT_GAMES = Object.freeze(['word', 'fake', 'pack']);
 
 /**
  * Whether the morning's game has anything to show right now: live play, or
@@ -36,7 +48,7 @@ export const DEFAULT_GAMES = Object.freeze(['word', 'draw', 'run']);
  * game away (user's call, 2026-10-02).
  */
 export function deepBlueOpen(game) {
-  const kind = game.minigame ?? 'run';
+  const kind = game.minigame ?? 'word';
   if (kind === 'run') return ['game', 'game_locked'].includes(game.phase);
   const today = ['alarm', 'game', 'game_locked'].includes(game.phase);
   const shown = game.dayGame?.cycle === game.cycle && game.dayGame.kind === kind;
@@ -47,9 +59,13 @@ export function deepBlueOpen(game) {
 export const STEPS = Object.freeze({
   word: [['read', 10], ['clue', 60], ['pick', 50]],
   draw: [['draw', 45], ['guess', 90]],
+  fake: [['read', 8], ['draw', 45]],
+  pack: [['read', 8], ['pack', 40]],
 });
 
 export const WORD_PICKS = 3;
+export const PACK_ITEMS = 3;
+export const PACK_GRID = 12;
 export const CLUE_MAX = 20;
 export const DRAW_ASSIGN = 6;
 export const DRAW_SHOW_MS = 15_000;
@@ -59,13 +75,15 @@ const CAP = 999;
 
 /** Which game day `cycle` plays. `config.games` is the host's rotation. */
 export function gameOfDay(config, cycle) {
-  const list = (config?.games ?? DEFAULT_GAMES).filter((k) => KINDS.includes(k));
-  const games = list.length ? list : DEFAULT_GAMES;
+  const asked = config?.games ?? DEFAULT_GAMES;
+  const list = asked.filter((k) => KINDS.includes(k));
+  // A rotation that names a retired game (Sketch, the run) predates 2026-10-16: it gets today's three.
+  const games = list.length && list.length === asked.length ? list : DEFAULT_GAMES;
   return games[(Math.max(1, cycle) - 1) % games.length];
 }
 
 /** The games DEEP BLUE teaches with a tutorial the first morning they are played. */
-export const TAUGHT = Object.freeze(['word', 'draw']);
+export const TAUGHT = Object.freeze(['word']);
 
 /**
  * Whether day `cycle` is the first morning of a taught game (Word or Sketch).
@@ -151,6 +169,26 @@ export function pickWord(seed, cycle, pairs, usedIds = []) {
   return pick(fresh.length ? fresh : pairs, makeRng(seed, cycle, 'word'));
 }
 
+/** Today's trip for Pack the Bag, never one this game has used. */
+export function pickPlace(seed, cycle, places, usedIds = []) {
+  const fresh = places.filter((p) => !usedIds.includes(p.id));
+  return pick(fresh.length ? fresh : places, makeRng(seed, cycle, 'place'));
+}
+
+/**
+ * The twelve things on today's table, the same for every guest: the trip's
+ * own five, four from the other trip that shares its hint (so the hint alone
+ * leaves a Killer two trips to choose between), and three from anywhere else.
+ */
+export function dealPack(seed, cycle, place, places) {
+  const rng = makeRng(seed, cycle, 'pack');
+  const twin = places.find((p) => p.id !== place.id && p.hint === place.hint);
+  const twinItems = twin ? shuffle(twin.items, rng).slice(0, 4) : [];
+  const rest = shuffle(places.filter((p) => p !== place && p !== twin).flatMap((p) => p.items), rng);
+  const items = [...place.items, ...twinItems, ...rest].slice(0, PACK_GRID);
+  return shuffle(items, rng);
+}
+
 /** A different draw word for each guest, avoiding words already drawn this game. */
 export function dealDrawWords(seed, cycle, pids, bank, usedWords = []) {
   const fresh = bank.filter((w) => !usedWords.includes(w));
@@ -203,6 +241,37 @@ export function scoreWordDay({ clues = {}, picks = {}, word = '' }) {
     for (const p of chosen) got[p] = (got[p] ?? 0) + 1;
   }
   return Object.fromEntries(Object.keys(clues).map((pid) => [pid, { best: fair.has(pid) ? Math.min(CAP, 100 + 50 * (got[pid] ?? 0)) : 0 }]));
+}
+
+/**
+ * Fake Artist's board. Nobody rates a drawing, so every guest who drew
+ * scores 100 plus a seeded 0..99: the top three are a fair draw among
+ * everyone who drew, different each day (a flat 100 would hand the photos to
+ * the same three every time, since topOfDay breaks ties by pid). A blank
+ * page scores 0.
+ *
+ * @param drawings { pid: { strokes } }
+ */
+export function scoreFakeDay({ drawings = {}, seed = '', cycle = 0 }) {
+  return Object.fromEntries(Object.keys(drawings).sort().map((pid) => {
+    const inked = (drawings[pid]?.strokes ?? '').length > 4;
+    return [pid, { best: inked ? 100 + Math.floor(makeRng(seed, cycle, 'fake', pid)() * 100) : 0 }];
+  }));
+}
+
+/**
+ * Pack the Bag's board: 100 for a packed bag, plus 100 for each thing in it
+ * that belongs on the trip. Only things from today's table count, three at most.
+ *
+ * @param bags  { pid: { items: [id] } }
+ * @param fits  the trip's own item ids
+ * @param table today's twelve
+ */
+export function scorePackDay({ bags = {}, fits = [], table = [] }) {
+  return Object.fromEntries(Object.entries(bags).map(([pid, doc]) => {
+    const items = [...new Set((doc?.items ?? []).filter((id) => table.includes(id)))].slice(0, PACK_ITEMS);
+    return [pid, { best: items.length ? 100 + 100 * items.filter((id) => fits.includes(id)).length : 0 }];
+  }));
 }
 
 /**

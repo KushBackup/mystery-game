@@ -2,7 +2,10 @@ import React, { useRef } from 'react';
 import DeepBlueGame from '../game/DeepBlueGame';
 import WordGame from '../game/WordGame';
 import DrawGame from '../game/DrawGame';
-import { NavBar } from '../ui';
+import FakeGame from '../game/FakeGame';
+import PackGame from '../game/PackGame';
+import { NavBar, Hold } from '../ui';
+import { useServerNow } from '../../hooks/useKillers';
 import Glyph from '../icons/Glyph';
 import { submitScore } from '../../firebase/game';
 import { serverNow } from '../../lib/clockSkew';
@@ -15,7 +18,8 @@ import { deepBlueWhen } from '../words';
  * On a word or drawing day it opens that game from the alarm until the game
  * locks, then keeps its wall or its drawings up, with the answers, until the
  * night. On a run day it is the run below, live only while the game phase is
- * actually open. Any other time (including the alarm's own countdown)
+ * actually open; a guest who slides the alarm off early waits on a countdown
+ * (RunSoon), not the course. Any other time
  * `deepBlueOpen` says no, and this is the locked screen: no practice course,
  * so the app stays a mystery until it is really time to play (user's call,
  * 2026-10-02 — a practice run gave the game away). The dock icon agrees,
@@ -23,12 +27,30 @@ import { deepBlueWhen } from '../words';
  */
 export default function GameApp({ ctx, onClose }) {
   const { game } = ctx;
-  const kind = game.minigame ?? 'run';
+  const kind = game.minigame ?? 'word';
+  // Slid off the alarm on a run day: the run starts with the game phase, seconds away.
+  if (kind === 'run' && game.phase === 'alarm') return <RunSoon game={game} onClose={onClose} />;
   if (!deepBlueOpen(game)) return <LockedGame line={deepBlueWhen(game, ctx.pack, serverNow())} onClose={onClose} />;
   const shown = game.dayGame?.cycle === game.cycle && game.dayGame.kind === kind ? game.dayGame : null;
   if (kind === 'word') return <WordGame ctx={ctx} onClose={onClose} dayGame={shown} />;
+  if (kind === 'fake') return <FakeGame ctx={ctx} onClose={onClose} dayGame={shown} />;
+  if (kind === 'pack') return <PackGame ctx={ctx} onClose={onClose} dayGame={shown} />;
   if (kind === 'draw') return <DrawGame ctx={ctx} onClose={onClose} dayGame={shown} />;
   return <RunGame ctx={ctx} onClose={onClose} />;
+}
+
+/** The alarm's last seconds on a run day: the course isn't shown until the run opens. */
+function RunSoon({ game, onClose }) {
+  const now = useServerNow(game.phaseEndsAt, 250);
+  const secs = game.phaseEndsAt ? Math.max(0, Math.ceil((game.phaseEndsAt - now) / 1000)) : 0;
+  return (
+    <section className="os-app os-app--dark">
+      <NavBar title="DEEP BLUE" onBack={onClose} backLabel="Home" tone="dark" />
+      <div className="relative flex-1 min-h-0">
+        <Hold label={secs ? `THE RUN STARTS IN ${secs}s` : 'THE RUN IS STARTING…'} />
+      </div>
+    </section>
+  );
 }
 
 /** Shown whenever it isn't actually time to play: locked, not practice. */
